@@ -4,8 +4,12 @@ Runs the real decision path of the imported Runtime source (validate_snapshot ->
 SQLite destination commit, via LocalDestinationExecutor.execute_snapshot) at the pinned historical revision.
 It characterises what the baseline does today. It extracts no rule, populates no registry and qualifies nothing.
 
-The envelope values mirror the synthetic operation used by the historical Runtime tests
-(cognous-execution-runtime tests/test_producer_contract.py at ec728da6); this file is newly written for S01.
+Attribution: the ExecutionOperation field values in _operation() (actor, principal, institution_id, authority_domain,
+manifest_*, proposal_commitment, action_id, adapter_id, target, requested_permissions, amount, unit, effects, the
+authority/requirement/grant ids, effective_max_effects) are copied from the synthetic operation in
+cognous-execution-runtime tests/test_producer_contract.py at ec728da6dc301a664b331ac8986afd6e850a1273
+(Apache-2.0, Copyright 2026 Cognous; see baseline/execution-runtime/NOTICE and engine/LICENSE). The payload text, the
+policy construction, the run helpers and all test functions are newly written for S01.
 """
 import dataclasses
 import hashlib
