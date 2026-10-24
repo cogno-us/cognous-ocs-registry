@@ -1,7 +1,7 @@
 # OCS Registry — Mandatory Builder Handoff
 **Every builder instruction, worker delegation, PR description and completion report must include both exact references:**
 
-1. **Static plan:** https://github.com/cogno-us/cognous-ocs-registry/blob/main/docs/PROJECT_PLAN.md (OCS-REG-PLAN v1.0; until merged, cite the exact PR head/path).
+1. **Static plan:** https://github.com/cogno-us/cognous-ocs-registry/blob/main/docs/plans/PROJECT_PLAN-v1.1.md (OCS-REG-PLAN v1.1; until merged, cite the PR branch and exact head). Earlier v1.0 remains at docs/PROJECT_PLAN.md.
 2. **Engineering Constitution (pinned):** https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md
 
 Also read pinned `ADOPTION.md` and `ORCHESTRATION.md`. The Constitution governs engineering conduct, not release authority; do not infer project adoption from publication. If plan or Constitution is unreachable, report this and use the actual fetched canonical text before claiming conformance.
@@ -17,7 +17,7 @@ Also read pinned `ADOPTION.md` and `ORCHESTRATION.md`. The Constitution governs 
 - **Completion:** exact commit/PR, PASS/FAIL/SKIP, limitations and next action.
 
 ## Execution
-Build → Test → Fix → Retest → Commit. Autonomous routine repairs; small PRs; max two workers; no bulk history/corpus import; no new multi-repo governance system. No paid calls/cloud/effects/releases. Historical evidence stays in old repos.
+Build → Test → Fix → Retest → Commit. Autonomous routine repairs; small PRs; maximum productive parallelism for disjoint tasks within authorized S01, with one integration owner for shared files; no bulk history/corpus import; no new multi-repo governance system. No paid calls/cloud/effects/releases. Historical evidence stays in old repos.
 
 ## Current authorization
 **S01 ONLY — Historical baseline recovery.**
