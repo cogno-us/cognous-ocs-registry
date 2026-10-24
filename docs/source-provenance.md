@@ -1,29 +1,28 @@
 # Source provenance (S01)
 
-Written 2026-10-24 by the S01 implementation worker. Non-authorizing, builder-side. Release, publication and production are on HOLD. Nothing here is a qualification, certification, security clearance or readiness claim. A reviewer separate from this worker has not yet read this record.
+Written 2026-10-24 by the S01 implementation worker, revised once after builder-side checks. Non-authorizing. Release, publication and production are on HOLD. Nothing here is a qualification, certification, security clearance or readiness claim. PR #1 and every check cited here (mine and other builder-side workers') are builder-side inspection, not independent qualification; a separate reviewer is still required.
 
-Labels used: **VERIFIED** (I read it from the named source or ran it in this session), **REPORTED** (stated in a source document I read; I did not re-run or re-derive it).
+VERIFIED = read from the named source by REST, or run in this session. REPORTED = stated in a source document I did not re-run.
 
-## 1. Proposed S01 baseline
+## 1. Selected baseline (a proposal, not a confirmed determination)
 
-**OCS v0.1 review tuple `g8-r10`, reduced to one component: Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, files `engine/__init__.py` and `engine/safe_executor.py`.**
+The selected S01 baseline is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release), reduced to one component: Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, files `engine/__init__.py` and `engine/safe_executor.py`. **It needs operator confirmation.** Reasons for selecting it:
 
-Status: PROPOSED, determined from the hub's own records, for operator confirmation. The baseline is not "UNDETERMINED", but the word "original" is not used by the sources, and earlier candidates exist (section 3). Reasons for the choice:
+1. The hub labels this tuple "v0.1": annotated tag `review-v0.1-g8-r10-20261022` (hub tag object `00c915d3...`, peeled commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`), and the register titled "Known issues register: v0.1 public review release (candidate g8-r10)". The tag message says it is a review marker, not a version or release; contracts stay `0.1.0-draft`. The tag exists in 14 repositories: the 11 lock repositories plus hub, qualification and ergonomics (`prp`, `research_intelligence`, `tfa` have no tag).
+2. The hub's MVP definition says "Components at the existing g8-r10 tuple, unchanged on main (pre-F3 text, superseded in part: ...)". "pre-F3" describes that text, so `g8-r10` precedes the F3 repairs. Read by REST at hub main `51c579a3208149922649a31a6eb041106a4121c3` (`docs/mvp-recovery/mvp-definition.md`, line 9); that file does not exist at the tuple commit `a2d9396c`.
+3. The hub's registry catalogue manifest (`docs/mvp-recovery/registry/catalogue-v0.1/manifest.json`, hub main `51c579a3`) lists the `g8-r10` hub tag among its source revisions. Pointer only; the catalogue is not imported.
+4. `engine/safe_executor.py` is byte-identical (blob `2fc880dae37eac76e5074533435740ce0684209d`, 44,576 B) at `g8-r10` and at the MVP Runtime `c5e97e87`, so the F3 repair does not touch it.
+5. It holds a small family of hardcoded local restrictions (`LocalExecutionPolicy.check`) reachable through the real `execute_snapshot` path with the standard library only. No survey of alternative families was made; section 5 names one other.
 
-1. The hub names this tuple "v0.1". Its annotated tag `review-v0.1-g8-r10-20261022` exists in 14 repositories, and the hub's `docs/releases/v0.1-known-issues.md` calls it "the v0.1 public review release" (VERIFIED, hub docs; tags VERIFIED by REST). The same documents say the tag is a review marker, not a version or release, and that contracts remain `0.1.0-draft`.
-2. The hub's MVP definition describes `g8-r10` as the existing, "pre-F3" tuple that the October MVP candidate re-pins after the F3 repairs (hub `docs/mvp-recovery/mvp-definition.md`, VERIFIED). So `g8-r10` is the last tuple before the F3 repairs, which is the "original v0.1 plus selectively retained improvements" shape the S01 mission asks for.
-3. The chosen file `engine/safe_executor.py` is byte-identical (Git blob `2fc880dae37eac76e5074533435740ce0684209d`, 44,576 bytes) at `g8-r10` and at the MVP Runtime `c5e97e87` (VERIFIED by REST). The F3 repair does not touch it, so this baseline is not invalidated by the later improvement.
-4. It is the smallest closed family of hardcoded rules with observable outcomes that runs with the standard library only: the Runtime's local execution restrictions (`LocalExecutionPolicy.check`), reached through the real `execute_snapshot` path.
+Whether `g8-r10` is the "original v0.1" the operator intends is not established by the sources. Chronology: "v0.1" labels the **latest** pre-MVP tuple (2026-10-22). The bounded V1 reference tuples (W7, `f5b`) are **earlier**, so "original v0.1 then later V1 candidates" does not match the record.
 
-If the operator intends an earlier "original" (the W7 bounded V1 reference or the `f5b` reference), choose it from section 3 and S01 should be re-run; the file differs at those revisions.
+## 2. Exact revisions of the selected tuple
 
-## 2. Exact revisions
+Hub `component-lock.json` at `a2d9396c`: sha256 `dcd3ab9e4e737c7e50f4bc38c2439438f156da64c9eb1e46725f477973da59ff` (VERIFIED, fetched and hashed); `runtime_profile` `security-runtime-p2-20261018`.
 
-Hub tag `review-v0.1-g8-r10-20261022` (annotated tag object `00c915d3a12400f38d1e753ecbe5576404c99840`) peels to hub commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`. The hub `component-lock.json` at that commit has SHA-256 `dcd3ab9e4e737c7e50f4bc38c2439438f156da64c9eb1e46725f477973da59ff` (VERIFIED: fetched by REST at that commit and hashed; matches the value in the known-issues register). Lock `runtime_profile` is `security-runtime-p2-20261018`.
-
-| Lock key | Repository | Revision (full) | Imported here |
+| Lock key | Repository | Revision | Imported |
 |---|---|---|---|
-| `moltbot_safe` | `cogno-us/cognous-execution-runtime` | `ec728da6dc301a664b331ac8986afd6e850a1273` | yes, two files |
+| `moltbot_safe` | `cogno-us/cognous-execution-runtime` | `ec728da6dc301a664b331ac8986afd6e850a1273` | two files |
 | `control_plane` | `cogno-us/cognous-control-plane` | `0a41faa972699f7ec3063967a14cd9bdd3e67d27` | no |
 | `replay_bundle` | `cogno-us/cognous-replay-bundle` | `028f63d1c001f99580583888fa4b4e46d77a267b` | no |
 | `governance_evidence_pack` | `cogno-us/cognous-governance-evidence-pack` | `a3ebbb90559a44a88855139a182649d3792bb1ca` | no |
@@ -32,103 +31,88 @@ Hub tag `review-v0.1-g8-r10-20261022` (annotated tag object `00c915d3a12400f38d1
 | `verifier` | `cogno-us/cognous-open-control-stack-verifier` | `c0b8ba1f55b75db787a320f3de0f79342c6f6826` | no |
 | hub | `cogno-us/cognous-open-control-stack` | `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c` | no |
 
-The lock lists further components (governed exchange `7f7569b0`, institutional governance `9b5ab721`, evidence attestation `981036c3`, evidence registry `b2485998`, `prp`, `research_intelligence`, `tfa`); none is needed and none is imported.
+The lock names further components (governed exchange `7f7569b0`, institutional governance `9b5ab721`, evidence attestation `981036c3`, evidence registry `b2485998`, `prp`, `research_intelligence`, `tfa`); none is imported.
 
-Historical test evidence for this tuple (REPORTED, hub `docs/releases/v0.1-known-issues.md`): qualification run `g8-r10` ([39690459403](https://github.com/cogno-us/cognous-stack-qualification/actions/runs/39690459403), validation `v1-2026-10-16-a`, profile `r13`, workflow revision `4a57a309`, results retained at qualification `27e3deb1`) returned PASS over the reduced mandatory claim only (39 rows); the unreduced verdict is INCOMPLETE; 34 jobs PASS, 2 FAIL (ODES suite, four declared tests), 2 NOT RUN; the run was not independently audited; the verifier entry was not probed. S01 did not re-run or rely on that run.
+Note (VERIFIED, imported file line 17): `safe_executor.py` hard-codes `CONTROL_PLANE_COMMIT = "2ea9528eeb87e14ff10f05de06473122b9df540f"`, older than the lock's Control Plane `0a41faa9`; even the `g8-r10` Runtime self-declares a different Control Plane than the lock pairs it with.
 
-## 3. Tuple comparison
+Historical evidence (REPORTED, hub known-issues register): qualification run `g8-r10` ([39690459403](https://github.com/cogno-us/cognous-stack-qualification/actions/runs/39690459403), validation `v1-2026-10-16-a`, profile `r13`, workflow `4a57a309`, results at qualification `27e3deb1`): PASS over a reduced mandatory claim only (39 rows); unreduced verdict INCOMPLETE; 34 jobs PASS, 2 FAIL, 2 NOT RUN; self-run, not independently audited. Not re-run here.
 
-| | W7 bounded V1 reference selection | `f5b` public reference (V1 reference tags) | **v0.1 review `g8-r10` (proposed S01)** | October 2026 MVP candidate |
+## 3. Candidate census and tuple comparison
+
+All candidate tuples the sources name (read by REST at the hub tag commit `a2d9396c` unless noted). Tag-name SHAs below are peeled commits, not tag objects.
+
+| Candidate | Hub revision | Control Plane | Runtime | Status as read |
 |---|---|---|---|---|
-| Dates (REST) | Runtime merge 2026-10-08 | Runtime tag commit 2026-10-16 | tags 2026-10-22 | 2026-10-23 to 2026-10-24 |
-| Runtime | `da9f52900ee2596dab087ec6c249ba84915d2b13` | tag `e20f92e104aba2ba6ad06120d8549c6170eaf63f`; the hub lock at the `f5b` hub tag still names `c3c3ee7188b9367cf70b08074b9c40a5c70c94ac` | `ec728da6dc301a664b331ac8986afd6e850a1273` | `c5e97e87dd239c821b1b4a406a55dcd03c5bc61f` |
-| Control Plane | `e66e5f163c5d5c112ff345a2f332b4c3893ee183` | lock `d3dadee70bd319812b207389ab1e0f6efe511916` | `0a41faa972699f7ec3063967a14cd9bdd3e67d27` | `7a4bcd40b3b49e61ff3c294dcca53b52f460b22c` |
-| Replay | `2069a0ba1398812c3a8669331a7d8b87c80c4a48` | lock `459e4ba62fca49364aebb0050cd5fb2dd5a71bfa` | `028f63d1c001f99580583888fa4b4e46d77a267b` | `40012b8c174c6f25685bd5d9bc93ff46cc9a5842` |
-| Evidence Pack | `87293cfcbe8dfa2368d5bf77019945ba8ef1ae71` | lock `b4baccd823d2a73be276c1de745b19cf7c56a0d6` | `a3ebbb90559a44a88855139a182649d3792bb1ca` | `7b9511f2c6d56d424f17b078826594abd29f6c96` |
-| ODES | not in the selection table | lock `c5e9a0f3695ae836b803be06c46d2c669642ee03` | `e86a25a1d660e74533337d38744e2934200a50ae` | `1a5e1d300250d832e611633f0bf8f762e398c0ec` |
-| Action Manifest | `8d1572d4f926c968a8704cb912a6e9d49166f74a` | lock `46c950bed37fe3812000895430bc0312d29e37ce` | `fa170815ef96a54c233d0dd9da821b60debabf8b` | `fa170815ef96a54c233d0dd9da821b60debabf8b` |
-| Verifier | not in the table | not in the lock | `c0b8ba1f55b75db787a320f3de0f79342c6f6826` | `c0b8ba1f55b75db787a320f3de0f79342c6f6826` |
-| Hub | merge `f7d03c719b9be3b9c3fe0fe300df642b0f408d98` | tag `a2d3a509856e1621105664c5f11195f6f6b100ce` | tag `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c` | `c897266b7ce4b921889519087fa8b1863b4302e3` |
-| `safe_executor.py` blob (bytes) | `a13892f0...` (31,540) | `aedb0cd5...` (37,177) at the tag; `ed7cd85f...` (27,771) at the lock's Runtime | `2fc880da...` (44,576) | `2fc880da...` (44,576) |
-| Target matching in `LocalExecutionPolicy` | plain prefix (no `target_match`) | plain prefix (no `target_match`) | segment-aware default, input hygiene (Runtime #114, #115) | same as `g8-r10` |
+| merged-consumer-chain (`merged-producers-v1`), earlier selected lock | `fa27954a4b8ab142f7e110eef36a96b4b5b7799b` (2026-10-07); accepted merge `f801546d5272104b02a240e1126b3f92f26486f2` | `d3dadee70bd319812b207389ab1e0f6efe511916` | `c3c3ee7188b9367cf70b08074b9c40a5c70c94ac` | selected lock at the time |
+| W7 bounded V1 reference | merge `f7d03c719b9be3b9c3fe0fe300df642b0f408d98` (profile `w7-bounded-v1-component-lock.candidate.json`) | `e66e5f163c5d5c112ff345a2f332b4c3893ee183` | `da9f52900ee2596dab087ec6c249ba84915d2b13` | bounded V1 reference candidate |
+| remediation-candidate-20261015 | profile only | `c7f122ba3a6e39f9268a7163c99be3ee514cd97e` | `309e194c1b0a3de23e11e20133e6eaf88875e48a` | `selected: false` |
+| security-runtime-candidate-20261016 | profile only | `996baeb476c8745b1a58ddc968b9eecc6a39b76b` | `fd6b76fa0e85feb5b67324114bf790d3a12fdaf1` (the upstream quarantine commit) | `selected: false` |
+| **hub component-lock at the `f5b` tag** (`public-reference-f5b-20261016`) | `a2d3a509856e1621105664c5f11195f6f6b100ce` | `d3dadee70bd319812b207389ab1e0f6efe511916` | `c3c3ee7188b9367cf70b08074b9c40a5c70c94ac` | older components; lock unchanged by the tag |
+| **`f5b` candidate profile** (`profiles/security-runtime-f5b-candidate-20261016.json`) | same hub tag commit | `a34c3dc26f84a767a55f9d5c89dc0b53e63fefa5` | `e20f92e104aba2ba6ad06120d8549c6170eaf63f` | `selected: false`; also Replay `79ba16d48b9be1e059b3045989c7df960c3df1c2`, Evidence Pack `893aca8dfb27ba5c5f3e833f2d29210ca7fc92e3`, ODES `eb83220c82f942e429a5e3ef5f677fdd5057ef84`, Exchange `8be6c6b80da8c5038d66419f84c10cc529f78137`, Manifest `2c36bcd0b620dbfe7ad924bc7196a3f0c04c5c5e` |
+| g5 / g6 hub freezes (2026-10-21) | source commits `64d89d6f130673b641eb50e322241b7316e884cd`, `97ed5364dd962b61fac520f93c462c623ce87ddb` | not read | selected `c3c3ee7188b9367cf70b08074b9c40a5c70c94ac` | freeze manifests; g7 is named only in the known-issues register and no tuple was read |
+| **v0.1 `g8-r10` (selected for S01)** | `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c` | `0a41faa972699f7ec3063967a14cd9bdd3e67d27` | `ec728da6dc301a664b331ac8986afd6e850a1273` | review marker; lock sha256 above |
+| MVP candidate (2026-10-23/24) | `c897266b7ce4b921889519087fa8b1863b4302e3` | `7a4bcd40b3b49e61ff3c294dcca53b52f460b22c` | `c5e97e87dd239c821b1b4a406a55dcd03c5bc61f` | provisional, UNQUALIFIED |
 
-Sources: hub `docs/releases/bounded-v1-reference-release.md`, hub `docs/release-status.md`, hub `component-lock.json` at each hub revision (the `g8-r10` and `f5b` locks fetched by REST, the latter SHA-256 `dc66aafeb15eb2d5695b2217019775a1a2e517b3a6ab55b07c1b37349d8ee5cc`), hub `docs/mvp-package/candidate-manifest.json` (MVP revisions match the S01 task text exactly), and REST file reads of `engine/safe_executor.py` at each Runtime revision. The "no `target_match`" row was checked by searching those file contents. The W7 row's dates and blobs come from REST; I did not fetch the other W7 components.
+MVP tuple rest: Replay `40012b8c174c6f25685bd5d9bc93ff46cc9a5842`, Evidence Pack `7b9511f2c6d56d424f17b078826594abd29f6c96`, ODES `1a5e1d300250d832e611633f0bf8f762e398c0ec`, Verifier `c0b8ba1f55b75db787a320f3de0f79342c6f6826`, Action Manifest `fa170815ef96a54c233d0dd9da821b60debabf8b`; these match hub `docs/mvp-package/candidate-manifest.json` (blob `7afef8de62cb0c9ce5ba0ba48cac242e50112f65`) at hub main `51c579a3`, whose `status` reads UNQUALIFIED and `provisional` true.
 
-Reading: the bounded V1 reference candidates (W7, `f5b`) precede `g8-r10` and have different Runtime policy code. The MVP candidate is `g8-r10` plus the F3 repairs (section 6) and re-pins; it is a later program step and is not the S01 baseline. The MVP tuple is provisional and described by the hub as UNQUALIFIED for the later pins (REPORTED).
+`safe_executor.py` by Runtime revision (REST): `c3c3ee71` blob `ed7cd85f` (27,771 B); `da9f5290` `a13892f0` (31,540); `e20f92e1` `aedb0cd5` (37,177); `ec728da6` and `c5e97e87` both `2fc880da` (44,576). The first three have no `target_match` or `_target_is_well_formed` (searched); segment-aware matching arrives in Runtime #114/#115 before `g8-r10`.
 
 ## 4. Dependencies
 
-| Item | Value | Source |
+Python 3.12 (Runtime CI `python-safety.yml` at `ec728da6`; qualification also ran 3.11/3.12, REPORTED). The imported module uses the standard library only. Test lock `requirements-s01.lock.txt` is a byte copy of the Runtime's `.github/locks/pytest-b61d81.txt` (sha256 `257be2880f0486e1ec637276cd13755e02969b257c8da089c1b744914ac11cb3`): pytest 8.3.5, pluggy 1.7.0, iniconfig 2.3.1, packaging 26.3. The Runtime's wider suite lock adds pydantic 2.11.9 (not needed here); the MVP profile is CPython 3.13 with pydantic 2.13.5 (not the baseline).
+
+## 5. Imported, not imported
+
+Imported: 6 files, 69,370 bytes, under `baseline/execution-runtime/`; each is byte-identical to the Runtime at `ec728da6` and a test asserts the blob ids.
+
+| File | Bytes | Blob |
 |---|---|---|
-| Python for the baseline | 3.12 (Runtime CI `python-safety.yml` at `ec728da6`; qualification also ran 3.11 and 3.12 jobs) | VERIFIED workflow file; REPORTED qualification matrix |
-| Runtime packages for the imported source | none (standard library only: copy, hashlib, json, math, re, sqlite3, time, unicodedata, uuid, dataclasses, pathlib, typing) | VERIFIED by reading imports |
-| Test lock used here | `requirements-s01.lock.txt`: pytest 8.3.5, pluggy 1.7.0, iniconfig 2.3.1, packaging 26.3 (colorama on Windows only), hashes included | byte-for-byte copy of Runtime `.github/locks/pytest-b61d81.txt`, SHA-256 `257be2880f0486e1ec637276cd13755e02969b257c8da089c1b744914ac11cb3` |
-| Full Runtime suite lock (not imported) | `.github/locks/pydantic-pytest-f8aeba.txt`: pytest 8.3.5, pydantic 2.11.9, pydantic-core 2.33.2, annotated-types 0.8.0, typing-extensions 4.16.0, typing-inspection 0.4.4, plus pytest's set; SHA-256 `9bf5704d232c2ca15fd843d96ea9a23fa217c771c1df6509794795b3bdf91dc6` | VERIFIED file |
-| MVP profile (not the baseline) | CPython 3.13 only; pydantic 2.13.5, pytest 8.3.5, cryptography 50.0.0 | REPORTED, hub `docs/mvp-package/dependency-manifest.md` |
+| `engine/safe_executor.py` | 44,576 | `2fc880dae37eac76e5074533435740ce0684209d` |
+| `engine/__init__.py` | 32 | `9013e21fc7b3726aa9b65ddc381bfcb8310f2ccf` |
+| `engine/LICENSE` (Apache-2.0) | 11,358 | `d645695673349e3947e8e5ae42332d0ac3164cd7` |
+| `LICENSE-APACHE-2.0` (same text) | 11,358 | `d645695673349e3947e8e5ae42332d0ac3164cd7` |
+| `LICENSE` (MIT, upstream Moltbot) | 1,074 | `f7b526698bb7ed2d26d96c49f2f32234c88f69bc` |
+| `NOTICE` | 972 | `f2e9d127dbe54f68791e28cb6d1614909caf2d19` |
 
-The Runtime has no `pyproject.toml` or `requirements` file at `ec728da6`; its `CLAUDE.md` gives the test command (`pip install pytest==8.3.5 pydantic==2.11.9`). pydantic is needed only by tests that touch the Control Plane path, not by the imported module.
+Licenses (GitHub SPDX, VERIFIED): hub, Control Plane, Replay, Evidence Pack, ODES, Verifier, Action Manifest Apache-2.0; Runtime repository root MIT, while its `NOTICE` says `engine/` is Apache-2.0. No separate third-party notices file exists in the Runtime tree beyond `NOTICE`. File-level headers were not audited.
 
-## 5. What was imported, and why
+Not imported: the historical catalogue and all generated artifacts; the Control Plane, Replay, Evidence Pack, ODES, Verifier, Action Manifest; other Runtime modules; the Runtime test suite; qualification, CI and release machinery.
 
-Total under `baseline/execution-runtime/`: 6 files, 69,370 bytes. Plus `requirements-s01.lock.txt` (the lock above).
+Candidate files for later sprints (not imported, no decision made): Runtime `engine/effective_grant.py`, `engine/permissions.py` with `permissions.json`, `engine/action_schema.py` (read); Control Plane `policy_gate.py` and `reason_vocabulary.py` (names INFERRED from hub documents, not read). Control Plane scanners, mandatory-check manifests, reason codes and the policy gate are outside this baseline.
 
-| File | Bytes | Git blob (equals the source revision) | Why |
-|---|---|---|---|
-| `engine/safe_executor.py` | 44,576 | `2fc880dae37eac76e5074533435740ce0684209d` | the behaviour under test: envelope snapshot and validation, `LocalExecutionPolicy`, SQLite destination, `LocalDestinationExecutor` |
-| `engine/__init__.py` | 32 | `9013e21fc7b3726aa9b65ddc381bfcb8310f2ccf` | makes `engine` importable |
-| `engine/LICENSE` | 11,358 | `d645695673349e3947e8e5ae42332d0ac3164cd7` | Apache-2.0 text for `engine/` |
-| `LICENSE-APACHE-2.0` | 11,358 | `d645695673349e3947e8e5ae42332d0ac3164cd7` | preserved as the Runtime's `CLAUDE.md` requires (identical to `engine/LICENSE`) |
-| `LICENSE` | 1,074 | `f7b526698bb7ed2d26d96c49f2f32234c88f69bc` | MIT, upstream Moltbot; `NOTICE` says it stays with the code |
-| `NOTICE` | 972 | `f2e9d127dbe54f68791e28cb6d1614909caf2d19` | Cognous notice and license scoping |
+## 6. Later improvements (listed, not imported)
 
-The Runtime has no separate third-party notices file at that revision beyond `NOTICE` (VERIFIED by listing the tree). Nothing in `engine/safe_executor.py` was modified; `tests/test_s01_baseline_local_policy.py` fails if any imported file's blob id changes.
+| Change | Revision | What it changes |
+|---|---|---|
+| Runtime #144, F3 NC1-04 approval revocation terminal | merge `c5e97e87dd239c821b1b4a406a55dcd03c5bc61f`; REST head `ee1ff55c250455a3bb14939ca0ce10aeeac70ccb` (hub architect ruling names head `d291eda7`) | terminal revocation per `approval_ref` on `AtomicAuthorityEffectDestination`, retained table `authority_approval_revocations_v1`; `engine/local_authority_effect.py` +52/-3 plus two test files; revoked to `unknown` now refused. `safe_executor.py` unchanged |
+| Control Plane #83 claim-journal repair | merge `7a4bcd40b3b49e61ff3c294dcca53b52f460b22c` (candidate `df4794c8`) | binds the claim-stage journal check to stage, decision and a distinct `check_ref` |
+| Replay #78/#79, Evidence Pack #63/#64, ODES #139/#141 | Replay `40012b8c...`, Pack `7b9511f2...`, ODES `1a5e1d30...` | `failure_class` admission on route B denial; re-pins to the F3 revisions |
 
-Licenses by component (GitHub-reported SPDX, VERIFIED by REST on 2026-10-24; none of the others is imported): hub, Control Plane, Replay, Evidence Pack, ODES, Verifier, Action Manifest: Apache-2.0. Runtime: GitHub reports MIT for the repository root; its own `NOTICE` states that `engine/` and its tests are Apache-2.0 while upstream-derived files remain MIT. Both texts are preserved. I did not audit file-level headers.
+Facts left for the operator: the bodies of Runtime #144, Replay #79, Evidence Pack #64 and ODES #141 say DRAFT and (for #79, #64, #141) "do not merge before independent review"; REST shows all four merged (Replay #79 2026-10-24T00:37Z, Pack #64 00:41Z, ODES #141 00:47Z). Evidence Pack #64 cites an "operator directive of 2026-10-23". Control Plane #83 and Replay #78 say "operator-authorized". The hub states the later pins are provisional and UNQUALIFIED (candidate-manifest.json) and that NC1-04 stays a FAIL until requalified (architect-rulings-3, REPORTED). The approval question is not resolved here.
 
-### Not imported, and why
+## 7. Reproduction record
 
-| Not imported | Reason |
+Clean venv (`python3.12 -m venv`, `pip install --require-hashes -r requirements-s01.lock.txt`), CPython 3.12.3, Linux 6.18.44. Results are in `docs/sprint-status.md` for the PR head. At the first head (`13e7d2de`, 11 tests) a separate builder-side worker re-ran 11 passed on 3.12.3 from a clean clone (not independent qualification); the 3.11/3.13 passes are self-run and were not re-run by another worker.
+
+Finding: `LocalExecutionPolicy.check` has an "exactly one effect" branch ("local adapter supports exactly one effect"), but it is not reachable through the real path: `snapshot_envelope` and `validate_snapshot` refuse `effects != 1` first with `ValueError: effects must equal exactly 1`. The fixture asserts that behavior and the zero-effect, recorded refusal; the mutant below survives for that reason.
+
+Mutation checks (scratch copies, not committed; each makes one restriction allow everything, then the full suite runs; the blob-identity test fails in every case, as expected):
+
+| Mutated check | Behavioural test that failed |
 |---|---|
-| Historical registry catalogue (hub `docs/mvp-recovery/registry/catalogue-v0.1/`, about 3,190 rules, 2,840 scenarios, 6,648 tests, evidence index) and its generated artifacts | Prohibited by the sprint restriction; read-only discovery only. I looked at file names only to recognise it. |
-| Other Runtime modules (`control_plane_adapter`, `local_authority_effect`, atomic, dedupe, operation-identity, refund-intent, openshell, recovery) | Not needed to inspect the local restriction family; most need the Control Plane |
-| Legacy `engine/permissions.py`, `action_schema.py`, `engine.py`, `audit.py` and `permissions.json` | A compatibility shell that "performs no side effect"; a second, smaller hardcoded-permission family, left as a candidate for a later authorized sprint |
-| Control Plane, Replay, Evidence Pack, ODES, Verifier, Action Manifest, hub tooling | Not on the path of the chosen behaviour; they remain authoritative in their repositories |
-| Runtime test suite (about 40 Python test files) | Bulk historical tests are prohibited. I ran it once in a scratch checkout for comparison only (section 7) |
-| Qualification suites, CI workflows, release manifests, selected-notices, run logs | Release-packaging and evidence machinery; links only |
+| institution, authority domain, adapter, action, unit, amount, effective max effects | the matching parametrized refusal test (one each) |
+| target | refusal-case test and segment-aware test |
+| `effects != 1` | none (unreachable branch, mutant survives) |
 
-## 6. Later improvements (listed, NOT imported)
+An earlier mutation (target check, 2026-10-24 first round) failed the refusal test as well.
 
-| Improvement | Exact revision | What it changes | Effect on the S01 file |
-|---|---|---|---|
-| Runtime PR #144, F3, NC1-04 "approval revocation is not terminal" | PR head `ee1ff55c250455a3bb14939ca0ce10aeeac70ccb`, merge commit `c5e97e87dd239c821b1b4a406a55dcd03c5bc61f` (merged into main, VERIFIED by REST) | Approval revocation becomes terminal per `approval_ref` on `AtomicAuthorityEffectDestination`: a retained table `authority_approval_revocations_v1`, refusal of any non-revoked status on a revoked ref, provisioning refuses a revoked ref. Production change is `engine/local_authority_effect.py` (+52/-3) plus two new test files. Behaviour change disclosed in the PR: revoked to `unknown` is now refused. | none; `safe_executor.py` blob unchanged |
-| Control Plane PR #83, F3 claim-journal repair | merge `7a4bcd40b3b49e61ff3c294dcca53b52f460b22c` (candidate `df4794c8`, base `0a41faa9`) | Binds the claim-stage journal check to the claim stage, decision and a distinct `check_ref`, so completed journal checks no longer reuse the decision-stage identity (the Verifier refuted that as `journal_check_reused`; Replay refused the record). Change in `local_authority_effect.py` and `tests/test_claim_journal_stage.py` | none (different component) |
-| Replay #78 / #79 | `ab421ad0`, merge `40012b8c174c6f25685bd5d9bc93ff46cc9a5842` | admits `failure_class` on route B denial exports; re-ties the Programme 2 pairing to Runtime `c5e97e87` | none |
-| Evidence Pack #63 / #64, ODES #139 / #141 | `7b9511f2c6d56d424f17b078826594abd29f6c96`, `1a5e1d300250d832e611633f0bf8f762e398c0ec` | re-pins to Replay, Control Plane and Runtime F3 revisions | none |
+## 8. Unqualified, unsupported, not done
 
-The hub states that NC1-04 stays a FAIL until independently requalified and that the later pins are provisional and unqualified (REPORTED, hub `docs/mvp-recovery/architect-rulings-3-and-known-limitations.md`, `docs/mvp-package/dependency-manifest.md`). Whether the PR #144 merge was authorized by the operator is not established by what I read; the PR body I read says "DRAFT ... operator approval pending" while REST reports it merged. That discrepancy is left for the operator. I did not verify the Control Plane and Replay PR contents beyond their REST titles, bodies and compare listings.
+- Nothing is qualified. The fixture covers the Runtime local policy and SQLite destination only; the Control Plane is intended to call this module (hub documentation, not re-verified here).
+- Hub narrative documents were first read from a local clone whose head is not visible by REST. Re-read by REST: `mvp-definition.md` and the catalogue manifest at hub main `51c579a3`, the locks, profiles, freeze manifests and `candidate-manifest.json`. Other hub document citations (known-issues, release-status, bounded-v1, dependency-manifest, architect-rulings) are as read locally and not re-verified at a REST-reachable commit. Runtime and component files were read by REST at exact revisions.
+- g7 tuple not read; Control Plane contents of #83 and Replay contents of #78/#79 were checked only through REST titles, bodies and compare listings.
+- The upstream Runtime suite was run once in a scratch checkout (499 passed, 33 skipped, Control Plane absent) and is not part of this repo.
 
-## 7. Reproduction record (what was actually run)
+## 9. Engineering Constitution
 
-Environment: Linux 6.18.44, x86_64, CPython 3.12.3 (system `python3.12`), clean venv created with `python3.12 -m venv`, install with `pip install --require-hashes -r requirements-s01.lock.txt`; `pip freeze` printed exactly iniconfig 2.3.1, packaging 26.3, pluggy 1.7.0, pytest 8.3.5.
-
-| Run | Result |
-|---|---|
-| `pytest -v` in this repository (S01 fixture, 11 tests) on 3.12.3 | 11 passed in 0.44 s |
-| the same on 3.11 and 3.13 (supplementary; 3.13 is the MVP interpreter, 3.11 a qualification interpreter) | 11 passed each |
-| negative control: the target-restriction call in a scratch copy of `safe_executor.py` replaced by `if False:` | 2 failed (refusal test and blob-identity test), 9 passed, so the fixture detects that mutation |
-| Upstream Runtime full suite at `ec728da6` in a scratch checkout (not imported), 3.12.3, `pydantic-pytest-f8aeba` lock, `PYTHONPATH=".:src" pytest -q tests`, Control Plane absent | 499 passed, 33 skipped, 0 failed; the skipped tests I sampled say they need the Control Plane contract on `PYTHONPATH` (I did not tabulate every skip reason) |
-
-The fixture's positive case (`execute_snapshot` returns `executed`, observation `applied`, one effect row) and refusal cases (target refused with `local target restriction`, a `policy_denial` failure record, zero effects; plus one refusal for each other local restriction, in code order) all passed. The fixture's operation values are taken from the historical Runtime test helper; the test file itself is new. It proves that the baseline behaves as described on those inputs; it does not prove completeness over other inputs.
-
-## 8. Unqualified, unsupported or missing
-
-- Nothing here is qualified. The upstream qualification run is REPORTED only, over a reduced claim, self-run and not independently audited.
-- The fixture covers the Runtime's local policy and SQLite destination only. It does not cover the Control Plane authorization decision, Replay, Evidence Pack, ODES, the Verifier, the 121 reason codes, scanners or mandatory-check manifests (the hub's other hardcoded rule families). A later sprint must decide which family comes next; S01 does not.
-- Control-Plane-dependent Runtime tests (33 skipped above) were not run with the Control Plane.
-- The `target_match="legacy-prefix"` mode and the amount and effect-count rules are tested only on a few values.
-- I read hub narrative documents from a local clone at `2faf339a1231888c3f25d763b9bab3c77f56554d` (later than the tuple; not modified). Locks and Runtime files were read by REST at the exact tuple revisions.
-- The Engineering Constitution repository was not readable in this session, so article titles were not checked.
-
-## 9. Engineering Constitution status
-
-Revision `6f7f2731` of `cogno-us/cognous-engineering-constitution` is PROVISIONAL guidance. No formal adoption record has been found: the hub's `docs/declarative-governance-registry.md` says adoption of an exact revision is a separate recorded act, and I found no such record. The articles in play for S01 are CA01, CA02, CA04, CA07, CA09, CA10, CA11, CA12, CA18 and CA23, as listed by the operator; I applied them as constraints (bounded scope, provenance, minimal import, no overclaiming, one-sprint stop) and did not read their text, so I make no claim of conformance with them. This worker implemented S01; a separate later reviewer is required, and no coordinator-directed review is independent.
+Revision `6f7f2731` is PROVISIONAL guidance with no formal adoption record found (the hub's `declarative-governance-registry.md` calls adoption of an exact revision a separate recorded act). The articles CA01, CA02, CA04, CA07, CA09, CA10, CA11, CA12, CA18 and CA23 were named by the operator. Their text was not available to this worker (the constitution repository returned 403 in this session) and was not read, so no application of, or conformance with, any article is claimed. No coordinator-directed review is called independent.

@@ -23,13 +23,15 @@ This is not a new OCS implementation program. It does not reconstruct the stack,
 
 ## Historical source baseline (proposed, exact)
 
-The proposed S01 baseline is the OCS **v0.1 review tuple `g8-r10`** (hub review marker `review-v0.1-g8-r10-20261022`, hub commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`, component lock SHA-256 `dcd3ab9e4e737c7e50f4bc38c2439438f156da64c9eb1e46725f477973da59ff`). From that tuple only one component's source is imported, in two files:
+**Scope caveat:** this baseline is a first, narrow slice (the Runtime's local policy only). Control Plane scanners, mandatory-check manifests, reason codes and the policy gate sit outside it. Candidate files for later sprints, not imported: Runtime `engine/effective_grant.py`, `engine/permissions.py` (+json), `engine/action_schema.py`; Control Plane `policy_gate.py` and `reason_vocabulary.py` (names inferred, not read).
+
+The proposed S01 baseline is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release; hub tag `review-v0.1-g8-r10-20261022`, hub commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`, component lock SHA-256 `dcd3ab9e4e737c7e50f4bc38c2439438f156da64c9eb1e46725f477973da59ff`). From that tuple only one component's source is imported, in two files:
 
 | Component | Repository | Revision | Imported |
 |---|---|---|---|
 | Execution Runtime (`moltbot_safe`) | `cogno-us/cognous-execution-runtime` | `ec728da6dc301a664b331ac8986afd6e850a1273` | `engine/__init__.py`, `engine/safe_executor.py`, with `engine/LICENSE`, `LICENSE`, `LICENSE-APACHE-2.0`, `NOTICE` |
 
-Imported files are byte-identical to that revision; a test checks their Git blob ids. Why this baseline, how it differs from the bounded V1 reference candidates and from the October 2026 MVP tuple, and everything else, is in [docs/source-provenance.md](docs/source-provenance.md). The architecture is in [docs/architecture.md](docs/architecture.md).
+Imported files are byte-identical to that revision; a test checks their Git blob ids. It needs operator confirmation. Why this baseline, how it differs from the bounded V1 reference candidates and from the October 2026 MVP tuple, and everything else, is in [docs/source-provenance.md](docs/source-provenance.md). The architecture is in [docs/architecture.md](docs/architecture.md).
 
 ## Relationship to the existing OCS components
 
@@ -46,6 +48,8 @@ python3.12 -m venv .venv
 ```
 
 `pytest.ini` puts `baseline/execution-runtime` on the import path. The result recorded for the PR head is in [docs/sprint-status.md](docs/sprint-status.md).
+
+PR #1 and the checks cited in it are builder-side inspection, not independent qualification; a separate reviewer is still required.
 
 ## Licenses
 

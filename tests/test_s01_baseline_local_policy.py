@@ -143,6 +143,35 @@ def test_each_local_restriction_refuses_with_its_stable_reason(tmp_path, field, 
     assert destination.effect_count(op.grant_id) == 0
 
 
+def test_effects_other_than_one_is_refused_by_validation_before_the_policy_text(tmp_path):
+    # Finding: "local adapter supports exactly one effect" (LocalExecutionPolicy.check) is not reachable through the
+    # real path, because snapshot_envelope and validate_snapshot refuse effects != 1 first with a ValueError.
+    op = dataclasses.replace(_operation(), effects=2, effective_max_effects=2)
+    envelope = ExecutionEnvelope(EXECUTION_ENVELOPE_VERSION, "decision-1", "effect-1", op)
+    with pytest.raises(ValueError, match="^effects must equal exactly 1$"):
+        snapshot_envelope(envelope)
+    destination, executor, snapshot = _run(tmp_path, _operation(), _policy(_operation(), max_effects=2))
+    forged = dataclasses.replace(snapshot, operation=dataclasses.replace(snapshot.operation, effects=2))
+    with pytest.raises(ValueError, match="^effects must equal exactly 1$"):
+        executor.execute_snapshot(forged)
+    assert destination.effect_count(op.grant_id) == 0
+    assert [r["reason_code"] for r in destination.failure_history("effect-1")] == ["local_policy_rejected"]
+
+
+def test_segment_aware_target_matching_through_execute_snapshot(tmp_path):
+    entry = ("urn:cognous:synthetic-account",)  # no trailing separator
+    spill = dataclasses.replace(_operation(), target="urn:cognous:synthetic-accountX")
+    inside = dataclasses.replace(_operation(), target="urn:cognous:synthetic-account:customer-1")
+    d1, e1, s1 = _run(tmp_path / "a", spill, _policy(spill, allowed_target_prefixes=entry))
+    with pytest.raises(PermissionError, match="^local target restriction$"):
+        e1.execute_snapshot(s1)
+    assert d1.effect_count(spill.grant_id) == 0
+    d2, e2, s2 = _run(tmp_path / "b", inside, _policy(inside, allowed_target_prefixes=entry))
+    assert e2.execute_snapshot(s2).status == "executed"
+    d3, e3, s3 = _run(tmp_path / "c", spill, _policy(spill, allowed_target_prefixes=entry, target_match="legacy-prefix"))
+    assert e3.execute_snapshot(s3).status == "executed" and d3.effect_count(spill.grant_id) == 1
+
+
 def test_default_target_match_is_segment_aware_and_legacy_prefix_is_an_explicit_opt_in(tmp_path):
     entry = ("urn:cognous:synthetic-account",)  # no trailing separator
     inside = dataclasses.replace(_operation(), target="urn:cognous:synthetic-account:customer-1")

@@ -19,17 +19,17 @@ The imported module is `engine/safe_executor.py` from the Execution Runtime at `
 
 1. `snapshot_envelope(ExecutionEnvelope)` deep-copies and freezes the request (envelope version `0.2.0`, an `ExecutionOperation` with actor, institution, authority domain, adapter, action, target, amount, unit, effect counts, grant reference).
 2. `LocalDestinationExecutor.execute_snapshot` first runs `validate_snapshot` (shape, types, payload commitment, strict numbers) and then `LocalExecutionPolicy.check`.
-3. `LocalExecutionPolicy.check` is a fixed sequence of hardcoded local restrictions. Each refusal raises `PermissionError` with a stable reason text, in this order: institution, authority domain, adapter, action, target, unit, amount, exactly one effect, effective maximum effects. Allowed values come from the policy object the caller constructs (frozensets, a tuple of target prefixes, `max_amount`, `max_effects`, `target_match`); the order of checks, the reason texts, the one-effect rule and the target well-formedness and segment-matching rules are in code.
+3. `LocalExecutionPolicy.check` is a fixed sequence of hardcoded local restrictions. Each refusal raises `PermissionError` with a stable reason text, in this order: institution, authority domain, adapter, action, target, unit, amount, exactly one effect, effective maximum effects. (The one-effect branch is not reachable through the real path, because validation refuses `effects != 1` first.) Allowed values come from the policy object the caller constructs (frozensets, a tuple of target prefixes, `max_amount`, `max_effects`, `target_match`); the order of checks, the reason texts, the one-effect rule and the target well-formedness and segment-matching rules are in code.
 4. A refusal is written to the SQLite destination as a `policy_denial` failure record (`local_policy_rejected`, stage `pre_dispatch`) and re-raised; no attempt begins and no effect row is written.
 5. On success the executor begins an attempt, observes the destination, commits the frozen operation to `DurableRefundDestination` (SQLite on disk, synthetic refunds) and returns an `ExecutionResult` (`executed`, observation `applied`).
 
-The module does not establish institutional authorization. In the full stack the Control Plane revalidates authority and calls this code as the destination adapter; S01 deliberately does not import the Control Plane (see provenance), so the fixture exercises the Runtime's local policy and destination only.
+The module does not establish institutional authorization. Per the hub's documentation (not re-verified here), the Control Plane is intended to call this module; S01 deliberately does not import the Control Plane (see provenance), so the fixture exercises the Runtime's local policy and destination only.
 
 ## Why this is a suitable first baseline
 
-- It is a closed, deterministic family of hardcoded rules (the local restrictions above) with observable outcomes (reason text, failure record, effect count).
+- It is a small family of hardcoded local restrictions with observable outcomes (reason text, failure record, effect count). Closure and determinism beyond the fixtures were not checked.
 - The same file is byte-identical at the later MVP candidate Runtime `c5e97e87`, so the F3 repair does not alter it.
-- It needs no network, subprocess, credential or other component, so it can be reproduced safely and cheaply.
+- It uses only the standard library and a local synthetic SQLite destination, with no network, subprocess or credential use observed in the fixture. Safety was not assessed.
 
 ## Boundaries
 
