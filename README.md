@@ -8,9 +8,13 @@ Migrate configurable, hardcoded governance rules of the Cognous Open Control Sta
 
 This is not a new OCS implementation program. It does not reconstruct the stack, duplicate established components, reactivate the v0.2 program, or migrate the historical qualification corpus.
 
+## Governing references
+
+Static plan OCS-REG-PLAN v1.1: https://github.com/cogno-us/cognous-ocs-registry/blob/s01-baseline/docs/plans/PROJECT_PLAN-v1.1.md. Engineering Constitution (exact pin): https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md.
+
 ## Currently authorized sprint
 
-**S01 only**: select and reproduce the smallest suitable historical OCS v0.1 behavioural baseline for registry migration. After S01 the next authorized action is none until the operator authorizes one. The live state is in [docs/sprint-status.md](docs/sprint-status.md), the only live status document.
+**S01 only**: propose and reproduce a bounded historical OCS v0.1 behavioural baseline candidate (minimality not established) for registry migration. After S01 the next authorized action is none until the operator authorizes one. The live state is in [docs/sprint-status.md](docs/sprint-status.md), the only live status document.
 
 ## What this repository does NOT do
 
@@ -53,4 +57,4 @@ PR #1 and the checks cited in it are builder-side inspection, not independent qu
 
 ## Licenses
 
-The imported Runtime engine (`engine/`) is Apache-2.0 (`baseline/execution-runtime/engine/LICENSE`, `LICENSE-APACHE-2.0`). The Runtime repository root also carries an MIT `LICENSE` (upstream Moltbot, Copyright (c) 2025 Peter Steinberger), kept as the Runtime's `NOTICE` requires; it is preserved unchanged next to the import. Original files in this repository (documents and tests) have no license grant yet; the operator decides that. See [docs/source-provenance.md](docs/source-provenance.md).
+The imported Runtime engine (`engine/`) is Apache-2.0 (`baseline/execution-runtime/engine/LICENSE`, `LICENSE-APACHE-2.0`). The Runtime repository root also carries an MIT `LICENSE` (upstream Moltbot, Copyright (c) 2025 Peter Steinberger), kept as retained upstream notice material; it is preserved unchanged next to the import. Original files in this repository (documents and tests) have no license grant yet; the operator decides that. See [docs/source-provenance.md](docs/source-provenance.md).

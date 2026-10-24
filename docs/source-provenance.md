@@ -6,7 +6,7 @@ VERIFIED = read from the named source by REST, or run in this session. REPORTED 
 
 ## 1. Selected baseline (a proposal, not a confirmed determination)
 
-The selected S01 baseline is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release), reduced to one component: Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, files `engine/__init__.py` and `engine/safe_executor.py`. **It needs operator confirmation.** Reasons for selecting it:
+The proposed S01 baseline candidate is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release), reduced to one component: Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, files `engine/__init__.py` and `engine/safe_executor.py`. **It needs operator confirmation.** Reasons for selecting it:
 
 1. The hub labels this tuple "v0.1": annotated tag `review-v0.1-g8-r10-20261022` (hub tag object `00c915d3...`, peeled commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`), and the register titled "Known issues register: v0.1 public review release (candidate g8-r10)". The tag message says it is a review marker, not a version or release; contracts stay `0.1.0-draft`. The tag exists in 14 repositories: the 11 lock repositories plus hub, qualification and ergonomics (`prp`, `research_intelligence`, `tfa` have no tag).
 2. The hub's MVP definition says "Components at the existing g8-r10 tuple, unchanged on main (pre-F3 text, superseded in part: ...)". "pre-F3" describes that text, so `g8-r10` precedes the F3 repairs. Read by REST at hub main `51c579a3208149922649a31a6eb041106a4121c3` (`docs/mvp-recovery/mvp-definition.md`, line 9); that file does not exist at the tuple commit `a2d9396c`.
@@ -92,6 +92,9 @@ Facts left for the operator: the bodies of Runtime #144, Replay #79, Evidence Pa
 
 ## 7. Reproduction record
 
+Review-round verification at PR head `58e9bc46` (S01 completion session, 2026-10-24, not independent qualification): (a) a fresh `git clone` checked out at that head, hash-locked venv, CPython 3.13.17: 13 passed; (b) a separate clone of `cogno-us/cognous-execution-runtime` at `ec728da6`: `git hash-object` of all six imported files equals both the local copies and the blob ids in the test (so byte identity is checked against the upstream revision, not only against constants); (c) hub `component-lock.json` at `a2d9396c` hashes to `dcd3ab9e...` and the tag `review-v0.1-g8-r10-20261022` peels to `a2d9396c`. A read-only reviewer worker found boundary and ordering gaps; four tests were added (17 total). Scratch mutants `amount >= max`, `effective_max_effects >= max` and institution/domain order swap are now each caught.
+
+
 Clean venv (`python3.12 -m venv`, `pip install --require-hashes -r requirements-s01.lock.txt`), CPython 3.12.3, Linux 6.18.44. Results are in `docs/sprint-status.md` for the PR head. At the first head (`13e7d2de`, 11 tests) a separate builder-side worker re-ran 11 passed on 3.12.3 from a clean clone (not independent qualification); the 3.11/3.13 passes are self-run and were not re-run by another worker.
 
 Finding: `LocalExecutionPolicy.check` has an "exactly one effect" branch ("local adapter supports exactly one effect"), but it is not reachable through the real path: `snapshot_envelope` and `validate_snapshot` refuse `effects != 1` first with `ValueError: effects must equal exactly 1`. The fixture asserts that behavior and the zero-effect, recorded refusal; the mutant below survives for that reason.
@@ -113,6 +116,9 @@ An earlier mutation (target check, 2026-10-24 first round) failed the refusal te
 - g7 tuple not read; Control Plane contents of #83 and Replay contents of #78/#79 were checked only through REST titles, bodies and compare listings.
 - The upstream Runtime suite was run once in a scratch checkout (499 passed, 33 skipped, Control Plane absent) and is not part of this repo.
 
-## 9. Engineering Constitution
+## 9. Governing references and Engineering Constitution
 
-Revision `6f7f2731` is PROVISIONAL guidance with no formal adoption record found (the hub's `declarative-governance-registry.md` calls adoption of an exact revision a separate recorded act). The articles CA01, CA02, CA04, CA07, CA09, CA10, CA11, CA12, CA18 and CA23 were named by the operator. Their text was not available to this worker (the constitution repository returned 403 in this session) and was not read, so no application of, or conformance with, any article is claimed. No coordinator-directed review is called independent.
+- Static plan: OCS-REG-PLAN v1.1, https://github.com/cogno-us/cognous-ocs-registry/blob/s01-baseline/docs/plans/PROJECT_PLAN-v1.1.md (S01 section).
+- Engineering Constitution, exact pin: https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md (commit `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`). Its text was fetched and read in the S01 completion session (2026-10-24). The earlier reference to revision `6f7f2731` and the statement that the text was unavailable are superseded by this pin; the earlier wording is retained in Git history.
+- Formal adoption: the plan states it does not itself adopt the Constitution; no adoption record was located by this work. Publication of the pinned text confers no adoption.
+- Articles materially applied to S01 (inspection of this PR's diff against them, not conformance certification): CA01, CA02, CA04, CA05, CA06, CA07, CA09, CA10, CA11, CA12, CA15, CA16, CA18, CA23. Per CA04/CA23 nothing here is independent qualification.

@@ -1,14 +1,16 @@
 # Sprint status (the only live status document)
 
 Updated 2026-10-24. Non-authorizing, builder-side. Release, publication and production are on HOLD.
+Plan: OCS-REG-PLAN v1.1 (https://github.com/cogno-us/cognous-ocs-registry/blob/s01-baseline/docs/plans/PROJECT_PLAN-v1.1.md). Constitution pin: https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md.
 
 | Field | Value |
 |---|---|
-| Sprint | S01: select and reproduce the smallest suitable historical OCS v0.1 behavioural baseline |
-| State | Draft implementation delivered for review. Baseline choice unconfirmed. Not merged, not reviewed. |
-| Proposed baseline | v0.1 review tuple `g8-r10`, Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, `engine/safe_executor.py` only (see [source-provenance.md](source-provenance.md)). Proposed, not confirmed by the operator. |
-| Fixture result | 13 passed on CPython 3.12.3 with hash-locked pytest 8.3.5 (also 13 passed on 3.11.17 and 3.13.16). Self-run by the implementation worker. At the first head (11 tests) a separate builder-side worker re-ran 11 passed from a clean clone (not independent qualification). |
-| CI | None: the repository has no workflow. No CI result is claimed. |
-| Qualification | None. The baseline, the fixture and this repository are unqualified. |
-| Open items | Operator to confirm the baseline choice (the sources do not use the word "original"; earlier V1 reference candidates exist). Operator to decide this repository's own license. Operator to decide whether the PR #144 merge status discrepancy needs action. Engineering Constitution `6f7f2731` remains provisional with no adoption record found. |
+| Sprint | S01: historical baseline recovery (proposed candidate, not an adopted release) |
+| State | Draft PR #1 updated after review round; baseline choice unconfirmed; not merged. |
+| Proposed baseline | v0.1 review tuple `g8-r10`, Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, `engine/safe_executor.py` and `engine/__init__.py` (see [source-provenance.md](source-provenance.md)). Proposed, not confirmed by the operator. |
+| Tests | 17 passed on CPython 3.13.17 (hash-locked pytest 8.3.5) in this session; 13 passed at the prior head from a fresh clone. 3.11 and 3.12 results are earlier builder self-runs, not re-run by the completion session. SKIP: none. |
+| Provenance | Imported files byte-identical to upstream `ec728da6` (`git hash-object` against a fresh upstream clone); hub lock hash `dcd3ab9e...` and tag peel `a2d9396c` re-verified. |
+| CI | None; no workflow exists. |
+| Qualification | None. Developer tests and a read-only reviewer worker are not independent qualification. |
+| Open items | Operator: confirm baseline (is `g8-r10` the intended "original v0.1"; earlier W7/`f5b` tuples exist); decide this repository's license; decide whether the Runtime #144 / F3 merge-status discrepancy needs action; formal Constitution adoption record. Known gaps: malformed-target cases of `_target_is_well_formed` untested; per-file license headers not audited; mutation checks not committed. |
 | Next authorized action | **None** until the operator authorizes one. Do not start S02 or any rule extraction. |

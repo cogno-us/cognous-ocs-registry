@@ -182,3 +182,43 @@ def test_default_target_match_is_segment_aware_and_legacy_prefix_is_an_explicit_
     assert segment._target_allowed(spill.target) is False
     legacy = _policy(inside, allowed_target_prefixes=entry, target_match="legacy-prefix")
     assert legacy._target_allowed(spill.target) is True
+
+
+# --- S01 review-round additions: boundary, ordering and exact-mode controls (characterisation only) ---
+
+
+def test_amount_exactly_at_max_is_allowed(tmp_path):
+    op = dataclasses.replace(_operation(), amount=1000.0)
+    destination, executor, snapshot = _run(tmp_path, op, _policy(op))
+    assert executor.execute_snapshot(snapshot).status == "executed"
+    assert destination.effect_count(op.grant_id) == 1
+
+
+def test_effective_max_effects_equal_to_policy_max_is_allowed(tmp_path):
+    op = dataclasses.replace(_operation(), effective_max_effects=2)
+    destination, executor, snapshot = _run(tmp_path, op, _policy(op, max_effects=2))
+    assert executor.execute_snapshot(snapshot).status == "executed"
+
+
+def test_first_failing_check_in_documented_order_wins(tmp_path):
+    # Violate institution AND authority domain: institution is reported (checked first).
+    op = _operation()
+    policy = _policy(
+        op,
+        allowed_institutions=frozenset({"urn:cognous:institution:other"}),
+        allowed_authority_domains=frozenset({"other-domain"}),
+    )
+    destination, executor, snapshot = _run(tmp_path, op, policy)
+    with pytest.raises(PermissionError, match="^local institution restriction$"):
+        executor.execute_snapshot(snapshot)
+
+
+def test_exact_target_match_mode_allows_only_the_exact_target(tmp_path):
+    op = _operation()
+    ok = _policy(op, allowed_target_prefixes=(op.target,), target_match="exact")
+    destination, executor, snapshot = _run(tmp_path, op, ok)
+    assert executor.execute_snapshot(snapshot).status == "executed"
+    longer = dataclasses.replace(op, target=op.target + "-x")
+    destination2, executor2, snapshot2 = _run(tmp_path / "b", longer, ok)
+    with pytest.raises(PermissionError, match="^local target restriction$"):
+        executor2.execute_snapshot(snapshot2)
