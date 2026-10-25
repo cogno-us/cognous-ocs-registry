@@ -12,10 +12,27 @@ Scope of this module (and only this):
   * the module-owned four-row `r08-v2` effective-payload table, from which `family_version` is DERIVED and never accepted (spec 6, ruling N-3);
   * the typed refusal mapping of spec 8.1 for the codes that already exist in `CODES_V2`.
 
+Hostile-input boundary (review of PR #33, S1/S2): every public validator and digest function first copies its input through `_plain`, which accepts
+ONLY exact `dict`, `list`/`tuple` (tuples become lists), `str`, `bool`, `int` and `None` (subclasses, floats, bytes and every other type become an opaque
+marker that is refused with `field_type_invalid` at its own path), requires `str` keys, and bounds nesting depth and node count. Validation and hashing
+then operate on that private plain copy, so a subclass can neither change what is validated versus hashed nor mutate the document in between. The only
+exceptions the public surface raises for a document are `IdentityRefusal`; `ValueError` is raised only for programmer errors (an unknown refusal code or
+role).
+
 Not in this module: composition of registry and caller values (EXT-S1-4), any store, activation state or `activation_sequence` (EXT-S4), the Control
 Plane or Runtime guards, and the three ruled additive codes (`not_activated`, `policy_identity_mismatch`, `store_unknown`) and `CODES_V2_REV2`
 (Amendment 1, PR #32): every refusal here uses a code that is already in `CODES_V2`. The mapping rows for the additive codes are therefore absent
 from `REFUSAL_MAPPING` and are to be wired in when the amendment lands.
+
+DEFERRED (not implemented here, listed so no consumer assumes them): (1) the spec 8 carry-forward completeness test over all 48 `CODES_V2` entries
+(`UNMAPPED_CODES` is the explicit remainder); (2) the registry-form identity (null `activation_ref`) built from verified inputs and its completion with
+`activation_ref` (spec 4 and 10 assign this to the Registry source PR); (3) an adapter from the verifier's `TrustSnapshot` object to the normalized dict
+that `trust_snapshot_fingerprint` takes (the object is refused, never misread).
+
+PROPOSED by this PR in addition (each needs an Architect line, none is a ruling): a snapshot shape guard at the verifier's own strictness (lowercase
+hex key, five-token grants, versions and epochs of at least 1 and under 20 digits, repeated grants inside one issuer refused as duplicates);
+`NON_STRING_KEY` as the member of a refusal for a dict key that is not a str; long integer literals load as `OutOfRangeInteger`, never as a plausible int;
+the order in `verify_carried_binding_digest` (binding, carried-digest format, equality).
 
 Items the spec still lists as OPEN are implemented at the spec's current PROPOSED behaviour and are marked `PROPOSED` below; they are not decisions:
 N-10 (syntax-first parse order, byte-level input boundary, no verifier ceiling), N-11 (`trust_snapshot_missing`: one code, two stages), N-12 (an
@@ -46,20 +63,21 @@ SCOPE_KEY_PREFIX = b"ocs-reg/r08-v2/scope-key\n"
 MAX_DOCUMENT_BYTES = 65536
 MAX_DEPTH = 8
 MAX_LIST_ENTRIES = 256
+MAX_NODES = 65536  # nodes of one in-memory document accepted by `_plain` (the byte limit of the loader is MAX_DOCUMENT_BYTES)
 _MAX_EXACT_DIGITS = 20  # every range below is under 20 digits; longer integer literals are classified by length and never converted
-_OUT_OF_RANGE = 10 ** 40
+_INT_BOUND = 10 ** _MAX_EXACT_DIGITS  # the serializer refuses an integer of 20 or more digits (it never calls str() on an unbounded int)
 
 # Per-field integer domains (spec 5.2). Each field has its OWN literal on purpose; they are equal today and independent by ruling OQ-1.
-INTEGER_RANGES: Dict[str, Tuple[int, int]] = {
+INTEGER_RANGES = MappingProxyType({
     "record_version": (1, 2147483647),
     "selection_epoch": (1, 2147483647),
     "trust_snapshot_version": (1, 9007199254740991),  # N-1: component-owner-derived (no source ceiling); N-10(c) verifier ceiling still OPEN
-}
-AGE_RANGES: Dict[str, Tuple[int, int]] = {
+})
+AGE_RANGES = MappingProxyType({
     "registry": (1, 2147483647),
     "caller": (0, 2147483647),
     "effective": (0, 2147483647),
-}
+})  # read-only views: a process-wide widening of the grammar must not be possible by assignment
 
 TOP_MEMBERS = ("activation_ref", "binding_profile", "consumer_id", "effective_policy_digest", "family", "operation", "record_digest", "record_id",
                "record_version", "scope", "selection_digest", "selection_epoch", "selection_id", "trust_snapshot_fingerprint", "trust_snapshot_version")
@@ -74,22 +92,96 @@ _DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 
 
 class IdentityRefusal(Exception):
-    """A typed refusal: `code` is an existing `CODES_V2` entry, `member` the first failing member path (or None)."""
+    """A typed refusal: `code` is an existing `CODES_V2` entry, `member` the first failing member path (a str) or None, `stage` the pipeline stage the
+    refusal belongs to (`projection` for a refusal to project verified inputs into a binding, else None: the shape stage), `evidence` a read-only
+    mapping of the spec 8.1 evidence values this module can compute (`observed_value_class`, `expected_range`, `carried_digest`, `recomputed_digest`,
+    `projection_refusal_code`); values only a consumer knows (`original_selection_digest`, `scope_key_digest`, ...) are never filled in here."""
 
-    def __init__(self, code: str, member: Any = None):
-        if code not in CODES_V2:  # a raise, not an assert: this must hold under python -O
+    def __init__(self, code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+        if type(code) is not str or code not in CODES_V2:  # a raise, not an assert: this must hold under python -O
             raise ValueError("refusal code outside CODES_V2: %r" % (code,))
         super().__init__(code)
         self.code = code
         self.member = member
+        self.stage = stage
+        self.evidence = MappingProxyType(dict(evidence or {}))
 
     @property
     def layer(self) -> str:
         return CODES_V2[self.code][0]
 
 
-def _refuse(code: str, member: Any = None):
-    raise IdentityRefusal(code, member)
+def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+    raise IdentityRefusal(code, member, stage, evidence)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Hostile-input boundary: exact-type, bounded, private plain copy
+# ----------------------------------------------------------------------------------------------------------------------
+class OutOfRangeInteger:
+    """What the loader returns for an integer literal of more than 20 digits (spec 5.5.1: classified by length, never converted). It is a distinct
+    marker, never a plausible `int`: it is integer-TYPED (so a range check reports `field_invalid`, not a type error), it is outside EVERY range, it
+    equals only a marker with the same literal, and the serializer refuses it."""
+
+    __slots__ = ("literal",)
+
+    def __init__(self, literal: str):
+        self.literal = literal
+
+    def __eq__(self, other: Any) -> bool:
+        return type(other) is OutOfRangeInteger and other.literal == self.literal
+
+    def __hash__(self) -> int:
+        return hash(("OutOfRangeInteger", self.literal))
+
+    def __repr__(self) -> str:
+        return "OutOfRangeInteger(%d digits)" % len(self.literal.lstrip("-"))
+
+
+class _Foreign:
+    """Stands for any value `_plain` does not accept (a subclass, float, bytes, set, object, ...). Equal only to itself; every validator refuses it
+    as a type error at its own path and the serializer refuses it."""
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "<foreign>"
+
+
+_FOREIGN = _Foreign()
+NON_STRING_KEY = "<non-string key>"  # PROPOSED (spec 5.5 is silent): the member reported for a dict key that is not an exact str
+
+
+def _value_class(v: Any) -> str:
+    if v is None:
+        return "null"
+    return {bool: "boolean", int: "integer", str: "string", list: "array", dict: "object", OutOfRangeInteger: "integer"}.get(type(v), "other")
+
+
+def _plain(value: Any, depth: int = 1, budget: Any = None) -> Any:
+    """A private plain copy of `value`: exact dict/list/str/bool/int/None only (tuples become lists; anything else becomes `_FOREIGN`), `str` keys only
+    (any other key refuses `field_unknown` at NON_STRING_KEY), nesting no deeper than MAX_DEPTH (`json_nesting_too_deep`, counting scalars like the loader
+    does) and at most MAX_NODES nodes (`input_too_large`). Recursion is bounded by MAX_DEPTH, so a self-referential list ends in a typed refusal."""
+    if budget is None:
+        budget = [MAX_NODES]
+    budget[0] -= 1
+    if budget[0] < 0:
+        _refuse("input_too_large")
+    if depth > MAX_DEPTH:
+        _refuse("json_nesting_too_deep")
+    t = type(value)
+    if value is None or t is str or t is bool or t is int or t is OutOfRangeInteger:
+        return value
+    if t is list or t is tuple:
+        return [_plain(x, depth + 1, budget) for x in value]
+    if t is dict:
+        out = {}
+        for k, v in value.items():
+            if type(k) is not str:
+                _refuse("field_unknown", NON_STRING_KEY)
+            out[k] = _plain(v, depth + 1, budget)
+        return out
+    return _FOREIGN
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -121,27 +213,35 @@ def _serialize_string(s: str) -> str:
     return "".join(out)
 
 
-def _serialize(value: Any) -> str:
+def _serialize(value: Any, depth: int = 1) -> str:
+    """Exact types only (a subclass is a refusal, not a coercion), nesting bounded by MAX_DEPTH, integers below 20 digits; every failure is an
+    IdentityRefusal (`field_type_invalid`, `field_invalid`, `json_nesting_too_deep`) and `str()` is never called on an unbounded integer."""
+    if depth > MAX_DEPTH:
+        _refuse("json_nesting_too_deep")
+    t = type(value)
     if value is None:
         return "null"
-    if value is True:
-        return "true"
-    if value is False:
-        return "false"
-    if isinstance(value, int):
-        return str(value)
-    if isinstance(value, str):
+    if t is bool:
+        return "true" if value else "false"
+    if t is int:
+        if not -_INT_BOUND < value < _INT_BOUND:
+            _refuse("field_invalid")
+        return "%d" % value
+    if t is str:
         return _serialize_string(value)
-    if isinstance(value, (list, tuple)):
-        return "[" + ",".join(_serialize(x) for x in value) + "]"
-    if isinstance(value, dict):
-        return "{" + ",".join(_serialize_string(k) + ":" + _serialize(value[k]) for k in sorted(value)) + "}"
-    raise TypeError("unsupported type for canonical serialization: %r" % type(value))
+    if t is list or t is tuple:
+        return "[" + ",".join(_serialize(x, depth + 1) for x in value) + "]"
+    if t is dict:
+        if any(type(k) is not str for k in value):
+            _refuse("field_unknown", NON_STRING_KEY)
+        return "{" + ",".join(_serialize_string(k) + ":" + _serialize(value[k], depth + 1) for k in sorted(value)) + "}"
+    _refuse("field_type_invalid")
 
 
 def canonical_json_bytes(value: Any) -> bytes:
     """Canonical JSON: keys sorted by Unicode code point, no whitespace, every code point outside U+0020..U+007E escaped (lowercase hex, surrogate
-    pairs above U+FFFF), so the output is pure ASCII. Only None, bool, int, str, list and dict are serializable (TypeError otherwise)."""
+    pairs above U+FFFF), so the output is pure ASCII. Only exact None, bool, int (under 20 digits), str, list, tuple and dict (str keys) are
+    serializable; anything else, or nesting deeper than MAX_DEPTH, is an IdentityRefusal."""
     return _serialize(value).encode("ascii")
 
 
@@ -173,11 +273,11 @@ _ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r"
 _HEX = frozenset("0123456789abcdefABCDEF")
 
 
-def _int_literal(text: str) -> int:
+def _int_literal(text: str) -> Any:
     digits = text.lstrip("-")
     if len(digits) <= _MAX_EXACT_DIGITS:
         return int(text)
-    return -_OUT_OF_RANGE if text.startswith("-") else _OUT_OF_RANGE
+    return OutOfRangeInteger(text)
 
 
 def _scan_string(text: str, i: int):
@@ -367,14 +467,15 @@ def _materialize(node):
 def load_document(raw: Any) -> Any:
     """Parse a binding, scope-key, preimage or effective document. Order (PROPOSED, N-10): input boundary (strict UTF-8 or text, then UTF-8 size in
     BYTES), whole-text syntax, number literals (float, exponent, NaN, Infinity), duplicate keys at any depth after unescaping, nesting depth. A BOM is
-    not stripped and an integer literal of any length is valid syntax (classified by length, never converted when long)."""
-    if isinstance(raw, (bytes, bytearray)):
-        data = bytes(raw)
+    not stripped and an integer literal of any length is valid syntax (classified by length, never converted when long: it loads as an `OutOfRangeInteger`
+    marker, never a plausible int). Only exact `bytes` and `str` are accepted; any other type is `input_not_text`."""
+    if type(raw) is bytes:
+        data = raw
         try:
             text = data.decode("utf-8")
         except UnicodeDecodeError:
             _refuse("input_not_text")
-    elif isinstance(raw, str):
+    elif type(raw) is str:
         text = raw
         try:
             data = text.encode("utf-8")
@@ -403,7 +504,25 @@ def load_document(raw: Any) -> Any:
 # Completed-binding validation (spec 3, 5.1, 5.2, 5.5)
 # ----------------------------------------------------------------------------------------------------------------------
 def _is_int(v: Any) -> bool:
-    return isinstance(v, int) and not isinstance(v, bool)
+    """A strict integer: exactly `int` (never bool, never a subclass)."""
+    return type(v) is int
+
+
+def _int_typed(v: Any) -> bool:
+    """Integer-TYPED for the type phase: a strict int or the loader's out-of-range marker (which then fails every range check with `field_invalid`)."""
+    return type(v) is int or type(v) is OutOfRangeInteger
+
+
+def _in_range(v: Any, lo: int, hi: int) -> bool:
+    return type(v) is int and lo <= v <= hi
+
+
+def _type_refusal(path: Any, value: Any):
+    _refuse("field_type_invalid", path, evidence={"observed_value_class": _value_class(value)})
+
+
+def _range_refusal(path: str, lo: int, hi: int):
+    _refuse("field_invalid", path, evidence={"expected_range": (lo, hi)})
 
 
 def _ascii_match(pattern, value: str) -> bool:
@@ -424,40 +543,42 @@ def _flatten_checked(doc: dict) -> dict:
 
 
 def validate_binding(doc: Any) -> dict:
-    """Return `doc` if it is a well-formed completed binding, else raise IdentityRefusal. Phases (first failure wins, sorted path order inside a
-    phase): object, scope object, missing members, unknown members, types, values. The top-level set (14 plain members plus `scope`) and the nested
-    `scope` set (tenant, institution, authority_domain) are checked as TWO sets, before flattening."""
-    if not isinstance(doc, dict):
-        _refuse("field_type_invalid")
-    has_scope = "scope" in doc
-    nested = doc["scope"] if has_scope else None
-    if has_scope and not isinstance(nested, dict):
-        _refuse("field_type_invalid", "scope")
-    missing = set(TOP_MEMBERS) - {"scope"} - set(doc)
+    """Return a private plain COPY of `doc` if it is a well-formed completed binding, else raise IdentityRefusal (never the caller's own object, never
+    a subclass). Phases (first failure wins, sorted path order inside a phase): object, scope object, missing members, unknown members, types, values.
+    The top-level set (14 plain members plus `scope`) and the nested `scope` set (tenant, institution, authority_domain) are checked as TWO sets, before
+    flattening."""
+    d = _plain(doc)
+    if type(d) is not dict:
+        _type_refusal(None, d)
+    has_scope = "scope" in d
+    nested = d["scope"] if has_scope else None
+    if has_scope and type(nested) is not dict:
+        _type_refusal("scope", nested)
+    missing = set(TOP_MEMBERS) - {"scope"} - set(d)
     if not has_scope:
         missing.add("scope")
     else:
         missing |= {"scope." + k for k in SCOPE_MEMBERS if k not in nested}
     if missing:
         _refuse("field_missing", min(missing))
-    unknown = {k for k in doc if k not in TOP_MEMBERS}
+    unknown = {k for k in d if k not in TOP_MEMBERS}
     unknown |= {"scope." + k for k in nested if k not in SCOPE_MEMBERS}
     if unknown:
         _refuse("field_unknown", min(unknown))
-    flat = _flatten_checked(doc)
+    flat = _flatten_checked(d)
     for path in sorted(flat):
         v = flat[path]
         if path in _INT_PATHS:
-            if not _is_int(v):
-                _refuse("field_type_invalid", path)
-        elif not isinstance(v, str):
-            _refuse("field_type_invalid", path)
+            if not _int_typed(v):
+                _type_refusal(path, v)
+        elif type(v) is not str:
+            _type_refusal(path, v)
     for path in sorted(flat):
         v = flat[path]
         if path in _INT_PATHS:
             lo, hi = INTEGER_RANGES[path]
-            if not lo <= v <= hi:
-                _refuse("field_invalid", path)
+            if not _in_range(v, lo, hi):
+                _range_refusal(path, lo, hi)
         elif path in _ID_PATHS:
             if not _ascii_match(_IDENT, v):
                 _refuse("field_invalid", path)
@@ -466,7 +587,7 @@ def validate_binding(doc: Any) -> dict:
                 _refuse("field_invalid", path)
         elif path == "binding_profile" and v != BINDING_PROFILE:
             _refuse("field_invalid", path)
-    return doc
+    return d
 
 
 def parse_binding(raw: Any) -> dict:
@@ -484,12 +605,13 @@ def checked_binding_digest(binding: dict) -> str:
 
 
 def verify_carried_binding_digest(binding: dict, carried: Any) -> str:
-    """Guard check: a carried digest string is format-checked (`field_invalid`) and compared with the recomputed value (`digest_mismatch`)."""
+    """Guard check: a carried digest string is format-checked (`field_invalid`) and compared with the recomputed value (`digest_mismatch`, evidence
+    carried and recomputed). PROPOSED order (the spec is silent): the binding is validated first, then the carried digest's format, then equality."""
     recomputed = checked_binding_digest(binding)
-    if not (isinstance(carried, str) and _ascii_match(_DIGEST, carried)):
-        _refuse("field_invalid")
+    if not (type(carried) is str and _ascii_match(_DIGEST, carried)):
+        _refuse("field_invalid", evidence={"observed_value_class": _value_class(carried)})
     if carried != recomputed:
-        _refuse("digest_mismatch")
+        _refuse("digest_mismatch", evidence={"carried_digest": carried, "recomputed_digest": recomputed})
     return recomputed
 
 
@@ -497,82 +619,136 @@ def verify_carried_binding_digest(binding: dict, carried: Any) -> str:
 # Trust snapshot fingerprint (spec 7)
 # ----------------------------------------------------------------------------------------------------------------------
 _SNAPSHOT_MEMBERS = ("issuers", "min_epochs", "revoked_key_ids", "revoked_selections", "snapshot_id", "valid_until", "version")
+_ISSUER_MEMBERS = ("alg", "authority", "issuer_id", "key_id", "public_key")
+_LOWER_HEX = frozenset("0123456789abcdef")
 
 
-def _is_pair(p: Any, second_is_int: bool) -> bool:
-    if not (isinstance(p, (list, tuple)) and len(p) == 2 and isinstance(p[0], str)):
-        return False
-    return _is_int(p[1]) if second_is_int else True
+def _token(v: Any) -> bool:
+    return type(v) is str and c.valid_token(v)
+
+
+def _epoch(v: Any) -> bool:
+    """Selection epochs and floors in a snapshot: strict ints from 1 (the verifier requires a floor of at least 1, verify.py `_normalize_trust`) and
+    below 20 digits so the fingerprint serializer can always write them. PROPOSED: no further ceiling (the snapshot owns no epoch range)."""
+    return type(v) is int and 1 <= v < _INT_BOUND
+
+
+def _hex_key(v: Any) -> bool:
+    return type(v) is str and len(v) > 0 and len(v) % 2 == 0 and _LOWER_HEX.issuperset(v)
+
+
+def _grant_ok(g: Any) -> bool:
+    return type(g) is list and len(g) == 5 and all(_token(x) for x in g)
+
+
+def _issuer_ok(i: Any) -> bool:
+    """One issuer in the normalized shape of contract section 5: exactly alg, authority, issuer_id, key_id, public_key (lowercase hex, non-empty)."""
+    return (type(i) is dict and set(i) == set(_ISSUER_MEMBERS) and _token(i["key_id"]) and _token(i["issuer_id"]) and type(i["alg"]) is str
+            and _hex_key(i["public_key"]) and type(i["authority"]) is list and all(_grant_ok(g) for g in i["authority"]))
+
+
+def _pair_ok(p: Any) -> bool:
+    return type(p) is list and len(p) == 2 and type(p[0]) is str and _epoch(p[1])
 
 
 def _snapshot_shape_ok(s: Any) -> bool:
-    if not (isinstance(s, dict) and set(s) == set(_SNAPSHOT_MEMBERS)):
+    """The delivered snapshot in the spec's normalized shape, checked against the verifier's own rules (valid tokens, version and floors of at least 1,
+    parseable `valid_until`, five-token grants) plus the exact member set. Takes the PLAIN copy produced by `_checked_snapshot`."""
+    if not (type(s) is dict and set(s) == set(_SNAPSHOT_MEMBERS)):
         return False
-    if not (isinstance(s["issuers"], list) and isinstance(s["revoked_key_ids"], list) and isinstance(s["revoked_selections"], list)
-            and isinstance(s["min_epochs"], list)):
+    if not (_token(s["snapshot_id"]) and _epoch(s["version"]) and type(s["valid_until"]) is str and c.parse_timestamp(s["valid_until"]) is not None):
         return False
-    if not all(isinstance(i, dict) and isinstance(i.get("key_id"), str) and isinstance(i.get("authority"), list) for i in s["issuers"]):
+    if not (type(s["issuers"]) is list and type(s["revoked_key_ids"]) is list and type(s["revoked_selections"]) is list and type(s["min_epochs"]) is list):
         return False
-    return (all(isinstance(k, str) for k in s["revoked_key_ids"]) and all(_is_pair(p, True) for p in s["revoked_selections"])
-            and all(_is_pair(p, True) for p in s["min_epochs"]))
+    return (all(_issuer_ok(i) for i in s["issuers"]) and all(type(k) is str for k in s["revoked_key_ids"])
+            and all(_pair_ok(p) for p in s["revoked_selections"]) and all(_pair_ok(p) for p in s["min_epochs"]))
+
+
+def _checked_snapshot(snapshot: Any) -> dict:
+    """A private plain copy of a shape-valid snapshot, or `trust_snapshot_invalid` (PROPOSED REFUSE class) for ANY defect, including hostile types,
+    over-deep or over-large input."""
+    try:
+        plain = _plain(snapshot)
+    except IdentityRefusal:
+        _refuse("trust_snapshot_invalid")
+    if not _snapshot_shape_ok(plain):
+        _refuse("trust_snapshot_invalid")
+    return plain
+
+
+def _duplicates(plain: dict) -> bool:
+    keys = [i["key_id"] for i in plain["issuers"]]
+    floors = [p[0] for p in plain["min_epochs"]]
+    pairs = [(p[0], p[1]) for p in plain["revoked_selections"]]
+    revoked = plain["revoked_key_ids"]
+    grants = [i["authority"] for i in plain["issuers"]]
+    per_issuer = any(len({tuple(g) for g in a}) != len(a) for a in grants)  # PROPOSED: a repeated grant inside one issuer (contract 5: "Duplicates are refused")
+    return (len(set(keys)) != len(keys) or len(set(floors)) != len(floors) or len(set(pairs)) != len(pairs) or len(set(revoked)) != len(revoked)
+            or per_issuer)
 
 
 def normalize_snapshot(snapshot: dict) -> dict:
     """Normalized form: issuers by key_id, each `authority` array sorted, revoked_key_ids sorted, revoked_selections by (selection id, integer epoch),
-    min_epochs by selection id. Never mutates the input. A malformed snapshot is `trust_snapshot_invalid` (PROPOSED REFUSE class)."""
-    if not _snapshot_shape_ok(snapshot):
-        _refuse("trust_snapshot_invalid")
-    out = {k: snapshot[k] for k in snapshot}
-    out["issuers"] = sorted(({**i, "authority": sorted(i["authority"])} for i in snapshot["issuers"]), key=lambda i: i["key_id"])
-    out["revoked_key_ids"] = sorted(snapshot["revoked_key_ids"])
-    out["revoked_selections"] = sorted(([p[0], p[1]] for p in snapshot["revoked_selections"]), key=lambda p: (p[0], p[1]))
-    out["min_epochs"] = sorted(([p[0], p[1]] for p in snapshot["min_epochs"]), key=lambda p: p[0])
+    min_epochs by selection id. Never mutates the input and returns a plain copy. A malformed snapshot is `trust_snapshot_invalid` (PROPOSED REFUSE
+    class); duplicates are NOT checked here (see `check_snapshot_duplicates`, `trust_snapshot_fingerprint`)."""
+    plain = _checked_snapshot(snapshot)
+    out = dict(plain)
+    out["issuers"] = sorted(({**i, "authority": sorted(i["authority"])} for i in plain["issuers"]), key=lambda i: i["key_id"])
+    out["revoked_key_ids"] = sorted(plain["revoked_key_ids"])
+    out["revoked_selections"] = sorted(([p[0], p[1]] for p in plain["revoked_selections"]), key=lambda p: (p[0], p[1]))
+    out["min_epochs"] = sorted(([p[0], p[1]] for p in plain["min_epochs"]), key=lambda p: p[0])
     return out
 
 
 def check_snapshot_duplicates(snapshot: dict) -> None:
-    """Duplicate issuer key ids, min_epoch ids, revoked selection pairs or revoked key ids refuse `trust_snapshot_invalid` (PROPOSED REFUSE class)."""
-    if not _snapshot_shape_ok(snapshot):
-        _refuse("trust_snapshot_invalid")
-    keys = [i["key_id"] for i in snapshot["issuers"]]
-    floors = [p[0] for p in snapshot["min_epochs"]]
-    pairs = [(p[0], p[1]) for p in snapshot["revoked_selections"]]
-    revoked = list(snapshot["revoked_key_ids"])
-    if len(set(keys)) != len(keys) or len(set(floors)) != len(floors) or len(set(pairs)) != len(pairs) or len(set(revoked)) != len(revoked):
+    """A malformed snapshot, or a duplicate issuer key id, min_epoch id, revoked selection pair, revoked key id or (PROPOSED) repeated grant inside one
+    issuer, refuses `trust_snapshot_invalid` (PROPOSED REFUSE class)."""
+    if _duplicates(_checked_snapshot(snapshot)):
         _refuse("trust_snapshot_invalid")
 
 
 def trust_snapshot_fingerprint(snapshot: dict) -> str:
-    """`sha256:` + plain digest of the normalized snapshot's canonical (ASCII) bytes; no domain prefix (contract section 5)."""
-    check_snapshot_duplicates(snapshot)
+    """`sha256:` + plain digest of the normalized snapshot's canonical (ASCII) bytes; no domain prefix (contract section 5). Takes the SPEC's normalized
+    dict shape (hex public keys, list pairs); an adapter from the verifier's `TrustSnapshot` object is deferred (see the PR body)."""
+    plain = _checked_snapshot(snapshot)
+    if _duplicates(plain):
+        _refuse("trust_snapshot_invalid")
     try:
-        return plain_digest(normalize_snapshot(snapshot))
-    except TypeError:
+        return plain_digest(normalize_snapshot(plain))
+    except IdentityRefusal:  # unreachable for a shape-valid snapshot; kept so the entry point can only ever raise trust_snapshot_invalid
         _refuse("trust_snapshot_invalid")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Projection from verified inputs (spec 5.6)
 # ----------------------------------------------------------------------------------------------------------------------
+def _projection_refusal(member: str, **evidence):
+    _refuse("field_invalid", member, stage="projection", evidence={"projection_refusal_code": "field_invalid", **evidence})
+
+
 def project_scope(statement_scope: Any) -> dict:
     """IDENTITY projection: each of the three scope tokens passes through byte for byte when it already matches the ASCII identifier grammar;
-    otherwise binding creation is refused `field_invalid` at `scope.<name>` (first in sorted order). No normalization, transliteration, case folding,
-    truncation or hashing is ever applied."""
-    if not isinstance(statement_scope, dict) or set(statement_scope) != set(SCOPE_MEMBERS):
-        _refuse("field_invalid", "scope")
+    otherwise binding creation is refused `field_invalid` at `scope.<name>` (first in sorted order), at the `projection` stage. No normalization,
+    transliteration, case folding, truncation or hashing is ever applied. Returns a plain copy."""
+    try:
+        d = _plain(statement_scope)
+    except IdentityRefusal:
+        _projection_refusal("scope")
+    if type(d) is not dict or set(d) != set(SCOPE_MEMBERS):
+        _projection_refusal("scope")
     for k in sorted(SCOPE_MEMBERS):
-        v = statement_scope[k]
-        if not (isinstance(v, str) and _ascii_match(_IDENT, v)):
-            _refuse("field_invalid", "scope." + k)
-    return {k: statement_scope[k] for k in SCOPE_MEMBERS}
+        v = d[k]
+        if not (type(v) is str and _ascii_match(_IDENT, v)):
+            _projection_refusal("scope." + k)
+    return {k: d[k] for k in SCOPE_MEMBERS}
 
 
 def project_snapshot_version(version: Any) -> int:
     """A verified snapshot version the binding cannot carry (above 2^53 - 1, or not a strict int in range) refuses `field_invalid` at
-    `trust_snapshot_version` at the projection stage. Whether the verifier should also cap it is OPEN (N-10(c)); this is the projection-stage rule."""
+    `trust_snapshot_version` at the PROJECTION stage. Whether the verifier should also cap it is OPEN (N-10(c)); this is the projection-stage rule."""
     lo, hi = INTEGER_RANGES["trust_snapshot_version"]
-    if not _is_int(version) or not lo <= version <= hi:
-        _refuse("field_invalid", "trust_snapshot_version")
+    if not _in_range(version, lo, hi):
+        _projection_refusal("trust_snapshot_version", expected_range=(lo, hi))
     return version
 
 
@@ -580,12 +756,20 @@ PROJECTION_REFUSAL_KINDS = ("scope_token", "trust_snapshot_version", "effective_
                             "effective_payload_field_invalid")
 
 
+def _text_or_none(v: Any) -> Any:
+    """Only an exact `str` can name a participation, state or determination; anything else (a subclass with a lying `__eq__`, an unhashable) is NONE,
+    which every branch below treats as unknown."""
+    return v if type(v) is str else None
+
+
 def projection_effect(participation: Any, activation_state: Any, determination: Any) -> dict:
     """Effect of a refusal at the projection stage (ruling N-5). Binding creation is refused for EVERY participation and kind; this function takes
     no refusal kind. It never yields `overlay_not_applied` and never ACCEPTs by itself. `required` refuses (UNKNOWN_FAIL_CLOSED when the activation
-    state is `indeterminate`); `optional` falls back ONLY for (`permits_optional`, `authenticated`). Any other participation is refused
-    `field_invalid` at `participation` (a raise, so the rule survives python -O).
+    state is `indeterminate`); `optional` falls back ONLY for (`permits_optional`, `authenticated`). Any other participation (including a non-str) is
+    refused `field_invalid` at `participation` (a raise, so the rule survives python -O). An unknown or non-str state or determination never permits a
+    fallback (REFUSE).
     PROPOSED (N-12): optional with `indeterminate` state is UNKNOWN_FAIL_CLOSED; the evidence record layout is owned by EXT-S4 (N-7)."""
+    participation, activation_state, determination = _text_or_none(participation), _text_or_none(activation_state), _text_or_none(determination)
     if participation == "required":
         outcome = "UNKNOWN_FAIL_CLOSED" if activation_state == "indeterminate" else "REFUSE"
         return {"effect_outcome": outcome, "decision_kind": "required_policy_unavailable", "fallback_permitted": False, "fallback_evidence": None}
@@ -600,8 +784,9 @@ def projection_effect(participation: Any, activation_state: Any, determination: 
 
 
 def projection_effect_for(refusal_code: str, participation: Any, activation_state: Any, determination: Any) -> dict:
-    """Join a refusal's own code with the single effect function: the code is the only thing a refusal contributes (to the fallback evidence)."""
-    if refusal_code not in CODES_V2:
+    """Join a refusal's own code with the single effect function: the code is the only thing a refusal contributes (to the fallback evidence). The code
+    is a programmer argument: anything but a `CODES_V2` string is a ValueError, never a typed refusal."""
+    if type(refusal_code) is not str or refusal_code not in CODES_V2:
         raise ValueError("refusal code outside CODES_V2: %r" % (refusal_code,))
     out = projection_effect(participation, activation_state, determination)
     if out["fallback_evidence"] is not None:
@@ -616,24 +801,26 @@ _SCOPE_KEY_TOP = ("scope_key_profile",) + SCOPE_KEY_MEMBERS
 
 
 def validate_scope_key(doc: Any) -> dict:
-    if not isinstance(doc, dict):
-        _refuse("field_type_invalid")
-    missing = set(_SCOPE_KEY_TOP) - set(doc)
+    """Return a private plain copy of a well-formed scope-key object, else raise IdentityRefusal."""
+    d = _plain(doc)
+    if type(d) is not dict:
+        _type_refusal(None, d)
+    missing = set(_SCOPE_KEY_TOP) - set(d)
     if missing:
         _refuse("field_missing", min(missing))
-    unknown = set(doc) - set(_SCOPE_KEY_TOP)
+    unknown = set(d) - set(_SCOPE_KEY_TOP)
     if unknown:
         _refuse("field_unknown", min(unknown))
-    for k in sorted(doc):
-        if not isinstance(doc[k], str):
-            _refuse("field_type_invalid", k)
-    for k in sorted(doc):
+    for k in sorted(d):
+        if type(d[k]) is not str:
+            _type_refusal(k, d[k])
+    for k in sorted(d):
         if k == "scope_key_profile":
-            if doc[k] != SCOPE_KEY_PROFILE:
+            if d[k] != SCOPE_KEY_PROFILE:
                 _refuse("field_invalid", k)
-        elif not _ascii_match(_IDENT, doc[k]):
+        elif not _ascii_match(_IDENT, d[k]):
             _refuse("field_invalid", k)
-    return doc
+    return d
 
 
 def scope_key_bytes(doc: dict) -> bytes:
@@ -674,8 +861,14 @@ REGISTERED_CONTRACT_VERSIONS = (CONTRACT_VERSION,)  # an identity exists for `r0
 
 
 def registered_family_version(family: Any, contract_version: Any) -> str:
-    """Look up the derived tag from the module's own table, keyed by the authenticated record's family id and contract_version (ruling N-3)."""
-    if not isinstance(family, str) or family not in IDENTITY_FAMILIES:
+    """Look up the derived tag from the module's own table, keyed by the authenticated record's family id and contract_version (ruling N-3). A non-str
+    `family` or `contract_version` is `field_type_invalid` at its own member on every entry point (spec 6); an unregistered str is `family_unsupported`
+    or `contract_unsupported`."""
+    if type(family) is not str:
+        _type_refusal("family", family)
+    if type(contract_version) is not str:
+        _type_refusal("contract_version", contract_version)
+    if family not in IDENTITY_FAMILIES:
         _refuse("family_unsupported", "family")
     if contract_version not in REGISTERED_CONTRACT_VERSIONS:
         _refuse("contract_unsupported", "contract_version")
@@ -683,53 +876,57 @@ def registered_family_version(family: Any, contract_version: Any) -> str:
 
 
 def validate_effective_payload(family: Any, payload: Any, role: str = "effective") -> dict:
-    """Strict validator of a composed (role `effective`) or input (`registry`, `caller`) family payload. Phases: family, shape (missing, unknown),
-    types, values; sorted path order inside a phase. Lists: sorted by code point, duplicate-free, at most 256 entries, tokens per `common.valid_token`
-    (platform Unicode database dependence: PROPOSED, N-13); `[]` is an explicit deny-all. Ages: strict ints in the role's range."""
-    if role not in AGE_RANGES:
+    """Strict validator of a composed (role `effective`) or input (`registry`, `caller`) family payload; returns a private plain copy. Phases: family,
+    shape (missing, unknown), types, values; sorted path order inside a phase. Lists: sorted by code point, duplicate-free, at most 256 entries, tokens
+    per `common.valid_token` (platform Unicode database dependence: PROPOSED, N-13); `[]` is an explicit deny-all. Ages: strict ints in the role's range.
+    A non-str family is `field_type_invalid`. `role` is a programmer argument (ValueError if unknown)."""
+    if type(role) is not str or role not in AGE_RANGES:
         raise ValueError("unknown role: %r" % (role,))
-    if not isinstance(family, str) or family not in IDENTITY_FAMILIES:
+    if type(family) is not str:
+        _type_refusal("family", family)
+    if family not in IDENTITY_FAMILIES:
         _refuse("family_unsupported", "family")
     row = IDENTITY_FAMILIES[family]
-    if not isinstance(payload, dict):
-        _refuse("field_type_invalid")
+    d = _plain(payload)
+    if type(d) is not dict:
+        _type_refusal(None, d)
     members = set(row.members)
-    missing = members - set(payload)
+    missing = members - set(d)
     if missing:
         _refuse("field_missing", min(missing))
-    unknown = set(payload) - members
+    unknown = set(d) - members
     if unknown:
         _refuse("field_unknown", min(unknown))
     flat = {}
-    for k in payload:
-        if row.kind == "classmap" and isinstance(payload[k], dict):
-            for cls, v in payload[k].items():
+    for k in d:
+        if row.kind == "classmap" and type(d[k]) is dict:
+            for cls, v in d[k].items():
                 flat[k + "." + cls] = v
         else:
-            flat[k] = payload[k]
+            flat[k] = d[k]
     for path in sorted(flat):
         v = flat[path]
         if row.kind == "lists":
-            if not isinstance(v, list) or not all(isinstance(x, str) for x in v):
-                _refuse("field_type_invalid", path)
+            if type(v) is not list or not all(type(x) is str for x in v):
+                _type_refusal(path, v)
         elif row.kind == "ints":
-            if not _is_int(v):
-                _refuse("field_type_invalid", path)
-        elif path == "class_status_max_age_seconds" or not _is_int(v):
-            _refuse("field_type_invalid", path)
+            if not _int_typed(v):
+                _type_refusal(path, v)
+        elif path == "class_status_max_age_seconds" or not _int_typed(v):
+            _type_refusal(path, v)
     lo, hi = AGE_RANGES[role]
     for path in sorted(flat):
         v = flat[path]
         if row.kind == "lists":
             if len(v) > MAX_LIST_ENTRIES or not all(c.valid_token(x) for x in v) or v != sorted(set(v)):
                 _refuse("field_invalid", path)
-        elif not lo <= v <= hi:
-            _refuse("field_invalid", path)
+        elif not _in_range(v, lo, hi):
+            _range_refusal(path, lo, hi)
     if row.kind == "classmap":
-        classes = payload["class_status_max_age_seconds"]
+        classes = d["class_status_max_age_seconds"]
         if not classes or not all(c.valid_token(k) for k in classes):
             _refuse("field_invalid", "class_status_max_age_seconds")
-    return payload
+    return d
 
 
 def deny_all_dimensions(family: str, payload: dict) -> list:
@@ -741,9 +938,9 @@ def deny_all_dimensions(family: str, payload: dict) -> list:
 def effective_preimage(family: Any, payload: Any, contract_version: Any = CONTRACT_VERSION) -> dict:
     """The digest preimage. `family_version` is derived from the module table; no parameter or payload member can supply it."""
     version = registered_family_version(family, contract_version)
-    validate_effective_payload(family, payload)
+    plain_payload = validate_effective_payload(family, payload)
     return {"effective_policy_profile": EFFECTIVE_PROFILE, "contract_version": contract_version, "family": family, "family_version": version,
-            "deny_all": deny_all_dimensions(family, payload), "effective": payload}
+            "deny_all": deny_all_dimensions(family, plain_payload), "effective": plain_payload}
 
 
 def effective_digest_of_preimage(preimage: dict) -> str:
@@ -759,45 +956,40 @@ def preimage_from_inputs(doc: Any) -> dict:
     Any `family_version` member (whatever its value) is `field_unknown`. Order: member set (missing, unknown), registered lookup (family, then
     contract_version), then the payload. Returns the derived preimage."""
     top = ("contract_version", "effective", "family")
-    if not isinstance(doc, dict):
-        _refuse("field_type_invalid")
-    missing = set(top) - set(doc)
+    d = _plain(doc)
+    if type(d) is not dict:
+        _type_refusal(None, d)
+    missing = set(top) - set(d)
     if missing:
         _refuse("field_missing", min(missing))
-    unknown = set(doc) - set(top)
+    unknown = set(d) - set(top)
     if unknown:
         _refuse("field_unknown", min(unknown))
-    if not isinstance(doc["family"], str):
-        _refuse("field_type_invalid", "family")
-    if not isinstance(doc["contract_version"], str):
-        _refuse("field_type_invalid", "contract_version")
-    return effective_preimage(doc["family"], doc["effective"], doc["contract_version"])
+    return effective_preimage(d["family"], d["effective"], d["contract_version"])
 
 
 def validate_preimage(doc: Any) -> dict:
-    """A presented preimage must equal the one rebuilt from its own family and payload; its tags are compared with the registered ones, never trusted."""
+    """A presented preimage must equal the one rebuilt from its own family and payload; its tags are compared with the registered ones, never trusted.
+    Returns a private plain copy."""
     top = ("contract_version", "deny_all", "effective", "effective_policy_profile", "family", "family_version")
-    if not isinstance(doc, dict):
-        _refuse("field_type_invalid")
-    missing = set(top) - set(doc)
+    d = _plain(doc)
+    if type(d) is not dict:
+        _type_refusal(None, d)
+    missing = set(top) - set(d)
     if missing:
         _refuse("field_missing", min(missing))
-    unknown = set(doc) - set(top)
+    unknown = set(d) - set(top)
     if unknown:
         _refuse("field_unknown", min(unknown))
-    if doc["effective_policy_profile"] != EFFECTIVE_PROFILE:
+    if d["effective_policy_profile"] != EFFECTIVE_PROFILE:
         _refuse("field_invalid", "effective_policy_profile")
-    if not isinstance(doc["family"], str):
-        _refuse("field_type_invalid", "family")
-    if not isinstance(doc["contract_version"], str):
-        _refuse("field_type_invalid", "contract_version")
-    registered = registered_family_version(doc["family"], doc["contract_version"])
-    validate_effective_payload(doc["family"], doc["effective"])
-    if doc["family_version"] != registered:
+    registered = registered_family_version(d["family"], d["contract_version"])
+    validate_effective_payload(d["family"], d["effective"])
+    if d["family_version"] != registered:
         _refuse("field_invalid", "family_version")
-    if doc["deny_all"] != deny_all_dimensions(doc["family"], doc["effective"]):
+    if d["deny_all"] != deny_all_dimensions(d["family"], d["effective"]):
         _refuse("field_invalid", "deny_all")
-    return doc
+    return d
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -820,6 +1012,7 @@ class MappingRow:
     evidence_fields: Tuple[str, ...]
     stage_value: Any = None
     optional_overlay: bool = False  # only through an authenticated optional-state determination (contract 7.4 line 8(c)); never by the refusal alone
+    proposed: bool = False  # True for a row (verdict class or stage split) that is a PROPOSAL of this PR, not an Architect ruling
 
 
 REFUSAL_MAPPING = (
@@ -858,7 +1051,7 @@ REFUSAL_MAPPING = (
     MappingRow("MP-selection_epoch_stale", "REFUSE_STALE", "selection_epoch_stale", "required_policy_unavailable", "fresh_statement_required",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch", "high_water_epoch", "min_epoch_floor", "selection_digest",),),
     MappingRow("MP-trust_snapshot_invalid", "REFUSE", "trust_snapshot_invalid", "required_policy_unavailable", "never_same_input",
-               ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",),),
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",), proposed=True),
     MappingRow("MP-selection_revoked", "REFUSE", "selection_revoked", "required_policy_unavailable", "fresh_statement_required",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch", "selection_digest",),),
     MappingRow("MP-issuer_key_revoked", "REFUSE", "issuer_key_revoked", "required_policy_unavailable", "fresh_statement_required",
@@ -872,9 +1065,9 @@ REFUSAL_MAPPING = (
     MappingRow("MP-selection_conflict", "REFUSE", "selection_conflict", "required_policy_unavailable", "never_same_input",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch", "selection_digest",),),
     MappingRow("MP-trust_snapshot_missing-verify", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_missing", "required_policy_unavailable", "after_authoritative_state_available",
-               ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",), stage_value="verify",),
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",), stage_value="verify", proposed=True),
     MappingRow("MP-trust_snapshot_missing-guard", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_missing", "required_policy_unavailable", "after_authoritative_state_available",
-               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "trust_snapshot_version",), stage_value="guard",),
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "trust_snapshot_version",), stage_value="guard", proposed=True),
     MappingRow("MP-trust_snapshot_expired-delivered", "REFUSE", "trust_snapshot_expired", "required_policy_unavailable", "fresh_statement_required",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",),),
     MappingRow("MP-trust_snapshot_expired-guard", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_expired", "required_policy_unavailable", "after_authoritative_state_available",
@@ -888,14 +1081,26 @@ def mapping_rows_for(code: str) -> Tuple[MappingRow, ...]:
 
 
 def verdict_for(code: str, stage: Any = None) -> MappingRow:
-    """The unique mapping row for a registry code (and, for the codes with several rows, a stage); a code with no row is a contract change and raises
-    KeyError. `trust_snapshot_missing` has two rows (stage `verify` / `guard`) and `trust_snapshot_expired` two (use `MAPPING_BY_ID`)."""
-    rows = mapping_rows_for(code)
+    """The unique mapping row for a registry code (and, for the codes with several rows, a stage); a code with no row, or with several rows the stage
+    does not single out, raises KeyError. `trust_snapshot_missing` has two rows (stage `verify` / `guard`) and `trust_snapshot_expired` two (use
+    `MAPPING_BY_ID`); `field_invalid` has three (use `mapping_row_for`, which reads a refusal's own stage and evidence)."""
+    rows = mapping_rows_for(code) if type(code) is str else ()
     if stage is not None:
         rows = tuple(r for r in rows if r.stage_value == stage)
     if len(rows) != 1:
         raise KeyError((code, stage))
     return rows[0]
+
+
+def mapping_row_for(refusal: IdentityRefusal) -> MappingRow:
+    """The spec 8.1 row for a refusal this module raised. `field_invalid` is split by the refusal's own data: stage `projection` selects
+    MP-field_invalid-projection; an `expected_range` in its evidence selects MP-field_invalid-integer; anything else is MP-field_invalid-identifier.
+    Every other code has exactly one row, or this raises KeyError (the 20 `CODES_V2` codes in UNMAPPED_CODES are not mapped by this module)."""
+    if refusal.code == "field_invalid":
+        if refusal.stage == "projection":
+            return MAPPING_BY_ID["MP-field_invalid-projection"]
+        return MAPPING_BY_ID["MP-field_invalid-integer" if "expected_range" in refusal.evidence else "MP-field_invalid-identifier"]
+    return verdict_for(refusal.code, refusal.stage)
 
 
 def _check_module_tables() -> None:
@@ -905,5 +1110,9 @@ def _check_module_tables() -> None:
     if not all(r.verdict_class in VERDICT_CLASSES for r in REFUSAL_MAPPING):
         raise RuntimeError("mapping uses a verdict class outside the closed vocabulary")
 
+
+UNMAPPED_CODES = frozenset(CODES_V2) - {r.registry_code for r in REFUSAL_MAPPING}
+# DEFERRED (spec 8, carry-forward): the 48-code completeness test (every `CODES_V2` entry mapped, or owned by another package) is not implemented here.
+# `UNMAPPED_CODES` is the explicit remainder; a test pins it so a mapping change is visible.
 
 _check_module_tables()

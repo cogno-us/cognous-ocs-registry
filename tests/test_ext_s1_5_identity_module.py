@@ -253,10 +253,183 @@ def _oracle_failures():
         check(m.registered_family_version("f4-control-plane-age-bounds", "r08-v2") == "v2", "f4 tag")
         check(_outcome(m.registered_family_version, "f4-control-plane-age-bounds", "r08-v1") == ("refuse", "contract_unsupported", "contract_version"), "r08-v1")
         check(_outcome(m.registered_family_version, "f9", "r08-v2") == ("refuse", "family_unsupported", "family"), "f9")
+        for table in (m.INTEGER_RANGES, m.AGE_RANGES, m.IDENTITY_FAMILIES, m.MAPPING_BY_ID):
+            try:
+                table["record_version"] = (1, 2)
+                fails.append("a module table is writable")
+            except TypeError:
+                pass
         check({f: r.family_version for f, r in m.IDENTITY_FAMILIES.items()} == {"f1a-local-execution-allowlist": "v1", "f1ab-local-execution-allowlist": "v2",
                                                                               "f4-control-plane-age-bounds": "v2", "f5-action-class-age-bounds": "v2"}, "table")
 
-    for fn in (valid_bindings, invalid_bindings, identifiers, guards, effective, scope_keys, snapshots, projection, spec_rules_not_pinned_by_a_vector, code_boundaries):
+    def loader_direct():
+        # the loader is also a public function: its own refusals, not only the ones parse_binding reaches through the validator's defences
+        loader_codes = {"input_not_text", "input_too_large", "json_malformed", "json_duplicate_key", "json_number_unsupported", "json_nesting_too_deep"}
+        for vec in V["invalid"] + V["input_boundary"]:
+            exp = vec["expected"]
+            if exp["result"] == "refuse" and exp["code"] in loader_codes:
+                check(_outcome(m.load_document, _raw(vec)) == ("refuse", exp["code"], None), vec["id"] + " loader")
+        check(_outcome(m.load_document, bytearray(b"{}")) == ("refuse", "input_not_text", None), "bytearray is not bytes")
+        check(_outcome(m.load_document, memoryview(b"{}")) == ("refuse", "input_not_text", None), "memoryview is not bytes")
+
+    def long_literals():
+        a, b, n, top = m.load_document("[100000000000000000000,100000000000000000001,-100000000000000000000,99999999999999999999]")
+        check(a != b and a != n and not isinstance(a, int) and type(top) is int, "long literals are distinct markers")
+        check(a == m.load_document("[100000000000000000000]")[0], "same literal, same marker")
+        snap = json.loads(json.dumps(V["trust_snapshots"][0]["input"]))
+        raw = json.dumps(snap).replace('["sel-old-1", 2]', '["sel-old-1", 100000000000000000000000]')
+        check(raw != json.dumps(snap), "fixture")
+        check(_outcome(lambda: m.trust_snapshot_fingerprint(m.load_document(raw))) == ("refuse", "trust_snapshot_invalid", None), "long epoch is refused, never fingerprinted")
+        check(_outcome(m.canonical_json_bytes, 10 ** 5000) == ("refuse", "field_invalid", None), "serializer refuses a huge int without str()")
+        check(_outcome(m.canonical_json_bytes, 10 ** 20) == ("refuse", "field_invalid", None) and m.canonical_json_bytes(10 ** 20 - 1) == b"99999999999999999999", "20 digits")
+
+    def malformed_snapshots():
+        base = V["trust_snapshots"][0]["input"]
+
+        def bad(label, edit):
+            snap = json.loads(json.dumps(base))
+            edit(snap)
+            check(_outcome(m.trust_snapshot_fingerprint, snap) == ("refuse", "trust_snapshot_invalid", None), "snapshot " + label)
+
+        iss = lambda s_: s_["issuers"][0]
+        for label, edit in [
+            ("version None", lambda s_: s_.update(version=None)), ("version True", lambda s_: s_.update(version=True)),
+            ("version str", lambda s_: s_.update(version="7")), ("version 0", lambda s_: s_.update(version=0)),
+            ("version -1", lambda s_: s_.update(version=-1)), ("version 20 digits", lambda s_: s_.update(version=10 ** 20)),
+            ("snapshot_id list", lambda s_: s_.update(snapshot_id=[1])), ("snapshot_id empty", lambda s_: s_.update(snapshot_id="")),
+            ("valid_until text", lambda s_: s_.update(valid_until="notatime")), ("valid_until int", lambda s_: s_.update(valid_until=5)),
+            ("extra member", lambda s_: s_.update(extra=1)), ("missing member", lambda s_: s_.pop("min_epochs")),
+            ("issuer no key", lambda s_: iss(s_).pop("public_key")), ("issuer extra member", lambda s_: iss(s_).update(extra=1)),
+            ("key uppercase", lambda s_: iss(s_).update(public_key="AB" * 32)), ("key odd length", lambda s_: iss(s_).update(public_key="abc")),
+            ("key empty", lambda s_: iss(s_).update(public_key="")), ("key not hex", lambda s_: iss(s_).update(public_key="zz" * 32)),
+            ("alg int", lambda s_: iss(s_).update(alg=5)), ("key_id empty", lambda s_: iss(s_).update(key_id="")),
+            ("issuer_id None", lambda s_: iss(s_).update(issuer_id=None)),
+            ("authority int", lambda s_: iss(s_).update(authority=[1])), ("authority mixed", lambda s_: iss(s_).update(authority=[["a"], ["b", 1]])),
+            ("grant of four", lambda s_: iss(s_).update(authority=[["a", "b", "c", "d"]])),
+            ("grant with number", lambda s_: iss(s_).update(authority=[["a", "b", "c", "d", 5]])),
+            ("grant with star token", lambda s_: iss(s_).update(authority=[["a", "b", "c", "d", "*"]])),
+            ("duplicate grants", lambda s_: iss(s_).update(authority=[["a", "b", "c", "d", "e"]] * 2)),
+            ("revoked epoch negative", lambda s_: s_.update(revoked_selections=[["a", -5]])), ("revoked epoch 0", lambda s_: s_.update(revoked_selections=[["a", 0]])),
+            ("revoked epoch bool", lambda s_: s_.update(revoked_selections=[["a", True]])), ("revoked epoch str", lambda s_: s_.update(revoked_selections=[["a", "1"]])),
+            ("revoked pair of three", lambda s_: s_.update(revoked_selections=[["a", 1, 2]])), ("revoked epoch huge", lambda s_: s_.update(revoked_selections=[["a", 10 ** 5000]])),
+            ("floor 0", lambda s_: s_.update(min_epochs=[["a", 0]])), ("floor bool", lambda s_: s_.update(min_epochs=[["a", True]])),
+            ("revoked key int", lambda s_: s_.update(revoked_key_ids=[1])),
+            ("deep list", lambda s_: iss(s_).update(public_key=[[[[[[[[[1]]]]]]]]])),
+        ]:
+            bad(label, edit)
+        cyc = []
+        cyc.append(cyc)
+        bad("self-referential list", lambda s_: s_.update(snapshot_id=cyc))
+        check(_outcome(m.trust_snapshot_fingerprint, None) == ("refuse", "trust_snapshot_invalid", None), "snapshot None")
+        check(_outcome(m.normalize_snapshot, {"issuers": 1}) == ("refuse", "trust_snapshot_invalid", None), "normalize malformed")
+        check(_outcome(m.check_snapshot_duplicates, {"issuers": 1}) == ("refuse", "trust_snapshot_invalid", None), "duplicates malformed")
+        # tuples are the same data as lists
+        snap = json.loads(json.dumps(base))
+        snap["revoked_selections"] = [tuple(p) for p in snap["revoked_selections"]]
+        check(m.trust_snapshot_fingerprint(snap) == V["trust_snapshots"][0]["expected"]["trust_snapshot_fingerprint"], "tuple pairs")
+
+    def hostile_types():
+        class Liar(str):
+            def __ne__(self, other):
+                return False
+
+            def __eq__(self, other):
+                return True
+
+            __hash__ = str.__hash__
+
+        class EvilInt(int):
+            def __str__(self):
+                return '1,"evil":2'
+
+        class D(dict):
+            def __getitem__(self, k):
+                return "x"
+
+        good = m.parse_binding(_bv()["input_json"])
+        good_digest = m.checked_binding_digest(good)
+        check(_outcome(m.verify_carried_binding_digest, good, Liar("sha256:" + "0" * 64)) == ("refuse", "field_invalid", None), "str subclass as carried digest")
+        check(_outcome(m.verify_carried_binding_digest, good, "sha256:" + "0" * 64) == ("refuse", "digest_mismatch", None), "mismatch")
+        check(_outcome(m.validate_binding, {**good, "binding_profile": Liar("ocs-policy-binding/9")}) == ("refuse", "field_type_invalid", "binding_profile"), "profile subclass")
+        check(_outcome(m.validate_binding, {**good, "record_version": EvilInt(1)}) == ("refuse", "field_type_invalid", "record_version"), "int subclass")
+        check(_outcome(m.validate_binding, D(good)) == ("refuse", "field_type_invalid", None), "dict subclass")
+        check(_outcome(m.canonical_json_bytes, EvilInt(1)) == ("refuse", "field_type_invalid", None), "serializer int subclass")
+        check(_outcome(m.canonical_json_bytes, D(a=1)) == ("refuse", "field_type_invalid", None), "serializer dict subclass")
+        check(_outcome(m.canonical_json_bytes, Liar("x")) == ("refuse", "field_type_invalid", None), "serializer str subclass")
+        check(_outcome(m.canonical_json_bytes, {1: 2}) == ("refuse", "field_unknown", m.NON_STRING_KEY), "serializer non-str key")
+        for fn, arg in ((m.validate_binding, {**good, 1: 1, "zz": 2}), (m.validate_binding, {**good, None: 1}), (m.validate_binding, {**good, b"x": 1, 1: 2}),
+                        (m.validate_binding, {**good, "scope": {**good["scope"], 5: 1}}), (m.validate_scope_key, {1: 1, "x": 2}),
+                        (m.preimage_from_inputs, {1: 1, "x": 2}), (m.validate_preimage, {1: 1, "x": 2})):
+            check(_outcome(fn, arg) == ("refuse", "field_unknown", m.NON_STRING_KEY), "non-str key %s" % fn.__name__)
+        check(m.checked_binding_digest(good) == good_digest, "copy is stable")
+        mutable = json.loads(json.dumps(good))
+        copy = m.validate_binding(mutable)
+        mutable["family"] = "changed"
+        check(copy["family"] == good["family"] and copy is not mutable, "validate_binding returns a private copy")
+        f5 = "f5-action-class-age-bounds"
+        for payload in ({"class_status_max_age_seconds": {1: 1}}, {"class_status_max_age_seconds": {None: 1}}, {"class_status_max_age_seconds": {"a": 1, 2: 1}}):
+            check(_outcome(m.validate_effective_payload, f5, payload) == ("refuse", "field_unknown", m.NON_STRING_KEY), "classmap key %r" % (payload,))
+        f4 = "f4-control-plane-age-bounds"
+        check(_outcome(m.validate_effective_payload, f4, {1: 1, "x": 2, "status_max_age_seconds": 1, "approval_max_age_seconds": 1}) == ("refuse", "field_unknown", m.NON_STRING_KEY), "f4 mixed keys")
+        for bad_family in ([], None, 5, {}, b"x"):
+            check(_outcome(m.validate_effective_payload, bad_family, {}) == ("refuse", "field_type_invalid", "family"), "family %r" % (bad_family,))
+        check(_outcome(m.validate_effective_payload, f4, {}, "effective")[:2] == ("refuse", "field_missing"), "empty f4")
+        for fn in (lambda: m.validate_effective_payload(f4, {}, role=[]), lambda: m.projection_effect_for([], "required", "known", "n/a"),
+                   lambda: m.projection_effect_for(None, "required", "known", "n/a"), lambda: m.IdentityRefusal([])):
+            try:
+                fn()
+                fails.append("a programmer error was accepted")
+            except ValueError:
+                pass
+        for cv in (5, None, [], b"r08-v2"):
+            check(_outcome(m.effective_policy_digest, f4, {"status_max_age_seconds": 1, "approval_max_age_seconds": 1}, cv) == ("refuse", "field_type_invalid", "contract_version"), "cv %r" % (cv,))
+            check(_outcome(m.registered_family_version, f4, cv) == ("refuse", "field_type_invalid", "contract_version"), "registered cv %r" % (cv,))
+            check(_outcome(m.registered_family_version, cv, "r08-v2") == ("refuse", "field_type_invalid", "family"), "registered family %r" % (cv,))
+        check(_outcome(m.projection_effect, Liar("optional"), "permits_optional", "authenticated") == ("refuse", "field_invalid", "participation"), "participation subclass")
+        eff = m.projection_effect("optional", Liar("permits_optional"), Liar("authenticated"))
+        check(eff["effect_outcome"] == "REFUSE" and eff["fallback_permitted"] is False, "state and determination subclasses never permit a fallback")
+        check(m.projection_effect("required", [], {})["effect_outcome"] == "REFUSE", "unhashable state and determination")
+        check(_outcome(m.projection_effect, [], "known", "n/a") == ("refuse", "field_invalid", "participation"), "unhashable participation")
+        check(_outcome(m.project_scope, [1]) == ("refuse", "field_invalid", "scope"), "scope list")
+        check(_outcome(m.project_scope, {1: 1, "x": 2}) == ("refuse", "field_invalid", "scope"), "scope non-str keys")
+        check(_outcome(m.project_snapshot_version, True) == ("refuse", "field_invalid", "trust_snapshot_version"), "version bool")
+        check(_outcome(m.project_snapshot_version, [1]) == ("refuse", "field_invalid", "trust_snapshot_version"), "version list")
+        check(_outcome(m.load_document, "\ud800") == ("refuse", "input_not_text", None), "lone surrogate text")
+        check(_outcome(m.verify_carried_binding_digest, {**good, "family": 5}, [1]) == ("refuse", "field_type_invalid", "family"), "binding is validated before the carried digest (PROPOSED order)")
+
+    def stage_and_evidence():
+        def caught(fn, *args):
+            try:
+                fn(*args)
+            except m.IdentityRefusal as r:
+                return r
+            return None
+
+        r = caught(m.project_scope, {"tenant": "a b", "institution": "i", "authority_domain": "d"})
+        check(r is not None and r.stage == "projection" and r.member == "scope.tenant" and m.mapping_row_for(r).row_id == "MP-field_invalid-projection"
+              and r.evidence["projection_refusal_code"] == "field_invalid", "scope projection stage")
+        r = caught(m.project_snapshot_version, 2 ** 53)
+        check(r is not None and r.stage == "projection" and m.mapping_row_for(r).row_id == "MP-field_invalid-projection"
+              and tuple(r.evidence["expected_range"]) == (1, 2 ** 53 - 1), "version projection stage")
+        good = m.parse_binding(_bv()["input_json"])
+        r = caught(m.validate_binding, {**good, "selection_epoch": 0})
+        check(r is not None and r.stage is None and m.mapping_row_for(r).row_id == "MP-field_invalid-integer" and tuple(r.evidence["expected_range"]) == (1, 2147483647), "integer row")
+        r = caught(m.validate_binding, {**good, "family": "a b"})
+        check(r is not None and r.stage is None and m.mapping_row_for(r).row_id == "MP-field_invalid-identifier" and "expected_range" not in r.evidence, "identifier row")
+        r = caught(m.validate_effective_payload, "f4-control-plane-age-bounds", {"status_max_age_seconds": 2147483648, "approval_max_age_seconds": 1})
+        check(r is not None and m.mapping_row_for(r).row_id == "MP-field_invalid-integer", "effective age is an integer row")
+        r = caught(m.validate_binding, {**good, "selection_epoch": "3"})
+        check(r is not None and r.evidence["observed_value_class"] == "string" and m.mapping_row_for(r).row_id == "MP-field_type_invalid", "observed class")
+        r = caught(m.validate_binding, {**good, "selection_epoch": None})
+        check(r is not None and r.evidence["observed_value_class"] == "null", "observed class null")
+        r = caught(m.verify_carried_binding_digest, good, "sha256:" + "0" * 64)
+        check(r is not None and r.evidence["carried_digest"] == "sha256:" + "0" * 64 and r.evidence["recomputed_digest"] == m.checked_binding_digest(good)
+              and m.mapping_row_for(r).row_id == "MP-digest_mismatch", "digest evidence")
+        check(not any(x.proposed for x in m.REFUSAL_MAPPING if x.row_id not in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-verify", "MP-trust_snapshot_missing-guard"))
+              and all(m.MAPPING_BY_ID[i].proposed for i in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-verify", "MP-trust_snapshot_missing-guard")), "proposed rows")
+
+    for fn in (valid_bindings, invalid_bindings, identifiers, guards, effective, scope_keys, snapshots, projection, spec_rules_not_pinned_by_a_vector, code_boundaries,
+               loader_direct, long_literals, malformed_snapshots, hostile_types, stage_and_evidence):
         guard(fn.__name__, fn)
     return fails
 
@@ -459,11 +632,215 @@ def test_canonical_serializer_matches_json_dumps_on_the_profile_domain_and_rejec
         else:
             assert got == want, s
     assert m.canonical_json_bytes({"b": [1, None, True], "a": {"z": 0, "y": -1}}) == b'{"a":{"y":-1,"z":0},"b":[1,null,true]}'
-    for bad in (1.5, b"x", {1: 2}, object()):
-        with pytest.raises((TypeError,)):
+    for bad in (1.5, b"x", object(), (1, 2.5), {"a": b"x"}, float("nan")):
+        with pytest.raises(m.IdentityRefusal) as info:
             m.canonical_json_bytes(bad)
+        assert info.value.code == "field_type_invalid"
+    with pytest.raises(m.IdentityRefusal) as info:
+        m.canonical_json_bytes({1: 2})
+    assert (info.value.code, info.value.member) == ("field_unknown", m.NON_STRING_KEY)
+    deep = []
+    for _ in range(m.MAX_DEPTH + 1):
+        deep = [deep]
+    with pytest.raises(m.IdentityRefusal) as info:
+        m.canonical_json_bytes(deep)
+    assert info.value.code == "json_nesting_too_deep"
+    assert m.canonical_json_bytes((1, "a")) == b'[1,"a"]'  # a tuple is a list
     # keys sort by code point of the ORIGINAL string (U+FFFF before U+1F600), not by the UTF-16 units of the escaped text
     assert m.canonical_json_bytes({"\U0001f600": 1, "\uffff": 2}) == b'{"\\uffff":2,"\\ud83d\\ude00":1}'
+
+
+def test_unmapped_codes_are_the_explicit_remainder_of_codes_v2():
+    """DEFERRED (spec 8 carry-forward): the 48-code completeness test is not implemented in this PR; the remainder is pinned so a change is visible."""
+    assert m.UNMAPPED_CODES == frozenset((
+        "composition_family_unsupported", "composition_operator_unsupported", "composition_record_invalid", "evaluator_mismatch", "evaluator_unsupported",
+        "issuer_not_authorized", "issuer_untrusted", "kind_unsupported", "lineage_authority_unavailable", "record_digest_mismatch", "record_identity_mismatch",
+        "selection_consumer_mismatch", "selection_missing", "selection_operation_mismatch", "selection_scope_mismatch", "selection_supersession_invalid",
+        "selection_withdrawn", "signature_algorithm_unsupported", "signature_invalid", "signature_missing", "supersession_invalid", "time_unavailable",
+        "trust_snapshot_version_stale", "verifier_unavailable"))
+    assert m.UNMAPPED_CODES | {r.registry_code for r in m.REFUSAL_MAPPING} == set(CODES_V2)
+    for code in m.UNMAPPED_CODES:
+        with pytest.raises(KeyError):
+            m.verdict_for(code)
+    with pytest.raises(KeyError):
+        m.mapping_row_for(m.IdentityRefusal("trust_snapshot_expired"))
+
+
+def test_every_refusal_this_module_raises_selects_exactly_one_mapping_row():
+    good = m.parse_binding(_bv()["input_json"])
+    raised = []
+    for vec in V["invalid"] + V["input_boundary"] + V["integer_boundary"]:
+        try:
+            m.parse_binding(_raw(vec))
+        except m.IdentityRefusal as r:
+            raised.append(r)
+    for fn, args in ((m.project_scope, ({"tenant": "a b", "institution": "i", "authority_domain": "d"},)), (m.project_snapshot_version, (2 ** 53,)),
+                     (m.verify_carried_binding_digest, (good, "sha256:" + "0" * 64)), (m.trust_snapshot_fingerprint, ({},)),
+                     (m.validate_effective_payload, ("f9", {}))):
+        try:
+            fn(*args)
+        except m.IdentityRefusal as r:
+            raised.append(r)
+    assert len({r.code for r in raised}) >= 8
+    for r in raised:
+        row = m.mapping_row_for(r)
+        assert row.registry_code == r.code, (r.code, row.row_id)
+
+
+def test_trust_snapshot_object_adapter_is_deferred_and_the_object_is_refused_not_misread():
+    """The fingerprint takes the spec's normalized dict. The verifier's `TrustSnapshot` object is not accepted (and never silently misread); the adapter
+    from a verified snapshot (bytes key to lowercase hex, frozensets to sorted pairs, grants to five-token arrays) is DEFERRED to the Registry source PR."""
+    from registry_successor.verify import TrustSnapshot
+    obj = TrustSnapshot(snapshot_id="snap-example-7", version=7, valid_until="2026-12-01T00:00:00Z", issuers=(), revoked_key_ids=frozenset(),
+                        revoked_selections=frozenset(), min_epochs={})
+    with pytest.raises(m.IdentityRefusal) as info:
+        m.trust_snapshot_fingerprint(obj)
+    assert info.value.code == "trust_snapshot_invalid"
+    assert not [n for n in dir(m) if "trust_snapshot_from" in n or "adapter" in n.lower()]
+
+
+def _hostile_values():
+    class S(str):
+        pass
+
+    class I(int):
+        pass
+
+    class L(list):
+        pass
+
+    class D(dict):
+        pass
+
+    cyc = []
+    cyc.append(cyc)
+    deep = []
+    for _ in range(40):
+        deep = [deep]
+    return [None, True, False, 0, -1, 2 ** 64, 10 ** 5000, -10 ** 5000, 1.5, float("nan"), "", "a", "a b", "\ud800", S("a"), I(1), L([1]), D(a=1), b"x", bytearray(b"x"),
+            memoryview(b"x"), (), (1, "a"), [], [[]], {}, {"a": 1}, {1: 1}, {None: 1}, {b"x": 1, "a": 1}, {"a": {1: 2}}, cyc, deep, object(), set(), frozenset(), {"scope": 5},
+            {"scope": {1: 2}}, {"issuers": [1]}, [[["a", 10 ** 5000]]]]
+
+
+def test_public_surface_raises_only_typed_refusals_on_hostile_input():
+    """S1: every public function that takes a document either returns or raises IdentityRefusal; nothing else escapes (digit limit, recursion, TypeError)."""
+    good = m.parse_binding(_bv()["input_json"])
+    fam = list(m.IDENTITY_FAMILIES)
+    one_arg = (m.load_document, m.validate_binding, m.parse_binding, m.canonical_binding_bytes, m.checked_binding_digest, m.binding_digest, m.canonical_json_bytes,
+               m.plain_digest, m.normalize_snapshot, m.check_snapshot_duplicates, m.trust_snapshot_fingerprint, m.project_scope, m.project_snapshot_version,
+               m.validate_scope_key, m.scope_key_bytes, m.scope_key_digest, m.scope_key_from_binding, m.preimage_from_inputs, m.validate_preimage,
+               m.effective_digest_of_preimage)
+    n = 0
+    for value in _hostile_values():
+        for fn in one_arg:
+            try:
+                fn(value)
+            except m.IdentityRefusal:
+                pass
+            n += 1
+        for f in fam + _hostile_values():
+            for fn in (m.registered_family_version, m.effective_policy_digest, m.effective_preimage):
+                for other in (value, "r08-v2"):
+                    try:
+                        fn(f, value) if fn is not m.registered_family_version else fn(f, other)
+                    except m.IdentityRefusal:
+                        pass
+                    n += 1
+            try:
+                m.validate_effective_payload(f, value)
+            except m.IdentityRefusal:
+                pass
+        for fn in (m.verify_carried_binding_digest,):
+            for a, b in ((good, value), (value, "sha256:" + "0" * 64), (value, value)):
+                try:
+                    fn(a, b)
+                except m.IdentityRefusal:
+                    pass
+        for a, b, c_ in ((value, "known", "n/a"), ("optional", value, "authenticated"), ("optional", "permits_optional", value), (value, value, value)):
+            try:
+                m.projection_effect(a, b, c_)
+            except m.IdentityRefusal:
+                pass
+        for member in good:  # every member replaced by a hostile value
+            try:
+                m.validate_binding({**good, member: value})
+            except m.IdentityRefusal:
+                pass
+    assert n > 1500
+
+
+def test_validators_hand_back_private_plain_copies():
+    good = m.parse_binding(_bv()["input_json"])
+    mutable = json.loads(json.dumps(good))
+    out = m.validate_binding(mutable)
+    assert out == good and out is not mutable and out["scope"] is not mutable["scope"] and type(out) is dict and type(out["scope"]) is dict
+    f4 = "f4-control-plane-age-bounds"
+    payload = {"status_max_age_seconds": 1, "approval_max_age_seconds": 2}
+    assert m.validate_effective_payload(f4, payload) == payload and m.validate_effective_payload(f4, payload) is not payload
+    lists = {"allowed_actions": ["a"], "allowed_adapters": ["b"], "allowed_units": ["c"]}
+    pre = m.effective_preimage("f1a-local-execution-allowlist", lists)
+    lists["allowed_actions"].append("later")
+    assert pre["effective"]["allowed_actions"] == ["a"]
+
+
+def test_str_subclass_cannot_defeat_the_carried_digest_comparison():
+    class Liar(str):
+        def __ne__(self, other):
+            return False
+
+        def __eq__(self, other):
+            return True
+
+        __hash__ = str.__hash__
+
+    good = m.parse_binding(_bv()["input_json"])
+    with pytest.raises(m.IdentityRefusal) as info:
+        m.verify_carried_binding_digest(good, Liar("sha256:" + "0" * 64))
+    assert info.value.code == "field_invalid"
+
+
+def test_integer_subclass_cannot_inject_into_the_preimage():
+    class EvilInt(int):
+        def __str__(self):
+            return '1,"evil":2'
+
+        __repr__ = __str__
+
+    good = m.parse_binding(_bv()["input_json"])
+    with pytest.raises(m.IdentityRefusal) as info:
+        m.canonical_binding_bytes({**good, "record_version": EvilInt(1)})
+    assert (info.value.code, info.value.member) == ("field_type_invalid", "record_version")
+
+
+def test_digit_limit_cannot_crash_the_snapshot_fingerprint_or_the_loader():
+    base = json.loads(json.dumps(V["trust_snapshots"][0]["input"]))
+    base["revoked_selections"] = [["a", 10 ** 5000]]
+    with pytest.raises(m.IdentityRefusal) as info:
+        m.trust_snapshot_fingerprint(base)
+    assert info.value.code == "trust_snapshot_invalid"
+    old = sys.get_int_max_str_digits()
+    sys.set_int_max_str_digits(640)
+    try:
+        doc = m.load_document("[" + "9" * 700 + "]")
+        assert doc[0] == m.OutOfRangeInteger("9" * 700) and doc[0] != m.OutOfRangeInteger("9" * 699 + "8")
+        with pytest.raises(m.IdentityRefusal):
+            m.canonical_json_bytes(doc)
+    finally:
+        sys.set_int_max_str_digits(old)
+
+
+def test_snapshot_fingerprint_distinguishes_every_long_epoch_by_refusing_it():
+    """S5: two different 21+ digit epochs must never fingerprint (they used to collapse into one sentinel and one digest)."""
+    base = V["trust_snapshots"][0]["input"]
+    raw = json.dumps(base)
+    digests = set()
+    for epoch in ("100000000000000000000", "100000000000000000001", "10" + "0" * 30):
+        doc = m.load_document(raw.replace('["sel-old-1", 2]', '["sel-old-1", %s]' % epoch))
+        with pytest.raises(m.IdentityRefusal) as info:
+            m.trust_snapshot_fingerprint(doc)
+        assert info.value.code == "trust_snapshot_invalid"
+        digests.add(epoch)
+    assert len(digests) == 3
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -601,16 +978,16 @@ MUTANTS = [
     ("size limit off by one", "MAX_DOCUMENT_BYTES = 65536", "MAX_DOCUMENT_BYTES = 65537"),
     ("lenient utf-8", 'text = data.decode("utf-8")', 'text = data.decode("utf-8", "replace")'),
     ("depth limit 9", "MAX_DEPTH = 8", "MAX_DEPTH = 9"),
-    ("depth check off by one", "if d > MAX_DEPTH:", "if d > MAX_DEPTH + 1:"),
+    ("depth check off by one", 'if d > MAX_DEPTH:', 'if d > MAX_DEPTH + 1:'),
     ("floats accepted", "    if saw_number:\n        _refuse", "    if False:\n        _refuse"),
     ("duplicate keys accepted", "if len(keys) != len(set(keys)):", "if len(keys) < 0:"),
     ("exact digits 5", "_MAX_EXACT_DIGITS = 20", "_MAX_EXACT_DIGITS = 5"),
-    ("big int not out of range", "_OUT_OF_RANGE = 10 ** 40", "_OUT_OF_RANGE = 1"),
+    ("big int not out of range", '    return OutOfRangeInteger(text)', '    return 10 ** 40'),
     ("pairs not joined", "0xDC00 <= int(h2, 16) <= 0xDFFF", "False"),
     ("ident length 129", "{0,127}", "{0,128}"),
     ("prefix match not fullmatch", "pattern.fullmatch(value) is not None", "pattern.match(value) is not None"),
     ("non-ascii identifier accepted", "return value.isascii() and pattern.fullmatch", "return pattern.fullmatch"),
-    ("bool is int", "return isinstance(v, int) and not isinstance(v, bool)", "return isinstance(v, int)"),
+    ("bool is int", '    return type(v) is int or type(v) is OutOfRangeInteger', '    return isinstance(v, int) or type(v) is OutOfRangeInteger'),
     ("snapshot version ceiling", '(1, 9007199254740991),  # N-1', '(1, 9007199254740992),  # N-1'),
     ("snapshot version floor", '"trust_snapshot_version": (1, ', '"trust_snapshot_version": (0, '),
     ("epoch ceiling", '"selection_epoch": (1, 2147483647)', '"selection_epoch": (1, 2147483648)'),
@@ -618,16 +995,16 @@ MUTANTS = [
     ("caller age floor", '"caller": (0, 2147483647)', '"caller": (1, 2147483647)'),
     ("registry age floor", '"registry": (1, 2147483647)', '"registry": (0, 2147483647)'),
     ("effective age ceiling", '"effective": (0, 2147483647)', '"effective": (0, 2147483648)'),
-    ("dotted key allowed (flatten before sets)", "unknown = {k for k in doc if k not in TOP_MEMBERS}\n", 'unknown = {k for k in doc if k not in TOP_MEMBERS and "." not in k}\n'),
+    ("dotted key allowed (flatten before sets)", 'unknown = {k for k in d if k not in TOP_MEMBERS}\n', 'unknown = {k for k in d if k not in TOP_MEMBERS and "." not in k}\n'),
     ("missing reports max", '_refuse("field_missing", min(missing))\n    unknown = {k', '_refuse("field_missing", max(missing))\n    unknown = {k'),
     ("unknown reports max", '_refuse("field_unknown", min(unknown))\n    flat = _flatten_checked', '_refuse("field_unknown", max(unknown))\n    flat = _flatten_checked'),
     ("profile not checked", 'elif path == "binding_profile" and v != BINDING_PROFILE:', "elif False:"),
     ("digest not recompared", "    if carried != recomputed:", "    if False:"),
     ("authority not sorted", '"authority": sorted(i["authority"])', '"authority": i["authority"]'),
     ("epoch sorted lexically", "key=lambda p: (p[0], p[1]))\n    out[\"min_epochs\"]", "key=lambda p: (p[0], str(p[1])))\n    out[\"min_epochs\"]"),
-    ("revoked ids duplicates allowed", "or len(set(revoked)) != len(revoked):", "or False:"),
-    ("issuer duplicates allowed", "if len(set(keys)) != len(keys) or", "if False or"),
-    ("fingerprint with binding prefix", "return plain_digest(normalize_snapshot(snapshot))", "return binding_digest(normalize_snapshot(snapshot))"),
+    ("revoked ids duplicates allowed", 'or len(set(revoked)) != len(revoked)', 'or False'),
+    ("issuer duplicates allowed", '    return (len(set(keys)) != len(keys) or', '    return (False or'),
+    ("fingerprint with binding prefix", 'return plain_digest(normalize_snapshot(plain))', 'return binding_digest(normalize_snapshot(plain))'),
     ("f1a tag", '"f1a-local-execution-allowlist", "v1", "lists"', '"f1a-local-execution-allowlist", "v2", "lists"'),
     ("r08-v1 registered", "REGISTERED_CONTRACT_VERSIONS = (CONTRACT_VERSION,)", 'REGISTERED_CONTRACT_VERSIONS = (CONTRACT_VERSION, "r08-v1")'),
     ("deny_all wrong", "if v == [])", "if len(v) < 2)"),
@@ -635,18 +1012,50 @@ MUTANTS = [
     ("list bound 257", "len(v) > MAX_LIST_ENTRIES", "len(v) > MAX_LIST_ENTRIES + 1"),
     ("token rule dropped", "all(c.valid_token(x) for x in v)", "all(isinstance(x, str) for x in v)"),
     ("empty class map allowed", "if not classes or not", "if not"),
-    ("class map bare int", 'elif path == "class_status_max_age_seconds" or not _is_int(v):', "elif not _is_int(v):"),
-    ("deny_all not compared", 'if doc["deny_all"] != deny_all_dimensions', "if False and doc[\"deny_all\"] != deny_all_dimensions"),
-    ("family tag trusted", 'if doc["family_version"] != registered:', "if False:"),
-    ("scope key profile unchecked", 'if doc[k] != SCOPE_KEY_PROFILE:', "if False:"),
+    ("class map bare int", 'elif path == "class_status_max_age_seconds" or not _int_typed(v):', 'elif not _int_typed(v):'),
+    ("deny_all not compared", 'if d["deny_all"] != deny_all_dimensions', 'if False and d["deny_all"] != deny_all_dimensions'),
+    ("family tag trusted", 'if d["family_version"] != registered:', 'if False:'),
+    ("scope key profile unchecked", 'if d[k] != SCOPE_KEY_PROFILE:', 'if False:'),
     ("required indeterminate", 'outcome = "UNKNOWN_FAIL_CLOSED" if activation_state == "indeterminate" else "REFUSE"', 'outcome = "REFUSE"'),
     ("optional falls back on either", 'if determination == "authenticated" and activation_state', 'if determination == "authenticated" or activation_state'),
     ("unknown participation read as optional", 'if participation != "optional":\n        _refuse', "if False:\n        _refuse"),
     ("optional indeterminate falls back", 'if activation_state == "indeterminate":\n        return {"effect_outcome": "UNKNOWN_FAIL_CLOSED", "decision_kind": None', 'if False:\n        return {"effect_outcome": "UNKNOWN_FAIL_CLOSED", "decision_kind": None'),
     ("refusal code not joined", '"projection_refusal_code": refusal_code}}', '"projection_refusal_code": "field_invalid"}}'),
-    ("snapshot version unbounded", "if not _is_int(version) or not lo <= version <= hi:", "if not _is_int(version) or not lo <= version:"),
-    ("scope projection normalizes", 'if not (isinstance(v, str) and _ascii_match(_IDENT, v)):\n            _refuse("field_invalid", "scope." + k)', 'if not isinstance(v, str):\n            _refuse("field_invalid", "scope." + k)'),
-    ("refusal code unchecked", "if code not in CODES_V2:  #", "if False:  #"),
+    ("snapshot version unbounded", 'if not _in_range(version, lo, hi):', 'if not _in_range(version, lo, 2 ** 70):'),
+    ("scope projection normalizes", 'if not (type(v) is str and _ascii_match(_IDENT, v)):\n            _projection_refusal("scope." + k)', 'if type(v) is not str:\n            _projection_refusal("scope." + k)'),
+    ("refusal code unchecked", 'if type(code) is not str or code not in CODES_V2:  #', 'if False:  #'),
+    # review of PR #33 (S1-S5, nits): hostile-input boundary, snapshot guard, stage and evidence
+    ("non-string key accepted", "            if type(k) is not str:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            out[k]", "            if False:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            out[k]"),
+    ("serializer int unbounded", "if not -_INT_BOUND < value < _INT_BOUND:", "if False:"),
+    ("serializer coerces subclasses", "    _refuse(\"field_type_invalid\")\n\n\ndef canonical_json_bytes", "    return str(value)\n\n\ndef canonical_json_bytes"),
+    ("plain depth unchecked", "    if depth > MAX_DEPTH:\n        _refuse(\"json_nesting_too_deep\")\n    t = type(value)\n    if value is None or", "    t = type(value)\n    if value is None or"),
+    ("snapshot member set loose", "set(s) == set(_SNAPSHOT_MEMBERS)", "set(s) >= set(_SNAPSHOT_MEMBERS)"),
+    ("snapshot epoch accepts bool", "return type(v) is int and 1 <= v < _INT_BOUND", "return isinstance(v, int) and 1 <= v < _INT_BOUND"),
+    ("snapshot epoch floor 0", "return type(v) is int and 1 <= v < _INT_BOUND", "return type(v) is int and 0 <= v < _INT_BOUND"),
+    ("snapshot key upper hex", '_LOWER_HEX = frozenset("0123456789abcdef")', '_LOWER_HEX = frozenset("0123456789abcdefABCDEF")'),
+    ("snapshot key empty", "return type(v) is str and len(v) > 0 and len(v) % 2 == 0", "return type(v) is str and len(v) % 2 == 0"),
+    ("snapshot grant arity", "return type(g) is list and len(g) == 5", "return type(g) is list and len(g) >= 4"),
+    ("snapshot grant tokens", "len(g) == 5 and all(_token(x) for x in g)", "len(g) == 5 and all(type(x) is str for x in g)"),
+    ("snapshot issuer extras", "type(i) is dict and set(i) == set(_ISSUER_MEMBERS)", "type(i) is dict and set(i) >= set(_ISSUER_MEMBERS)"),
+    ("snapshot valid_until unparsed", "and c.parse_timestamp(s[\"valid_until\"]) is not None", ""),
+    ("snapshot repeated grant allowed", "            or per_issuer)", "            or False)"),
+    ("snapshot version unchecked", "_token(s[\"snapshot_id\"]) and _epoch(s[\"version\"])", "_token(s[\"snapshot_id\"]) and True"),
+    ("snapshot hostile input escapes", "    except IdentityRefusal:\n        _refuse(\"trust_snapshot_invalid\")\n    if not _snapshot_shape_ok(plain):", "    except ZeroDivisionError:\n        _refuse(\"trust_snapshot_invalid\")\n    if not _snapshot_shape_ok(plain):"),
+    ("projection stage dropped", 'def _projection_refusal(member: str, **evidence):\n    _refuse("field_invalid", member, stage="projection",', 'def _projection_refusal(member: str, **evidence):\n    _refuse("field_invalid", member, stage=None,'),
+    ("integer range evidence dropped", 'evidence={"expected_range": (lo, hi)})', "evidence={})"),
+    ("digest evidence dropped", 'evidence={"carried_digest": carried, "recomputed_digest": recomputed})', "evidence={})"),
+    ("observed class dropped", 'evidence={"observed_value_class": _value_class(value)})', "evidence={})"),
+    ("carried digest checked before binding", "    recomputed = checked_binding_digest(binding)\n    if not (type(carried) is str", "    if not (type(carried) is str and _ascii_match(_DIGEST, carried)):\n        _refuse(\"field_invalid\")\n    recomputed = checked_binding_digest(binding)\n    if not (type(carried) is str"),
+    ("registered cv type unchecked", "    if type(contract_version) is not str:\n        _type_refusal(\"contract_version\", contract_version)\n    if family not in", "    if family not in"),
+    ("registered family type unchecked", "    if type(family) is not str:\n        _type_refusal(\"family\", family)\n    if type(contract_version)", "    if type(contract_version)"),
+    ("payload family type unchecked", "    if type(family) is not str:\n        _type_refusal(\"family\", family)\n    if family not in IDENTITY_FAMILIES:\n        _refuse(\"family_unsupported\", \"family\")\n    row =", "    if family not in IDENTITY_FAMILIES:\n        _refuse(\"family_unsupported\", \"family\")\n    row ="),
+    ("text coercion dropped", "return v if type(v) is str else None", "return v"),
+    ("loader accepts bytearray", "    if type(raw) is bytes:", "    if isinstance(raw, (bytes, bytearray)):"),
+    ("ranges writable", "INTEGER_RANGES = MappingProxyType({", "INTEGER_RANGES = ({"),
+    ("age ranges writable", "AGE_RANGES = MappingProxyType({", "AGE_RANGES = ({"),
+    ("projection stage row unselected", 'if refusal.stage == "projection":', "if False:"),
+    ("integer row unselected", '"expected_range" in refusal.evidence', "False"),
+    ("proposed flag dropped", 'stage_value="verify", proposed=True)', 'stage_value="verify")'),
     ("scope key members", 'SCOPE_KEY_MEMBERS = ("authority_domain", "consumer_id", "family", "institution", "operation", "selection_id", "tenant")', 'SCOPE_KEY_MEMBERS = ("authority_domain", "consumer_id", "family", "institution", "operation", "selection_id")'),
 ]
 
