@@ -1,0 +1,24 @@
+{
+  "manifest_type": "local-execution-allowlist-selection",
+  "manifest_version": "s04-v1",
+  "contract_version": "s03-v1",
+  "record": {
+    "record_id": "lep.allowlist.synthetic",
+    "record_version": 1,
+    "record_digest": "sha256:e8481a3f440f9e79f13d13109289e063b9aaf5f1ff597090ffdb3cd6a4ca899d",
+    "file_sha256": "sha256:ab9b13660cff0060383809d0f8edd6bf9d286bb18ef51894d8a3475f44d02d91"
+  },
+  "record_source": {
+    "repository": "cogno-us/cognous-ocs-registry",
+    "commit": "0000000000000000000000000000000000000000",
+    "path": "registry_records/local-execution-allowlist.synthetic.record.json"
+  },
+  "evaluator": {
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "binding": "registered-code-reference"
+  },
+  "runtime": {
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+  }
+}
