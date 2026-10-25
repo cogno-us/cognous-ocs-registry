@@ -20,7 +20,7 @@ from typing import Any, Callable, Optional
 from registry_successor import common as c
 from registry_successor import compose as compose_mod
 from registry_successor.compose import CompositionResult
-from registry_successor import v2_f1ab
+from registry_successor import v2_age_bounds, v2_f1ab
 
 # Enforcing components named by the contract (section 2 table). Descriptive labels only: never an authorization.
 COMPONENT_RUNTIME = "runtime"
@@ -73,10 +73,30 @@ _F1AB = FamilySpec(
     enforcing_component=COMPONENT_RUNTIME,
 )
 
-# `r08-v2` table (EXT-S1-3): the v1 families plus `f1ab`. Kept SEPARATE from `FAMILIES` because the frozen `r08-v1` entry
+_F4 = FamilySpec(
+    family=v2_age_bounds.FAMILY_F4,
+    payload_fields=v2_age_bounds.F4_FIELDS,
+    payload_validator=v2_age_bounds.f4_payload_validator,
+    composer=v2_age_bounds.compose_f4,
+    evaluator_binding=(c.EVALUATOR_ID, c.EVALUATOR_BINDING),
+    caller_normalizer=v2_age_bounds.normalize_caller_f4,
+    enforcing_component=COMPONENT_CONTROL_PLANE,
+)
+
+_F5 = FamilySpec(
+    family=v2_age_bounds.FAMILY_F5,
+    payload_fields=v2_age_bounds.F5_FIELDS,
+    payload_validator=v2_age_bounds.f5_payload_validator,
+    composer=v2_age_bounds.compose_f5,
+    evaluator_binding=(c.EVALUATOR_ID, c.EVALUATOR_BINDING),
+    caller_normalizer=v2_age_bounds.normalize_caller_f5,
+    enforcing_component=COMPONENT_CONTROL_PLANE,
+)
+
+# `r08-v2` table (EXT-S1-3, EXT-S1-4): the v1 families plus `f1ab`, `f4` and `f5`. Kept SEPARATE from `FAMILIES` because the frozen `r08-v1` entry
 # points (record, selection, decision) read `FAMILIES`, and the v1 golden pins that they refuse `f1ab` `family_unsupported`.
 # A v2 entry point selects a table through `table_for_contract_version` (below); the v2 statement shape is EXT-S1-5/6.
-FAMILIES_V2: Mapping = MappingProxyType({**FAMILIES, _F1AB.family: _F1AB})
+FAMILIES_V2: Mapping = MappingProxyType({**FAMILIES, _F1AB.family: _F1AB, _F4.family: _F4, _F5.family: _F5})
 
 # The family the unchanged `r08-v1` entry points normalize an optional caller policy with when a refusal happens before
 # (or without) a registered family being known. Part of the frozen v1 behaviour, not a general default for new families.
