@@ -24,7 +24,7 @@ F1a (done) → F1b → F1c → F6 → F4 scalars → F5 tightening subset → F7
 
 ## What each step must carry
 
-Frozen expectations written before code; an oracle independent of the validator author where available; negative controls for each refusal class; Copilot review on the exact head (technical review only); no activation, no approved pin, and no Runtime integration in the same sprint.
+Frozen expectations written before code; an oracle written by someone other than the validator author, required for every family beyond F1a before any claim (07 §2); negative controls for each refusal class; Copilot review on the exact head (technical review only); no activation, no approved pin, and no Runtime integration in the same sprint.
 
 ## Explicitly not in this roadmap
 

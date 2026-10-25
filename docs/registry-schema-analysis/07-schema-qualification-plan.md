@@ -13,7 +13,7 @@
 | U1 | Unsupported envelope version | `envelope_version` unknown | `envelope_unsupported` |
 | U2 | Unsupported family or family contract version | | `family_unsupported` |
 | U3 | Unsupported canonicalization id | | `canonicalization_unsupported` |
-| U4 | Newer record version than consumer supports | | refused; never read best-effort |
+| U4 | `envelope_version` or family `contract_version` newer than the consumer supports | | refused; never read best-effort. (`record_version` is a data revision selected by the manifest; a correctly selected v2 record on a supported envelope and contract is not refused for being v2.) |
 | K1 | Duplicate keys at any depth | | `record_malformed` |
 | D1 | `data_digest` wrong | | `digest_mismatch` |
 | D2 | `record_digest` wrong | | `digest_mismatch` |
@@ -36,6 +36,7 @@
 | W1 | Registry value is a superset of the caller's (for example a broader allow-list) | | Successful non-widening case: effective value equals the caller's by intersection; no refusal (cf. `tests/test_s04_overlay.py`) |
 | W1b | Defect injection: a composition implementation returns a value broader than the caller's | test double | post-composition assertion fails: `widening_attempt` (detection of a defect, not a data case) |
 | W2 | Payload attempts to relax a toggle (`allow_synthetic_resolver`) or add an action class | | `record_malformed` (unknown field) or `requirement_conflict` |
+| W2b | F5 payload tightens only `irreversible` to true for a class whose host `reversibility` is `reversible_at_cost` | | `requirement_conflict` (the host class would raise `irreversible_flag_mismatch`); no partial application |
 | W3 | Record claims `approved`, `active` or `mandatory` | | `record_malformed` (unknown field); has no effect |
 | W4 | Record carries an expression or script field | | `record_malformed` |
 | H1 | Changed conditions: caller policy tightened after the record was authored | | effective value is the tighter of the two |

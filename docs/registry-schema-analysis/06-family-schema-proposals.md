@@ -133,13 +133,13 @@ The two ages are separate typed fields because they bound different observed obj
   "contract_version": "example-0",
   "data": {
     "classes": {
-      "class-a": { "irreversible": true, "max_status_age_seconds": 30, "on_unreadable": "refuse" }
+      "class-a": { "max_status_age_seconds": 30, "on_unreadable": "refuse" }
     }
   }
 }
 ```
 
-The payload can only tighten a class the host already declares: it cannot add a class, and `allow_synthetic_resolver` and similar relaxing toggles are not representable. A class absent from the host profile is refused (`requirement_conflict`).
+The payload can only tighten a class the host already declares: it cannot add a class, and `allow_synthetic_resolver` and similar relaxing toggles are not representable. A class absent from the host profile is refused (`requirement_conflict`). `irreversible` is deliberately omitted: it is derived from the host's `reversibility` enum and cannot be changed alone (04 §4.4).
 
 ### 5.6 ISS example
 

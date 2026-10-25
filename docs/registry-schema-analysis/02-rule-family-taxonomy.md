@@ -31,7 +31,7 @@ The figures in the "Where it appears" column are the sources' own counts. This a
 | Adoption status | Has the governing authority adopted it? | 229 clauses are proposed-not-adopted |
 | Evidence status | What evidence supports the classification? | Worker inference versus source read |
 | Applicability | To which component, revision and profile does it apply? | `runtime_source_blob_id` exact match in S03 |
-| Historical release scope | Which release did it come from? | All catalogue rules are `v0_1`; no V0.2 inventory exists |
+| Historical release scope | Which release did it come from? | All catalogue rules are `v0_1`; no separate V0.2 inventory was recovered (absence of recovery, not proof that none exists) |
 
 ## 3. Candidate configurable families (nine)
 
