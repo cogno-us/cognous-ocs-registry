@@ -94,14 +94,16 @@ V2_CONTRACT = "r08-v2"
 def _admission_mandatory(selection: Any, contract_version: Any) -> bool:
     """Admission is mandatory on every path except the explicit legacy `r08-v1` default. Fail closed: any other or odd
     `contract_version` value, or an envelope that itself says r08-v2, selects the mandatory path."""
-    if contract_version != LEGACY_CONTRACT:
+    if type(contract_version) is not str or contract_version != LEGACY_CONTRACT:
         return True
     return getattr(selection, "envelope", None) is not None and \
         isinstance(selection.envelope, dict) and selection.envelope.get("contract_version") == V2_CONTRACT
 
 
-def _normalize_trust(trust: Any) -> Optional[dict]:
-    """Return a normalized view of a well-formed snapshot, or None."""
+def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
+    """Return a normalized view of a well-formed snapshot, or None. On the mandatory-admission path a missing, empty or
+    wrong-type public key is NOT a shape error here: it is left for `_admission_failure` so it gets the typed
+    key_admission_invalid detail (key_type / key_length). The legacy path is unchanged."""
     if not isinstance(trust, TrustSnapshot):
         return None
     if not c.valid_token(trust.snapshot_id) or not c.is_int(trust.version) or trust.version < 1:
@@ -114,7 +116,7 @@ def _normalize_trust(trust: Any) -> Optional[dict]:
     for entry in trust.issuers:
         if not isinstance(entry, IssuerEntry) or not c.valid_token(entry.key_id) or not c.valid_token(entry.issuer_id):
             return None
-        if not isinstance(entry.alg, str) or not isinstance(entry.public_key, bytes) or not entry.public_key:
+        if not isinstance(entry.alg, str) or (not mandatory and (not isinstance(entry.public_key, bytes) or not entry.public_key)):
             return None
         if entry.key_id in issuers or not isinstance(entry.authority, (tuple, list)):
             return None
@@ -161,6 +163,8 @@ def _admission_failure(trust: dict, key_admission: Any, mandatory: bool) -> Opti
         return None
     for key_id, (entry, _grants) in trust["issuers"].items():
         cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None
+        if mandatory and cause is None and (type(entry.public_key) is not bytes or not entry.public_key):
+            cause = "key_type" if type(entry.public_key) is not bytes else "key_length"  # any alg: never admit junk
         admitted = True
         if key_admission is not None:
             try:
@@ -290,8 +294,8 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
             bad = _record_binding(statement, record)
             mark("record_binding", *(bad if bad else (None,)))
 
-    trust = _normalize_trust(trust_in)
     mandatory = _admission_mandatory(selection, contract_version)
+    trust = _normalize_trust(trust_in, mandatory)
     admission = None if trust is None else _admission_failure(trust, key_admission, mandatory)
     if trust_in is None:
         mark("trust_snapshot", "trust_snapshot_missing", "no trust snapshot supplied")

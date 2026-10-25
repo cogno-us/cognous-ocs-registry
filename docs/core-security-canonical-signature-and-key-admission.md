@@ -26,7 +26,7 @@ Architect ruling B: public-key admission is MANDATORY on the r08-v2 verification
 
 `verify_selection(..., key_admission=None, contract_version="r08-v1")` and `verify_and_decide(..., key_admission=None,
 contract_version="r08-v1")`. Admission is **mandatory unless `contract_version` is exactly the legacy string `r08-v1`**
-(fail closed: `r08-v2`, any other string, `None`, a non-string, or `"R08-V1"` / `"r08-v1 "` all select the mandatory path),
+(fail closed: the legacy path requires `type(x) is str` AND equality, so `r08-v2`, any other string, `None`, a non-string, a `str` subclass or an equal-comparing object such as `UserString("r08-v1")`, and `"R08-V1"` / `"r08-v1 "` all select the mandatory path),
 and also whenever the selection envelope itself says `r08-v2`. On the mandatory path the built-in Ed25519 check
 (`inspect_ed25519_key`) runs on every issuer key when the trust snapshot is admitted, whether or not a callback is supplied.
 The optional `key_admission` policy `(alg, public_key) -> bool` can only ADD refusals: a callback that returns `True` for a
@@ -63,6 +63,8 @@ is approved. Until then mixed-order keys and signatures made with them MAY be ac
 check alone accepting mixed-order cases. This PR does not close that gap.
 
 ### 2.0a Reason and typed detail (ruling C)
+
+On the mandatory path an empty or wrong-type public key (any algorithm) is an admission failure (`key_length` / `key_type`), not a generic malformed snapshot; legacy normalization is unchanged.
 
 Reason code: `trust_snapshot_invalid` (the existing code; CODES stays 46; the frozen reason-code artifacts are untouched).
 Typed detail, in `registry_successor/key_admission.py`:

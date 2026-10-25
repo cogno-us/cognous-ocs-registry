@@ -147,6 +147,21 @@ def _verify_probe(mod):
     stricter = run(canon, key, lambda a, k: False, "r08-v2")
     assert stricter.code == "trust_snapshot_invalid" and stricter.detail_cause == "policy_refused"
     assert run(canon, key, lambda a, k: (_ for _ in ()).throw(RuntimeError()), "r08-v2").detail_cause == "policy_refused"
+    import collections
+    class StrSub(str):
+        pass
+    for odd in (collections.UserString("r08-v1"), StrSub("r08-v1"), b"r08-v1"):
+        assert run(bad_sig, bad_key, None, odd).code == "trust_snapshot_invalid", odd
+    for junk, cause in ((b"", "key_length"), (None, "key_type"), ("a" * 32, "key_type"), (bytearray(32), "key_type")):
+        jr = run(canon, junk, None, "r08-v2")
+        assert jr.code == "trust_snapshot_invalid" and jr.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and jr.detail_cause == cause, junk
+        assert run(canon, junk, None).detail == "trust snapshot is malformed"  # legacy normalization untouched
+    for junk, cause in ((b"", "key_length"), (None, "key_type")):
+        other = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                                  (mod.IssuerEntry("key-test-1", "issuer-test-1", "future-alg", junk, (grant,)),))
+        selx = selection.parse_selection_envelope(r.dumps(r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)))
+        o = mod.verify_selection(selx, ctx, other, _V64(), r.NOW, contract_version="r08-v2")
+        assert o.code == "trust_snapshot_invalid" and o.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and o.detail_cause == cause
     mal = run(canon, key, None, "malformed")
     assert mal.code == "trust_snapshot_invalid" and mal.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED
     assert mal.detail_code != ka.DETAIL_KEY_ADMISSION_INVALID
@@ -239,7 +254,12 @@ MUTANTS = {
         "admission_none_means_builtin": [("    if key_admission is None and not mandatory:\n        return None\n", "    if key_admission is None and not mandatory:\n        key_admission = lambda a, k: True\n")],
         "mandatory_requires_callback": [("    if key_admission is None and not mandatory:", "    if key_admission is None:")],
         "callback_replaces_builtin": [("cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None", "cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG and key_admission is None else None")],
-        "mandatory_only_for_exact_v2": [("    if contract_version != LEGACY_CONTRACT:\n        return True", "    if contract_version == V2_CONTRACT:\n        return True")],
+        "mandatory_only_for_exact_v2": [("    if type(contract_version) is not str or contract_version != LEGACY_CONTRACT:\n        return True", "    if contract_version == V2_CONTRACT:\n        return True")],
+        "legacy_equality_only": [("type(contract_version) is not str or contract_version != LEGACY_CONTRACT", "contract_version != LEGACY_CONTRACT")],
+        "legacy_isinstance_str": [("type(contract_version) is not str or", "not isinstance(contract_version, str) or")],
+        "junk_key_left_to_normalizer": [("(not mandatory and (not isinstance(entry.public_key, bytes)", "((not isinstance(entry.public_key, bytes)")],
+        "junk_key_check_dropped": [("    if mandatory and cause is None and (type(entry.public_key) is not bytes or not entry.public_key):", "    if False:")],
+        "junk_key_type_label_swapped": [('cause = "key_type" if type(entry.public_key) is not bytes else "key_length"', 'cause = "key_length"')],
         "mandatory_ignores_envelope_v2": [("selection.envelope.get(\"contract_version\") == V2_CONTRACT", "False")],
         "contract_version_not_threaded": [("record, key_admission, contract_version)", "record, key_admission, LEGACY_CONTRACT)")],
         "malformed_detail_always_typed": [("(DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None", "(DETAIL_TRUST_SNAPSHOT_MALFORMED, None)")],

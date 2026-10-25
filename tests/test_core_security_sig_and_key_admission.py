@@ -594,3 +594,43 @@ def test_decision_pipeline_forwards_contract_version_to_the_verifier():
     d = decision.verify_and_decide(*args, contract_version=V2)                       # PK is 17 bytes: key_length
     assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
     assert d.detail_cause == "key_length"
+
+
+def test_equal_but_non_str_contract_versions_take_the_mandatory_path():
+    import collections
+
+    class StrSub(str):
+        pass
+    for odd in (collections.UserString("r08-v1"), StrSub("r08-v1"), b"r08-v1"):
+        report = _v2(IDENTITY, None, odd)
+        assert report.code == "trust_snapshot_invalid" and report.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID, odd
+    assert _v2(IDENTITY, None, "r08-v1").ok is True  # the exact legacy str still behaves as before
+
+
+@pytest.mark.parametrize("junk,cause", [(b"", "key_length"), (None, "key_type"), ("a" * 32, "key_type"),
+                                         (bytearray(32), "key_type"), (5, "key_type")])
+def test_empty_and_wrong_type_keys_are_admission_failures_on_v2_not_malformed(junk, cause):
+    for policy in (None, lambda a, k: True):
+        report = verify.verify_selection(
+            _signed_selection("AAAA")[1], CTX, _trust(junk), Sig64Verifier(), r.NOW, key_admission=policy, contract_version=V2)
+        assert report.code == "trust_snapshot_invalid"
+        assert report.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and report.detail_cause == cause
+    legacy = verify.verify_selection(_signed_selection("AAAA")[1], CTX, _trust(junk), Sig64Verifier(), r.NOW)
+    assert legacy.code == "trust_snapshot_invalid" and legacy.detail == "trust snapshot is malformed"
+    assert type(legacy) is verify.VerificationReport
+
+
+@pytest.mark.parametrize("junk,cause", [(b"", "key_length"), (None, "key_type"), ("a" * 32, "key_type")])
+def test_decision_pipeline_reports_junk_keys_as_key_admission_invalid_on_v2(junk, cause):
+    from registry_successor import decision
+    caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
+              "allowed_units": ["unit-a", "unit-b", "unit-c"]}
+    rec = r.make_record()
+    for part in ("required", "optional"):
+        sel = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), key_id=KEY, public_key=PK, signed=True))
+        d = decision.verify_and_decide(part, caller, r.dumps(rec), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW,
+                                       contract_version=V2)
+        assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
+        assert d.detail_cause == cause and d.operationally_authorized is False
+        legacy = decision.verify_and_decide(part, caller, r.dumps(rec), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW)
+        assert legacy.code == "trust_snapshot_invalid" and not hasattr(legacy, "detail_code")
