@@ -10,7 +10,10 @@ Scope of this module (and only this):
   * the trust snapshot normalizer and fingerprint (spec 7);
   * the scope-token projection and the projection-stage refusal effect (spec 5.6);
   * the module-owned four-row `r08-v2` effective-payload table, from which `family_version` is DERIVED and never accepted (spec 6, ruling N-3);
-  * the typed refusal mapping of spec 8.1 for the codes that already exist in `CODES_V2`.
+  * the typed refusal mapping of spec 8.1 for the codes of `CODES_V2_REV2` this package owns (the 48 of revision 1 that apply, plus the three ruled additive
+    codes, Amendment 1); the withdrawal and snapshot-floor rows stay absent until their owning contracts and evaluators exist (ruling 4.4);
+  * a pure six-member identity comparison (`compare_binding_identity`, ruling 4.3) and the ordered `verify_carried_binding_digest`;
+  * the Registry-side adapter from the verifier's `TrustSnapshot` object (`trust_snapshot_from_verified`, ruling 4.6).
 
 Hostile-input boundary (review of PR #33, S1/S2): every public function that takes a document, a value to hash or a snapshot (the validators, the
 digest and canonical-bytes functions, the snapshot functions, `deny_all_dimensions`) first copies its input through `_plain`, which accepts ONLY exact
@@ -23,25 +26,33 @@ message never formats the offending object. `IdentityRefusal` does not validate 
 `mapping_row_for` treat a `stage` that is not an exact `str` as no match (`KeyError`, or the identifier row for `field_invalid`), never calling its `==`.
 
 Not in this module: composition of registry and caller values (EXT-S1-4), any store, activation state or `activation_sequence` (EXT-S4), the Control
-Plane or Runtime guards, and the three ruled additive codes (`not_activated`, `policy_identity_mismatch`, `store_unknown`) and `CODES_V2_REV2`
-(Amendment 1, PR #32): every refusal here uses a code that is already in `CODES_V2`. The mapping rows for the additive codes are therefore absent
-from `REFUSAL_MAPPING` and are to be wired in when the amendment lands.
+Plane or Runtime guards (the guard comparison ORDER and every durable-state read belong to EXT-S4-2; `compare_binding_identity` is a pure helper over a row the
+caller already holds). The three additive codes (`not_activated`, `policy_identity_mismatch`, `store_unknown`) are revision 2 (`r08-v2-reasons/2`,
+`v2_codes.CODES_V2_REV2`, Amendment 1 / PR #32); this module maps all three and raises two of them (`policy_identity_mismatch` and `store_unknown`) from
+`compare_binding_identity`; `not_activated` is mapped for the guard that will raise it.
 
-DEFERRED (not implemented here, listed so no consumer assumes them): (1) the spec 8 carry-forward completeness test over all 48 `CODES_V2` entries
-(`UNMAPPED_CODES` is the explicit remainder); (2) the registry-form identity (null `activation_ref`) built from verified inputs and its completion with
-`activation_ref` (spec 4 and 10 assign this to the Registry source PR); (3) an adapter from the verifier's `TrustSnapshot` object to the normalized dict
-that `trust_snapshot_fingerprint` takes (the object is refused, never misread).
+DEFERRED (not implemented here, listed so no consumer assumes them): (1) the registry-form identity (null `activation_ref`) built from verified inputs and its
+completion with `activation_ref` (spec 4 and 10 assign this to the Registry source PR); (2) the guard itself and durable state (EXT-S4); (3) the mapping rows
+for the two v2-only codes of `V2_ADDED_CODES` (withdrawal and the snapshot floor: owning contracts and evaluators absent); (4) the token rule still follows `common.valid_token`
+(platform Unicode database) until the frozen Unicode table of PR #35 is merged and adopted (N-13); (5) the typed evidence stages are spelled `verify` /
+`guard` in the vectors at main, typed here as INPUT / DURABLE_STATE (PR #35 renames them); (6) a trust root or any authentication of a snapshot: the adapter
+and the digests give integrity only and add no authority.
 
-PROPOSED by this PR in addition (each needs an Architect line, none is a ruling): a snapshot shape guard (lowercase hex key, five-token grants,
-repeated grants inside one issuer refused as duplicates) that is STRICTER than `verify._normalize_trust` in exactly these places and fail-closed in each:
-a snapshot version, floor or revoked epoch of 20 or more digits is refused (the serializer writes under 20 digits; the verifier accepts any strict int),
-a repeated grant inside one issuer is refused (the verifier accepts it); everything else is at the verifier's own strictness (a revoked epoch may be any
-strict int below 20 digits, including 0 and negative, as in the verifier; versions and floors are at least 1); a node ceiling on one in-memory document
-(MAX_NODES) and a larger one on one snapshot (MAX_SNAPSHOT_NODES), each refused as `input_too_large` (a size limit, never reported as a malformed
-snapshot); `NON_STRING_KEY` and `AMBIGUOUS_STRING_KEY` as the members of a refusal for a dict key that is not an exact str or contains an adjacent
-surrogate pair, and a refusal of such a string value at its own path (the order of these refusals against the root-object and `field_missing` checks is
-not stated by the spec: a non-str key is refused first); long integer literals load as `OutOfRangeInteger`, never as a plausible int, and the raw
-serializer refuses it `field_invalid` like a native big int; the order in `verify_carried_binding_digest` (binding, carried-digest format, equality);
+RULED (Architect Batch 6, 4.6, N-10) and applied here: a snapshot version is a strict int in [1, 2^53 - 1] (not an operational freshness bound); a `min_epochs`
+floor and a revoked-selection epoch are strict POSITIVE ints in the declared selection-epoch range; a repeated grant (the same canonical five-token identity
+twice in one issuer) is refused while distinct grants, and the same grant under two issuers, are accepted; MAX_SNAPSHOT_NODES (1048576) refuses as `input_too_large`;
+a non-str or ambiguous key refuses before any projection or digest; `NON_STRING_KEY` and `AMBIGUOUS_STRING_KEY` are TYPED `DiagnosticLabel` values that the
+exact-type boundary refuses everywhere a digest or document could take them; `project_effective_policy_digest` is the public projection entry point;
+`verify_carried_binding_digest` orders: binding syntax and version, carried-digest format, authoritative identity and context (when the row is given), then the
+digest comparison. This is STRICTER than `verify._normalize_trust` in exactly these places, each fail-closed: a version above 2^53 - 1, a floor or revoked epoch
+outside [1, 2147483647] (the verifier accepts any strict int for a revoked epoch and any floor of at least 1), and a repeated grant (the verifier accepts it).
+
+PROPOSED by this PR in addition (each needs an Architect line, none is a ruling): a snapshot shape guard (lowercase hex key, five-token grants); a node ceiling
+on one in-memory document (MAX_NODES), refused as `input_too_large` (a size limit, never reported as a malformed snapshot); the members `NON_STRING_KEY` and
+`AMBIGUOUS_STRING_KEY` for a dict key that is not an exact str or contains an adjacent surrogate pair, and a refusal of such a string value at its own path (the
+order of these refusals against the root-object and `field_missing` checks is not stated by the spec: a non-str key is refused first); long integer literals
+load as `OutOfRangeInteger`, never as a plausible int, and the raw serializer refuses it `field_invalid` like a native big int; the comparison order of
+`compare_binding_identity` (`selection_id` first, `scope_key` second) and its reading of an unusable durable row as `store_unknown`;
 `project_effective_policy_digest` tagging the three effective-derivation kinds as projection-stage refusals.
 
 Known, disclosed limits (PR #33 re-review, PROPOSED where they are choices): (N-C) native input is bounded by node count (MAX_NODES, MAX_SNAPSHOT_NODES)
@@ -50,10 +61,10 @@ adjacent high and low surrogate in an identifier member is refused `field_type_i
 string that does not match; the verdict and retry class are the same, the loader can never produce such a string, and the raw serializer says
 `field_invalid`; (N-E) `IdentityRefusal.__reduce__` rebuilds the base class, so a subclass would not survive pickling (none exists in the package).
 
-Items the spec still lists as OPEN are implemented at the spec's current PROPOSED behaviour and are marked `PROPOSED` below; they are not decisions:
-N-10 (syntax-first parse order, byte-level input boundary, no verifier ceiling), N-11 (`trust_snapshot_missing`: one code, two stages), N-12 (an
-optional scope with an unknown store is UNKNOWN_FAIL_CLOSED; a refused projection never counts as an activation determination), N-13 (the token
-rule follows the platform Unicode database through `common.valid_token`).
+Rulings N-10 to N-12 are RULED and implemented (syntax-first parse, strict ints, typed INPUT / DURABLE_STATE stage, unknown store HOLD, a refused projection is never
+never-activated). N-13 is RULED but its frozen Unicode table (PR #35, not merged) is not adopted here: the token rule still follows the platform Unicode database
+through `common.valid_token` and an ambiguous token is not yet refused by table. N-10(c) (whether the VERIFIER also enforces the 2^53 - 1 ceiling before projection)
+stays OPEN; the ceiling is enforced here by the snapshot shape guard and the projection stage.
 
 Pure: no files, no clock, no state. Digests give integrity, never authentication.
 """
@@ -64,7 +75,8 @@ from types import MappingProxyType
 from typing import Any, Dict, Tuple
 
 from . import common as c
-from .v2_codes import CODES_V2
+from . import verify as _verify
+from .v2_codes import CODES_V2, CODES_V2_REV2
 
 IDENTITY_MODULE_VERSION = "ocs-ext-s1-5-identity/1"
 
@@ -109,14 +121,14 @@ _DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
 
 
 class IdentityRefusal(Exception):
-    """A typed refusal: `code` is an existing `CODES_V2` entry, `member` the first failing member path (a str) or None, `stage` the pipeline stage the
+    """A typed refusal: `code` is a `CODES_V2_REV2` entry (revision 2 of the one Registry v2 vocabulary, 51 codes), `member` the first failing member path (a str) or None, `stage` the pipeline stage the
     refusal belongs to (`projection` for a refusal to project verified inputs into a binding, else None: the shape stage), `evidence` a read-only
     mapping of the spec 8.1 evidence values this module can compute (`observed_value_class`, `expected_range`, `carried_digest`, `recomputed_digest`,
     `projection_refusal_code`); values only a consumer knows (`original_selection_digest`, `scope_key_digest`, ...) are never filled in here."""
 
     def __init__(self, code: str, member: Any = None, stage: Any = None, evidence: Any = None):
-        if type(code) is not str or code not in CODES_V2:  # a raise, not an assert: this must hold under python -O
-            raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(code).__name__)
+        if type(code) is not str or code not in CODES_V2_REV2:  # a raise, not an assert: this must hold under python -O
+            raise ValueError("refusal code outside CODES_V2_REV2 (got a %s)" % type(code).__name__)
         super().__init__(code)
         self.code = code
         self.member = member
@@ -130,7 +142,7 @@ class IdentityRefusal(Exception):
 
     @property
     def layer(self) -> str:
-        return CODES_V2[self.code][0]
+        return CODES_V2_REV2[self.code][0]
 
 
 def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
@@ -181,8 +193,17 @@ class _Ambiguous(_Foreign):
 _FOREIGN = _Foreign()
 _AMBIGUOUS = _Ambiguous()
 _SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")
-NON_STRING_KEY = "<non-string key>"  # PROPOSED (spec 5.5 is silent): the member reported for a dict key that is not an exact str
-AMBIGUOUS_STRING_KEY = "<ambiguous string key>"  # PROPOSED: the member reported for a str key that contains an adjacent high and low surrogate
+class DiagnosticLabel(str):
+    """A TYPED diagnostic member label (ruling 4.6). It is a `str` subclass on purpose: `_plain` accepts exact `str` only, so a label can never be hashed, serialized
+    or placed in a document, a binding, a preimage or any signed or digest input (it becomes an opaque marker that is refused). It is equal to its text so a
+    consumer can compare a refusal's `member`, and `type(member) is DiagnosticLabel` tells a diagnostic placeholder from a real member path. A real document
+    key with the same text is an ordinary `str` and is refused on its own merits."""
+
+    __slots__ = ()
+
+
+NON_STRING_KEY = DiagnosticLabel("<non-string key>")  # PROPOSED (spec 5.5 is silent): the member reported for a dict key that is not an exact str
+AMBIGUOUS_STRING_KEY = DiagnosticLabel("<ambiguous string key>")  # PROPOSED: the member reported for a str key that contains an adjacent high and low surrogate
 
 
 def _value_class(v: Any) -> str:
@@ -654,12 +675,75 @@ def checked_binding_digest(binding: dict) -> str:
     return binding_digest(validate_binding(binding))
 
 
-def verify_carried_binding_digest(binding: dict, carried: Any) -> str:
-    """Guard check: a carried digest string is format-checked (`field_invalid`) and compared with the recomputed value (`digest_mismatch`, evidence
-    carried and recomputed). PROPOSED order (the spec is silent): the binding is validated first, then the carried digest's format, then equality."""
+# The authoritative identity members of the complete declared canonical binding version `ocs-policy-binding/1` (ruling 4.3). SIX members; the selected record
+# identity is the triple, so eight VALUES are compared. `scope_key` is the scope-key DIGEST (spec 5.7); the other seven are binding members. A member a
+# historical binding version does not declare is never manufactured: this table is the declared v1 binding, not a superset of it.
+POLICY_IDENTITY_MEMBER_SET = ("scope_key", "selection_id", "selection_epoch", "selection_digest", "record", "activation_ref")
+POLICY_IDENTITY_MEMBER_VALUES = ("scope_key", "selection_id", "selection_epoch", "selection_digest", "record_id", "record_version", "record_digest", "activation_ref")
+# Comparison order for the FIRST differing member: `selection_id` precedes `scope_key` because the scope-key digest includes `selection_id` (spec 5.7), so a
+# `selection_id` difference would otherwise always be reported as `scope_key`. PROPOSED and local to this pure helper; the guard order stays with EXT-S4-2.
+_COMPARE_ORDER = ("selection_id", "scope_key", "selection_epoch", "selection_digest", "record_id", "record_version", "record_digest", "activation_ref")
+_ROW_INT_PATHS = frozenset(("selection_epoch", "record_version"))
+_ROW_ID_PATHS = frozenset(("selection_id", "record_id"))
+_ROW_DIGEST_PATHS = frozenset(("scope_key", "selection_digest", "record_digest", "activation_ref"))
+
+
+def _authoritative_row_ok(row: Any) -> bool:
+    """The consumer-owned durable row as the comparison needs it: exactly the eight values, each in its binding grammar. Anything else means the
+    authoritative state is not usable (the caller maps that to `store_unknown`, never to a fallback)."""
+    if type(row) is not dict or set(row) != set(POLICY_IDENTITY_MEMBER_VALUES):
+        return False
+    for k, v in row.items():
+        if type(k) is not str:
+            return False
+        if k in _ROW_INT_PATHS:
+            lo, hi = INTEGER_RANGES[k]
+            if not (type(v) is int and lo <= v <= hi):
+                return False
+        elif k in _ROW_ID_PATHS:
+            if not (type(v) is str and _ascii_match(_IDENT, v)):
+                return False
+        elif not (type(v) is str and _ascii_match(_DIGEST, v)):
+            return False
+    return True
+
+
+def compare_binding_identity(binding: Any, authoritative: Any) -> str:
+    """Compare a claim-carried completed binding with the consumer-owned durable activation row over ALL six authoritative identity members of
+    `ocs-policy-binding/1` (ruling 4.3). PURE: it reads no store and decides no guard order (EXT-S4-2 owns the guard); `authoritative` is the row the caller
+    already holds. The binding is validated first (syntax, version and every member), so a malformed binding is refused with its own code.
+      * `authoritative` that is not exactly the eight values in their grammar: `store_unknown` (UNKNOWN_FAIL_CLOSED): an unusable row is indeterminate state,
+        never a fallback and never a match. No member is skipped because it is missing.
+      * a claim epoch BEHIND the row: `selection_epoch_stale` (REFUSE_STALE, evidence `selection_epoch`, `high_water_epoch`); it takes precedence over any
+        other differing member, as in the kit.
+      * otherwise the FIRST differing member in `_COMPARE_ORDER` (`selection_id` first, then `scope_key`, ...; a claim epoch AHEAD of the row included): `policy_identity_mismatch`
+        (REFUSE) with `member` naming it. The claim's `effective_policy_digest` is never compared with durable state (contract 7.4: it is caller-dependent).
+    Returns the recomputed binding digest when every member matches."""
+    b = validate_binding(binding)
+    if not _authoritative_row_ok(authoritative):
+        _refuse("store_unknown", "authoritative")
+    row = authoritative
+    claim = {"scope_key": scope_key_digest(scope_key_from_binding(b))}
+    claim.update({k: b[k] for k in POLICY_IDENTITY_MEMBER_VALUES if k != "scope_key"})
+    if claim["selection_epoch"] < row["selection_epoch"]:
+        _refuse("selection_epoch_stale", "selection_epoch", evidence={"selection_epoch": claim["selection_epoch"], "high_water_epoch": row["selection_epoch"]})
+    for k in _COMPARE_ORDER:
+        if claim[k] != row[k]:
+            _refuse("policy_identity_mismatch", k)
+    return binding_digest(b)
+
+
+def verify_carried_binding_digest(binding: dict, carried: Any, authoritative: Any = None) -> str:
+    """Guard check on a carried binding digest. Order (ruling 4.6): (1) the binding is validated (syntax, `binding_profile` version, all 15 members), (2) the
+    carried digest's format (`field_invalid`), (3) when `authoritative` (the consumer-owned durable row, `compare_binding_identity`) is given, the authoritative
+    identity and context are compared (`store_unknown`, `selection_epoch_stale`, `policy_identity_mismatch`), and only then (4) the carried digest is compared
+    with the recomputed value (`digest_mismatch`, evidence carried and recomputed). WITHOUT `authoritative` this is a digest-integrity check only: it verifies
+    no identity and no context, and a caller that needs the identity guarantee MUST pass the row (the guard, EXT-S4-2, is the consumer)."""
     recomputed = checked_binding_digest(binding)
     if not (type(carried) is str and _ascii_match(_DIGEST, carried)):
         _refuse("field_invalid", evidence={"observed_value_class": _value_class(carried)})
+    if authoritative is not None:
+        compare_binding_identity(binding, authoritative)
     if carried != recomputed:
         _refuse("digest_mismatch", evidence={"carried_digest": carried, "recomputed_digest": recomputed})
     return recomputed
@@ -677,16 +761,22 @@ def _token(v: Any) -> bool:
     return type(v) is str and c.valid_token(v)
 
 
+def _snapshot_version_ok(v: Any) -> bool:
+    """`TrustSnapshot.version`: a strict int in [1, 2^53 - 1] (ruling N-10, interoperable V1 representation; the same range as the binding's
+    `trust_snapshot_version`). Not an operational freshness bound. `bool` and every subclass are refused."""
+    lo, hi = INTEGER_RANGES["trust_snapshot_version"]
+    return type(v) is int and lo <= v <= hi
+
+
 def _epoch(v: Any) -> bool:
-    """Selection epochs and floors in a snapshot: strict ints from 1 (the verifier requires a floor of at least 1, verify.py `_normalize_trust`) and
-    below 20 digits so the fingerprint serializer can always write them. PROPOSED: no further ceiling (the snapshot owns no epoch range)."""
-    return type(v) is int and 1 <= v < _INT_BOUND
+    """A selection epoch in a snapshot (a `min_epochs` floor or a revoked-selection epoch): a strict POSITIVE int in the declared `selection_epoch` range
+    [1, 2147483647] (ruling 4.6: strict, unambiguous positive integers within the declared versioned range; the verifier requires a floor of at least 1 and
+    accepts any strict int for a revoked epoch, so this is STRICTER than `verify._normalize_trust` and fail-closed: a refusal, never a coercion)."""
+    lo, hi = INTEGER_RANGES["selection_epoch"]
+    return type(v) is int and lo <= v <= hi
 
 
-def _revoked_epoch(v: Any) -> bool:
-    """A revoked-selection epoch: ANY strict int the serializer can write (under 20 digits, 0 and negatives included), because the verifier accepts any
-    strict int there (`verify._normalize_trust`) and a snapshot it accepts must not be refused by the fingerprint. PROPOSED: the 20-digit bound."""
-    return type(v) is int and -_INT_BOUND < v < _INT_BOUND
+_revoked_epoch = _epoch  # the same declared range for a revoked-selection epoch (it names a selection epoch); kept as a name so the two uses read apart
 
 
 def _hex_key(v: Any) -> bool:
@@ -716,7 +806,7 @@ def _snapshot_shape_ok(s: Any) -> bool:
     any strict-int revoked epoch, parseable `valid_until`, five-token grants) plus the exact member set. Takes the PLAIN copy produced by `_checked_snapshot`."""
     if not (type(s) is dict and set(s) == set(_SNAPSHOT_MEMBERS)):
         return False
-    if not (_token(s["snapshot_id"]) and _epoch(s["version"]) and type(s["valid_until"]) is str and c.parse_timestamp(s["valid_until"]) is not None):
+    if not (_token(s["snapshot_id"]) and _snapshot_version_ok(s["version"]) and type(s["valid_until"]) is str and c.parse_timestamp(s["valid_until"]) is not None):
         return False
     if not (type(s["issuers"]) is list and type(s["revoked_key_ids"]) is list and type(s["revoked_selections"]) is list and type(s["min_epochs"]) is list):
         return False
@@ -780,6 +870,63 @@ def trust_snapshot_fingerprint(snapshot: dict) -> str:
         # twice the cost at the ceiling, never a smaller ceiling and never the caller's original object)
     except IdentityRefusal:  # unreachable for a shape-valid snapshot; kept so the entry point can only ever raise trust_snapshot_invalid
         _refuse("trust_snapshot_invalid")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Registry-side adapter from the verifier's `TrustSnapshot` object (ruling 4.6: the P1 worker owns it; it is NOT a second trust authority)
+# ----------------------------------------------------------------------------------------------------------------------
+_SEQUENCE_TYPES = (tuple, list)
+_SET_TYPES = (set, frozenset, tuple, list)
+
+
+def trust_snapshot_from_verified(trust: Any) -> dict:
+    """Convert a snapshot the VERIFIER accepts into the spec's normalized dict shape (public key bytes to lowercase hex, grants to five-token arrays, pairs to
+    two-element lists), for `trust_snapshot_fingerprint`. It adds no authority: the object is only ever read, never trusted, signed or stored.
+      * `None` (no required snapshot supplied): `trust_snapshot_missing` at the `verify` stage (typed `INPUT`, ruling N-11).
+      * anything else that is not exactly a `TrustSnapshot` (a subclass, a dict, a look-alike), or that `verify._normalize_trust` refuses, or whose members are
+        not exactly the verifier's types: `trust_snapshot_invalid` (definitive malformed input is never called missing).
+    The result is then re-checked by the stricter shape guard of `trust_snapshot_fingerprint` (version and epoch ranges from `INTEGER_RANGES`, no repeated
+    grant inside one issuer), so a snapshot that passes the verifier can still be refused here, never the reverse."""
+    if trust is None:
+        _refuse("trust_snapshot_missing", None, "verify")
+    try:
+        if type(trust) is not _verify.TrustSnapshot or _verify._normalize_trust(trust) is None:
+            raise TypeError
+        if not (type(trust.issuers) in _SEQUENCE_TYPES and type(trust.revoked_key_ids) in _SET_TYPES and type(trust.revoked_selections) in _SET_TYPES):
+            raise TypeError
+        issuers = []
+        for e in trust.issuers:
+            if type(e) is not _verify.IssuerEntry or type(e.public_key) is not bytes or type(e.authority) not in _SEQUENCE_TYPES:
+                raise TypeError
+            grants = []
+            for g in e.authority:
+                if type(g) is not _verify.AuthorityGrant:
+                    raise TypeError
+                grants.append([g.consumer_id, g.tenant, g.institution, g.authority_domain, g.operation])
+            issuers.append({"key_id": e.key_id, "issuer_id": e.issuer_id, "alg": e.alg, "public_key": e.public_key.hex(), "authority": grants})
+        revoked = []
+        for item in trust.revoked_selections:
+            if type(item) is not tuple or len(item) != 2:
+                raise TypeError
+            revoked.append([item[0], item[1]])
+        floors = trust.min_epochs
+        pairs = list(floors.items()) if isinstance(floors, _verify.Mapping) else list(floors)
+        mins = []
+        for item in pairs:
+            sid, floor = item
+            mins.append([sid, floor])
+        out = {"snapshot_id": trust.snapshot_id, "version": trust.version, "valid_until": trust.valid_until, "issuers": issuers,
+               "revoked_key_ids": list(trust.revoked_key_ids), "revoked_selections": revoked, "min_epochs": mins}
+    except Exception:  # a hostile or malformed object is a definitive refusal, never an escape, and never formatted into a message
+        _refuse("trust_snapshot_invalid")
+    check_snapshot_duplicates(out)  # a repeated grant (the same canonical five-token identity twice in one issuer), issuer key, pair or key id: trust_snapshot_invalid
+    return normalize_snapshot(out)
+
+
+def trust_snapshot_fingerprint_from_verified(trust: Any) -> str:
+    """`trust_snapshot_fingerprint` of the adapter's normalized dict for a verifier `TrustSnapshot` (spec 7); same refusals as `trust_snapshot_from_verified`
+    plus duplicates (`trust_snapshot_invalid`)."""
+    return trust_snapshot_fingerprint(trust_snapshot_from_verified(trust))
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -851,9 +998,9 @@ def projection_effect(participation: Any, activation_state: Any, determination: 
 
 def projection_effect_for(refusal_code: str, participation: Any, activation_state: Any, determination: Any) -> dict:
     """Join a refusal's own code with the single effect function: the code is the only thing a refusal contributes (to the fallback evidence). The code
-    is a programmer argument: anything but a `CODES_V2` string is a ValueError, never a typed refusal."""
-    if type(refusal_code) is not str or refusal_code not in CODES_V2:
-        raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(refusal_code).__name__)
+    is a programmer argument: anything but a `CODES_V2_REV2` string is a ValueError, never a typed refusal."""
+    if type(refusal_code) is not str or refusal_code not in CODES_V2_REV2:
+        raise ValueError("refusal code outside CODES_V2_REV2 (got a %s)" % type(refusal_code).__name__)
     out = projection_effect(participation, activation_state, determination)
     if out["fallback_evidence"] is not None:
         out = {**out, "fallback_evidence": {**out["fallback_evidence"], "projection_refusal_code": refusal_code}}
@@ -1100,6 +1247,10 @@ def validate_preimage(doc: Any) -> dict:
 # them lands (the withdrawal row and the snapshot-floor row) are NOT here: this module emits none of those codes. PROPOSED rows: trust_snapshot_invalid (REFUSE class), trust_snapshot_missing (N-11, two stages).
 # ----------------------------------------------------------------------------------------------------------------------
 VERDICT_CLASSES = ("ACCEPT", "REFUSE", "REFUSE_STALE", "UNKNOWN_FAIL_CLOSED")
+EVIDENCE_STAGE_VERSION = "ocs-evidence-stage/1"  # ruling N-11: the evidence stage is typed and versioned
+EVIDENCE_STAGES = ("INPUT", "DURABLE_STATE")
+# The vector file at Registry main still spells the two stage values `verify` and `guard` (PR #35 renames them); the mapping keeps the vector spelling and types it here.
+STAGE_TYPES = MappingProxyType({"verify": "INPUT", "guard": "DURABLE_STATE"})
 
 
 @dataclass(frozen=True)
@@ -1113,6 +1264,16 @@ class MappingRow:
     stage_value: Any = None
     optional_overlay: bool = False  # only through an authenticated optional-state determination (contract 7.4 line 8(c)); never by the refusal alone
     proposed: bool = False  # True for a row (verdict class or stage split) that is a PROPOSAL of this PR, not an Architect ruling
+
+    @property
+    def evidence_stage(self) -> Any:
+        """The TYPED evidence stage of a `trust_snapshot_missing` row (ruling N-11): `INPUT` (no required snapshot supplied) or `DURABLE_STATE` (no applicable
+        trusted snapshot accepted in authoritative durable state); None for every other row. The two are different underlying conditions under one code."""
+        return STAGE_TYPES.get(self.stage_value) if self.registry_code == "trust_snapshot_missing" else None
+
+    @property
+    def stage_version(self) -> Any:
+        return EVIDENCE_STAGE_VERSION if self.evidence_stage is not None else None
 
 
 REFUSAL_MAPPING = (
@@ -1172,6 +1333,15 @@ REFUSAL_MAPPING = (
                ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",),),
     MappingRow("MP-trust_snapshot_expired-guard", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_expired", "required_policy_unavailable", "after_authoritative_state_available",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "trust_snapshot_version",),),
+    # Revision-2 codes (`r08-v2-reasons/2`, Amendment 1; rulings 4.3, N-12). None of the three has an optional overlay: an optional scope under an unknown store is
+    # HOLD, and a refused identity is never an optional fallback (N-12). The guard that raises them (and its comparison order) is EXT-S4-2, not this module.
+    MappingRow("MP-store_unknown", "UNKNOWN_FAIL_CLOSED", "store_unknown", "required_policy_unavailable", "after_authoritative_state_available",
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "unknown_cause",),),
+    MappingRow("MP-not_activated", "REFUSE", "not_activated", "required_policy_unavailable", "fresh_statement_required",
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id",),),
+    MappingRow("MP-policy_identity_mismatch", "REFUSE", "policy_identity_mismatch", "required_policy_unavailable", "never_same_input",
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "member", "selection_id", "selection_epoch", "high_water_epoch",
+                "selection_digest", "record_id", "record_version", "record_digest", "activation_ref",),),
 )
 MAPPING_BY_ID = MappingProxyType({r.row_id: r for r in REFUSAL_MAPPING})
 
@@ -1198,7 +1368,7 @@ def mapping_row_for(refusal: IdentityRefusal) -> MappingRow:
     """The spec 8.1 row for a refusal this module raised. `field_invalid` is split by the refusal's own data: stage `projection` selects
     MP-field_invalid-projection; an `expected_range` in its evidence selects MP-field_invalid-integer; anything else is MP-field_invalid-identifier.
     A code with a single row (family_unsupported and contract_unsupported included, whatever their stage, projection among them) maps to that row; a
-    code with several rows is singled out by the refusal's stage. A code with no row raises KeyError (the 24 `CODES_V2` codes in UNMAPPED_CODES are
+    code with several rows is singled out by the refusal's stage. A code with no row raises KeyError (the codes in UNMAPPED_CODES are
     not mapped by this module)."""
     if refusal.code == "field_invalid":
         if type(refusal.stage) is str and refusal.stage == "projection":
@@ -1212,14 +1382,15 @@ def mapping_row_for(refusal: IdentityRefusal) -> MappingRow:
 
 def _check_module_tables() -> None:
     used = {r.registry_code for r in REFUSAL_MAPPING}
-    if not used <= set(CODES_V2):
-        raise RuntimeError("mapping uses a code outside CODES_V2: %s" % sorted(used - set(CODES_V2)))
+    if not used <= set(CODES_V2_REV2):
+        raise RuntimeError("mapping uses a code outside CODES_V2_REV2: %s" % sorted(used - set(CODES_V2_REV2)))
     if not all(r.verdict_class in VERDICT_CLASSES for r in REFUSAL_MAPPING):
         raise RuntimeError("mapping uses a verdict class outside the closed vocabulary")
 
 
-UNMAPPED_CODES = frozenset(CODES_V2) - {r.registry_code for r in REFUSAL_MAPPING}
-# DEFERRED (spec 8, carry-forward): the 48-code completeness test (every `CODES_V2` entry mapped, or owned by another package) is not implemented here.
-# `UNMAPPED_CODES` is the explicit remainder; a test pins it so a mapping change is visible.
+UNMAPPED_CODES = frozenset(CODES_V2_REV2) - {r.registry_code for r in REFUSAL_MAPPING}
+# `UNMAPPED_CODES` is the explicit remainder of the 51 revision-2 codes (codes owned by another package, plus the two v2-only codes of `V2_ADDED_CODES` whose
+# owning contracts and evaluators are not in this package); a test pins it so a mapping change is visible, and the
+# revision-2 outcome map (docs/p1-extraction-plan/data/ld02-outcome-map-rev2.json) is the 51-code completeness artifact.
 
 _check_module_tables()

@@ -21,7 +21,7 @@ import pytest
 
 from registry_successor import common as c
 from registry_successor import v2_policy_identity as m
-from registry_successor.v2_codes import CODES_V2
+from registry_successor.v2_codes import CODES_V2, CODES_V2_REV2
 
 ROOT = Path(__file__).resolve().parent.parent
 VECTORS = ROOT / "docs" / "ext-implementation" / "data" / "ext-s1-5-policy-identity-vectors.json"
@@ -246,8 +246,8 @@ def _oracle_failures():
 
     def code_boundaries():
         try:
-            m.IdentityRefusal("not_activated")
-            fails.append("a code outside CODES_V2 was accepted")
+            m.IdentityRefusal("not_a_registry_code")
+            fails.append("a code outside CODES_V2_REV2 was accepted")
         except ValueError:
             pass
         check(m.registered_family_version("f4-control-plane-age-bounds", "r08-v2") == "v2", "f4 tag")
@@ -564,7 +564,7 @@ def _oracle_failures():
             return 1
 
         snap = json.loads(json.dumps(base))
-        snap["revoked_selections"] = [["sel-%d" % i, i] for i in range(30000)]  # about 90k nodes: over MAX_NODES, well under the snapshot ceiling
+        snap["revoked_selections"] = [["sel-%d" % i, i + 1] for i in range(30000)]  # about 90k nodes: over MAX_NODES, well under the snapshot ceiling
         big = nodes(snap)
         check(big > m.MAX_NODES, "fixture: the large snapshot exceeds the document ceiling")
         fp = m.trust_snapshot_fingerprint(snap)
@@ -588,19 +588,23 @@ def _oracle_failures():
         check(_outcome(m.trust_snapshot_fingerprint, {**base, "snapshot_id": shared}) == ("refuse", "input_too_large", None) or
               _outcome(m.trust_snapshot_fingerprint, {**base, "snapshot_id": shared})[:2] == ("refuse", "trust_snapshot_invalid"), "a shared DAG snapshot never expands")
 
-        # S4: revoked epochs are any strict int under 20 digits; versions and floors keep the verifier's floor of 1
+        # S4 (ruling 4.6, replaces the 20-digit rule): a revoked epoch and a `min_epochs` floor are strict POSITIVE ints in the declared selection-epoch range
+        # [1, 2147483647]; the snapshot version is a strict int in [1, 2^53 - 1] (N-10). Everything else is `trust_snapshot_invalid`, never coerced.
         def with_snapshot(**edit):
             sn = json.loads(json.dumps(base))
             sn.update(edit)
             return sn
 
-        for epoch in (-5, 0, 1, 2 ** 53, 10 ** 20 - 1, -(10 ** 20 - 1)):
+        for epoch in (1, 2, 2147483647):
             sn = with_snapshot(revoked_selections=[["a", epoch]])
             ref = json.dumps(m.normalize_snapshot(sn), sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
             check(_outcome(m.trust_snapshot_fingerprint, sn) == ("ok", "sha256:" + __import__("hashlib").sha256(ref).hexdigest()), "revoked epoch %d accepted" % epoch)
-        for edit in ({"version": 2 ** 53}, {"version": 10 ** 20 - 1}, {"min_epochs": [["a", 2 ** 53]]}, {"min_epochs": [["a", 10 ** 20 - 1]]}):
+        for epoch in (-5, 0, 2147483648, 2 ** 53, 10 ** 20 - 1, -(10 ** 20 - 1), 10 ** 20):
+            check(_outcome(m.trust_snapshot_fingerprint, with_snapshot(revoked_selections=[["a", epoch]])) == ("refuse", "trust_snapshot_invalid", None), "revoked epoch %d refused" % epoch)
+        for edit in ({"version": 1}, {"version": 2 ** 53 - 1}, {"min_epochs": [["a", 1]]}, {"min_epochs": [["a", 2147483647]]}):
             check(_outcome(m.trust_snapshot_fingerprint, with_snapshot(**edit))[0] == "ok", "snapshot edit %r accepted" % (edit,))
-        for edit in ({"version": 0}, {"min_epochs": [["a", 0]]}, {"min_epochs": [["a", -1]]}, {"min_epochs": [["a", 10 ** 20]]}, {"version": 10 ** 20}):
+        for edit in ({"version": 0}, {"version": 2 ** 53}, {"version": 10 ** 20 - 1}, {"version": 10 ** 20}, {"min_epochs": [["a", 0]]}, {"min_epochs": [["a", -1]]},
+                     {"min_epochs": [["a", 2147483648]]}, {"min_epochs": [["a", 2 ** 53]]}, {"min_epochs": [["a", 10 ** 20]]}):
             check(_outcome(m.trust_snapshot_fingerprint, with_snapshot(**edit)) == ("refuse", "trust_snapshot_invalid", None), "snapshot edit %r refused" % (edit,))
 
         # copy-return: the private plain copy is never the caller's object or shares its containers
@@ -812,7 +816,7 @@ def test_unknown_participation_is_refused_and_survives_python_dash_O():
         assert _outcome(m.projection_effect, bad, "permits_optional", "authenticated") == ("refuse", "field_invalid", "participation")
     code = ("import sys\nsys.path.insert(0, %r)\nfrom registry_successor import v2_policy_identity as m\n"
             "try:\n    m.projection_effect('OPTIONAL', 'permits_optional', 'authenticated')\n    print('NOT_REFUSED')\n"
-            "except m.IdentityRefusal as e:\n    print(e.code)\ntry:\n    m.IdentityRefusal('not_activated')\n    print('CODE_ACCEPTED')\nexcept ValueError:\n    print('code-refused')\n") % str(ROOT)
+            "except m.IdentityRefusal as e:\n    print(e.code)\ntry:\n    m.IdentityRefusal('not_a_registry_code')\n    print('CODE_ACCEPTED')\nexcept ValueError:\n    print('code-refused')\n") % str(ROOT)
     out = subprocess.run([sys.executable, "-O", "-c", code], capture_output=True, text=True, timeout=60, check=True).stdout.split()
     assert out == ["field_invalid", "code-refused"]
 
@@ -845,25 +849,36 @@ def test_table_is_module_owned_four_rows_and_registered_for_r08_v2_only():
 def test_refusal_mapping_equals_the_vector_defect_mapping_for_existing_codes():
     rows = {r["id"]: r for r in V["defect_mapping"]}
     held_back = {"MP-selection_withdrawn", "MP-trust_snapshot_version_stale"}  # v2-only codes with no behaviour allowed in this package yet
-    expected_ids = {i for i, r in rows.items() if r["registry_code"] and not r.get("ruled_additive_code")} - held_back
-    assert set(m.MAPPING_BY_ID) == expected_ids and len(m.REFUSAL_MAPPING) == 28
+    expected_ids = {i for i, r in rows.items() if r["registry_code"]} - held_back  # the three ruled additive rows are in (revision 2, Amendment 1)
+    assert set(m.MAPPING_BY_ID) == expected_ids and len(m.REFUSAL_MAPPING) == 31
     for row in m.REFUSAL_MAPPING:
         src = rows[row.row_id]
         assert (row.verdict_class, row.registry_code, row.decision_kind, row.retry) == (src["verdict_class"], src["registry_code"], src["decision_kind"], src["retry"])
-        assert list(row.evidence_fields) == src["evidence_fields"] and row.stage_value == src.get("stage_value")
+        # ruling 4.3: the policy_identity_mismatch evidence names selection_epoch and high_water_epoch. PR #35 puts them in the vector row; until it merges the
+        # vector row at main lacks them, so the module is compared with the ruled list (a superset), and with the vector row itself once it carries `member_set`.
+        ruled = ["registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "member", "selection_id", "selection_epoch",
+                 "high_water_epoch", "selection_digest", "record_id", "record_version", "record_digest", "activation_ref"]
+        want = (src["evidence_fields"] if ("member_set" in src or row.registry_code != "policy_identity_mismatch") else ruled)
+        assert list(row.evidence_fields) == want and row.stage_value == src.get("stage_value")
         assert row.optional_overlay is ("optional_branch" in src), row.row_id
-        assert row.registry_code in CODES_V2 and row.verdict_class in m.VERDICT_CLASSES
+        assert row.registry_code in CODES_V2_REV2 and row.verdict_class in m.VERDICT_CLASSES
+        assert row.optional_overlay is False or row.registry_code not in ("not_activated", "policy_identity_mismatch", "store_unknown")  # N-12: no optional fallback
         assert row.decision_kind in ("applied", "applied_deny_all", "overlay_not_applied", "required_policy_unavailable")
-    # the deferred rows are absent, not silently mapped
-    assert not {r.registry_code for r in m.REFUSAL_MAPPING} & {"not_activated", "policy_identity_mismatch", "store_unknown"}
+    # the two v2-only codes with no owning contract in this package stay unmapped (held back), not silently mapped
+    assert not {r.registry_code for r in m.REFUSAL_MAPPING} & {"selection_withdrawn", "trust_snapshot_version_stale"}
+    # revision-2 rows: classes per rulings 4.3 and N-12
+    assert m.verdict_for("store_unknown").verdict_class == "UNKNOWN_FAIL_CLOSED" and m.verdict_for("not_activated").verdict_class == "REFUSE"
+    assert m.verdict_for("policy_identity_mismatch").verdict_class == "REFUSE"
+    # N-11: the stage of trust_snapshot_missing is typed and versioned
+    assert (m.verdict_for("trust_snapshot_missing", "verify").evidence_stage, m.verdict_for("trust_snapshot_missing", "guard").evidence_stage) == ("INPUT", "DURABLE_STATE")
+    assert m.verdict_for("trust_snapshot_missing", "guard").stage_version == m.EVIDENCE_STAGE_VERSION == "ocs-evidence-stage/1"
+    assert m.verdict_for("selection_epoch_stale").evidence_stage is None and m.verdict_for("selection_epoch_stale").stage_version is None
     assert m.verdict_for("trust_snapshot_missing", "verify").verdict_class == "UNKNOWN_FAIL_CLOSED"
     assert m.verdict_for("trust_snapshot_missing", "guard").stage_value == "guard"
     assert m.verdict_for("selection_epoch_stale").verdict_class == "REFUSE_STALE"
     assert m.verdict_for("selection_expired").optional_overlay is True and m.verdict_for("selection_revoked").optional_overlay is False
     with pytest.raises(KeyError):
         m.verdict_for("trust_snapshot_missing")  # two stages: ambiguous without one
-    with pytest.raises(KeyError):
-        m.verdict_for("policy_identity_mismatch")
     # every code this module can emit has a mapping row
     emitted = set(re.findall(r'_refuse\("([a-z_]+)"', MODULE_PATH.read_text(encoding="utf-8")))
     assert emitted <= {r.registry_code for r in m.REFUSAL_MAPPING}, emitted - {r.registry_code for r in m.REFUSAL_MAPPING}
@@ -874,12 +889,12 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
     src = MODULE_PATH.read_text(encoding="utf-8")
     tree = ast.parse(src)
     emitted = set(re.findall(r'_refuse\("([a-z_]+)"', src)) | set(re.findall(r'IdentityRefusal\("([a-z_]+)"', src))
-    assert emitted and emitted <= set(CODES_V2)
+    assert emitted and emitted <= set(CODES_V2_REV2)
+    assert not emitted & {"selection_withdrawn", "trust_snapshot_version_stale"}  # the two v2-only codes have no behaviour in this module (owning contracts absent)
     names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)} | {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
     literals = {n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)}
-    for deferred in ("not_activated", "policy_identity_mismatch", "store_unknown", "r08-v2-reasons/2"):
-        assert deferred not in literals, deferred  # only the docstring may mention them (it is one long literal, never an exact match)
-    assert not names & {"CODES_V2_REV2", "activation_sequence"}
+    assert "r08-v2-reasons/2" not in literals  # a documentary designation, never a wire value or a dispatch key
+    assert "activation_sequence" not in names and "CODES_V2_REV2" in names  # EXT-S4 state is not here; the one revision-2 registry symbol is imported, never defined here
     imports = {a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
     froms = {(n.module, a.name) for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) for a in n.names}
     assert imports <= {"hashlib", "re"} and ("types", "MappingProxyType") in froms
@@ -891,9 +906,12 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
     for fn in (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)):
         assert "family_version" not in [a.arg for a in fn.args.args + fn.args.kwonlyargs], fn.name
     diff = subprocess.run(["git", "diff", "--name-only", "origin/main...HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.split()
-    forbidden = ("registry_successor/common.py", "registry_successor/families.py", "registry_successor/decision.py", "registry_successor/v2_codes.py",
-                 "docs/conformance/README.md", "tests/golden", "README.md")
+    forbidden = ("registry_successor/common.py", "registry_successor/families.py", "registry_successor/compose.py", "registry_successor/record.py",
+                 "registry_successor/selection.py", "registry_successor/verify.py", "docs/conformance/README.md", "tests/golden", "README.md")
     assert not [p for p in diff if p.startswith(forbidden)], diff
+    # the only successor modules this PR may touch (Amendment 1 section 6.5): the identity module, the one reason registry and the explicit revision-2 path
+    assert {p for p in diff if p.startswith("registry_successor/")} <= {"registry_successor/v2_policy_identity.py", "registry_successor/v2_codes.py",
+                                                                          "registry_successor/decision.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():
@@ -981,15 +999,16 @@ def test_canonical_serializer_matches_json_dumps_on_the_profile_domain_and_rejec
     assert m.canonical_json_bytes({"\U0001f600": 1, "\uffff": 2}) == b'{"\\uffff":2,"\\ud83d\\ude00":1}'
 
 
-def test_unmapped_codes_are_the_explicit_remainder_of_codes_v2():
-    """DEFERRED (spec 8 carry-forward): the 48-code completeness test is not implemented in this PR; the remainder is pinned so a change is visible."""
+def test_unmapped_codes_are_the_explicit_remainder_of_codes_v2_rev2():
+    """The remainder of the 51 revision-2 codes this module does not map is pinned so a change is visible; the 51-code completeness artifact is the
+    revision-2 outcome map (tests/test_ext_s1_5_reason_mapping_completion.py)."""
     assert m.UNMAPPED_CODES == frozenset((
         "composition_family_unsupported", "composition_operator_unsupported", "composition_record_invalid", "evaluator_mismatch", "evaluator_unsupported",
         "issuer_not_authorized", "issuer_untrusted", "kind_unsupported", "lineage_authority_unavailable", "record_digest_mismatch", "record_identity_mismatch",
         "selection_consumer_mismatch", "selection_missing", "selection_operation_mismatch", "selection_scope_mismatch", "selection_supersession_invalid",
         "selection_withdrawn", "signature_algorithm_unsupported", "signature_invalid", "signature_missing", "supersession_invalid", "time_unavailable",
         "trust_snapshot_version_stale", "verifier_unavailable"))
-    assert m.UNMAPPED_CODES | {r.registry_code for r in m.REFUSAL_MAPPING} == set(CODES_V2)
+    assert m.UNMAPPED_CODES | {r.registry_code for r in m.REFUSAL_MAPPING} == set(CODES_V2_REV2)
     for code in m.UNMAPPED_CODES:
         with pytest.raises(KeyError):
             m.verdict_for(code)
@@ -1018,16 +1037,16 @@ def test_every_refusal_this_module_raises_selects_exactly_one_mapping_row():
         assert row.registry_code == r.code, (r.code, row.row_id)
 
 
-def test_trust_snapshot_object_adapter_is_deferred_and_the_object_is_refused_not_misread():
-    """The fingerprint takes the spec's normalized dict. The verifier's `TrustSnapshot` object is not accepted (and never silently misread); the adapter
-    from a verified snapshot (bytes key to lowercase hex, frozensets to sorted pairs, grants to five-token arrays) is DEFERRED to the Registry source PR."""
+def test_the_raw_fingerprint_still_refuses_a_verifier_object_and_the_adapter_is_the_only_way_in():
+    """`trust_snapshot_fingerprint` takes the spec's normalized dict: the verifier's `TrustSnapshot` object is never silently misread there. The Registry-side
+    adapter (`trust_snapshot_from_verified`, tests/test_ext_s1_5_trust_snapshot_and_identity.py) converts it explicitly."""
     from registry_successor.verify import TrustSnapshot
     obj = TrustSnapshot(snapshot_id="snap-example-7", version=7, valid_until="2026-12-01T00:00:00Z", issuers=(), revoked_key_ids=frozenset(),
                         revoked_selections=frozenset(), min_epochs={})
     with pytest.raises(m.IdentityRefusal) as info:
         m.trust_snapshot_fingerprint(obj)
     assert info.value.code == "trust_snapshot_invalid"
-    assert not [n for n in dir(m) if "trust_snapshot_from" in n or "adapter" in n.lower()]
+    assert m.trust_snapshot_fingerprint_from_verified(obj).startswith("sha256:")
 
 
 def _hostile_values():
@@ -1143,7 +1162,7 @@ def test_snapshot_at_the_real_node_ceiling_is_accepted_and_one_pair_over_is_refu
     base["revoked_selections"] = []
     room = m.MAX_SNAPSHOT_NODES - count(base)
     pairs = room // 3
-    base["revoked_selections"] = [["s%d" % i, i] for i in range(pairs)]
+    base["revoked_selections"] = [["s%d" % i, i + 1] for i in range(pairs)]
     exact = count(base)
     assert exact <= m.MAX_SNAPSHOT_NODES < exact + 3
     base["snapshot_id"] = "ok"
@@ -1411,15 +1430,15 @@ MUTANTS = [
     ("refusal code not joined", '"projection_refusal_code": refusal_code}}', '"projection_refusal_code": "field_invalid"}}'),
     ("snapshot version unbounded", 'if not _in_range(version, lo, hi):', 'if not _in_range(version, lo, 2 ** 70):'),
     ("scope projection normalizes", 'if not (type(v) is str and _ascii_match(_IDENT, v)):\n            _projection_refusal("scope." + k)', 'if type(v) is not str:\n            _projection_refusal("scope." + k)'),
-    ("refusal code unchecked", 'if type(code) is not str or code not in CODES_V2:  #', 'if False:  #'),
+    ("refusal code unchecked", 'if type(code) is not str or code not in CODES_V2_REV2:  #', 'if False:  #'),
     # review of PR #33 (S1-S5, nits): hostile-input boundary, snapshot guard, stage and evidence
     ("non-string key accepted", "            if type(k) is not str:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            if _SURROGATE_PAIR", "            if False:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            if _SURROGATE_PAIR"),
     ("serializer int unbounded", "if not -_INT_BOUND < value < _INT_BOUND:", "if False:"),
     ("serializer coerces subclasses", "    _refuse(\"field_type_invalid\")\n\n\ndef canonical_json_bytes", "    return str(value)\n\n\ndef canonical_json_bytes"),
     ("plain depth unchecked", "    if depth > MAX_DEPTH:\n        _refuse(\"json_nesting_too_deep\")\n    t = type(value)\n    if t is str:\n        return _AMBIGUOUS", "    t = type(value)\n    if t is str:\n        return _AMBIGUOUS"),
     ("snapshot member set loose", "set(s) == set(_SNAPSHOT_MEMBERS)", "set(s) >= set(_SNAPSHOT_MEMBERS)"),
-    ("snapshot epoch accepts bool", "return type(v) is int and 1 <= v < _INT_BOUND", "return isinstance(v, int) and 1 <= v < _INT_BOUND"),
-    ("snapshot epoch floor 0", "return type(v) is int and 1 <= v < _INT_BOUND", "return type(v) is int and 0 <= v < _INT_BOUND"),
+    ("snapshot epoch accepts bool", "lo, hi = INTEGER_RANGES[\"selection_epoch\"]\n    return type(v) is int and lo <= v <= hi", "lo, hi = INTEGER_RANGES[\"selection_epoch\"]\n    return isinstance(v, int) and lo <= v <= hi"),
+    ("snapshot epoch floor 0", "lo, hi = INTEGER_RANGES[\"selection_epoch\"]\n    return type(v) is int and lo <= v <= hi", "lo, hi = INTEGER_RANGES[\"selection_epoch\"]\n    return type(v) is int and 0 <= v <= hi"),
     ("snapshot key upper hex", '_LOWER_HEX = frozenset("0123456789abcdef")', '_LOWER_HEX = frozenset("0123456789abcdefABCDEF")'),
     ("snapshot key empty", "return type(v) is str and len(v) > 0 and len(v) % 2 == 0", "return type(v) is str and len(v) % 2 == 0"),
     ("snapshot grant arity", "return type(g) is list and len(g) == 5", "return type(g) is list and len(g) >= 4"),
@@ -1427,7 +1446,10 @@ MUTANTS = [
     ("snapshot issuer extras", "type(i) is dict and set(i) == set(_ISSUER_MEMBERS)", "type(i) is dict and set(i) >= set(_ISSUER_MEMBERS)"),
     ("snapshot valid_until unparsed", "and c.parse_timestamp(s[\"valid_until\"]) is not None", ""),
     ("snapshot repeated grant allowed", "            or per_issuer)", "            or False)"),
-    ("snapshot version unchecked", "_token(s[\"snapshot_id\"]) and _epoch(s[\"version\"])", "_token(s[\"snapshot_id\"]) and True"),
+    ("snapshot version unchecked", "_snapshot_version_ok(s[\"version\"])", "True"),
+    ("snapshot version accepts bool", "lo, hi = INTEGER_RANGES[\"trust_snapshot_version\"]\n    return type(v) is int and lo <= v <= hi", "lo, hi = INTEGER_RANGES[\"trust_snapshot_version\"]\n    return isinstance(v, int) and lo <= v <= hi"),
+    ("snapshot version unbounded above", "lo, hi = INTEGER_RANGES[\"trust_snapshot_version\"]\n    return type(v) is int and lo <= v <= hi", "lo, hi = INTEGER_RANGES[\"trust_snapshot_version\"]\n    return type(v) is int and lo <= v"),
+    ("snapshot version floor 0", "lo, hi = INTEGER_RANGES[\"trust_snapshot_version\"]\n    return type(v) is int and lo <= v <= hi", "lo, hi = INTEGER_RANGES[\"trust_snapshot_version\"]\n    return type(v) is int and 0 <= v <= hi"),
     ("snapshot hostile input escapes", "    except IdentityRefusal as e:\n        if e.code == \"input_too_large\":", "    except ZeroDivisionError as e:\n        if e.code == \"input_too_large\":"),
     ("projection stage dropped", 'def _projection_refusal(member: str, **evidence):\n    _refuse("field_invalid", member, stage="projection",', 'def _projection_refusal(member: str, **evidence):\n    _refuse("field_invalid", member, stage=None,'),
     ("integer range evidence dropped", 'evidence={"expected_range": (lo, hi)})', "evidence={})"),
@@ -1467,13 +1489,11 @@ MUTANTS = [
     ("serializer ignores pair keys", "        if any(_SURROGATE_PAIR.search(k) for k in value):", "        if False:"),
     ("marker is a type error in the serializer", "    if t is OutOfRangeInteger or t is _Ambiguous:", "    if t is _Ambiguous:"),
     ("ambiguous string is a type error in the serializer", "    if t is OutOfRangeInteger or t is _Ambiguous:", "    if t is OutOfRangeInteger:"),
-    ("revoked epoch needs 1", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return type(v) is int and 1 <= v < _INT_BOUND"),
-    ("revoked epoch unbounded", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return type(v) is int"),
-    ("revoked epoch bound inclusive", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return type(v) is int and -_INT_BOUND <= v <= _INT_BOUND"),
-    ("revoked epoch accepts bool", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return isinstance(v, int) and -_INT_BOUND < v < _INT_BOUND"),
-    ("revoked pairs use the floor rule", "all(_revoked_pair_ok(p) for p in s[\"revoked_selections\"])", "all(_pair_ok(p) for p in s[\"revoked_selections\"])"),
-    ("floors use the revoked rule", "and all(_pair_ok(p) for p in s[\"min_epochs\"]))", "and all(_revoked_pair_ok(p) for p in s[\"min_epochs\"]))"),
-    ("snapshot epoch ceiling 2^53", "return type(v) is int and 1 <= v < _INT_BOUND", "return type(v) is int and 1 <= v < 2 ** 53"),
+    ("revoked epoch allows 0", "_revoked_epoch = _epoch  #", "_revoked_epoch = lambda v: type(v) is int and 0 <= v <= 2147483647  #"),
+    ("revoked epoch unbounded", "_revoked_epoch = _epoch  #", "_revoked_epoch = lambda v: type(v) is int and v >= 1  #"),
+    ("revoked epoch accepts negatives", "_revoked_epoch = _epoch  #", "_revoked_epoch = lambda v: type(v) is int and -2147483647 <= v <= 2147483647  #"),
+    ("revoked epoch accepts bool", "_revoked_epoch = _epoch  #", "_revoked_epoch = lambda v: isinstance(v, int) and 1 <= v <= 2147483647  #"),
+    ("snapshot epoch ceiling 2^53", "lo, hi = INTEGER_RANGES[\"selection_epoch\"]\n    return type(v) is int and lo <= v <= hi", "lo, hi = INTEGER_RANGES[\"selection_epoch\"]\n    return type(v) is int and lo <= v <= 2 ** 53"),
     ("snapshot issuers type unchecked", 'if not (type(s["issuers"]) is list and type(s["revoked_key_ids"])', 'if not (True and type(s["revoked_key_ids"])'),
     ("snapshot revoked ids type unchecked", 'type(s["revoked_key_ids"]) is list and type(s["revoked_selections"])', 'True and type(s["revoked_selections"])'),
     ("snapshot revoked selections type unchecked", 'type(s["revoked_selections"]) is list and type(s["min_epochs"]) is list', 'True and type(s["min_epochs"]) is list'),
@@ -1500,9 +1520,9 @@ MUTANTS = [
     ("deny-all family unregistered unchecked", '    if family not in IDENTITY_FAMILIES:\n        _refuse("family_unsupported", "family")\n    d = _plain(payload)', '    d = _plain(payload)'),
     ("serializer escape table writable", "_SHORT = MappingProxyType({", "_SHORT = ({"),
     ("loader escape table writable", "_ESCAPES = MappingProxyType({", "_ESCAPES = ({"),
-    ("refusal message formats the code", 'raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(code).__name__)', 'raise ValueError("refusal code outside CODES_V2: %r" % (code,))'),
+    ("refusal message formats the code", 'raise ValueError("refusal code outside CODES_V2_REV2 (got a %s)" % type(code).__name__)', 'raise ValueError("refusal code outside CODES_V2_REV2: %r" % (code,))'),
     ("role message formats the role", 'raise ValueError("unknown role (got a %s)" % type(role).__name__)', 'raise ValueError("unknown role: %r" % (role,))'),
-    ("effect message formats the code", 'raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(refusal_code).__name__)', 'raise ValueError("refusal code outside CODES_V2: %r" % (refusal_code,))'),
+    ("effect message formats the code", 'raise ValueError("refusal code outside CODES_V2_REV2 (got a %s)" % type(refusal_code).__name__)', 'raise ValueError("refusal code outside CODES_V2_REV2: %r" % (refusal_code,))'),
     ("marker class lost", 'OutOfRangeInteger: "integer"}', 'OutOfRangeInteger: "other"}'),
     ("loader joins any escape after a surrogate", "0xDC00 <= int(h2, 16) <= 0xDFFF", "0x0000 <= int(h2, 16) <= 0xFFFF"),
     ("surrogate pair: high range ends early", r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")', r'_SURROGATE_PAIR = re.compile("[\ud800-\udbfe][\udc00-\udfff]")'),
@@ -1516,7 +1536,7 @@ MUTANTS = [
     ("native scalar at depth 9 accepted", '    if depth > MAX_DEPTH:\n        _refuse("json_nesting_too_deep")\n    t = type(value)\n    if t is str:\n        return _AMBIGUOUS', '    if depth > MAX_DEPTH + 1:\n        _refuse("json_nesting_too_deep")\n    t = type(value)\n    if t is str:\n        return _AMBIGUOUS'),
     ("deny-all read from every family", '    if IDENTITY_FAMILIES[family].kind != "lists":\n        return []', '    if False:\n        return []'),
     ("refusal keeps the caller's evidence dict", "self.evidence = MappingProxyType(dict(evidence or {}))", "self.evidence = MappingProxyType(evidence if evidence else {})"),
-    ("module table check: code outside CODES_V2", "    if not used <= set(CODES_V2):", "    if False:"),
+    ("module table check: code outside CODES_V2_REV2", "    if not used <= set(CODES_V2_REV2):", "    if False:"),
     ("module table check: verdict class", "    if not all(r.verdict_class in VERDICT_CLASSES for r in REFUSAL_MAPPING):", "    if False:"),
     ("verdict_for compares a hostile stage", '        if type(stage) is not str:  # a hostile `stage` (e.g. a raising `__eq__`) must neither be called nor reach a row: no match\n            raise KeyError((code, "<non-string stage>"))\n', ""),
     ("projection stage compared without a type check", 'if type(refusal.stage) is str and refusal.stage == "projection":', 'if refusal.stage == "projection":'),

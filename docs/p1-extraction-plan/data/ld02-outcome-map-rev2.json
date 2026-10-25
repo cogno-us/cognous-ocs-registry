@@ -1,0 +1,143 @@
+{
+ "meta": {
+  "schema": "ocs-registry-outcome-map/rev2",
+  "vocabulary_revision": "r08-v2-reasons/2",
+  "vocabulary_symbol": "CODES_V2_REV2",
+  "vocabulary_note": "Documentary designation only; contract_version stays exactly r08-v2. Revision 1 (r08-v2-reasons/1, CODES_V2, 48 codes) is unchanged.",
+  "code_count": 51,
+  "inherits": {
+   "file": "docs/p1-extraction-plan/data/ld02-outcome-map.json",
+   "git_blob": "2752800d240d4255af3e62d2e911b0821c8e2af4",
+   "sha256": "dcb14ec1067ccf3218949de57312040dad9df926b134a67f2826e3f0c37d535c",
+   "code_count": 48,
+   "rule": "The 48 revision-1 entries are the pinned map, byte for byte; this file adds exactly three entries and edits none."
+  },
+  "added_codes_order": [
+   "not_activated",
+   "policy_identity_mismatch",
+   "store_unknown"
+  ],
+  "completeness_rule": "Every CODES_V2_REV2 entry is mapped: the 48 by the inherited map, the three added by this file. Deleting any entry fails tests/test_ext_s1_5_reason_mapping_completion.py. can_authorize_action is false for every entry.",
+  "status": "RULED_REQUIRED (Architect Batch 6, 4.3, 4.7, N-4, N-12); outcome and Control Plane classification not ratified by the Control Plane owner",
+  "detail_schema": "ocs-registry-failure-detail/1"
+ },
+ "codes_added": {
+  "not_activated": {
+   "code": "not_activated",
+   "verification_layer": "selection",
+   "verdict_class": "REFUSE",
+   "registry_meaning": "The enforcing component's known authoritative durable state has no row for the scope key.",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "overlay_not_applied": false,
+    "caller_policy_returned": false,
+    "rule": "Never an optional fallback (Architect Batch 6, N-12): optional participation does not turn this code into overlay_not_applied. Fallback needs separate authenticated consumer-owned state."
+   },
+   "retry_class": "fresh_statement_required",
+   "evidence_requirement": {
+    "common": "ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at",
+    "specific": "scope_key_digest, selection_id (if known)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_OWNER_RECORD_REQUIRED",
+    "proposed_outcome": "REFUSE",
+    "basis": "Architect Batch 6, ruling 4.7: definitive invalidity or policy violation REFUSE; definitive stale authority REFUSE_STALE where the owning outcome contract supports it; unavailable or indeterminate authority HOLD. Not adopted as a Control Plane reason: the Control Plane owner records trigger, severity, producer, consumer and evidence semantics before ratification.",
+    "deny_used": false
+   },
+   "occurs_at": "gate_and_commit",
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy and never leaves the caller policy usable; it is not an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "A known store with no row is a definitive answer; an absent or unreadable store is store_unknown.",
+   "in_CODES": false,
+   "in_CODES_V2": false,
+   "in_CODES_V2_REV2": true,
+   "status": "RULED_REQUIRED_NOT_RATIFIED_OUTCOME"
+  },
+  "policy_identity_mismatch": {
+   "code": "policy_identity_mismatch",
+   "verification_layer": "identity",
+   "verdict_class": "REFUSE",
+   "registry_meaning": "A claim-carried identity member differs from the authoritative durable activation row, over all six members of ocs-policy-binding/1 (scope_key, selection_id, selection_epoch, selection_digest, selected record identity, activation_ref).",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "overlay_not_applied": false,
+    "caller_policy_returned": false,
+    "rule": "Never an optional fallback (Architect Batch 6, N-12): optional participation does not turn this code into overlay_not_applied. Fallback needs separate authenticated consumer-owned state."
+   },
+   "retry_class": "never_same_input",
+   "evidence_requirement": {
+    "common": "ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at",
+    "specific": "scope_key_digest, member, selection_id, selection_epoch, high_water_epoch, selection_digest, record_id, record_version, record_digest, activation_ref",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_OWNER_RECORD_REQUIRED",
+    "proposed_outcome": "REFUSE",
+    "basis": "Architect Batch 6, ruling 4.7: definitive invalidity or policy violation REFUSE; definitive stale authority REFUSE_STALE where the owning outcome contract supports it; unavailable or indeterminate authority HOLD. Not adopted as a Control Plane reason: the Control Plane owner records trigger, severity, producer, consumer and evidence semantics before ratification.",
+    "deny_used": false
+   },
+   "occurs_at": "gate_and_commit",
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy and never leaves the caller policy usable; it is not an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "A claim epoch behind the row is selection_epoch_stale (REFUSE_STALE), never this code. effective_policy_digest is not compared with durable state.",
+   "in_CODES": false,
+   "in_CODES_V2": false,
+   "in_CODES_V2_REV2": true,
+   "status": "RULED_REQUIRED_NOT_RATIFIED_OUTCOME"
+  },
+  "store_unknown": {
+   "code": "store_unknown",
+   "verification_layer": "trust",
+   "verdict_class": "UNKNOWN_FAIL_CLOSED",
+   "registry_meaning": "The enforcing component's authoritative durable state is unavailable, lost, torn, rolled back, tampered or otherwise indeterminate.",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "overlay_not_applied": false,
+    "caller_policy_returned": false,
+    "rule": "Never an optional fallback (Architect Batch 6, N-12): optional participation does not turn this code into overlay_not_applied. Fallback needs separate authenticated consumer-owned state."
+   },
+   "retry_class": "after_authoritative_state_available",
+   "evidence_requirement": {
+    "common": "ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at",
+    "specific": "scope_key_digest, unknown_cause",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_OWNER_RECORD_REQUIRED",
+    "proposed_outcome": "HOLD",
+    "basis": "Architect Batch 6, ruling 4.7: definitive invalidity or policy violation REFUSE; definitive stale authority REFUSE_STALE where the owning outcome contract supports it; unavailable or indeterminate authority HOLD. Not adopted as a Control Plane reason: the Control Plane owner records trigger, severity, producer, consumer and evidence semantics before ratification.",
+    "deny_used": false
+   },
+   "occurs_at": "gate_and_commit",
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy and never leaves the caller policy usable; it is not an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "HOLD for every participation. Never overlay_not_applied merely because the durable state is unknown; never read as never-activated.",
+   "in_CODES": false,
+   "in_CODES_V2": false,
+   "in_CODES_V2_REV2": true,
+   "status": "RULED_REQUIRED_NOT_RATIFIED_OUTCOME"
+  }
+ }
+}
