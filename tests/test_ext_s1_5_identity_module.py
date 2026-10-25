@@ -436,8 +436,8 @@ def _oracle_failures():
         r = caught(m.verify_carried_binding_digest, good, "sha256:" + "0" * 64)
         check(r is not None and r.evidence["carried_digest"] == "sha256:" + "0" * 64 and r.evidence["recomputed_digest"] == m.checked_binding_digest(good)
               and m.mapping_row_for(r).row_id == "MP-digest_mismatch", "digest evidence")
-        check(not any(x.proposed for x in m.REFUSAL_MAPPING if x.row_id not in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-verify", "MP-trust_snapshot_missing-guard"))
-              and all(m.MAPPING_BY_ID[i].proposed for i in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-verify", "MP-trust_snapshot_missing-guard")), "proposed rows")
+        check(not any(x.proposed for x in m.REFUSAL_MAPPING if x.row_id not in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-input", "MP-trust_snapshot_missing-durable-state"))
+              and all(m.MAPPING_BY_ID[i].proposed for i in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-input", "MP-trust_snapshot_missing-durable-state")), "proposed rows")
 
     def round_two():
         """Review of PR #33, round two (S1-S6 and the nits)."""
@@ -661,7 +661,7 @@ def _oracle_failures():
             r = refusal_of(m.project_effective_policy_digest, *args)
             check(r is not None and r.stage is None and "projection_refusal_code" not in r.evidence, "wrapper leaves %s untagged" % label)
         check(m.mapping_row_for(m.IdentityRefusal("family_unsupported", "family", "projection")).row_id == "MP-family_unsupported", "single-row code ignores the stage")
-        check(m.mapping_row_for(m.IdentityRefusal("trust_snapshot_missing", None, "guard")).row_id == "MP-trust_snapshot_missing-guard", "multi-row code uses the stage")
+        check(m.mapping_row_for(m.IdentityRefusal("trust_snapshot_missing", None, "DURABLE_STATE")).row_id == "MP-trust_snapshot_missing-durable-state", "multi-row code uses the stage")
         try:
             m.mapping_row_for(m.IdentityRefusal("trust_snapshot_missing", None, "nope"))
             fails.append("unknown stage accepted")
@@ -777,7 +777,7 @@ def test_every_vector_set_passes_against_the_production_module():
 
 
 def test_vectors_are_not_empty_so_the_oracle_cannot_pass_vacuously():
-    assert len(V["valid"]) == 15 and len(V["invalid"]) == 119 and len(V["input_boundary"]) == 28
+    assert len(V["valid"]) == 15 and len(V["invalid"]) == 128 and len(V["input_boundary"]) == 28
     assert len(V["effective_payloads"]) == 16 and len(V["integer_boundary"]) == 31 and len(V["effective_integer_boundary"]) == 45
     assert len(V["projection_effect_matrix"]) == 30 and len(V["defect_mapping"]) == 35
 
@@ -870,13 +870,13 @@ def test_refusal_mapping_equals_the_vector_defect_mapping_for_existing_codes():
     assert m.verdict_for("store_unknown").verdict_class == "UNKNOWN_FAIL_CLOSED" and m.verdict_for("not_activated").verdict_class == "REFUSE"
     assert m.verdict_for("policy_identity_mismatch").verdict_class == "REFUSE"
     # N-11: the stage of trust_snapshot_missing is typed and versioned
-    assert (m.verdict_for("trust_snapshot_missing", "verify").evidence_stage, m.verdict_for("trust_snapshot_missing", "guard").evidence_stage) == ("INPUT", "DURABLE_STATE")
-    assert m.verdict_for("trust_snapshot_missing", "guard").stage_version == m.EVIDENCE_STAGE_VERSION == "ocs-evidence-stage/1"
+    assert (m.verdict_for("trust_snapshot_missing", "INPUT").evidence_stage, m.verdict_for("trust_snapshot_missing", "DURABLE_STATE").evidence_stage) == ("INPUT", "DURABLE_STATE")
+    assert m.verdict_for("trust_snapshot_missing", "DURABLE_STATE").stage_version == m.EVIDENCE_STAGE_VERSION == "ocs-evidence-stage/1"
     assert m.verdict_for("selection_epoch_stale").evidence_stage is None and m.verdict_for("selection_epoch_stale").stage_version is None
-    assert m.verdict_for("trust_snapshot_missing", "verify").verdict_class == "UNKNOWN_FAIL_CLOSED"
-    assert m.verdict_for("trust_snapshot_missing", "guard").stage_value == "guard"
+    assert m.verdict_for("trust_snapshot_missing", "INPUT").verdict_class == "UNKNOWN_FAIL_CLOSED"
+    assert m.verdict_for("trust_snapshot_missing", "DURABLE_STATE").stage_value == "DURABLE_STATE"
     assert m.verdict_for("selection_epoch_stale").verdict_class == "REFUSE_STALE"
-    assert m.verdict_for("selection_expired").optional_overlay is True and m.verdict_for("selection_revoked").optional_overlay is False
+    assert m.verdict_for("selection_expired").optional_overlay is False and m.verdict_for("selection_revoked").optional_overlay is False
     with pytest.raises(KeyError):
         m.verdict_for("trust_snapshot_missing")  # two stages: ambiguous without one
     # every code this module can emit has a mapping row
@@ -1465,7 +1465,7 @@ MUTANTS = [
     ("age ranges writable", "AGE_RANGES = MappingProxyType({", "AGE_RANGES = ({"),
     ("projection stage row unselected", 'if type(refusal.stage) is str and refusal.stage == "projection":', "if False:"),
     ("integer row unselected", '"expected_range" in refusal.evidence', "False"),
-    ("proposed flag dropped", 'stage_value="verify", proposed=True)', 'stage_value="verify")'),
+    ("proposed flag dropped", 'stage_value="INPUT", proposed=True)', 'stage_value="INPUT")'),
     # review of PR #33, round two (S1-S6, nits, and the reviewer's surviving mutants)
     ("refusal not picklable", "    def __reduce__(self):", "    def __reduce_disabled__(self):"),
     ("refusal reduce drops stage", "return (IdentityRefusal, (self.code, self.member, self.stage, dict(self.evidence)))", "return (IdentityRefusal, (self.code, self.member, None, dict(self.evidence)))"),

@@ -63,15 +63,15 @@ def test_adapter_is_independent_of_collection_order_and_container_type():
 
 def test_no_snapshot_supplied_is_missing_at_the_typed_input_stage():
     e = _refusal(m.trust_snapshot_from_verified, None)
-    assert (e.code, e.stage) == ("trust_snapshot_missing", "verify")
+    assert (e.code, e.stage) == ("trust_snapshot_missing", "INPUT")
     row = m.mapping_row_for(e)
     assert row.evidence_stage == "INPUT" and row.stage_version == "ocs-evidence-stage/1" and row.verdict_class == "UNKNOWN_FAIL_CLOSED"
     assert _refusal(m.trust_snapshot_fingerprint_from_verified, None).code == "trust_snapshot_missing"
 
 
 def test_the_durable_state_stage_is_a_different_typed_row_under_the_same_code():
-    guard = m.verdict_for("trust_snapshot_missing", "guard")
-    verify = m.verdict_for("trust_snapshot_missing", "verify")
+    guard = m.verdict_for("trust_snapshot_missing", "DURABLE_STATE")
+    verify = m.verdict_for("trust_snapshot_missing", "INPUT")
     assert (verify.evidence_stage, guard.evidence_stage) == ("INPUT", "DURABLE_STATE") and verify.row_id != guard.row_id
     assert verify.registry_code == guard.registry_code == "trust_snapshot_missing"
     assert "scope_key_digest" in guard.evidence_fields and "scope_key_digest" not in verify.evidence_fields  # not presented as one underlying cause
@@ -479,6 +479,56 @@ def test_ingest_bound_refuses_before_authority_evaluation(version, monkeypatch):
     assert calls == []  # authority evaluation never reached
     assert m.mapping_row_for(e).verdict_class == "REFUSE"
     assert _refusal(m.trust_snapshot_fingerprint_from_verified, _snap(version=version)).stage == "ingest"
+
+
+def _sib_value(v):
+    t = v["text_repeat"][0] * v["text_repeat"][1] if "text_repeat" in v else v["text"]
+    rep = v["representation"]
+    if rep == "int":
+        return (10 ** len(t) - 1) // 9 * int(t[0]) if "text_repeat" in v else int(t)  # repeated-digit literals built arithmetically (no int-string conversion limit)
+    return {"float": float, "string": str, "bool": lambda x: x == "true", "null": lambda x: None}[rep](t)
+
+
+@pytest.mark.parametrize("vec", V["snapshot_version_ingest_bound"]["vectors"], ids=lambda v: v["id"])
+def test_sib_vectors_drive_the_ingest_bound(vec, monkeypatch):
+    """Merged PR #35 vectors SIB-001..013 against `trust_snapshot_from_verified`: accepted versions reach authority evaluation; every other representation is
+    refused at ingest (code, stage and member as the vector states) BEFORE authority evaluation."""
+    from registry_successor import verify as vm
+    sec, exp = V["snapshot_version_ingest_bound"], vec["expected"]
+    value = _sib_value(vec)
+    reached = []
+    real = vm._normalize_trust
+    monkeypatch.setattr(vm, "_normalize_trust", lambda t: (reached.append(1), real(t))[1])
+    if exp["result"] == "refuse":
+        e = _refusal(m.trust_snapshot_from_verified, _snap(version=value))
+        assert (e.code, e.stage, e.member) == (exp["code"], exp["stage"], exp["member"]) == (sec["code"], sec["stage"], sec["member"])
+        assert reached == [] and exp["authority_evaluation_reached"] is False
+    else:
+        assert m.trust_snapshot_from_verified(_snap(version=value))["version"] == int(vec["text"])
+        assert reached == [1]
+
+
+def test_ingest_stage_and_member_are_diagnostic_metadata_never_digest_data():
+    """Architect Batch 7: stage `ingest` and member `trust_snapshot_version` are typed diagnostic metadata on the refusal, not canonical digest data."""
+    e = _refusal(m.trust_snapshot_from_verified, _snap(version=0))
+    row = m.mapping_row_for(e)
+    assert "member" in row.evidence_fields and "stage" in row.evidence_fields and "trust_snapshot_version" in row.evidence_fields
+    good = m.trust_snapshot_from_verified(_snap())
+    assert set(good) == set(m._SNAPSHOT_MEMBERS)  # the normalized snapshot (the fingerprint preimage) has no stage or member
+    assert m.trust_snapshot_fingerprint(good) == TF001["expected"]["trust_snapshot_fingerprint"]  # unchanged after a refused ingest in the same process
+    pre = m.canonical_json_bytes(good)
+    assert b"ingest" not in pre and b'"member"' not in pre and b'"stage"' not in pre
+    b = _binding()
+    assert m.checked_binding_digest(b) == m.binding_digest(b) and b"ingest" not in m.canonical_binding_bytes(b)
+
+
+def test_cross_row_substitution_is_the_identity_mismatch_never_stale_after_the_merge():
+    b = _binding()
+    for edit in ({"selection_id": "sel-other"}, {"scope_key": DIGEST_A}):
+        row = _row(b, selection_epoch=b["selection_epoch"] + 9, **edit)
+        for fn, args in ((m.compare_binding_identity, (b, row)), (m.verify_carried_binding_digest, (b, "sha256:" + "0" * 64, row))):
+            e = _refusal(fn, *args)
+            assert e.code == "policy_identity_mismatch" and e.code != "selection_epoch_stale"  # identity before digest too
 
 
 def _bad_rows():

@@ -898,13 +898,13 @@ _SET_TYPES = (set, frozenset, tuple, list)
 def trust_snapshot_from_verified(trust: Any) -> dict:
     """Convert a snapshot the VERIFIER accepts into the spec's normalized dict shape (public key bytes to lowercase hex, grants to five-token arrays, pairs to
     two-element lists), for `trust_snapshot_fingerprint`. It adds no authority: the object is only ever read, never trusted, signed or stored.
-      * `None` (no required snapshot supplied): `trust_snapshot_missing` at the `verify` stage (typed `INPUT`, ruling N-11).
+      * `None` (no required snapshot supplied): `trust_snapshot_missing` at the `INPUT` stage (typed, ruling N-11).
       * anything else that is not exactly a `TrustSnapshot` (a subclass, a dict, a look-alike), or that `verify._normalize_trust` refuses, or whose members are
         not exactly the verifier's types: `trust_snapshot_invalid` (definitive malformed input is never called missing).
     The result is then re-checked by the stricter shape guard of `trust_snapshot_fingerprint` (version and epoch ranges from `INTEGER_RANGES`, no repeated
     grant inside one issuer), so a snapshot that passes the verifier can still be refused here, never the reverse."""
     if trust is None:
-        _refuse("trust_snapshot_missing", None, "verify")
+        _refuse("trust_snapshot_missing", None, "INPUT")
     if type(trust) is _verify.TrustSnapshot:
         # N-10(c) ingest bound (PROPOSED mapping, PR #35 spec 5.5.2): the representation bound is applied to the delivered version BEFORE the snapshot is used in
         # authority evaluation (`_normalize_trust`), the fingerprint or any projection; `bool`, floats, strings, None and out-of-range ints never get further.
@@ -1282,8 +1282,8 @@ def validate_preimage(doc: Any) -> dict:
 VERDICT_CLASSES = ("ACCEPT", "REFUSE", "REFUSE_STALE", "UNKNOWN_FAIL_CLOSED")
 EVIDENCE_STAGE_VERSION = "ocs-evidence-stage/1"  # ruling N-11: the evidence stage is typed and versioned
 EVIDENCE_STAGES = ("INPUT", "DURABLE_STATE")
-# The vector file at Registry main still spells the two stage values `verify` and `guard` (PR #35 renames them); the mapping keeps the vector spelling and types it here.
-STAGE_TYPES = MappingProxyType({"verify": "INPUT", "guard": "DURABLE_STATE"})
+# The merged vector file (PR #35) spells the two typed stage values `INPUT` and `DURABLE_STATE`; the mapping uses them as the row's `stage_value`.
+STAGE_TYPES = MappingProxyType({"INPUT": "INPUT", "DURABLE_STATE": "DURABLE_STATE"})
 
 
 @dataclass(frozen=True)
@@ -1345,23 +1345,23 @@ REFUSAL_MAPPING = (
     MappingRow("MP-selection_epoch_stale", "REFUSE_STALE", "selection_epoch_stale", "required_policy_unavailable", "fresh_statement_required",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch", "high_water_epoch", "min_epoch_floor", "selection_digest",),),
     MappingRow("MP-trust_snapshot_invalid", "REFUSE", "trust_snapshot_invalid", "required_policy_unavailable", "never_same_input",
-               ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",), proposed=True),
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version", "member",), proposed=True),
     MappingRow("MP-selection_revoked", "REFUSE", "selection_revoked", "required_policy_unavailable", "fresh_statement_required",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch", "selection_digest",),),
     MappingRow("MP-issuer_key_revoked", "REFUSE", "issuer_key_revoked", "required_policy_unavailable", "fresh_statement_required",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch",),),
     MappingRow("MP-selection_expired", "REFUSE", "selection_expired", "required_policy_unavailable", "fresh_statement_required",
-               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch",), optional_overlay=True),
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch",),),  # N-12(c) RULED: expiry is never a fallback basis (REFUSE); only an independently authenticated never-required or withdrawn state is
     MappingRow("MP-selection_not_yet_effective", "REFUSE", "selection_not_yet_effective", "required_policy_unavailable", "after_validity_window_opens",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch",),),
     MappingRow("MP-participation_mismatch", "REFUSE", "participation_mismatch", "required_policy_unavailable", "never_same_input",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id",),),
     MappingRow("MP-selection_conflict", "REFUSE", "selection_conflict", "required_policy_unavailable", "never_same_input",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "selection_id", "selection_epoch", "selection_digest",),),
-    MappingRow("MP-trust_snapshot_missing-verify", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_missing", "required_policy_unavailable", "after_authoritative_state_available",
-               ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",), stage_value="verify", proposed=True),
-    MappingRow("MP-trust_snapshot_missing-guard", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_missing", "required_policy_unavailable", "after_authoritative_state_available",
-               ("registry_code", "layer", "participation", "decision_kind", "stage", "scope_key_digest", "trust_snapshot_version",), stage_value="guard", proposed=True),
+    MappingRow("MP-trust_snapshot_missing-input", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_missing", "required_policy_unavailable", "after_authoritative_state_available",
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "stage_version", "trust_snapshot_version",), stage_value="INPUT", proposed=True),
+    MappingRow("MP-trust_snapshot_missing-durable-state", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_missing", "required_policy_unavailable", "after_authoritative_state_available",
+               ("registry_code", "layer", "participation", "decision_kind", "stage", "stage_version", "scope_key_digest", "trust_snapshot_version",), stage_value="DURABLE_STATE", proposed=True),
     MappingRow("MP-trust_snapshot_expired-delivered", "REFUSE", "trust_snapshot_expired", "required_policy_unavailable", "fresh_statement_required",
                ("registry_code", "layer", "participation", "decision_kind", "stage", "trust_snapshot_version",),),
     MappingRow("MP-trust_snapshot_expired-guard", "UNKNOWN_FAIL_CLOSED", "trust_snapshot_expired", "required_policy_unavailable", "after_authoritative_state_available",
@@ -1385,7 +1385,7 @@ def mapping_rows_for(code: str) -> Tuple[MappingRow, ...]:
 
 def verdict_for(code: str, stage: Any = None) -> MappingRow:
     """The unique mapping row for a registry code (and, for the codes with several rows, a stage); a code with no row, or with several rows the stage
-    does not single out, raises KeyError. `trust_snapshot_missing` has two rows (stage `verify` / `guard`) and `trust_snapshot_expired` two (use
+    does not single out, raises KeyError. `trust_snapshot_missing` has two rows (stage `INPUT` / `DURABLE_STATE`) and `trust_snapshot_expired` two (use
     `MAPPING_BY_ID`); `field_invalid` has three (use `mapping_row_for`, which reads a refusal's own stage and evidence)."""
     rows = mapping_rows_for(code) if type(code) is str else ()
     if stage is not None:
