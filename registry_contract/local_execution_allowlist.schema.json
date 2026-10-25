@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "S03 documentation form of docs/s03-contract.md section 3 (non-authorizing, unqualified). The validator in validator.py is normative for outcomes; a test checks field-name parity. Digest recomputation, supersession consistency and context checks cannot be expressed here.",
+  "title": "local-execution-allowlist s03-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "contract_version", "record_id", "record_version", "status", "non_authorizing", "supersedes", "source", "applicability", "evaluator", "data", "data_digest", "provenance", "record_digest"],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "hex40": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "entries": {
+      "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 128},
+      "$comment": "Also: ascending order, no Unicode C*/Z* characters, no '*'."
+    }
+  },
+  "properties": {
+    "record_type": {"const": "local-execution-allowlist"},
+    "contract_version": {"const": "s03-v1"},
+    "record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
+    "record_version": {"type": "integer", "minimum": 1},
+    "status": {"enum": ["proposed", "active", "superseded", "withdrawn"]},
+    "non_authorizing": {"const": true},
+    "supersedes": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "object", "additionalProperties": false,
+         "required": ["record_id", "record_version", "record_digest"],
+         "properties": {
+           "record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
+           "record_version": {"type": "integer", "minimum": 1},
+           "record_digest": {"$ref": "#/$defs/sha256"}}}
+      ]
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "commit", "path", "blob_id", "sha256", "field_lines", "check_lines"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit": {"$ref": "#/$defs/hex40"},
+        "path": {"type": "string", "minLength": 1},
+        "blob_id": {"$ref": "#/$defs/hex40"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "field_lines": {"type": "string", "pattern": "^[0-9]+-[0-9]+$"},
+        "check_lines": {"type": "string", "pattern": "^[0-9]+-[0-9]+$"}
+      }
+    },
+    "applicability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runtime_source_blob_id"],
+      "properties": {"runtime_source_blob_id": {"$ref": "#/$defs/hex40"}}
+    },
+    "evaluator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evaluator_id", "binding", "supplies"],
+      "properties": {
+        "evaluator_id": {"const": "engine.safe_executor.LocalExecutionPolicy.check"},
+        "binding": {"const": "registered-code-reference"},
+        "supplies": {"const": ["allowed_actions", "allowed_adapters", "allowed_units"]}
+      }
+    },
+    "data": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed_units", "allowed_adapters", "allowed_actions"],
+      "properties": {
+        "allowed_units": {"$ref": "#/$defs/entries"},
+        "allowed_adapters": {"$ref": "#/$defs/entries"},
+        "allowed_actions": {"$ref": "#/$defs/entries"}
+      }
+    },
+    "data_digest": {"$ref": "#/$defs/sha256"},
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decision_ref", "authored_at", "authored_by"],
+      "properties": {
+        "decision_ref": {"type": "string", "minLength": 1, "maxLength": 200},
+        "authored_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+        "authored_by": {"type": "string", "minLength": 1, "maxLength": 120}
+      }
+    },
+    "record_digest": {"$ref": "#/$defs/sha256"}
+  }
+}
