@@ -2439,7 +2439,7 @@ def test_snapshot_version_bound_is_applied_before_authority_evaluation_n10c():
     reaches authority evaluation."""
     sec = V["snapshot_version_ingest_bound"]
     assert "BEFORE the snapshot is used in authorization or projection" in sec["rule"] and sec["stage"] == "ingest" and sec["code"] == "trust_snapshot_invalid"
-    assert (sec["min"], sec["max"]) == RANGES["trust_snapshot_version"] and "PROPOSED mapping" in sec["code_status"]
+    assert (sec["min"], sec["max"]) == RANGES["trust_snapshot_version"] and "ACCEPTED mapping" in sec["code_status"]
     ids = [v["id"] for v in sec["vectors"]]
     assert ids == ["SIB-%03d" % i for i in range(1, 14)]
     for v in sec["vectors"]:  # long literals are generated (the file stays small): "text_repeat": [digit, count]

@@ -6593,7 +6593,7 @@
     "trust_snapshot_version",
     "member"
    ],
-   "source": "contract 5; registry_successor/verify.py:245; PROPOSED verdict class (this PR): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped",
+   "source": "contract 5; registry_successor/verify.py:245; verdict class (accepted, Architect Batch 7): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped",
    "ingest_bound": "N-10(c) RULED: stage `ingest`, member `trust_snapshot_version`; the refusal precedes every authority evaluation and every projection. The code reuses the existing trust_snapshot_invalid (the N-11 invalid-input refusal); the exact stage vocabulary and code are flagged for Architect confirmation"
   },
   {
@@ -9188,7 +9188,7 @@
   "member": "trust_snapshot_version",
   "min": 1,
   "max": 9007199254740991,
-  "code_status": "The ruling fixes the ordering, not the code name. This maps the refusal onto the existing trust_snapshot_invalid (N-11: definitive malformed input uses the invalid-input refusal, never missing). PROPOSED mapping; Architect to confirm. A source that still refuses at the projection stage with field_invalid (defence in depth) is not conforming to the ordering.",
+  "code_status": "The ruling fixes the ordering, not the code name. This maps the refusal onto the existing trust_snapshot_invalid (N-11: definitive malformed input uses the invalid-input refusal, never missing). ACCEPTED mapping (ACCEPTED by the Architect (Batch 7, 2026-10-25)) as typed diagnostic metadata, never canonical digest data. A source that still refuses at the projection stage with field_invalid (defence in depth) is not conforming to the ordering.",
   "representations": [
    "int",
    "float",
