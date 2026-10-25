@@ -22110,6 +22110,7 @@
      "REFUSE",
      "record_invalid"
     ],
+    "skipped_behavior_check": true,
     "under_refusal": {
      "historical": "!",
      "registry_backed": "!"
@@ -22135,6 +22136,7 @@
      "REFUSE",
      "record_invalid"
     ],
+    "skipped_behavior_check": true,
     "under_refusal": {
      "historical": "!",
      "registry_backed": "!"
@@ -22160,6 +22162,7 @@
      "REFUSE",
      "record_invalid"
     ],
+    "skipped_behavior_check": true,
     "under_refusal": {
      "historical": "!",
      "registry_backed": "!"
@@ -23268,6 +23271,7 @@
    "refusal": 0,
    "representation": 0
   },
-  "skipped": 0
+  "skipped": 3,
+  "skipped_detail": "behavioral comparison (under refusal and designed narrowing) for E05 x 3 fields: the baseline snapshot cannot encode the value; constructor, S03 and consumer checks for these rows still ran and passed"
  }
 }

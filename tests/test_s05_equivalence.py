@@ -149,7 +149,10 @@ def manifest_bytes(manifest: dict) -> bytes:
 
 class Scenario:
     """Trusted-host layout. The harness plays the operator for synthetic scenarios: it computes the pin from the manifest
-    it generates. Pin independence from checked files is exercised separately by the PIN cases and by R09, R14, R24, R31."""
+    it generates. Substitution against an UNCHANGED pin is exercised only by R09 (and R05/R10-style cases that leave the
+    pinned manifest bytes alone). Recipes that call set_manifest() (e.g. R14, R24, R31) recompute the pin and therefore test
+    manifest/runtime-identity, shape and size validation, not substitution. PIN-1/PIN-2 use a pin literal frozen before the
+    harness; PIN-3 is a signature/field check of the API surface, not proof that no derivation path exists."""
 
     def __init__(self, directory: Path, sets=None, rec=None, raw=None, manifest_mutate=None):
         directory.mkdir(parents=True, exist_ok=True)
@@ -617,8 +620,11 @@ def representation(sink, tmp_path_factory):
                 try:
                     op_of(op)
                     exercisable = True
-                except Exception as exc:  # noqa: BLE001 - recorded, not hidden
+                except UnicodeEncodeError as exc:
+                    if cls["id"] != "E05":
+                        raise AssertionError("unexpected non-exercisable class " + cls["id"]) from exc
                     exercisable = False
+                    row["skipped_behavior_check"] = True
                     row["not_exercisable"] = "baseline snapshot_envelope cannot represent this value: %s" % type(exc).__name__
                 if not exercisable:
                     # Neither path can evaluate an operation carrying this value; both fail identically before check().
@@ -881,6 +887,8 @@ def test_Z4_totals_are_recorded(sink, g1, g2, refusal, representation, boundarie
                   "refusal": len(refusal), "representation": len(representation), "boundaries": len(boundaries),
                   "e2e": len(e2e), "pin": len(pins), "limitations": len(limitations)},
         "failing_cases_by_group": failing,
-        "skipped": 0,
+        "skipped": sum(1 for r in representation if r.get("skipped_behavior_check")),
+        "skipped_detail": "behavioral comparison (under refusal and designed narrowing) for E05 x 3 fields: the baseline "
+                          "snapshot cannot encode the value; constructor, S03 and consumer checks for these rows still ran and passed",
     }
     assert sum(failing.values()) == 0, failing
