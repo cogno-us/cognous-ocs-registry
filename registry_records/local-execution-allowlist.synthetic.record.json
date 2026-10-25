@@ -1,0 +1,48 @@
+{
+  "record_type": "local-execution-allowlist",
+  "contract_version": "s03-v1",
+  "record_id": "lep.allowlist.synthetic",
+  "record_version": 1,
+  "status": "active",
+  "non_authorizing": true,
+  "supersedes": null,
+  "source": {
+    "repository": "cogno-us/cognous-execution-runtime",
+    "commit": "ec728da6dc301a664b331ac8986afd6e850a1273",
+    "path": "engine/safe_executor.py",
+    "blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68",
+    "field_lines": "358-372",
+    "check_lines": "417-424"
+  },
+  "applicability": {
+    "runtime_source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d"
+  },
+  "evaluator": {
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "binding": "registered-code-reference",
+    "supplies": [
+      "allowed_actions",
+      "allowed_adapters",
+      "allowed_units"
+    ]
+  },
+  "data": {
+    "allowed_units": [
+      "USD"
+    ],
+    "allowed_adapters": [
+      "urn:cognous:adapter:synthetic-refund"
+    ],
+    "allowed_actions": [
+      "refund.issue"
+    ]
+  },
+  "data_digest": "sha256:a2693a5459f23f9a550939ad035b8319993cdadcab5a02952d75da0800738d3f",
+  "provenance": {
+    "decision_ref": "docs/decisions/2026-10-24-s04-preconditions-and-authorization.md",
+    "authored_at": "2026-10-24T12:00:00Z",
+    "authored_by": "S04 builder (synthetic fixture, not a policy)"
+  },
+  "record_digest": "sha256:e8481a3f440f9e79f13d13109289e063b9aaf5f1ff597090ffdb3cd6a4ca899d"
+}

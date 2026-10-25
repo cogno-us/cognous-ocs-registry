@@ -185,6 +185,9 @@ def caller_policy(**changes) -> LocalExecutionPolicy:
     return LocalExecutionPolicy(**args)
 
 
+_DEFAULT = object()
+
+
 class Scenario:
     """A trusted-host layout in tmp_path: untrusted record file, manifest file, and the operator's trusted pin."""
 
@@ -201,10 +204,15 @@ class Scenario:
         self.trust = TrustConfig(manifest_sha256=sha256_of(self.manifest_raw), runtime_source_blob_id=BLOB,
                                  runtime_source_sha256=SHA)
 
-    def run(self, policy=None, trust=None, manifest_path=None, record_path=None):
+    def run(self, policy=None, trust=_DEFAULT, manifest_path=_DEFAULT, record_path=_DEFAULT):
+        """Explicit None means "missing"; only an omitted argument falls back to the scenario's own files."""
         policy = policy or caller_policy()
-        result = apply_registry_overlay(policy, trust or self.trust, manifest_path or self.manifest_path,
-                                        record_path or self.record_path)
+        result = apply_registry_overlay(
+            policy,
+            self.trust if trust is _DEFAULT else trust,
+            self.manifest_path if manifest_path is _DEFAULT else manifest_path,
+            self.record_path if record_path is _DEFAULT else record_path,
+        )
         return policy, result
 
 
@@ -483,6 +491,19 @@ def test_N20_caller_policy_must_be_a_local_execution_policy(tmp_path, bad_policy
     assert result.policy is bad_policy
 
 
+def test_N20b_subclass_with_a_replaced_check_is_not_accepted_as_the_caller_policy(tmp_path):
+    @dataclasses.dataclass(frozen=True)
+    class WeakPolicy(LocalExecutionPolicy):
+        def check(self, op):
+            return None
+
+    s = Scenario(tmp_path)
+    weak = WeakPolicy(**{f.name: getattr(caller_policy(), f.name) for f in dataclasses.fields(LocalExecutionPolicy)})
+    result = apply_registry_overlay(weak, s.trust, s.manifest_path, s.record_path)
+    assert (result.disposition, result.reason, result.overlay_applied) == ("REFUSE", "caller_policy_invalid", False)
+    assert result.policy is weak
+
+
 @pytest.mark.parametrize("text", [
     b'{"a": 1, "a": 2}', b"NaN", b"", b"[]", b"null", b"not json", b'{"manifest_type": NaN}',
 ])
@@ -505,6 +526,7 @@ def test_N21_malformed_manifest_text_even_when_pinned(tmp_path, text):
     ("version_string", lambda m: m["record"].update(record_version="1")),
     ("version_bool", lambda m: m["record"].update(record_version=True)),
     ("version_zero", lambda m: m["record"].update(record_version=0)),
+    ("version_too_large", lambda m: m["record"].update(record_version=2 ** 31)),
     ("bad_digest_format", lambda m: m["record"].update(record_digest="abc")),
     ("bad_file_hash_format", lambda m: m["record"].update(file_sha256="sha256:XYZ")),
     ("bad_blob_format", lambda m: m["runtime"].update(source_blob_id="xyz")),
@@ -516,16 +538,25 @@ def test_N22_manifest_shape_is_strict(tmp_path, name, mutate):
     refused(result, policy, "manifest_invalid")
 
 
-def test_N23_oversized_files_are_refused(tmp_path):
+def test_N23_oversized_files_are_refused_even_when_otherwise_valid_and_approved(tmp_path):
+    pad = b" " * (1024 * 1024)
+    # Valid manifest, padded past the bound, and pinned: refused for size, not content.
     s = Scenario(tmp_path)
-    big = b" " * (1024 * 1024 + 1)
-    s.manifest_path.write_bytes(big)
-    policy, result = s.run(trust=dataclasses.replace(s.trust, manifest_sha256=sha256_of(big)))
+    padded_manifest = s.manifest_raw + pad
+    s.manifest_path.write_bytes(padded_manifest)
+    policy, result = s.run(trust=dataclasses.replace(s.trust, manifest_sha256=sha256_of(padded_manifest)))
     refused(result, policy, "manifest_invalid")
+    # Valid record, padded past the bound, and approved by a pinned manifest: refused for size.
     (tmp_path / "second").mkdir()
     s2 = Scenario(tmp_path / "second")
-    s2.record_path.write_bytes(big)
-    policy, result = s2.run()
+    padded_record = s2.raw + pad
+    s2.record_path.write_bytes(padded_record)
+    manifest = make_manifest(s2.rec, padded_record)
+    s2.manifest_path.write_bytes(manifest_bytes(manifest))
+    trust = dataclasses.replace(s2.trust, manifest_sha256=sha256_of(s2.manifest_path.read_bytes()))
+    assert validate_record_text(padded_record, {"runtime_source_blob_id": BLOB, "runtime_source_sha256": SHA,
+                                                "latest_known_version": 1}).outcome == "ACCEPT"
+    policy, result = s2.run(trust=trust)
     refused(result, policy, "record_file_mismatch")
 
 
@@ -563,6 +594,12 @@ def test_F2_policy_construction_failure_is_contained(tmp_path, monkeypatch):
         raise ValueError("injected fault")
 
     monkeypatch.setattr(consumer.dataclasses, "replace", boom)
+    policy, result = Scenario(tmp_path).run()
+    refused(result, policy, "consumer_error")
+
+
+def test_F4_widening_cross_check_failure_is_contained(tmp_path, monkeypatch):
+    monkeypatch.setattr("registry_consumer.consumer.widening_violations", lambda *_a, **_k: ["allowed_units"])
     policy, result = Scenario(tmp_path).run()
     refused(result, policy, "consumer_error")
 
@@ -625,6 +662,13 @@ def test_B1_s03_validator_and_baseline_are_unchanged():
     data = RUNTIME_SOURCE.read_bytes()
     assert hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest() == BLOB
     assert sha256_of(data) == SHA
+
+
+def test_B4_documented_candidate_digest_matches_the_committed_manifest():
+    doc = (ROOT / "docs" / "s04-implementation.md").read_text(encoding="utf-8")
+    actual = sha256_of((FIXTURES / "local-execution-allowlist.synthetic.manifest.json").read_bytes())
+    assert "Candidate manifest digest (SHA-256 of the committed manifest bytes): `%s`" % actual in doc
+    assert "not an approved pin" in doc
 
 
 def test_B2_consumer_has_no_discovery_network_process_or_dynamic_code():
