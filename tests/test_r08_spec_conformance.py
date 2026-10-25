@@ -423,59 +423,65 @@ def test_QD06_invalid_record_and_caller():
 
 
 # ---------------------------------------------------------------- QP: per-operation outcomes, no silent fallback
-def good_report():
-    return pipeline()[1]
+# A1 amendment: decisions go through the single verify_and_decide entrypoint; there is no public report-taking interface.
+def vd(participation, caller=CALLER, record_obj=None, statement=DEFAULT, record_text=DEFAULT, trust_obj=DEFAULT,
+       verifier=DEFAULT, now=DEFAULT, signed=True):
+    record_obj = record_obj if record_obj is not None else r.make_record()
+    stmt = r.make_statement(record_obj, participation=participation) if statement is DEFAULT else statement
+    sel_text = None if stmt is None else r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=signed))
+    return decision.verify_and_decide(
+        participation, caller, r.dumps(record_obj) if record_text is DEFAULT else record_text, sel_text, CTX,
+        trust() if trust_obj is DEFAULT else trust_obj, r.FakeVerifier() if verifier is DEFAULT else verifier,
+        r.NOW if now is DEFAULT else now)
 
 
 def test_QP01_applied_and_applied_deny_all():
-    d = decision.decide_policy("required", CALLER, rec_result(), good_report())
+    d = vd("required")
     assert d.kind == "applied" and norm(d.effective)["allowed_units"] == ("unit-a",)
-    empty = with_payload(allowed_units=[])
-    d = decision.decide_policy("required", CALLER, rec_result(empty), pipeline(record_obj=empty)[1])
+    d = vd("required", record_obj=with_payload(allowed_units=[]))
     assert d.kind == "applied_deny_all"
 
 
-def failing_reports():
+def failing_cases():
     return {
-        "QP02a-missing-selection": None,
-        "QP02b-untrusted": pipeline(trust_obj=trust(issuers=()))[1],
-        "QP02c-revoked": pipeline(trust_obj=trust(revoked_selections=frozenset({("sel-test-1", 1)})))[1],
-        "QP02d-expired": pipeline(now=r.NOW.replace(day=27))[1],
-        "QP02e-no-trust-root": pipeline(trust_obj=None)[1],
-        "QP02f-no-verifier": pipeline(verifier=None)[1],
+        "QP02a-missing-selection": dict(statement=None),
+        "QP02b-untrusted": dict(trust_obj=trust(issuers=())),
+        "QP02c-revoked": dict(trust_obj=trust(revoked_selections=frozenset({("sel-test-1", 1)}))),
+        "QP02d-expired": dict(now=r.NOW.replace(day=27)),
+        "QP02e-no-trust-root": dict(trust_obj=None),
+        "QP02f-no-verifier": dict(verifier=None),
     }
 
 
-@pytest.mark.parametrize("name", list(failing_reports()))
+@pytest.mark.parametrize("name", list(failing_cases()))
 def test_QP02_required_never_falls_back_to_caller(name):
-    d = decision.decide_policy("required", CALLER, rec_result(), failing_reports()[name])
+    d = vd("required", **failing_cases()[name])
     assert d.kind == "required_policy_unavailable" and d.code in c.CODES
     assert d.effective is None or norm(d.effective) != norm(CALLER)
 
 
-@pytest.mark.parametrize("name", list(failing_reports()))
+@pytest.mark.parametrize("name", list(failing_cases()))
 def test_QP03_optional_returns_caller_unchanged_and_is_not_denial(name):
-    d = decision.decide_policy("optional", CALLER, rec_result(), failing_reports()[name])
+    d = vd("optional", **failing_cases()[name])
     assert d.kind == "overlay_not_applied" and d.code in c.CODES
     assert norm(d.effective) == norm(CALLER) and not getattr(d, "deny_all", False)
 
 
 def test_QP04_missing_selection_code_and_invalid_record():
-    assert decision.decide_policy("required", CALLER, rec_result(), None).code == "selection_missing"
-    assert decision.decide_policy("optional", CALLER, rec_result(), None).code == "selection_missing"
-    bad = rec_result(reseal(extra="x"))
-    d = decision.decide_policy("required", CALLER, bad, good_report())
-    assert d.kind == "required_policy_unavailable" and d.code in {bad.code, "composition_record_invalid"}
+    assert vd("required", statement=None).code == "selection_missing"
+    assert vd("optional", statement=None).code == "selection_missing"
+    bad = reseal(extra="x")
+    d = vd("required", record_obj=r.make_record(), record_text=r.dumps(bad))
+    assert d.kind == "required_policy_unavailable" and d.code in {rec_result(bad).code, "composition_record_invalid"}
 
 
 def test_QP05_unsupported_composition_in_decision():
-    d = decision.decide_policy("required", dict(CALLER, extra=["x"]), rec_result(), good_report())
+    d = vd("required", caller=dict(CALLER, extra=["x"]))
     assert d.kind == "required_policy_unavailable" and d.code == "composition_caller_invalid"
-    d = decision.decide_policy("optional", dict(CALLER, extra=["x"]), rec_result(), good_report())
+    d = vd("optional", caller=dict(CALLER, extra=["x"]))
     assert d.kind == "overlay_not_applied"
 
 
 def test_QP06_taxonomy_is_closed():
-    for name, rep in failing_reports().items():
-        d = decision.decide_policy("required", CALLER, rec_result(), rep)
-        assert d.code in c.CODES, name
+    for name, kw in failing_cases().items():
+        assert vd("required", **kw).code in c.CODES, name

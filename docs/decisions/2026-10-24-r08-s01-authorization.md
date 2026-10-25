@@ -17,3 +17,13 @@
 
 - Interface specification written before the modules: `docs/r08-s01-contract.md`. One lead builder owns integration; parallel lanes owned disjoint files.
 - Parameters the operator left open, resolved conservatively and recorded as candidates in the contract: an F1a payload field that is absent refuses (typed semantics; neither implicit allow nor deny); perpetual selections are not representable (A-05 still open); no `status` field (event-derived lifecycle per the Architect ruling); selection signature is Ed25519 over a domain-separated canonical statement, verified only through an injected verifier (none is supplied).
+
+## Architect disposition on PR #19 (ACCEPT WITH AMENDMENTS) and rulings recorded
+
+These are Architect rulings as relayed in the operator's message. They are not operator approval and authorize no activation.
+
+- A1 verification-to-decision binding: single public `verify_and_decide`; no public report-taking interface.
+- A2 supersession lineage: resolver is structural and non-authorizing; `resolve_authoritative` refuses `lineage_authority_unavailable` pending R09.
+- A3 signers: single-authorized-signer policy defined; no quorum.
+- A4 qualification provenance: QS13 history preserved in `docs/r08-s01/qualification-spec.md` section 5a.
+- Rulings: (1) finite selection intervals required for the initial F1a MSOP, maximum duration open; (2) no bundled Ed25519 implementation or operational trust root this sprint; (3) R10 Option B preferred for investigation with expiry clamping as defence in depth, Option A an alternative, no R10 implementation authorized; (4) LD-02 failure-code integration open; (5) F1 authority-to-effect consistency UNQUALIFIED; (6) D1, D5, D6 and D12 unresolved; (7) C-01, B-10, F-01 and G-09 keep their operator or architecture ownership.

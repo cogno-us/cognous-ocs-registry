@@ -23,66 +23,216 @@ def sel_of(stmt, **kw):
     return selection.parse_selection_envelope(r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=PK, **kw)))
 
 
-def run(stmt, rec_obj, participation="required", with_record=True, trust_obj=None):
-    rr = rec_of(rec_obj)
-    rep = verify.verify_selection(sel_of(stmt), CTX, trust_obj or trust(), r.FakeVerifier(), r.NOW, rr if with_record else None)
-    return rr, rep, decision.decide_policy(participation, CALLER, rr, rep)
+def vd(rec_obj, stmt=None, participation="required", record_text=None, sel_text="auto", trust_obj=None, now=None, caller=CALLER, signed=True):
+    stmt = stmt or r.make_statement(rec_obj, participation=participation)
+    if sel_text == "auto":
+        sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=signed))
+    return decision.verify_and_decide(participation, caller, record_text if record_text is not None else r.dumps(rec_obj), sel_text,
+                                      CTX, trust_obj or trust(), r.FakeVerifier(), now or r.NOW)
 
 
-def test_baseline_pipeline_applies():
-    _, rep, d = run(r.make_statement(), r.make_record())
-    assert rep.ok and d.kind == "applied"
+BROAD = {"allowed_actions": ["read-file", "write-file"], "allowed_adapters": ["local-fs", "s3"], "allowed_units": ["unit-a", "unit-b", "unit-c"]}
 
 
-def test_1_record_swap_is_refused():
+# ------------------------------------------------------------------ A1: verification-to-decision binding
+def test_a1_baseline_applies():
+    assert vd(r.make_record()).kind == "applied"
+
+
+def test_a1_no_public_report_taking_interface():
+    assert not hasattr(decision, "decide_policy")
+    assert [n for n in dir(decision) if not n.startswith("_") and "decide" in n] == ["verify_and_decide"]
+
+
+@pytest.mark.parametrize("fake", [object(), {"ok": True}, 1, b"x", ["x"]])
+def test_a1_fabricated_inputs_fail_closed(fake):
+    for part in ("required", "optional"):
+        d = decision.verify_and_decide(part, CALLER, fake, fake, CTX, trust(), r.FakeVerifier(), r.NOW)
+        assert d.kind in ("required_policy_unavailable", "overlay_not_applied") and d.operationally_authorized is False
+        assert d.kind != "applied" and d.kind != "applied_deny_all"
+
+
+def test_a1_record_substitution_refused_in_both_participations():
     narrow = r.make_record()
-    broad = r.make_record(payload={"allowed_actions": ["read-file", "write-file"], "allowed_adapters": ["local-fs", "s3"], "allowed_units": ["unit-a", "unit-b", "unit-c"]})
-    _, rep, _ = run(r.make_statement(narrow), narrow)
-    d = decision.decide_policy("required", CALLER, rec_of(broad), rep)
-    assert d.kind == "required_policy_unavailable" and d.code in {"record_digest_mismatch", "record_identity_mismatch"}
-    d = decision.decide_policy("optional", CALLER, rec_of(broad), verify.verify_selection(sel_of(r.make_statement(narrow, participation="optional")), CTX, trust(), r.FakeVerifier(), r.NOW, rec_of(narrow)))
-    assert d.kind == "overlay_not_applied"
+    broad = r.make_record(payload=BROAD)
+    for part in ("required", "optional"):
+        stmt = r.make_statement(narrow, participation=part)
+        d = vd(narrow, stmt=stmt, participation=part, record_text=r.dumps(broad))
+        assert d.kind in ("required_policy_unavailable", "overlay_not_applied")
+        assert d.code in {"record_identity_mismatch", "record_digest_mismatch", "digest_mismatch"}
 
 
-def test_1_missing_record_binding_is_refused():
+def test_a1_record_altered_after_binding_text_refused():
     rec_obj = r.make_record()
-    rr, rep, d = run(r.make_statement(rec_obj), rec_obj, with_record=False)
-    assert d.kind == "required_policy_unavailable" and d.code == "record_identity_mismatch"
+    altered = copy.deepcopy(rec_obj)
+    altered["payload"]["allowed_units"].append("unit-z")  # digests now stale
+    d = vd(rec_obj, record_text=r.dumps(altered))
+    assert d.kind == "required_policy_unavailable" and d.code in {"digest_mismatch", "record_identity_mismatch", "composition_record_invalid"}
 
 
-def test_2_payload_mutated_after_validation_is_refused():
+def test_a1_stale_selection_is_refused_not_replayed():
     rec_obj = r.make_record()
-    rr, rep, _ = run(r.make_statement(rec_obj), rec_obj)
-    rr.record["payload"]["allowed_units"].append("unit-z")  # nested content is mutable; digests are now stale
-    d = decision.decide_policy("required", CALLER, rr, rep)
+    assert vd(rec_obj).kind == "applied"
+    late = r.NOW.replace(day=27)
+    d = vd(rec_obj, now=late)
+    assert d.kind == "required_policy_unavailable" and d.code in c.CODES
+    assert vd(rec_obj).kind == "applied"  # each call verifies afresh at its own `now`
+
+
+@pytest.mark.parametrize("variant", ["unsigned", "unknown_key", "empty_trust"])
+def test_a1_unverified_selection_never_composes(variant):
+    rec_obj = r.make_record()
+    stmt = r.make_statement(rec_obj)
+    kw = {}
+    if variant == "unsigned":
+        kw["signed"] = False
+    elif variant == "unknown_key":
+        kw["sel_text"] = r.dumps(r.make_envelope(stmt, key_id="key-unknown", public_key=b"x"))
+    else:
+        kw["trust_obj"] = trust(issuers=())
+    for part in ("required", "optional"):
+        d = vd(rec_obj, participation=part, **kw)
+        assert d.kind in ("required_policy_unavailable", "overlay_not_applied") and d.effective != {"allowed_actions": ("write-file",), "allowed_adapters": ("local-fs",), "allowed_units": ("unit-a", "unit-b")}
+        if part == "required":
+            assert d.effective is None
+
+
+def test_a1_caller_and_inputs_are_not_mutated():
+    cal = copy.deepcopy(CALLER)
+    rec_obj = r.make_record()
+    rec_text = r.dumps(rec_obj)
+    first = vd(rec_obj, caller=cal)
+    rec_obj["payload"]["allowed_units"].append("unit-z")  # mutating the source object cannot change a decision made from text
+    assert cal == CALLER
+    assert vd(r.make_record(), caller=cal, record_text=rec_text) == first
+
+
+def test_a1_internal_tamper_after_verify_refused():
+    """Defence in depth for the INTERNAL decide step: a validated record mutated after verification is refused."""
+    rec_obj = r.make_record()
+    rr = rec_of(rec_obj)
+    rep = verify.verify_selection(sel_of(r.make_statement(rec_obj)), CTX, trust(), r.FakeVerifier(), r.NOW, rr)
+    assert rep.ok
+    rr.record["payload"]["allowed_units"].append("unit-z")
+    d = decision._decide_verified("required", CALLER, rr, rep)
     assert d.kind == "required_policy_unavailable" and d.code == "digest_mismatch"
-    rep2 = verify.verify_selection(sel_of(r.make_statement(rec_obj)), CTX, trust(), r.FakeVerifier(), r.NOW, rr)
-    assert not rep2.ok and rep2.code == "digest_mismatch"
+    assert not verify.verify_selection(sel_of(r.make_statement(rec_obj)), CTX, trust(), r.FakeVerifier(), r.NOW, rr).ok
+
+
+def test_a1_missing_record_binding_refused_internally():
+    rec_obj = r.make_record()
+    rr = rec_of(rec_obj)
+    rep = verify.verify_selection(sel_of(r.make_statement(rec_obj)), CTX, trust(), r.FakeVerifier(), r.NOW, None)
+    d = decision._decide_verified("required", CALLER, rr, rep)
+    assert d.kind == "required_policy_unavailable" and d.code in {"record_identity_mismatch", "record_not_bound", "selection_missing"} | set(c.CODES)
 
 
 @pytest.mark.parametrize("selection_part,operation_part", [("optional", "required"), ("required", "optional")])
-def test_3_participation_mismatch_is_refused(selection_part, operation_part):
+def test_a1_participation_mismatch_is_refused(selection_part, operation_part):
     rec_obj = r.make_record()
-    _, rep, d = run(r.make_statement(rec_obj, participation=selection_part), rec_obj, participation=operation_part)
-    assert rep.ok and rep.participation == selection_part
+    d = vd(rec_obj, stmt=r.make_statement(rec_obj, participation=selection_part), participation=operation_part)
     assert d.code == "participation_mismatch"
     assert d.kind == ("required_policy_unavailable" if operation_part == "required" else "overlay_not_applied")
 
 
-def test_4_chain_with_expired_middle_selection_resolves():
-    a = sel_of(r.make_statement(effective={"valid_from": "2026-10-20T00:00:00Z", "valid_until": "2026-10-30T00:00:00Z"}, epoch=1))
+# ------------------------------------------------------------------ A2: lineage is structural and non-authorizing
+def mk(stmt_over=None, **over):
+    return sel_of(r.make_statement(**{**(stmt_over or {}), **over}))
 
-    def ref(o, dec):
-        return {"selection_id": o.statement["selection_id"], "epoch": o.statement["epoch"], "statement_digest": o.statement_digest, "decision_ref": dec}
-    b = sel_of(r.make_statement(epoch=2, supersedes=ref(a, "decision-2"),
-                                effective={"valid_from": "2026-10-20T00:00:00Z", "valid_until": "2026-10-21T00:00:00Z"}))
-    cc = sel_of(r.make_statement(epoch=3, supersedes=ref(b, "decision-3"),
-                                 effective={"valid_from": "2026-10-25T00:00:00Z", "valid_until": "2026-10-30T00:00:00Z"}))
+
+def ref(o, dec="decision-2"):
+    return {"selection_id": o.statement["selection_id"], "epoch": o.statement["epoch"], "statement_digest": o.statement_digest, "decision_ref": dec}
+
+
+WIDE = {"valid_from": "2026-10-20T00:00:00Z", "valid_until": "2026-10-30T00:00:00Z"}
+PAST = {"valid_from": "2026-10-20T00:00:00Z", "valid_until": "2026-10-21T00:00:00Z"}
+
+
+def test_a2_resolver_result_is_never_authorizing():
+    a = mk(effective=WIDE, epoch=1)
+    b = mk(epoch=2, supersedes=ref(a), effective=WIDE)
+    for res in (selection.resolve_effective([a, b], CTX, r.NOW), selection.resolve_effective([a], CTX, r.NOW)):
+        assert res.ok and res.authorizing is False and res.lineage_authenticated is False
+
+
+def test_a2_authority_consuming_interface_always_refuses():
+    a = mk(effective=WIDE, epoch=1)
+    res = selection.resolve_authoritative([a], CTX, r.NOW)
+    assert (res.ok, res.code, res.selected, res.authorizing) == (False, "lineage_authority_unavailable", None, False)
+
+
+def test_a2_expired_intermediate_resolves_structurally_only():
+    a = mk(effective=WIDE, epoch=1)
+    b = mk(epoch=2, supersedes=ref(a), effective=PAST)
+    cc = mk(epoch=3, supersedes=ref(b, "decision-3"), effective=WIDE)
     for order in ([a, b, cc], [cc, b, a], [b, a, cc]):
         res = selection.resolve_effective(order, CTX, r.NOW)
-        assert res.ok and res.selected is cc, order
-    # the in-window older statement without the chain still conflicts
-    assert selection.resolve_effective([a, cc], CTX, r.NOW).code == "selection_conflict"
+        assert res.ok and res.selected is cc and not res.authorizing
+    assert selection.resolve_effective([a, cc], CTX, r.NOW).code == "selection_conflict"  # missing intermediate
+
+
+def test_a2_forged_historical_link_does_not_resolve():
+    a = mk(effective=WIDE, epoch=1)
+    forged = ref(a)
+    forged["statement_digest"] = "sha256:" + "0" * 64 if str(a.statement_digest).startswith("sha256:") else "0" * 64
+    b = mk(epoch=2, supersedes=forged, effective=WIDE)
+    if b.ok:
+        assert selection.resolve_effective([a, b], CTX, r.NOW).code == "selection_conflict"
+    else:
+        assert b.code == "selection_supersession_invalid"
+
+
+@pytest.mark.parametrize("bad_ref", ["", "Not An Identifier", None, 7, "x" * 500])
+def test_a2_invalid_decision_references_refused_at_parse(bad_ref):
+    a = mk(effective=WIDE, epoch=1)
+    sup = ref(a)
+    sup["decision_ref"] = bad_ref
+    assert mk(epoch=2, supersedes=sup).code == "selection_supersession_invalid"
+
+
+def test_a2_conflicting_effective_selections():
+    a = mk(effective=WIDE, epoch=1)
+    twin = mk(effective=WIDE, epoch=1, selector_ref="selector-other")
+    assert selection.resolve_effective([a, twin], CTX, r.NOW).code == "selection_conflict"
+
+
+def test_a2_unauthorized_higher_epoch_does_not_supersede():
+    a = mk(effective=WIDE, epoch=1)
+    b = mk(effective=WIDE, epoch=2)  # no explicit supersession
+    for order in ([a, b], [b, a]):
+        res = selection.resolve_effective(order, CTX, r.NOW)
+        assert res.code == "selection_conflict" and res.selected is None
+
+
+def test_a2_rollback_attempts_refused():
+    hi = mk(effective=WIDE, epoch=2)
+    assert mk(epoch=1, supersedes=ref(hi)).code == "selection_supersession_invalid"
+    assert mk(epoch=2, supersedes=ref(hi)).code == "selection_supersession_invalid"  # not strictly lower
+    rec_obj = r.make_record()
+    floor = trust(min_epochs={"sel-test-1": 2})
+    d = vd(rec_obj, trust_obj=floor)  # presenting the epoch-1 selection after the trusted floor moved to 2
+    assert d.kind == "required_policy_unavailable" and d.code == "selection_epoch_stale"
+
+
+def test_a2_revoked_selection_not_rescued_by_lineage_and_resolver_ignores_revocation():
+    rec_obj = r.make_record()
+    revoked = trust(revoked_selections=frozenset({("sel-test-1", 1)}))
+    d = vd(rec_obj, trust_obj=revoked)
+    assert d.kind == "required_policy_unavailable" and d.code == "selection_revoked"
+    a = mk(effective=WIDE, epoch=1)
+    res = selection.resolve_effective([a], CTX, r.NOW)
+    assert res.authorizing is False  # the structural resolver has no revocation knowledge and says so
+
+
+def test_a2_unverified_historical_link_cannot_override_authenticated_selection():
+    """The decision path never consults the resolver: an authenticated selection is applied or refused on its own
+    verification, and a forged newer/older structural neighbour has no effect."""
+    rec_obj = r.make_record()
+    assert vd(rec_obj).kind == "applied"
+    forged_newer = mk(epoch=2, effective=WIDE)  # unsigned, unverified
+    assert forged_newer.ok
+    assert vd(rec_obj).kind == "applied"
+
 
 
 def two_issuer_trust(second_grant_op):

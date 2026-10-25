@@ -55,6 +55,7 @@ CODES = {
     # selection structure and conflicts
     "selection_missing": ("selection", "no selection was supplied or none is effective"),
     "selection_epoch_stale": ("selection", "epoch is below the trusted floor for this selection id"),
+    "lineage_authority_unavailable": ("selection", "authenticated, attributable supersession lineage requires R09 infrastructure that does not exist; the structural resolver is non-authorizing"),
     "selection_conflict": ("selection", "two effective selections conflict without explicit supersession"),
     "selection_supersession_invalid": ("selection", "supersession reference or decision reference is invalid"),
     "participation_mismatch": ("selection", "selection participation differs from the consumer's operation class"),

@@ -1,4 +1,4 @@
-"""R08-S01 Lane C developer tests: F1a composition and per-operation decision. DEVELOPER-TESTED, not independently qualified.
+"""R08-S01 Lane C developer tests: F1a composition and the INTERNAL decide step (_decide_verified). DEVELOPER-TESTED, not independently qualified.
 
 Record and report objects are local stand-ins so these tests do not depend on record.py or verify.py.
 """
@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import r08_support as s  # noqa: E402
 from registry_successor import common as c  # noqa: E402
 from registry_successor.compose import compose_f1a  # noqa: E402
-from registry_successor.decision import decide_policy as _real_decide  # noqa: E402
+from registry_successor.decision import _decide_verified as _real_decide  # noqa: E402
 
 F = c.F1A_FIELDS
 

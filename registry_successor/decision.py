@@ -12,6 +12,9 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from registry_successor import common as c
+from registry_successor import record as record_mod
+from registry_successor import selection as selection_mod
+from registry_successor import verify as verify_mod
 from registry_successor.compose import compose_f1a, normalize_caller
 
 
@@ -36,7 +39,9 @@ def _refusal(participation: Any, caller: Any, code: str, detail: str = "") -> Po
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
 
 
-def decide_policy(participation: Any, caller: Any, record: Any, report: Any) -> PolicyDecision:
+def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) -> PolicyDecision:
+    """INTERNAL. Only verify_and_decide may call this, with objects it produced itself. Not a public interface:
+    a caller-supplied report is never authority."""
     try:
         if participation not in c.PARTICIPATION:
             return _refusal("required", caller, "participation_mismatch", "operation participation is not required or optional")
@@ -73,3 +78,25 @@ def decide_policy(participation: Any, caller: Any, record: Any, report: Any) -> 
         return PolicyDecision(kind, result.effective, result.deny_all, result.deny_all_fields, None, "", False)
     except Exception:  # defensive: never an acceptance on unexpected input
         return _refusal("required", caller, "selection_missing", "unexpected input")
+
+
+def verify_and_decide(participation: Any, caller: Any, record_text: Any, selection_text: Any, context: Any,
+                      trust: Any, verifier: Any, now: Any) -> PolicyDecision:
+    """The single public verify-and-decide entrypoint. Pure: takes raw record and selection TEXT, parses and verifies both
+    internally at one `now`, binds the verified selection to the exact record parsed here, and composes only on success.
+    No caller-supplied report, parsed record or timestamped verification result is accepted, so reports cannot be
+    fabricated, substituted, replayed (stale), mutated after verification, or paired with a different record.
+    Required operations fail closed (never the caller policy); optional operations leave the caller policy unchanged."""
+    try:
+        if participation not in c.PARTICIPATION:
+            return _refusal("required", caller, "participation_mismatch", "operation participation is not required or optional")
+        if selection_text is None:
+            return _refusal(participation, caller, "selection_missing")
+        sel = selection_mod.parse_selection_envelope(selection_text)
+        if not sel.ok:
+            return _refusal(participation, caller, sel.code if sel.code in c.CODES else "selection_missing", sel.detail)
+        rec = record_mod.validate_record_text(record_text)
+        report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec)
+        return _decide_verified(participation, caller, rec, report)
+    except Exception:  # defensive: never an acceptance on unexpected input
+        return _refusal(participation if participation in c.PARTICIPATION else "required", caller, "selection_missing", "unexpected input")

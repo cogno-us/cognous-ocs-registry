@@ -43,6 +43,9 @@ class ConflictResult:
     code: Optional[str] = None
     detail: str = ""
     selected: Optional[SelectionResult] = None
+    # The structural resolver never authorizes anything. These are constants of the result type, not inputs.
+    authorizing: bool = False
+    lineage_authenticated: bool = False
 
 
 def _no(code: str, detail: str = "") -> SelectionResult:
@@ -224,8 +227,18 @@ def _resolve(selections: Any, context: Any, now: Any) -> ConflictResult:
     return ConflictResult(False, "selection_conflict", "effective selections without an explicit supersession chain")
 
 
+def resolve_authoritative(*_args: Any, **_kwargs: Any) -> ConflictResult:
+    """Authority-consuming lineage interface. ALWAYS refuses: authenticated, attributable lineage (verified historical
+    statements, decision_ref resolved against an approved-decision store) needs R09 infrastructure that does not exist.
+    Callers that need authority must use verify.verify_selection on the single selection presented, never this resolver."""
+    return ConflictResult(False, "lineage_authority_unavailable", "structural lineage only; no authenticated lineage source")
+
+
 def resolve_effective(selections: Sequence[SelectionResult], context: c.ExpectedContext,
                       now: Optional[datetime.datetime]) -> ConflictResult:
+    """STRUCTURAL, NON-AUTHORIZING lineage resolution over parsed (unverified) statements. A result with ok=True only
+    means the supplied statements are structurally consistent; `authorizing` and `lineage_authenticated` are always False.
+    Historical links are not authenticated, so this must never be used to override or confer authority."""
     try:
         return _resolve(selections, context, now)
     except Exception:  # defensive: never raise, never select

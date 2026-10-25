@@ -63,7 +63,7 @@ Layer names are those of the contract (parse, contract, shape, integrity, identi
 | QS04-QS06 | epoch 0; epoch `true`; participation `maybe` | `field_invalid`; `field_type_invalid` or `field_invalid`; `field_invalid` |
 | QS07-QS11 | inverted, equal, null-ended (perpetual), missing, malformed interval | `field_invalid`; `field_invalid`; `field_type_invalid` or `field_invalid`; `field_missing`; `field_invalid` |
 | QS12 | wildcard in scope | `field_invalid` |
-| QS13 | supersedes without `decision_ref` | `field_missing` |
+| QS13 | supersedes without `decision_ref` | **ORIGINAL (frozen blind) expectation: `field_missing`.** Candidate returned `selection_supersession_invalid`; the developer-side expectation was later changed to that. See section 5a (provenance); not independently adjudicated |
 | QS14, QS15 | supersedes epoch not lower; other selection id | `selection_supersession_invalid` or `field_invalid` |
 | QS16-QS19 | wrong family; envelope contract/kind/unknown field | `family_unsupported`; `contract_unsupported`; `kind_unsupported`; `field_unknown` |
 | QS20 | `statement_digest` altered (parse or verify) | `digest_mismatch` |
@@ -105,7 +105,7 @@ Layer names are those of the contract (parse, contract, shape, integrity, identi
 | QD05 | operator `union`, `latest`, empty, `newest`; non-F1a family | `composition_operator_unsupported`; `composition_family_unsupported` or `composition_record_invalid` |
 | QD06 | invalid record; caller missing / extra / string / non-string entries / None | `composition_record_invalid`; `composition_caller_invalid` |
 
-### 4.6 Per-operation outcomes (decide_policy)
+### 4.6 Per-operation outcomes (originally `decide_policy`; now `verify_and_decide`, see 5b)
 | ID | Recipe | Expected |
 |---|---|---|
 | QP01 | verified, valid; verified with empty dimension | `applied`; `applied_deny_all` |
@@ -120,7 +120,7 @@ Layer names are those of the contract (parse, contract, shape, integrity, identi
 1. Which of parse or verify raises integrity and structure codes for selections (QS20): the pipeline accepts either location.
 2. Codes for wrong-typed integers (`true`), perpetual (`null`) intervals, non-lower supersession, unsupported algorithm: `field_type_invalid` vs `field_invalid`, `selection_supersession_invalid` vs `field_invalid`, `signature_algorithm_unsupported` vs `field_invalid`.
 3. Wrong-digest supersession: `selection_supersession_invalid` vs `selection_conflict` (QC05).
-4. Non-F1a family reaching composition and an invalid record in `decide_policy`: family vs record code (QD05, QP04).
+4. Non-F1a family reaching composition and an invalid record in the decision entrypoint: family vs record code (QD05, QP04).
 5. Concrete types of `TrustSnapshot` members (`revoked_*` as `frozenset`, `min_epochs` as a mapping, `valid_until` as a timestamp string) are not pinned by the contract; the tests assume those.
 6. Where `participation_mismatch` is raised is not specified (no participation field in `ExpectedContext` or the report); **no case is written for it**, which is a coverage gap, not a pass.
 7. Inclusive/exclusive interval ends are inferred from the wording ("before valid_from", "at or after valid_until").
@@ -128,6 +128,23 @@ Layer names are those of the contract (parse, contract, shape, integrity, identi
 
 9. Order of shape/value checks versus digest checks is not specified. QR30's recipe therefore keeps the corrupted list sorted so only the digest layer can fail; a corruption that breaks sort order is `field_invalid` under any shape-first ordering.
 10. A supersession object lacking `decision_ref` (QS13): contract section 3 (exact nested fields) suggested `field_missing`; the `CODES` meaning of `selection_supersession_invalid` also fits. The blind run recorded the failure (candidate returned `selection_supersession_invalid`). **Disclosed amendment:** the lead builder then clarified the contract (section 3a: any malformed selection `supersedes` refuses `selection_supersession_invalid`) and changed the QS13 expectation to match. This amendment came after seeing the candidate's behavior, so it is a developer-side resolution, not independent evidence; the Architect should rule on the asymmetry with records (section 3a) and an independent qualifier must freeze its own expectation.
+
+## 5a. QS13 provenance record (A4; historical, not to be rewritten)
+
+| Step | Fact |
+|---|---|
+| 1. Original expectation | Written blind to the implementation from contract section 3 (exact nested fields): a supersession object without `decision_ref` is `field_missing`. |
+| 2. Actual candidate result | `selection_supersession_invalid` (recorded failure `QS13-supersedes-no-decision-ref`, the only conformance failure of the blind run). |
+| 3. Contract clarification | After seeing that result, the lead builder added contract section 3a (any malformed selection `supersedes` refuses `selection_supersession_invalid`). |
+| 4. Expectation amendment | The executable expectation in `tests/test_r08_spec_conformance.py` was changed to `selection_supersession_invalid`. |
+| 5. Status | The amendment was made **after candidate behavior was observed**. It is developer evidence only. It is not independent qualification, and it must not be cited as an independent pass. |
+| 6. Required follow-up | The future independent Tier 1 qualifier (not yet designated, F-01) must separately adjudicate and freeze the normative QS13 expectation (including the selection/record asymmetry in contract section 3a) **before** executing the candidate. The discrepancy above is retained, not suppressed. |
+
+Amendment A4 (PR #19 Architect disposition) changed only this documentation; no expectation was altered further.
+
+## 5b. Interface change after this spec was written (A1, A2)
+
+This spec's section 4.6 named `decide_policy(...)`. The public report-taking interface was removed; the public entrypoint is now `verify_and_decide(participation, caller, record_text, selection_text, context, trust, verifier, now)`. Cases QP01-QP06 are executed through it in the developer suite. Lineage resolution is structural and non-authorizing (`resolve_effective`), and `resolve_authoritative` always refuses `lineage_authority_unavailable`. A qualifier must write expectations for these interfaces independently; the builder-authored QP rows are not normative.
 
 ## 6. Coverage gaps (explicit)
 
