@@ -10,7 +10,7 @@ This is not a new OCS implementation program. It does not reconstruct the stack,
 
 ## Governing references
 
-Static plan OCS-REG-PLAN v1.1: https://github.com/cogno-us/cognous-ocs-registry/blob/s01-baseline/docs/plans/PROJECT_PLAN-v1.1.md. Engineering Constitution (exact pin): https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md.
+Static plan OCS-REG-PLAN v1.1: https://github.com/cogno-us/cognous-ocs-registry/blob/main/docs/plans/PROJECT_PLAN-v1.1.md. Engineering Constitution (exact pin): https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md.
 
 ## Licensing
 
