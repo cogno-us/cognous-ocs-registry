@@ -531,6 +531,90 @@ def test_cross_row_substitution_is_the_identity_mismatch_never_stale_after_the_m
             assert e.code == "policy_identity_mismatch" and e.code != "selection_epoch_stale"  # identity before digest too
 
 
+def test_authoritative_row_is_copied_once_before_validation():
+    """Review (Copilot) 1: the caller's row is mutated AFTER validation; the comparison still uses the validated private copy."""
+    b = _binding()
+    real_ok = m._authoritative_row_ok
+    row = _row(b)
+
+    def spy(r):
+        ok = real_ok(r)
+        row["selection_id"] = "sel-mutated"  # the caller mutates its own dict right after validation
+        row["selection_epoch"] = b["selection_epoch"] + 9
+        return ok
+
+    m._authoritative_row_ok = spy
+    try:
+        assert m.compare_binding_identity(b, row) == m.checked_binding_digest(b)  # the copy matched; the later mutation is invisible
+    finally:
+        m._authoritative_row_ok = real_ok
+
+
+def test_mappingproxy_of_a_one_shot_dict_subclass_keeps_its_floors():
+    class OneShot(dict):
+        used = False
+
+        def items(self):
+            if OneShot.used:
+                return iter(())
+            OneShot.used = True
+            return iter(dict.items(self))
+
+    OneShot.used = False
+    snap = _snap(min_epochs=m.MappingProxyType(OneShot({"sel-a": 3})))
+    assert m.trust_snapshot_from_verified(snap)["min_epochs"] == [["sel-a", 3]]
+    OneShot.used = False
+    assert m.trust_snapshot_fingerprint_from_verified(_snap(min_epochs=m.MappingProxyType(OneShot({"sel-a": 3})))) == m.trust_snapshot_fingerprint_from_verified(_snap(min_epochs={"sel-a": 3}))
+    assert m.trust_snapshot_fingerprint_from_verified(_snap(min_epochs={"sel-a": 3})) != m.trust_snapshot_fingerprint_from_verified(_snap(min_epochs={}))
+
+
+def _lists_payload(family, token):
+    return {k: ([token] if i == 0 else []) for i, k in enumerate(m.IDENTITY_FAMILIES[family].members)}
+
+
+def _classmap_payload(family, token):
+    return {"class_status_max_age_seconds": {token: 5}}
+
+
+def _tu_text(vec):
+    return "".join(chr(int(cp, 16)) for cp in vec["code_points"]) * vec.get("repeat", 1)
+
+
+def test_token_table_pin_and_fail_closed():
+    import hashlib
+    from registry_successor.v2_token_table import TABLE_BYTES
+    assert TABLE_BYTES == (ROOT / "docs/ext-implementation/data/ext-s1-5-token-unicode-15.1-excluded-ranges.json").read_bytes()  # the embedded copy is the committed file
+    assert hashlib.sha256(TABLE_BYTES).hexdigest() == m.TOKEN_TABLE_SHA256 == V["pins"]["token_unicode_table"]["sha256"]
+    starts, ranges = m._load_token_table()
+    assert len(ranges) == 713
+    for bad in (TABLE_BYTES + b" ", TABLE_BYTES.replace(b'"0000"', b'"0001"', 1), b"", "text", None.__class__):
+        with pytest.raises(RuntimeError):
+            m._load_token_table(bad)
+
+
+@pytest.mark.parametrize("vec", V["token_unicode"]["vectors"], ids=lambda v: v["id"])
+def test_token_unicode_vectors_drive_both_production_validators_without_the_host_database(vec, monkeypatch):
+    """Spec 6.1 / N-13: effective-list entries and F5 class names decide by the pinned table; `unicodedata` is poisoned to prove no dependence."""
+    import unicodedata
+    def poisoned(*a, **k):
+        raise AssertionError("host Unicode database consulted")
+    monkeypatch.setattr(unicodedata, "category", poisoned)
+    monkeypatch.setattr(m.c, "valid_token", poisoned)
+    text, want = _tu_text(vec), vec["expected"]["valid"]
+    assert m.frozen_token_valid(text) is want
+    from registry_successor.v2_policy_identity import IDENTITY_FAMILIES
+    lists_family = next(k for k, r in IDENTITY_FAMILIES.items() if r.kind == "lists")
+    classmap_family = next(k for k, r in IDENTITY_FAMILIES.items() if r.kind == "classmap")
+    for family, mk in ((lists_family, lambda t: _lists_payload(lists_family, t)), (classmap_family, lambda t: _classmap_payload(classmap_family, t))):
+        try:
+            m.validate_effective_payload(family, mk(text))
+            got = True
+        except m.IdentityRefusal as e:
+            assert e.code == "field_invalid"
+            got = False
+        assert got is want, (family, vec["id"])
+
+
 def _bad_rows():
     b = _binding()
     good = _row(b)

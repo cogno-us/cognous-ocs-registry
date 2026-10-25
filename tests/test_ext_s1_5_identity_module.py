@@ -911,7 +911,7 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
     assert not [p for p in diff if p.startswith(forbidden)], diff
     # the only successor modules this PR may touch (Amendment 1 section 6.5): the identity module, the one reason registry and the explicit revision-2 path
     assert {p for p in diff if p.startswith("registry_successor/")} <= {"registry_successor/v2_policy_identity.py", "registry_successor/v2_codes.py",
-                                                                          "registry_successor/decision.py"}, diff
+                                                                          "registry_successor/decision.py", "registry_successor/v2_token_table.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():
@@ -1417,7 +1417,7 @@ MUTANTS = [
     ("deny_all wrong", "if v == [])", "if len(v) < 2)"),
     ("duplicates in lists allowed", "or v != sorted(set(v)):", "or v != sorted(v):"),
     ("list bound 257", "len(v) > MAX_LIST_ENTRIES", "len(v) > MAX_LIST_ENTRIES + 1"),
-    ("token rule dropped", "all(c.valid_token(x) for x in v)", "all(isinstance(x, str) for x in v)"),
+    ("token rule dropped", "all(frozen_token_valid(x) for x in v)", "all(isinstance(x, str) for x in v)"),
     ("empty class map allowed", "if not classes or not", "if not"),
     ("class map bare int", 'elif path == "class_status_max_age_seconds" or not _int_typed(v):', 'elif not _int_typed(v):'),
     ("deny_all not compared", 'if d["deny_all"] != _deny_all', 'if False and d["deny_all"] != _deny_all'),

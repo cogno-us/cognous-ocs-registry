@@ -33,9 +33,8 @@ caller already holds). The three additive codes (`not_activated`, `policy_identi
 
 DEFERRED (not implemented here, listed so no consumer assumes them): (1) the registry-form identity (null `activation_ref`) built from verified inputs and its
 completion with `activation_ref` (spec 4 and 10 assign this to the Registry source PR); (2) the guard itself and durable state (EXT-S4); (3) the mapping rows
-for the two v2-only codes of `V2_ADDED_CODES` (withdrawal and the snapshot floor: owning contracts and evaluators absent); (4) the token rule still follows `common.valid_token`
-(platform Unicode database) until the frozen Unicode table of PR #35 is merged and adopted (N-13); (5) the typed evidence stages are spelled `verify` /
-`guard` in the vectors at main, typed here as INPUT / DURABLE_STATE (PR #35 renames them); (6) a trust root or any authentication of a snapshot: the adapter
+for the two v2-only codes of `V2_ADDED_CODES` (withdrawal and the snapshot floor: owning contracts and evaluators absent); (4) the shipped registry statement validator `common.valid_token` still reads the host Unicode database (a source PR matter; this module uses the frozen table
+for effective-payload entries and F5 class names); (5) (spec ids renamed: the typed evidence stages are INPUT / DURABLE_STATE); (6) a trust root or any authentication of a snapshot: the adapter
 and the digests give integrity only and add no authority.
 
 RULED (Architect Batch 6, 4.6, N-10) and applied here: a snapshot version is a strict int in [1, 2^53 - 1] (not an operational freshness bound); a `min_epochs`
@@ -62,11 +61,10 @@ string that does not match; the verdict and retry class are the same, the loader
 `field_invalid`; (N-E) `IdentityRefusal.__reduce__` rebuilds the base class, so a subclass would not survive pickling (none exists in the package).
 
 Rulings N-10 to N-12 are RULED and implemented (syntax-first parse, strict ints, typed INPUT / DURABLE_STATE stage, unknown store HOLD, a refused projection is never
-never-activated). N-13 is RULED but its frozen Unicode table (PR #35, not merged) is not adopted here: the token rule still follows the platform Unicode database
-through `common.valid_token` and an ambiguous token is not yet refused by table. N-10(c) is RULED (Architect final ruling): the 2^53 - 1 representation bound is applied at INGEST in `trust_snapshot_from_verified`
+never-activated). N-13 is RULED and adopted: effective-payload list entries and F5 class names are decided by the sha256-pinned Unicode 15.1.0 table (`frozen_token_valid`), never by the host database. N-10(c) is RULED (Architect final ruling): the 2^53 - 1 representation bound is applied at INGEST in `trust_snapshot_from_verified`
 (`trust_snapshot_invalid`, stage `ingest`, member `trust_snapshot_version`; the code and stage names are PROPOSED pending Architect confirmation, PR #35 spec 5.5.2); the snapshot shape guard and the projection stage remain second lines of defence.
 
-Pure: no files, no clock, no state. Digests give integrity, never authentication.
+Pure: no clock, no network, no mutable state; the sha256-pinned token table is embedded (`v2_token_table`), verified at first use, fail closed. Digests give integrity, never authentication.
 """
 import hashlib
 import re
@@ -729,10 +727,12 @@ def compare_binding_identity(binding: Any, authoritative: Any) -> str:
       * otherwise the FIRST differing member in `_COMPARE_ORDER` (`selection_epoch` AHEAD of the row, `selection_digest`, the record triple, `activation_ref`):
         `policy_identity_mismatch` (REFUSE). The claim's `effective_policy_digest` is never compared with durable state (contract 7.4: it is caller-dependent).
     Returns the recomputed binding digest when every member matches."""
+    # ONE exact private copy of the row BEFORE any validation, used for the whole comparison (like the binding): a concurrent mutation of the caller's row cannot
+    # make the comparison combine values from two row states. Only an exact dict is copied; anything else is passed on and refused by `_authoritative_row_ok`.
+    row = dict(authoritative) if type(authoritative) is dict else authoritative
     b = validate_binding(binding)
-    if not _authoritative_row_ok(authoritative):
+    if not _authoritative_row_ok(row):
         _refuse("store_unknown", "authoritative")
-    row = authoritative
     claim = {"scope_key": scope_key_digest(scope_key_from_binding(b))}
     claim.update({k: b[k] for k in POLICY_IDENTITY_MEMBER_VALUES if k != "scope_key"})
     for k in _ROW_IDENTITY:
@@ -771,6 +771,55 @@ def verify_carried_binding_digest(binding: dict, carried: Any, authoritative: An
 _SNAPSHOT_MEMBERS = ("issuers", "min_epochs", "revoked_key_ids", "revoked_selections", "snapshot_id", "valid_until", "version")
 _ISSUER_MEMBERS = ("alg", "authority", "issuer_id", "key_id", "public_key")
 _LOWER_HEX = frozenset("0123456789abcdef")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Frozen token membership (spec 6.1, ruling N-13): Unicode 15.1.0, a committed excluded-range table, NO runtime Unicode database and no network.
+# ----------------------------------------------------------------------------------------------------------------------
+TOKEN_TABLE_SHA256 = "8c85813d25f6ed53371e27f0e4895a89de44a619824486dcff8d48ff8b607474"  # pinned in the spec and the vectors (pins.token_unicode_table)
+_TOKEN_TABLE: Any = None
+_RANGE_RE = re.compile(rb'\[\s*"([0-9A-F]{4,6})",\s*"([0-9A-F]{4,6})"\s*\]')
+
+
+def _load_token_table(raw: Any = None, expected: str = TOKEN_TABLE_SHA256) -> Tuple[list, list]:
+    """Verify the sha256 of the embedded table bytes BEFORE parsing and fail closed: a mismatched or malformed table raises RuntimeError (a build defect, never a
+    typed refusal and never an accepting default). No file is opened and no host Unicode database is read."""
+    try:
+        if raw is None:
+            from .v2_token_table import TABLE_BYTES as raw
+        if type(raw) is not bytes or hashlib.sha256(raw).hexdigest() != expected or b'"unicode_version": "15.1.0"' not in raw:
+            raise ValueError("pin")
+        head, _, tail = raw.partition(b'"excluded_ranges"')
+        ranges = [(int(x, 16), int(y, 16)) for x, y in _RANGE_RE.findall(tail)]
+        if not ranges or any(a > b or (i and a <= ranges[i - 1][1]) for i, (a, b) in enumerate(ranges)) or ranges[-1][1] > 0x10FFFF:
+            raise ValueError("ranges")
+    except Exception:
+        raise RuntimeError("the pinned Unicode 15.1.0 token table does not match its sha256 pin or is malformed") from None
+    return [a for a, _ in ranges], ranges
+
+
+def frozen_token_valid(value: Any) -> bool:
+    """The token rule with frozen membership: an exact `str` of 1..128 code points, no `*`, no code point inside an excluded range of the pinned table.
+    No normalization. Consults no runtime Unicode database."""
+    global _TOKEN_TABLE
+    if type(value) is not str or not 1 <= len(value) <= c.MAX_ENTRY_CHARS or "*" in value:
+        return False
+    if _TOKEN_TABLE is None:
+        _TOKEN_TABLE = _load_token_table()
+    starts, ranges = _TOKEN_TABLE
+    for ch in value:
+        cp = ord(ch)
+        lo, hi = 0, len(starts)  # binary search: the last range whose start is <= cp
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if starts[mid] <= cp:
+                lo = mid + 1
+            else:
+                hi = mid
+        i = lo - 1
+        if i >= 0 and ranges[i][0] <= cp <= ranges[i][1]:
+            return False
+    return True
 
 
 def _token(v: Any) -> bool:
@@ -919,7 +968,8 @@ def trust_snapshot_from_verified(trust: Any) -> dict:
         # floor list. Only a re-iterable container is admitted (an exact dict or mapping proxy, a tuple or a list); anything else is refused before normalization.
         if type(trust.min_epochs) not in (dict, MappingProxyType, tuple, list):
             raise TypeError
-        if _verify._normalize_trust(trust) is None:
+        normalized = _verify._normalize_trust(trust)
+        if normalized is None:
             raise TypeError
         if not (type(trust.issuers) in _SEQUENCE_TYPES and type(trust.revoked_key_ids) in _SET_TYPES and type(trust.revoked_selections) in _SET_TYPES):
             raise TypeError
@@ -938,12 +988,8 @@ def trust_snapshot_from_verified(trust: Any) -> dict:
             if type(item) is not tuple or len(item) != 2:
                 raise TypeError
             revoked.append([item[0], item[1]])
-        floors = trust.min_epochs
-        pairs = list(floors.items()) if isinstance(floors, _verify.Mapping) else list(floors)
-        mins = []
-        for item in pairs:
-            sid, floor = item
-            mins.append([sid, floor])
+        # the floors are the verifier's OWN returned dict, never a second read of the caller's container (a one-shot `items()` would read back empty)
+        mins = [[sid, floor] for sid, floor in normalized["floors"].items()]
         out = {"snapshot_id": trust.snapshot_id, "version": trust.version, "valid_until": trust.valid_until, "issuers": issuers,
                "revoked_key_ids": list(trust.revoked_key_ids), "revoked_selections": revoked, "min_epochs": mins}
     except Exception:  # a hostile or malformed object is a definitive refusal, never an escape, and never formatted into a message
@@ -1124,7 +1170,7 @@ def registered_family_version(family: Any, contract_version: Any) -> str:
 def validate_effective_payload(family: Any, payload: Any, role: str = "effective") -> dict:
     """Strict validator of a composed (role `effective`) or input (`registry`, `caller`) family payload; returns a private plain copy. Phases: family,
     shape (missing, unknown), types, values; sorted path order inside a phase. Lists: sorted by code point, duplicate-free, at most 256 entries, tokens
-    per `common.valid_token` (platform Unicode database dependence: PROPOSED, N-13); `[]` is an explicit deny-all. Ages: strict ints in the role's range.
+    per `frozen_token_valid` (the pinned Unicode 15.1.0 table, N-13; no host Unicode database); `[]` is an explicit deny-all. Ages: strict ints in the role's range.
     A non-str family is `field_type_invalid`. `role` is a programmer argument (ValueError if unknown)."""
     if type(role) is not str or role not in AGE_RANGES:
         raise ValueError("unknown role (got a %s)" % type(role).__name__)
@@ -1164,13 +1210,13 @@ def validate_effective_payload(family: Any, payload: Any, role: str = "effective
     for path in sorted(flat):
         v = flat[path]
         if row.kind == "lists":
-            if len(v) > MAX_LIST_ENTRIES or not all(c.valid_token(x) for x in v) or v != sorted(set(v)):
+            if len(v) > MAX_LIST_ENTRIES or not all(frozen_token_valid(x) for x in v) or v != sorted(set(v)):
                 _refuse("field_invalid", path)
         elif not _in_range(v, lo, hi):
             _range_refusal(path, lo, hi)
     if row.kind == "classmap":
         classes = d["class_status_max_age_seconds"]
-        if not classes or not all(c.valid_token(k) for k in classes):
+        if not classes or not all(frozen_token_valid(k) for k in classes):
             _refuse("field_invalid", "class_status_max_age_seconds")
     return d
 
