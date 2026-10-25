@@ -7,7 +7,9 @@ No other key (no amount key, no `identity_max_age_seconds`, `mandate_max_age_sec
 evidence-obligation age): a third key refuses `field_unknown`, an absent key `field_missing`.
 
 Registry values: `type(v) is int` exactly (bool, float, str, None, bytes, Decimal, int subclasses, lists refuse), with
-AGE_MIN <= v <= AGE_MAX. Nothing is ever clamped, coerced or defaulted. No cross-bound among ages (an individually valid
+AGE_MIN <= v <= AGE_MAX. Family names, the operator and every payload or caller key must be exact `str` objects
+(`type(x) is str`; a str subclass is refused rather than compared by value), and payloads, records and class maps must be exact
+`dict` objects. Nothing is ever clamped, coerced or defaulted. No cross-bound among ages (an individually valid
 inverted pair is accepted) and no five-second floor (1 is accepted). There is no amount slot, reserved or inactive.
 
 Bounds. AGE_MIN = 1 (ADR D-27). AGE_MAX = 2147483647 is the V1 TECHNICAL REPRESENTATION CEILING recorded by the Architect
@@ -25,12 +27,14 @@ scalar and per class. A registry value above the caller yields the caller value 
 `registry_value_not_narrowing:<names>`); the result never exceeds the caller. A registry class the caller does not define is
 unknown and refuses `composition_record_invalid`; a caller class absent from the registry keeps the caller value. An invalid
 caller (wrong key set, any value that is not an int in 0..AGE_MAX, empty class map) refuses `composition_caller_invalid` and is
-never replaced. Every refusal carries no effective policy, so no refusal can return a default or the caller value. Optional
+never replaced. Every refusal carries no effective policy, so no refusal can return a default or the caller value. A caller Mapping is read once and at most `limit + 1`
+entries (2 for F4, 1 for F5, 256 for a class map), so an oversized Mapping is refused without a full copy. Optional
 fallback is NOT implemented here (consumer-owned, EXT-S4-2). `deny_all` is never set: a caller value of 0 stays 0.
 
 Pure and non-authorizing; unqualified (BUILDER_TESTED). Registered ONLY in the `r08-v2` table (`families.FAMILIES_V2`).
 Imports no Control Plane module.
 """
+import itertools
 from collections.abc import Mapping
 from typing import Any, Optional
 
@@ -63,6 +67,8 @@ def is_caller_age(v: Any) -> bool:
 
 def _key_shape(payload: Any, fields: tuple) -> Optional[str]:
     if type(payload) is not dict:  # exact dict for F4 and F5 alike: no Mapping subclass, no stateful container
+        return "field_type_invalid"
+    if not all(type(k) is str for k in payload):  # exact str keys: no str subclass with a custom __eq__/__hash__
         return "field_type_invalid"
     keys = set(payload)
     if keys - set(fields):
@@ -103,21 +109,26 @@ def f5_payload_validator(payload: dict) -> Optional[str]:
     return None
 
 
-def _snapshot(m: Any) -> Optional[dict]:
-    """One read of every key and value of a caller mapping into a plain dict, or None. Validation and composition then use only
-    the copy, so a Mapping that changes between reads cannot pass validation with one value and compose with another."""
+def _snapshot(m: Any, limit: int) -> Optional[dict]:
+    """One read of at most `limit` keys and values of a caller mapping into a plain dict, or None (not a Mapping, unreadable, or
+    more than `limit` entries). The read stops at `limit + 1` entries, so a huge or endless Mapping is refused without unbounded
+    copying. Validation and composition then use only the copy, so a Mapping that changes between reads cannot pass validation
+    with one value and compose with another. A duplicate key from a hostile Mapping collapses in the copy (the last read wins)."""
     if not isinstance(m, Mapping):
         return None
     try:
-        return {k: v for k, v in m.items()}
+        items = list(itertools.islice(m.items(), limit + 1))
+        if len(items) > limit:
+            return None
+        return {k: v for k, v in items}
     except Exception:
         return None
 
 
 def normalize_caller_f4(caller: Any) -> Optional[dict]:
     """Copy of a well-formed F4 caller policy, or None. Exactly the two keys, each an exact int in 0..AGE_MAX."""
-    snap = _snapshot(caller)
-    if snap is None or set(snap) != set(F4_FIELDS):
+    snap = _snapshot(caller, len(F4_FIELDS))
+    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F4_FIELDS):
         return None
     if not all(is_caller_age(snap[k]) for k in F4_FIELDS):
         return None
@@ -127,11 +138,11 @@ def normalize_caller_f4(caller: Any) -> Optional[dict]:
 def normalize_caller_f5(caller: Any) -> Optional[dict]:
     """Copy of a well-formed F5 caller policy (sorted by class), or None. A non-empty bounded class map of valid tokens to exact
     ints in 0..AGE_MAX."""
-    snap = _snapshot(caller)
-    if snap is None or set(snap) != set(F5_FIELDS):
+    snap = _snapshot(caller, len(F5_FIELDS))
+    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F5_FIELDS):
         return None
-    m = _snapshot(snap[F5_FIELD])
-    if m is None or not m or len(m) > MAX_CLASSES:
+    m = _snapshot(snap[F5_FIELD], MAX_CLASSES)
+    if m is None or not m:
         return None
     if not all(type(k) is str and c.valid_token(k) for k in m):
         return None
@@ -161,7 +172,7 @@ def _record_payload(record: Any, family: str, validator) -> tuple:
         return None, "composition_record_invalid"
     family_seen = body.get("family")
     payload = body.get("payload")
-    if family_seen != family:
+    if type(family_seen) is not str or family_seen != family:  # exact str: no str subclass with an overridden __ne__
         return None, "composition_family_unsupported"
     if type(payload) is not dict:
         return None, "composition_record_invalid"
@@ -178,7 +189,7 @@ def _ok(effective: dict, narrowed_over: list) -> CompositionResult:
 
 def compose_f4(caller: Any, record: Any, operator: Any = "intersection") -> CompositionResult:
     try:
-        if operator != "intersection":
+        if type(operator) is not str or operator != "intersection":
             return _refuse("composition_operator_unsupported")
         payload, code = _record_payload(record, FAMILY_F4, f4_payload_validator)
         if payload is None:
@@ -194,7 +205,7 @@ def compose_f4(caller: Any, record: Any, operator: Any = "intersection") -> Comp
 
 def compose_f5(caller: Any, record: Any, operator: Any = "intersection") -> CompositionResult:
     try:
-        if operator != "intersection":
+        if type(operator) is not str or operator != "intersection":
             return _refuse("composition_operator_unsupported")
         payload, code = _record_payload(record, FAMILY_F5, f5_payload_validator)
         if payload is None:

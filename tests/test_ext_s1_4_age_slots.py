@@ -30,7 +30,7 @@ MAX = 2147483647
 PINS = {
     "docs/r08-v2-contract.md": "64e2d6eb3af7b6024bf0ed7778fcea5ee61fd1cbad247d0199e1b15310ddff01",
     "docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md": "b9ad06be559bfb99c5e669ca7217d2ee28b62cda7738206c31fd8e6866233b67",
-    "docs/decisions/2026-10-25-dr-cp-age-1.md": "7980c8ee6e74bb2419edc407c1821fa81d960748f6bd2f7457b228d1b0c337f3",
+    "docs/decisions/2026-10-25-dr-cp-age-1.md": "072120e3d69dc6cbdbb344a4fc3e749e76e142d73b2069ed7d06feb26213145a",
 }
 CONTRACT_TEXT = [
     "| `f4-control-plane-age-bounds` (v2) | `status_max_age_seconds`, `approval_max_age_seconds` | strict integer seconds, `min(caller, registry)` per scalar | Control Plane |",
@@ -110,6 +110,54 @@ class StrSub(str):
     pass
 
 
+class _EqStr(str):
+    """A str subclass that claims equality with its base text and inequality never: the shape that defeats `!=` and set checks."""
+    def __ne__(self, other):
+        return False
+
+    def __eq__(self, other):
+        return str.__eq__(self, other)
+
+    __hash__ = str.__hash__
+
+
+class _BigMapping:
+    """A very large Mapping (finite, so an unbounded-copy mutant still terminates). `reads` counts the items its `items()` served:
+    a bounded snapshot serves at most limit + 1 of them."""
+    N = 50_000
+
+    def __init__(self):
+        self.reads = 0
+
+    def __getitem__(self, k):
+        return 1
+
+    def __iter__(self):
+        return (f"c{i:09d}" for i in range(self.N))
+
+    def __len__(self):
+        return self.N
+
+    def items(self):
+        def gen():
+            for i in range(self.N):
+                self.reads += 1
+                yield f"c{i:09d}", 1
+        return gen()
+
+
+from collections.abc import Mapping as _Mp  # noqa: E402
+_Mp.register(_BigMapping)
+
+
+def _bounded_snapshot_refuses(mod):
+    """Huge caller mappings (top level and class map) refuse as `composition_caller_invalid` after a bounded read."""
+    e1, e2 = _BigMapping(), _BigMapping()
+    r1 = mod.compose_f4(e1, rec(p4(), F4))
+    r2 = mod.compose_f5({F5K: e2}, rec(p5(), F5))
+    return r1.code == r2.code == "composition_caller_invalid" and e1.reads <= len(F4K) + 1 and e2.reads <= c.MAX_ENTRIES + 1
+
+
 BAD_TYPES = [True, False, 1.0, 60.0, float("inf"), float("-inf"), float("nan"), "60", "1", "", None, b"60", bytearray(b"1"), [1], (1,), {},
              IntSub(5), IntSub(0), object(), 1 + 0j]
 BELOW = [0, -1, -2, -(2**31), -(10**30)]
@@ -167,7 +215,7 @@ def test_no_new_codes_and_table_shape():
 def test_module_is_pure_and_imports_no_component():
     src = (ROOT / "registry_successor/v2_age_bounds.py").read_text(encoding="utf-8")
     imports = re.findall(r"^(?:from|import) ([\w.]+)", src, re.M)
-    assert set(imports) <= {"collections.abc", "typing", "registry_successor", "registry_successor.compose"}, imports
+    assert set(imports) <= {"itertools", "collections.abc", "typing", "registry_successor", "registry_successor.compose"}, imports
     for banned in ("agent_control_plane", "engine", "open(", "time.", "datetime", "os.", "random"):
         assert banned not in src, banned
     # no amount slot, reserved or inactive, anywhere in the payload field sets
@@ -647,6 +695,18 @@ def _battery(mod):
     chk("caller_output_sorted", lambda: list(comp5(c5({"class-c": 9, "class-a": 5, "class-b": 7}), p5({"class-a": 1})).effective[F5K]) == ["class-a", "class-b", "class-c"])
     chk("operator", lambda: mod.compose_f4(c4(), rec(p4(), F4), "union").code == "composition_operator_unsupported")
     chk("family", lambda: mod.compose_f4(c4(), rec(p5(), F5)).code == "composition_family_unsupported")
+    chk("ok_exactly_true", lambda: mod.compose_f4(c4(), rec(p4(), F4, ok=1)).code == "composition_record_invalid"
+        and mod.compose_f5(c5(), rec(p5(), F5, ok="yes")).code == "composition_record_invalid")
+    chk("exact_str_family", lambda: mod.compose_f4(c4(), rec(p4(), _EqStr(F4))).code == "composition_family_unsupported"
+        and mod.compose_f5(c5(), rec(p5(), _EqStr(F5))).code == "composition_family_unsupported")
+    chk("exact_str_operator", lambda: mod.compose_f4(c4(), rec(p4(), F4), _EqStr("intersection")).code == "composition_operator_unsupported"
+        and mod.compose_f5(c5(), rec(p5(), F5), _EqStr("intersection")).code == "composition_operator_unsupported")
+    chk("exact_str_payload_key", lambda: v4({_EqStr("status_max_age_seconds"): 5, "approval_max_age_seconds": 5}) == "field_type_invalid"
+        and v5({_EqStr(F5K): {"a": 1}}) == "field_type_invalid" and v5({F5K: {_EqStr("a"): 1}}) == "field_type_invalid")
+    chk("exact_str_caller_key", lambda: mod.compose_f4({_EqStr("status_max_age_seconds"): 5, "approval_max_age_seconds": 5}, rec(p4(), F4)).code == "composition_caller_invalid"
+        and mod.compose_f5({_EqStr(F5K): {"class-a": 5}}, rec(p5({"class-a": 1}), F5)).code == "composition_caller_invalid"
+        and mod.compose_f5({F5K: {_EqStr("class-a"): 5}}, rec(p5({"class-a": 1}), F5)).code == "composition_caller_invalid")
+    chk("bounded_snapshot", lambda: _bounded_snapshot_refuses(mod))
     return bad
 
 
@@ -675,10 +735,20 @@ MUTATIONS = {  # name -> (old, new, expected violated property)
     "drop caller normalizer f4": ("        cal = normalize_caller_f4(caller)\n        if cal is None:\n            return _refuse(\"composition_caller_invalid\")\n",
                                   "        cal = dict(caller)\n", "caller_extra_key"),
     "refusal returns effective": ("    return CompositionResult(False, code, detail)", "    return CompositionResult(False, code, detail, {})", "refusal_no_policy"),
-    "drop operator check f4": ("def compose_f4(caller: Any, record: Any, operator: Any = \"intersection\") -> CompositionResult:\n    try:\n        if operator != \"intersection\":\n            return _refuse(\"composition_operator_unsupported\")\n",
+    "drop operator check f4": ("def compose_f4(caller: Any, record: Any, operator: Any = \"intersection\") -> CompositionResult:\n    try:\n        if type(operator) is not str or operator != \"intersection\":\n            return _refuse(\"composition_operator_unsupported\")\n",
                                "def compose_f4(caller: Any, record: Any, operator: Any = \"intersection\") -> CompositionResult:\n    try:\n", "operator"),
-    "drop family check": ("    if family_seen != family:\n        return None, \"composition_family_unsupported\"\n", "", "family"),
-    "caller empty map accepted": ("    if m is None or not m or len(m) > MAX_CLASSES:", "    if m is None or len(m) > MAX_CLASSES:", "caller_empty_map"),
+    "drop family check": ("    if type(family_seen) is not str or family_seen != family:  # exact str: no str subclass with an overridden __ne__\n        return None, \"composition_family_unsupported\"\n", "", "family"),
+    "family compare without exact str": ("type(family_seen) is not str or family_seen != family", "family_seen != family", "exact_str_family"),
+    "operator compare without exact str": ("if type(operator) is not str or operator != \"intersection\":\n            return _refuse(\"composition_operator_unsupported\")\n        payload, code = _record_payload(record, FAMILY_F4",
+                                           "if operator != \"intersection\":\n            return _refuse(\"composition_operator_unsupported\")\n        payload, code = _record_payload(record, FAMILY_F4", "exact_str_operator"),
+    "payload keys without exact str": ("    if not all(type(k) is str for k in payload):  # exact str keys: no str subclass with a custom __eq__/__hash__\n        return \"field_type_invalid\"\n", "", "exact_str_payload_key"),
+    "class keys without exact str": ("if not all(type(k) is str for k in m) or not all(type(v) is int for v in m.values()):", "if not all(type(v) is int for v in m.values()):", "exact_str_payload_key"),
+    "caller f4 keys without exact str": ("    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F4_FIELDS):", "    if snap is None or set(snap) != set(F4_FIELDS):", "exact_str_caller_key"),
+    "caller f5 keys without exact str": ("    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F5_FIELDS):", "    if snap is None or set(snap) != set(F5_FIELDS):", "exact_str_caller_key"),
+    "ok truthy instead of True": ("if getattr(record, \"ok\", False) is not True:", "if not getattr(record, \"ok\", False):", "ok_exactly_true"),
+    "unbounded snapshot": ("items = list(itertools.islice(m.items(), limit + 1))", "items = list(m.items())", "bounded_snapshot"),
+    "snapshot bound off by one": ("        if len(items) > limit:\n            return None\n", "        if len(items) > limit + 1:\n            return None\n", "bounded_snapshot"),
+    "caller empty map accepted": ("    if m is None or not m:", "    if m is None:", "caller_empty_map"),
     "caller output unsorted": ("return {F5_FIELD: {k: m[k] for k in sorted(m)}}", "return {F5_FIELD: dict(m)}", "caller_output_sorted"),
 }
 
@@ -814,3 +884,54 @@ def test_f5_caller_output_is_sorted():
     res = compose5(c5({"class-c": 90, "class-a": 60, "class-b": 60}), p5({"class-a": 1}))
     assert res.ok and list(res.effective[F5K]) == ["class-a", "class-b", "class-c"]
     assert list(a.normalize_caller_f5(c5({"class-c": 1, "class-a": 1, "class-b": 1}))[F5K]) == ["class-a", "class-b", "class-c"]
+
+
+# ---------------------------------------------------------------- PR #31 review dispositions (N1, N2, N3, N5)
+def test_record_ok_must_be_exactly_true():
+    """N3: a truthy non-True `ok` is not a valid record (stricter than v1 on purpose)."""
+    for bad in (1, "yes", [1], object()):
+        refused(a.compose_f4(c4(), rec(p4(), F4, ok=bad)), "composition_record_invalid")
+        refused(a.compose_f5(c5(), rec(p5(), F5, ok=bad)), "composition_record_invalid")
+    assert a.compose_f4(c4(), rec(p4(), F4, ok=True)).ok
+
+
+def test_str_subclass_is_not_a_family_operator_or_key():
+    """N1: a str subclass that lies about equality is refused for the family, operator and every key, not matched by value."""
+    refused(a.compose_f4(c4(), rec(p4(), _EqStr(F4))), "composition_family_unsupported")
+    refused(a.compose_f5(c5(), rec(p5(), _EqStr(F5))), "composition_family_unsupported")
+    refused(a.compose_f4(c4(), rec(p4(), F4), _EqStr("intersection")), "composition_operator_unsupported")
+    refused(a.compose_f5(c5(), rec(p5(), F5), _EqStr("intersection")), "composition_operator_unsupported")
+    assert a.f4_payload_validator({_EqStr("status_max_age_seconds"): 5, "approval_max_age_seconds": 5}) == "field_type_invalid"
+    assert a.f5_payload_validator({_EqStr(F5K): {"a": 1}}) == "field_type_invalid"
+    assert a.f5_payload_validator({F5K: {_EqStr("a"): 1}}) == "field_type_invalid"
+    refused(a.compose_f4({_EqStr("status_max_age_seconds"): 5, "approval_max_age_seconds": 5}, rec(p4(), F4)), "composition_caller_invalid")
+    refused(a.compose_f5({F5K: {_EqStr("class-a"): 5}}, rec(p5({"class-a": 1}), F5)), "composition_caller_invalid")
+    # plain str values are unaffected
+    assert a.compose_f4(c4(), rec(p4(), F4), "intersection").ok and a.compose_f5(c5(), rec(p5(), F5), "intersection").ok
+
+
+def test_huge_caller_mapping_is_refused_after_a_bounded_read():
+    """N2: the caller snapshot stops at limit + 1 entries; a huge Mapping is refused without copying it."""
+    top, cls = _BigMapping(), _BigMapping()
+    refused(a.compose_f4(top, rec(p4(), F4)), "composition_caller_invalid")
+    assert top.reads <= len(F4K) + 1
+    refused(a.compose_f5({F5K: cls}, rec(p5(), F5)), "composition_caller_invalid")
+    assert cls.reads <= c.MAX_ENTRIES + 1
+    outer = _BigMapping()
+    refused(a.compose_f5(outer, rec(p5(), F5)), "composition_caller_invalid")
+    assert outer.reads <= len(a.F5_FIELDS) + 1
+    # exactly MAX_ENTRIES classes is still accepted, MAX_ENTRIES + 1 is not
+    ok_map = {f"c{i:04d}": 1 for i in range(c.MAX_ENTRIES)}
+    assert a.compose_f5({F5K: ok_map}, rec(p5({"c0000": 1}), F5)).ok
+    refused(a.compose_f5({F5K: {**ok_map, "c9999": 1}}, rec(p5({"c0000": 1}), F5)), "composition_caller_invalid")
+
+
+def test_nfc_and_nfd_class_keys_are_distinct_exact_strings():
+    """N5: no Unicode normalization. 'é' (U+00E9) and 'e' + U+0301 are two different, individually valid class ids."""
+    nfc, nfd = "é", "é"
+    assert nfc != nfd and c.valid_token(nfc) and c.valid_token(nfd)
+    reg = {k: 5 for k in sorted([nfc, nfd])}
+    assert a.f5_payload_validator({F5K: reg}) is None
+    res = a.compose_f5({F5K: {nfc: 60}}, rec({F5K: {nfc: 5}}, F5))
+    assert res.ok and res.effective == {F5K: {nfc: 5}}
+    refused(a.compose_f5({F5K: {nfc: 60}}, rec({F5K: {nfd: 5}}, F5)), "composition_record_invalid")  # NFD registry class unknown to an NFC caller

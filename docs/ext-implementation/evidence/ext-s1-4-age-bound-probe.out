@@ -1,3 +1,4 @@
+PROBE ENVIRONMENT: python 3.13.17 | CPython | Linux-6.18.44-fc-v153-x86_64-with-glibc2.39 | pydantic 2.13.5 | control-plane HEAD 7a4bcd40b3b49e61ff3c294dcca53b52f460b22c
 == class base ActionClass.max_status_age_seconds, grant status age 0
   base=2147483647 freshness-on: ok:authorized
   base=2147483647 anchored: ok:authorized

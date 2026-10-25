@@ -12,7 +12,12 @@ from datetime import timedelta
 CP, LIB = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 else "")
 sys.path[:0] = [p for p in (LIB, CP + "/src", CP) if p]
 sys.dont_write_bytecode = True
+import platform, subprocess
+import pydantic
 import agent_control_plane.bounded as bounded
+print("PROBE ENVIRONMENT: python", sys.version.split()[0], "|", platform.python_implementation(), "|", platform.platform(),
+      "| pydantic", pydantic.VERSION, "| control-plane HEAD",
+      subprocess.run(["git", "-C", CP, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown")
 from agent_control_plane.freshness import FreshnessProfile
 from tests.test_bounded_authorization import NOW
 import tests.test_freshness as tf
