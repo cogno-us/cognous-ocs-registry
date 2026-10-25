@@ -20,31 +20,64 @@ fails verification keeps `signature does not verify`. No reason code is added (C
 Open question for the Architect: the contract text should state the canonical spelling explicitly. This PR does not edit the
 hash-pinned contract file.
 
-## 2. Key admission at the trust boundary
+## 2. Key admission at the trust boundary (mandatory on the r08-v2 path)
 
-`verify_selection(..., key_admission=None)` takes an optional policy `(alg, public_key) -> bool`, applied to every issuer key
-when the trust snapshot is admitted. A refused key makes the snapshot `trust_snapshot_invalid` (existing code) with a detail
-naming the cause and key id, and authenticity is not evaluated. A policy that raises, or returns anything but exactly `True`,
-refuses.
+Architect ruling B: public-key admission is MANDATORY on the r08-v2 verification path.
 
-Default `None` keeps the legacy behaviour: existing fixtures use non-32-byte placeholder keys and the frozen v1 vectors must
-not change. A production caller must pass a policy. Whether the default should become mandatory for `r08-v2` is an open
-Architect question.
+`verify_selection(..., key_admission=None, contract_version="r08-v1")` and `verify_and_decide(..., key_admission=None,
+contract_version="r08-v1")`. Admission is **mandatory unless `contract_version` is exactly the legacy string `r08-v1`**
+(fail closed: `r08-v2`, any other string, `None`, a non-string, or `"R08-V1"` / `"r08-v1 "` all select the mandatory path),
+and also whenever the selection envelope itself says `r08-v2`. On the mandatory path the built-in Ed25519 check
+(`inspect_ed25519_key`) runs on every issuer key when the trust snapshot is admitted, whether or not a callback is supplied.
+The optional `key_admission` policy `(alg, public_key) -> bool` can only ADD refusals: a callback that returns `True` for a
+small-order key does not admit it; a callback that raises, or returns anything but exactly `True`, refuses. A refused key makes
+the snapshot `trust_snapshot_invalid` (existing code) and authenticity is not evaluated.
 
-`registry_successor/key_admission.py` provides `builtin_key_admission` (pure standard library). It DOES refuse: non-`bytes`,
-length other than 32, any encoding whose y coordinate is not below p (all 38 non-canonical y aliases and everything above),
-and any encoding whose y is one of the five small-order values for either sign bit (the eight canonical small-order encodings,
-including the identity, plus the non-canonical x = 0 sign-bit spellings).
+The legacy `r08-v1` path keeps its opt-in behaviour (`None` = no admission, a supplied callback still gets the built-in check),
+because the frozen v1 golden corpus and fixtures use non-32-byte placeholder keys and must not change. There is no r08-v2
+envelope parser in the repository yet (`selection.py` accepts only `r08-v1`); the gate is therefore placed at the verifier so
+that the v2 parser (EXT-S1-5/6) inherits it with no further wiring, and the v2 path is exercised here by passing
+`contract_version="r08-v2"` with a v1-shaped envelope.
 
-It does NOT refuse: a y that is not on the curve, or a point outside the prime-order subgroup. Mixed-order keys (A plus a
-small-order point) pass this built-in check; a test pins that limitation. The Ed25519 adapter's stricter
-`acceptable_public_key` (PR #26, unmerged) is meant to be composed in with `compose_key_admission`. Until a subgroup-validating policy or
-verifier is in place, mixed-order keys and signatures made with them MAY be accepted; PR #26 reports libsodium's signature check
-alone accepting mixed-order cases. This PR does not close that gap.
+### 2.0 Exact rules checked (`key_admission.inspect_ed25519_key`, pure standard library)
 
-### 2a. Behaviour notes (documented, not changed)
+Applied to `alg == "ed25519"` keys, in this order:
+1. exact `bytes` type (a `bytes` subclass, `bytearray`, `str`, `None`, int are refused: `key_type`);
+2. length exactly 32 (`key_length`);
+3. noncanonical encoding: the y coordinate (low 255 bits, little endian) must be below p = 2**255 - 19, so every alias
+   y + p (including y = p and the all-ones value) is refused whether or not it decodes to a point (`key_non_canonical_y`);
+4. small order, including the identity: the y coordinate must not be one of the five values shared by the eight small-order
+   points of edwards25519, for either sign bit: y = 0, y = 1, y = p - 1, and the two order-8 values
+   `0x5fc536d8...95e826` and `0x7a03ac92...6a17c7` (`key_small_order`). That refuses the eight canonical small-order encodings
+   (identity `01 00..00`, order-2 `ec ff..7f`, the two order-4 and the four order-8 encodings) and the x = 0 sign-bit spellings
+   `01 00..80`, `ec ff..ff` that a decoder might reduce to the same point.
+Source for the small-order set: RFC 8032 section 5.1.3 (point decoding, rejection of noncanonical y) and the standard list of
+the eight small-order points of edwards25519 as used by libsodium `ge25519_has_small_order` and the ed25519-speccheck
+("Taming the many EdDSAs") suite. The tests do not copy the list: they recompute the torsion points from the curve equation
+by integer arithmetic and compare (`test_small_order_table_matches_independent_arithmetic`).
 
-- **The built-in Ed25519 check always runs.** Whenever any `key_admission` policy is supplied, `inspect_ed25519_key` is applied
+Not checked here (documented limitation, unchanged): whether a canonical y lies on the curve, and prime-order-subgroup
+membership. Mixed-order keys (A plus a small-order point) pass the built-in check and a test pins that. The stricter
+`acceptable_public_key` of the Ed25519 adapter (PR #26, unmerged) is to be composed in with `compose_key_admission` after #34
+is approved. Until then mixed-order keys and signatures made with them MAY be accepted; PR #26 reports libsodium's signature
+check alone accepting mixed-order cases. This PR does not close that gap.
+
+### 2.0a Reason and typed detail (ruling C)
+
+Reason code: `trust_snapshot_invalid` (the existing code; CODES stays 46; the frozen reason-code artifacts are untouched).
+Typed detail, in `registry_successor/key_admission.py`:
+- `DETAIL_KEY_ADMISSION_INVALID = "key_admission_invalid"`: an admitted issuer key is refused. `detail_cause` is the stable label
+  `key_type | key_length | key_non_canonical_y | key_small_order | policy_refused`.
+- `DETAIL_TRUST_SNAPSHOT_MALFORMED = "trust_snapshot_malformed"`: any other malformed trust snapshot on the mandatory path.
+These are carried as `detail_code` / `detail_cause` on `TypedVerificationReport` (a subclass of `VerificationReport`) and on
+`TypedPolicyDecision` (a subclass of `PolicyDecision`). The subclasses are returned only for a refusal that has a typed detail
+on the mandatory path (and, on the legacy path, only for a key-admission refusal, which legacy fixtures never trigger). Every
+other report or decision is the base class, so the frozen r08-v1 serialized shape (golden corpus, 5,000+ cases) is byte-identical.
+`verify_and_decide` now propagates `detail_code` / `detail_cause`; free-text `detail` is still not surfaced there (pre-existing).
+
+### 2a. Behaviour notes
+
+- **The built-in Ed25519 check always runs** on the mandatory path, and on the legacy path whenever any `key_admission` policy is supplied: `inspect_ed25519_key` is applied
   to every ed25519 issuer key in addition to the policy, and a refusal by either refuses the snapshot. A custom policy can
   therefore only tighten admission; it cannot relax the built-in check (for example to admit test keys). Pinned by a test.
 - **Ordering.** An admission refusal outranks `time_unavailable` and `trust_snapshot_expired`: a bad key with an expired snapshot
@@ -53,8 +86,8 @@ alone accepting mixed-order cases. This PR does not close that gap.
   blocks the whole snapshot. This is fail-closed and intended. Pinned by a test and a mutant.
 - **Non-ed25519 algorithms.** `builtin_key_admission` returns `True` for them because the verifier never verifies them
   (`_authenticity` treats any non-ed25519 algorithm as not good); admission is therefore irrelevant to them.
-- **Detail is not surfaced by the decision layer.** `verify_and_decide` drops the report detail for every code (pre-existing),
-  so callers of that entrypoint see only `trust_snapshot_invalid`.
+- **Free-text detail is not surfaced by the decision layer.** `verify_and_decide` drops the report `detail` text for every code
+  (pre-existing); only the typed `detail_code` / `detail_cause` (section 2.0a) are propagated.
 
 ### 2b. Envelope-level spelling is not unique
 
@@ -65,19 +98,20 @@ therefore does not make the whole envelope text unique. Behaviour is unchanged b
 wanted, a separate decision would reject any non-canonical supported-algorithm signature for a trusted key even when another
 verifies.
 
-### 2c. OPEN GATE for Architect decision (not implemented here)
+### 2c. Remaining gate for Architect decision
 
-`key_admission` defaults to `None`, so a caller that omits it gets no admission at all on the single public entrypoint
-`verify_and_decide` (a small-order key is then refused only generically at signature time). Before any trust-root activation:
-1. admission must be mandatory on the r08-v2 path, or default to `builtin_key_admission` there (the v1 path stays legacy,
-   because v1 fixtures use placeholder keys); and
-2. a subgroup-validating check (the PR #26 adapter's `acceptable_public_key`, or equivalent) must be composed in with
-   `compose_key_admission`.
-Trust-root activation stays held until both are decided and implemented.
+Mandatory built-in admission on the r08-v2 path is implemented (section 2). Still open before any trust-root activation: a
+subgroup-validating check (the PR #26 adapter's `acceptable_public_key`, or equivalent) composed in with `compose_key_admission`
+after #34 is approved. Trust-root activation stays held until that is decided and implemented. The contract text should also
+state the canonical base64 spelling explicitly (section 1; this PR does not edit hash-pinned contract files).
 
 ## 3. Evidence
 
-- 85 behavioural tests and 37 mutation checks (`tests/test_core_security_*.py`): 16 non-canonical spellings through the full
-  verifier pipeline, the 8 small-order encodings, 38 aliases, junk and wrong-type keys, 42 legitimate keys (RFC 8032 vectors 1
-  and 2 plus 40 derived by plain integer arithmetic), 40 source mutants killed, one documented equivalent mutant pinned.
+- 175 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 52 mutation-suite tests (47 source mutants over
+  `canonical_b64`, `key_admission`, `verify`, `decision`, all killed, plus probes that pass on unmutated source and one documented
+  equivalent mutant). Coverage: 16 noncanonical spellings through the full verifier pipeline; the 8 small-order encodings, the
+  identity, 38 aliases, wrong lengths and types, 42 legitimate keys (RFC 8032 vectors 1 and 2 plus 40 derived by plain integer
+  arithmetic); callback omission, `lambda: True` bypass attempts, composed and raising callbacks on the mandatory path;
+  `contract_version` fail-closed values; envelope-declared r08-v2; valid signatures and ordinary callers still applied;
+  negative decisions for required and optional participation; typed-detail distinctness; legacy r08-v1 shape unchanged.
 - Limits: no real Ed25519 library is used in these tests; point arithmetic is a test-local transcription; only CPython.

@@ -445,3 +445,152 @@ def test_admission_refusal_outranks_snapshot_expiry():
 
 def test_non_ed25519_algorithms_are_passed_through_by_the_builtin_policy():
     assert ka.builtin_key_admission("rsa", b"short") is True
+
+
+# ---------------------------------------------------------------- mandatory admission on the r08-v2 path (Architect ruling B/C)
+
+V2 = "r08-v2"
+IDENTITY = b"\x01" + b"\x00" * 31
+BAD_KEYS = (
+    [(k, "key_small_order") for k in SMALL_ORDER_ENCODINGS]
+    + [(P.to_bytes(32, "little"), "key_non_canonical_y"), ((2**255 - 1).to_bytes(32, "little"), "key_non_canonical_y"),
+       ((P + 1 | (1 << 255)).to_bytes(32, "little"), "key_non_canonical_y")]
+    + [(b"\x07" * n, "key_length") for n in (1, 16, 31, 33, 64)]
+)
+CALLBACKS = {"omitted": None, "always_true": lambda a, k: True, "builtin": ka.builtin_key_admission,
+             "composed_builtin": ka.compose_key_admission(ka.builtin_key_admission)}
+
+
+def _v2(public_key, policy, contract_version=V2):
+    stmt = r.make_statement()
+    env = r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=False)
+    env["signatures"] = [{"alg": "ed25519", "key_id": KEY, "signature": _good_signature_for(public_key)}]
+    sel = selection.parse_selection_envelope(r.dumps(env))
+    return verify.verify_selection(sel, CTX, _trust(public_key), Sig64Verifier(), r.NOW,
+                                   key_admission=policy, contract_version=contract_version)
+
+
+@pytest.mark.parametrize("policy_name", list(CALLBACKS))
+@pytest.mark.parametrize("bad_key,cause", BAD_KEYS)
+def test_v2_path_refuses_bad_keys_whatever_the_callback_says(bad_key, cause, policy_name):
+    report = _v2(bad_key, CALLBACKS[policy_name])
+    assert report.ok is False and report.code == "trust_snapshot_invalid"
+    assert report.layers["trust_snapshot"] == verify.REFUSE and report.layers["authenticity"] == verify.NOT_EVALUATED
+    assert report.authenticated is False
+    assert report.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and report.detail_cause == cause
+
+
+def test_the_identity_key_is_refused_on_v2_even_with_a_permissive_callback():
+    report = _v2(IDENTITY, lambda a, k: True)
+    assert report.code == "trust_snapshot_invalid" and report.detail_cause == "key_small_order"
+    assert report.ok is False and report.authenticated is False
+
+
+@pytest.mark.parametrize("version", [V2, "r08-v3", "", None, 2, b"r08-v1", "R08-V1", "r08-v1 "])
+def test_every_path_but_exact_legacy_v1_is_mandatory(version):
+    assert _v2(IDENTITY, None, version).code == "trust_snapshot_invalid"
+
+
+def test_the_legacy_path_is_unchanged_without_a_callback():
+    assert _v2(IDENTITY, None, "r08-v1").ok is True
+    assert not hasattr(_v2(IDENTITY, None, "r08-v1"), "detail_code")
+
+
+def test_an_envelope_that_says_r08_v2_selects_the_mandatory_path_even_on_the_legacy_argument():
+    import dataclasses
+    stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    v2sel = dataclasses.replace(sel, envelope={**sel.envelope, "contract_version": V2})
+    t = _trust(IDENTITY)
+    assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), r.NOW).ok is True
+    assert verify.verify_selection(v2sel, CTX, t, Sig64Verifier(), r.NOW).code == "trust_snapshot_invalid"
+
+
+@pytest.mark.parametrize("policy_name", list(CALLBACKS))
+def test_v2_valid_keys_and_valid_signatures_still_pass(policy_name):
+    for key in LEGIT_KEYS[:6]:
+        report = _v2(key, CALLBACKS[policy_name])
+        assert report.ok is True and report.authenticated is True, (key.hex(), report.detail)
+        assert type(report) is verify.VerificationReport
+
+
+def test_a_callback_can_further_restrict_on_v2_with_a_distinct_cause():
+    report = _v2(LEGIT_KEYS[0], lambda a, k: False)
+    assert report.code == "trust_snapshot_invalid" and report.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
+    assert report.detail_cause == "policy_refused"
+    assert _v2(LEGIT_KEYS[0], lambda a, k: 1).detail_cause == "policy_refused"
+
+    def boom(a, k):
+        raise RuntimeError("x")
+    assert _v2(LEGIT_KEYS[0], boom).detail_cause == "policy_refused"
+
+
+def test_invalid_key_admission_is_distinguishable_from_a_malformed_snapshot_without_a_new_reason_code():
+    sel = _signed_selection("AAAA")[1]
+    malformed = verify.verify_selection(sel, CTX, "not a snapshot", Sig64Verifier(), r.NOW, contract_version=V2)
+    bad_key = _v2(IDENTITY, None)
+    assert malformed.code == bad_key.code == "trust_snapshot_invalid"
+    assert malformed.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED and bad_key.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
+    assert malformed.detail_code != bad_key.detail_code
+    assert len(c.CODES) == 46 and "key_admission_invalid" not in c.CODES
+    # the frozen r08-v1 serialized shape: a malformed snapshot there is a plain report with no typed fields
+    legacy = verify.verify_selection(sel, CTX, "not a snapshot", Sig64Verifier(), r.NOW)
+    assert type(legacy) is verify.VerificationReport and legacy.code == "trust_snapshot_invalid"
+
+
+def test_admission_precedes_expiry_and_time_on_v2_without_any_callback():
+    sel = _signed_selection(_good_signature_for(IDENTITY))[1]
+    t = _trust(IDENTITY)
+    assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), r.NOW.replace(year=2030), contract_version=V2).code == "trust_snapshot_invalid"
+    assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), None, contract_version=V2).code == "trust_snapshot_invalid"
+
+
+def test_decision_pipeline_negative_key_admission_on_v2_never_applies_and_never_returns_the_caller_policy_for_required():
+    from registry_successor import decision
+    caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
+              "allowed_units": ["unit-a", "unit-b", "unit-c"]}
+    rec = r.make_record()
+    for participation in ("required", "optional"):
+        stmt = r.make_statement(rec, participation=participation)
+        for key in (IDENTITY, SMALL_ORDER_ENCODINGS[3], b"short"):
+            sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=key, signed=True))
+            for policy in (None, lambda a, k: True):
+                d = decision.verify_and_decide(participation, caller, r.dumps(rec), sel_text, CTX, _trust(key),
+                                               r.FakeVerifier(), r.NOW, key_admission=policy, contract_version=V2)
+                assert d.code == "trust_snapshot_invalid" and d.operationally_authorized is False
+                assert d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
+                assert d.kind == ("required_policy_unavailable" if participation == "required" else "overlay_not_applied")
+                assert (d.effective is None) if participation == "required" else (d.caller_unchanged is True)
+            legacy = decision.verify_and_decide(participation, caller, r.dumps(rec), sel_text, CTX, _trust(key),
+                                                r.FakeVerifier(), r.NOW)
+            assert not hasattr(legacy, "detail_code")  # the legacy r08-v1 decision keeps its frozen shape
+
+
+def test_decision_pipeline_ordinary_v2_caller_with_a_valid_key_is_still_applied():
+    from registry_successor import decision
+    caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
+              "allowed_units": ["unit-a", "unit-b", "unit-c"]}
+    rec = r.make_record()
+    stmt = r.make_statement(rec, participation="required")
+    key = LEGIT_KEYS[0]
+    sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=key, signed=True))
+    for policy in (None, ka.builtin_key_admission):
+        d = decision.verify_and_decide("required", caller, r.dumps(rec), sel_text, CTX, _trust(key), r.FakeVerifier(),
+                                       r.NOW, key_admission=policy, contract_version=V2)
+        assert d.kind == "applied" and d.code is None, (d.code, d.detail)
+        assert type(d) is decision.PolicyDecision
+    legacy = decision.verify_and_decide("required", caller, r.dumps(rec), sel_text, CTX, _trust(key), r.FakeVerifier(), r.NOW)
+    assert legacy.kind == "applied"
+
+
+def test_decision_pipeline_forwards_contract_version_to_the_verifier():
+    from registry_successor import decision
+    caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
+              "allowed_units": ["unit-a", "unit-b", "unit-c"]}
+    rec = r.make_record()
+    stmt = r.make_statement(rec, participation="required")
+    sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=True))
+    args = ("required", caller, r.dumps(rec), sel_text, CTX, _trust(), r.FakeVerifier(), r.NOW)
+    assert decision.verify_and_decide(*args).kind == "applied"                       # legacy placeholder key
+    d = decision.verify_and_decide(*args, contract_version=V2)                       # PK is 17 bytes: key_length
+    assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
+    assert d.detail_cause == "key_length"

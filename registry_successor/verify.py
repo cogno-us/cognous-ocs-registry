@@ -14,7 +14,8 @@ from typing import Any, Mapping, Optional, Protocol
 from registry_successor import common as c
 from registry_successor.canonical_b64 import decode_canonical_base64
 from registry_successor.common import ExpectedContext
-from registry_successor.key_admission import inspect_ed25519_key
+from registry_successor.key_admission import (
+    DETAIL_KEY_ADMISSION_INVALID, DETAIL_TRUST_SNAPSHOT_MALFORMED, inspect_ed25519_key)
 
 LAYERS = (
     "structural", "integrity", "record_binding", "trust_snapshot", "authenticity",
@@ -25,7 +26,7 @@ SUPPORTED_ALG = "ed25519"
 
 __all__ = [
     "ExpectedContext", "AuthorityGrant", "IssuerEntry", "TrustSnapshot", "SignatureVerifier", "VerificationReport",
-    "LAYERS", "verify_selection",
+    "LAYERS", "verify_selection", "TypedVerificationReport",
 ]
 
 
@@ -75,6 +76,28 @@ class VerificationReport:
     operationally_authorized: bool = False
     participation: Optional[str] = None
     bound_record_digest: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class TypedVerificationReport(VerificationReport):
+    """A VerificationReport that also carries a typed sub-cause of `code`. Returned ONLY when a refusal has one (today:
+    the two `trust_snapshot_invalid` conditions). Every other report is the base class, so the frozen r08-v1 serialized
+    shape is untouched."""
+    detail_code: Optional[str] = None    # DETAIL_KEY_ADMISSION_INVALID or DETAIL_TRUST_SNAPSHOT_MALFORMED
+    detail_cause: Optional[str] = None   # stable cause label (e.g. key_small_order, key_length, policy_refused)
+
+
+LEGACY_CONTRACT = "r08-v1"
+V2_CONTRACT = "r08-v2"
+
+
+def _admission_mandatory(selection: Any, contract_version: Any) -> bool:
+    """Admission is mandatory on every path except the explicit legacy `r08-v1` default. Fail closed: any other or odd
+    `contract_version` value, or an envelope that itself says r08-v2, selects the mandatory path."""
+    if contract_version != LEGACY_CONTRACT:
+        return True
+    return getattr(selection, "envelope", None) is not None and \
+        isinstance(selection.envelope, dict) and selection.envelope.get("contract_version") == V2_CONTRACT
 
 
 def _normalize_trust(trust: Any) -> Optional[dict]:
@@ -130,18 +153,23 @@ def _normalize_trust(trust: Any) -> Optional[dict]:
             "floors": floors, "valid_until": c.parse_timestamp(trust.valid_until)}
 
 
-def _admission_failure(trust: dict, key_admission: Any) -> Optional[str]:
-    """Detail text when an admitted signing key is refused by the key-admission policy, else None. Fail closed."""
-    if key_admission is None:
+def _admission_failure(trust: dict, key_admission: Any, mandatory: bool) -> Optional[tuple]:
+    """(detail text, cause) when an admitted signing key is refused, else None. Fail closed.
+    The built-in Ed25519 check runs whenever admission is mandatory or any policy is supplied; a caller policy can only
+    add refusals (a non-True or raising policy refuses). With `mandatory` False and no policy: legacy, no admission."""
+    if key_admission is None and not mandatory:
         return None
     for key_id, (entry, _grants) in trust["issuers"].items():
         cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None
-        try:
-            admitted = key_admission(entry.alg, entry.public_key) is True
-        except Exception:
-            admitted = False
+        admitted = True
+        if key_admission is not None:
+            try:
+                admitted = key_admission(entry.alg, entry.public_key) is True
+            except Exception:
+                admitted = False
         if cause is not None or not admitted:
-            return f"trust snapshot admits a signing key refused by the key-admission policy ({cause or 'policy_refused'}; key_id={key_id})"
+            cause = cause or "policy_refused"
+            return (f"trust snapshot admits a signing key refused by the key-admission policy ({cause}; key_id={key_id})", cause)
     return None
 
 
@@ -232,17 +260,20 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -
     return (first_failure[0], first_failure[1], [])
 
 
-def _verify(selection, context, trust_in, verifier, now, record, key_admission=None) -> VerificationReport:
+def _verify(selection, context, trust_in, verifier, now, record, key_admission=None, contract_version=LEGACY_CONTRACT) -> VerificationReport:
     layers = {name: NOT_EVALUATED for name in LAYERS}
     codes: dict = {}
     details: dict = {}
+    typed: dict = {}
 
-    def mark(layer: str, code: Optional[str], detail: str = "") -> None:
+    def mark(layer: str, code: Optional[str], detail: str = "", typed_detail: Optional[tuple] = None) -> None:
         layers[layer] = PASS if code is None else REFUSE
         if code is not None:
             assert code in c.CODES, code
             codes[layer] = code
             details[layer] = detail
+            if typed_detail is not None:
+                typed[layer] = typed_detail
 
     when = _aware(now)
     statement = _statement_view(selection)
@@ -260,13 +291,15 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
             mark("record_binding", *(bad if bad else (None,)))
 
     trust = _normalize_trust(trust_in)
-    admission_detail = None if trust is None else _admission_failure(trust, key_admission)
+    mandatory = _admission_mandatory(selection, contract_version)
+    admission = None if trust is None else _admission_failure(trust, key_admission, mandatory)
     if trust_in is None:
         mark("trust_snapshot", "trust_snapshot_missing", "no trust snapshot supplied")
     elif trust is None:
-        mark("trust_snapshot", "trust_snapshot_invalid", "trust snapshot is malformed")
-    elif admission_detail is not None:
-        mark("trust_snapshot", "trust_snapshot_invalid", admission_detail)
+        mark("trust_snapshot", "trust_snapshot_invalid", "trust snapshot is malformed",
+             (DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None)  # legacy r08-v1 shape stays byte-frozen
+    elif admission is not None:
+        mark("trust_snapshot", "trust_snapshot_invalid", admission[0], (DETAIL_KEY_ADMISSION_INVALID, admission[1]))
     elif when is None:
         mark("trust_snapshot", "time_unavailable", "no trusted current time")
     elif when >= trust["valid_until"]:
@@ -333,24 +366,32 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
     first = next((name for name in LAYERS if layers[name] == REFUSE), None)
     required_ok = all(layers[name] == PASS for name in LAYERS if name != "record_binding")
     ok = first is None and required_ok and (record is None or layers["record_binding"] == PASS)
-    return VerificationReport(
+    klass, extra = VerificationReport, {}
+    if not ok and first in typed:
+        klass, extra = TypedVerificationReport, {"detail_code": typed[first][0], "detail_cause": typed[first][1]}
+    return klass(
         ok=ok, code=None if ok else codes.get(first, "selection_missing"),
         detail="" if ok else details.get(first, "verification incomplete"),
         layers=dict(layers), selection_digest=getattr(selection, "statement_digest", None) if statement is not None else None,
         authenticated=authenticated, issuer_id=issuer_id, operationally_authorized=False,
         participation=statement.get("participation") if statement is not None else None,
+        **extra,
         bound_record_digest=(statement.get("record") or {}).get("record_digest")
         if statement is not None and layers["record_binding"] == PASS and isinstance(statement.get("record"), dict) else None)
 
 
-def verify_selection(selection, context, trust, verifier, now, record=None, key_admission=None) -> VerificationReport:
+def verify_selection(selection, context, trust, verifier, now, record=None, key_admission=None,
+                     contract_version=LEGACY_CONTRACT) -> VerificationReport:
     """Layered technical verification. Never raises; never returns an acceptance on internal error.
 
-    `key_admission` is an optional policy `(alg, public_key) -> bool` applied to every issuer key when the trust
-    snapshot is admitted (see registry_successor.key_admission). Default None keeps the legacy behaviour.
+    Public-key admission (registry_successor.key_admission) is MANDATORY unless `contract_version` is exactly the legacy
+    `r08-v1` default: on every other value, and whenever the envelope says `r08-v2`, the built-in Ed25519 admission check
+    is applied to every issuer key when the trust snapshot is admitted, whether or not `key_admission` is supplied.
+    `key_admission`, an optional `(alg, public_key) -> bool`, can only add refusals. On the legacy path it keeps its
+    old opt-in meaning (None = no admission).
     """
     try:
-        return _verify(selection, context, trust, verifier, now, record, key_admission)
+        return _verify(selection, context, trust, verifier, now, record, key_admission, contract_version)
     except Exception:
         layers = {name: NOT_EVALUATED for name in LAYERS}
         layers["structural"] = REFUSE

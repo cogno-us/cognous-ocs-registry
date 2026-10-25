@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import r08_support as r  # noqa: E402
 from registry_successor import common as c  # noqa: E402
 from registry_successor import selection  # noqa: E402
+from registry_successor import verify as verify_mod  # noqa: E402
 
 PKG = Path(__file__).resolve().parent.parent / "registry_successor"
 P = 2**255 - 19
@@ -103,14 +104,20 @@ def _verify_probe(mod):
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     base = alphabet.index(canon[-3]) & ~15
 
-    def run(sig_text, public_key, policy):
+    def run(sig_text, public_key, policy, cv="r08-v1", mutate_env=None):
         env = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
         env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": sig_text}]
         sel = selection.parse_selection_envelope(r.dumps(env))
+        if mutate_env:
+            import dataclasses
+            sel = dataclasses.replace(sel, envelope={**sel.envelope, **mutate_env})
         grant = mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
         trust = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                                   (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", public_key, (grant,)),))
-        return mod.verify_selection(sel, ctx, trust, _V64(), r.NOW, key_admission=policy)
+        if cv == "malformed":
+            trust = "not a snapshot"
+            cv = "r08-v2"
+        return mod.verify_selection(sel, ctx, trust, _V64(), r.NOW, key_admission=policy, contract_version=cv)
 
     good = run(canon, key, None)
     assert good.ok is True
@@ -122,8 +129,30 @@ def _verify_probe(mod):
     raw_bad = hashlib.sha512(b"sig|" + bad_key + b"|" + msg).digest()
     refused = run(base64.b64encode(raw_bad).decode("ascii"), bad_key, ka.builtin_key_admission)
     assert refused.code == "trust_snapshot_invalid" and "key_small_order" in refused.detail
+    assert refused.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
     assert run(base64.b64encode(raw_bad).decode("ascii"), bad_key, None).ok is True
     assert run(canon, key, ka.builtin_key_admission).ok is True
+    # r08-v2 path: admission is MANDATORY; omitted or permissive callbacks cannot bypass the built-in check
+    bad_sig = base64.b64encode(raw_bad).decode("ascii")
+    for policy in (None, lambda a, k: True, ka.builtin_key_admission):
+        v2 = run(bad_sig, bad_key, policy, "r08-v2")
+        assert v2.ok is False and v2.code == "trust_snapshot_invalid", policy
+        assert v2.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and v2.detail_cause == "key_small_order"
+    assert run(bad_sig, bad_key, None, "not-a-version").code == "trust_snapshot_invalid"
+    assert run(bad_sig, bad_key, None, None).code == "trust_snapshot_invalid"
+    assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": "r08-v2"}).code == "trust_snapshot_invalid"
+    assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": "r08-v1"}).ok is True
+    assert run(canon, key, None, "r08-v2").ok is True
+    assert run(canon, key, lambda a, k: True, "r08-v2").ok is True
+    stricter = run(canon, key, lambda a, k: False, "r08-v2")
+    assert stricter.code == "trust_snapshot_invalid" and stricter.detail_cause == "policy_refused"
+    assert run(canon, key, lambda a, k: (_ for _ in ()).throw(RuntimeError()), "r08-v2").detail_cause == "policy_refused"
+    mal = run(canon, key, None, "malformed")
+    assert mal.code == "trust_snapshot_invalid" and mal.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED
+    assert mal.detail_code != ka.DETAIL_KEY_ADMISSION_INVALID
+    legacy_mal = mod.verify_selection(selection.parse_selection_envelope(r.dumps(
+        r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False))), ctx, "x", _V64(), r.NOW)
+    assert type(legacy_mal) is mod.VerificationReport  # frozen r08-v1 serialized shape: no extra fields
     assert run(canon, key, lambda a, k: 1).code == "trust_snapshot_invalid"
     assert run(canon, key, lambda a, k: (_ for _ in ()).throw(RuntimeError())).code == "trust_snapshot_invalid"
     custom = run(canon, key, lambda a, k: False)
@@ -144,6 +173,35 @@ def _verify_probe(mod):
                                 revoked_key_ids=frozenset({"key-test-2"}))
     rv = mod.verify_selection(sel, ctx, revoked, _V64(), r.NOW, key_admission=ka.builtin_key_admission)
     assert rv.code == "trust_snapshot_invalid" and "key-test-2" in rv.detail
+
+
+def _decision_probe(mod):
+    caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
+              "allowed_units": ["unit-a", "unit-b", "unit-c"]}
+    rec = r.make_record()
+    ctx = c.ExpectedContext("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+    grant = verify_mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+    trust = verify_mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                                     (verify_mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", b"public-key-test-1", (grant,)),))
+    for part in ("required", "optional"):
+        sel = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), signed=True))
+        legacy = mod.verify_and_decide(part, caller, r.dumps(rec), sel, ctx, trust, r.FakeVerifier(), r.NOW)
+        assert legacy.code is None and not hasattr(legacy, "detail_code")
+        for policy in (None, lambda a, k: True):
+            d = mod.verify_and_decide(part, caller, r.dumps(rec), sel, ctx, trust, r.FakeVerifier(), r.NOW,
+                                      key_admission=policy, contract_version="r08-v2")
+            assert d.code == "trust_snapshot_invalid" and d.detail_code == "key_admission_invalid" and d.detail_cause == "key_length"
+            assert d.kind == ("required_policy_unavailable" if part == "required" else "overlay_not_applied")
+            assert d.operationally_authorized is False
+        good = bytes.fromhex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")
+        gtrust = verify_mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                                          (verify_mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", good, (grant,)),))
+        gsel = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), public_key=good, signed=True))
+        ok = mod.verify_and_decide(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW, contract_version="r08-v2")
+        assert ok.code is None
+        no = mod.verify_and_decide(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW,
+                                   key_admission=lambda a, k: False, contract_version="r08-v2")
+        assert no.code == "trust_snapshot_invalid" and no.detail_cause == "policy_refused"
 
 
 MUTANTS = {
@@ -176,16 +234,31 @@ MUTANTS = {
     "verify": (_verify_probe, {
         "plain_b64decode_for_signature": [("raw = decode_canonical_base64(text)", "raw = base64.b64decode(text, validate=True) if isinstance(text, str) else None")],
         "noncanonical_detail_collapsed": [('"signature is not canonical base64"', '"signature is not valid base64"')],
-        "drop_admission_branch": [("    elif admission_detail is not None:\n        mark(\"trust_snapshot\", \"trust_snapshot_invalid\", admission_detail)\n", "")],
-        "admission_ignored": [("    if key_admission is None:\n        return None\n    for key_id", "    return None\n    for key_id")],
-        "admission_none_means_builtin": [("    if key_admission is None:\n        return None\n", "    if key_admission is None:\n        key_admission = lambda a, k: True\n")],
+        "drop_admission_branch": [("    elif admission is not None:\n        mark(\"trust_snapshot\", \"trust_snapshot_invalid\", admission[0], (DETAIL_KEY_ADMISSION_INVALID, admission[1]))\n", "")],
+        "admission_ignored": [("    if key_admission is None and not mandatory:\n        return None\n    for key_id", "    return None\n    for key_id")],
+        "admission_none_means_builtin": [("    if key_admission is None and not mandatory:\n        return None\n", "    if key_admission is None and not mandatory:\n        key_admission = lambda a, k: True\n")],
+        "mandatory_requires_callback": [("    if key_admission is None and not mandatory:", "    if key_admission is None:")],
+        "callback_replaces_builtin": [("cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None", "cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG and key_admission is None else None")],
+        "mandatory_only_for_exact_v2": [("    if contract_version != LEGACY_CONTRACT:\n        return True", "    if contract_version == V2_CONTRACT:\n        return True")],
+        "mandatory_ignores_envelope_v2": [("selection.envelope.get(\"contract_version\") == V2_CONTRACT", "False")],
+        "contract_version_not_threaded": [("record, key_admission, contract_version)", "record, key_admission, LEGACY_CONTRACT)")],
+        "malformed_detail_always_typed": [("(DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None", "(DETAIL_TRUST_SNAPSHOT_MALFORMED, None)")],
+        "malformed_detail_never_typed": [("(DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None", "None")],
+        "typed_detail_swapped": [("(DETAIL_KEY_ADMISSION_INVALID, admission[1]))", "(DETAIL_TRUST_SNAPSHOT_MALFORMED, admission[1]))")],
+        "typed_detail_dropped": [("    if not ok and first in typed:", "    if False:")],
         "admission_skips_revoked": [("    for key_id, (entry, _grants) in trust[\"issuers\"].items():\n        cause", "    for key_id, (entry, _grants) in trust[\"issuers\"].items():\n        if key_id in trust[\"revoked_keys\"]:\n            continue\n        cause")],
         "policy_truthy_accepted": [("admitted = key_admission(entry.alg, entry.public_key) is True", "admitted = bool(key_admission(entry.alg, entry.public_key))")],
-        "policy_exception_admits": [("        except Exception:\n            admitted = False", "        except Exception:\n            admitted = True")],
+        "policy_exception_admits": [("            except Exception:\n                admitted = False", "            except Exception:\n                admitted = True")],
         "drop_builtin_cause": [("cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None", "cause = None")],
-        "cause_not_in_detail": [("({cause or 'policy_refused'}; key_id={key_id})", "(refused; key_id={key_id})")],
+        "cause_not_in_detail": [("({cause}; key_id={key_id})", "(refused; key_id={key_id})")],
         "admission_only_first_issuer": [("    for key_id, (entry, _grants) in trust[\"issuers\"].items():", "    for key_id, (entry, _grants) in list(trust[\"issuers\"].items())[:1]:")],
-        "admission_passed_not_threaded": [("return _verify(selection, context, trust, verifier, now, record, key_admission)", "return _verify(selection, context, trust, verifier, now, record, None)")],
+        "admission_passed_not_threaded": [("record, key_admission, contract_version)\n    except", "record, None, contract_version)\n    except")],
+    }),
+    "decision": (_decision_probe, {
+        "contract_version_not_forwarded": [("rec, key_admission, contract_version)", "rec, key_admission)")],
+        "key_admission_not_forwarded": [("rec, key_admission, contract_version)", "rec, None, contract_version)")],
+        "typed_detail_dropped": [("typed = (dc, cause if type(cause) is str else None) if type(dc) is str else None", "typed = None")],
+        "typed_cause_dropped": [("typed = (dc, cause if type(cause) is str else None) if type(dc) is str else None", "typed = (dc, None) if type(dc) is str else None")],
     }),
 }
 
@@ -195,7 +268,7 @@ CASES = [(mod, name) for mod, (_, ms) in MUTANTS.items() for name in ms]
 @pytest.mark.parametrize("mod", list(MUTANTS))
 def test_unmutated_source_passes_its_probe(mod):
     probe = MUTANTS[mod][0]
-    probe(_load(mod) if mod != "verify" else _load("verify"))
+    probe(_load(mod))
 
 
 @pytest.mark.parametrize("mod,name", CASES)

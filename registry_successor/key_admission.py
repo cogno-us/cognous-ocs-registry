@@ -17,12 +17,27 @@ curve implementation; the Ed25519 adapter's `acceptable_public_key` (PR #26, not
 meant to be composed in through `compose_key_admission`. Until a subgroup-validating policy or verifier is in place, mixed-order keys and signatures made with them MAY be
 accepted: libsodium's signature check alone has been reported (PR #26) to accept mixed-order cases.
 
-Key admission is opt-in at `verify_selection(..., key_admission=...)`. With the default `None`, behaviour is exactly
-the legacy behaviour (existing fixtures use non-32-byte placeholder keys). Production callers must pass a policy.
+Policy source for the small-order set: RFC 8032 section 5.1.3 point decoding and the standard list of the eight
+small-order points of edwards25519 (as tabulated in the libsodium `ge25519_has_small_order` blocklist, in the ed25519-speccheck
+"Taming the many EdDSAs" test suite, and in the Wycheproof/CCTV corpora). The adopted strict policy refuses all of them.
+The set is also recomputed independently by tests from the curve equation, not copied from this module.
+
+Admission is MANDATORY on the `r08-v2` verification path: `verify_selection` / `verify_and_decide` always apply
+`inspect_ed25519_key` to every issuer key when `contract_version` is anything other than exactly the legacy `r08-v1`
+(or the selection envelope itself says `r08-v2`). The optional `key_admission` callback can only add restrictions; omitting
+it cannot skip this check. The legacy `r08-v1` path (existing fixtures use non-32-byte placeholder keys) keeps its
+callback-optional behaviour unchanged.
+
+Typed details: a refusal carries `DETAIL_KEY_ADMISSION_INVALID` (versus `DETAIL_TRUST_SNAPSHOT_MALFORMED`) so a caller can
+tell an invalid admitted key from other malformed-snapshot conditions without a new reason code.
 """
 from typing import Callable, Optional
 
-__all__ = ["P", "SMALL_ORDER_Y", "inspect_ed25519_key", "builtin_key_admission", "compose_key_admission"]
+__all__ = ["DETAIL_KEY_ADMISSION_INVALID", "DETAIL_TRUST_SNAPSHOT_MALFORMED", "P", "SMALL_ORDER_Y", "inspect_ed25519_key", "builtin_key_admission", "compose_key_admission"]
+
+# Typed detail codes carried beside the existing reason code `trust_snapshot_invalid` (no new reason code is added).
+DETAIL_KEY_ADMISSION_INVALID = "key_admission_invalid"
+DETAIL_TRUST_SNAPSHOT_MALFORMED = "trust_snapshot_malformed"
 
 P = 2**255 - 19
 SMALL_ORDER_Y = frozenset({
