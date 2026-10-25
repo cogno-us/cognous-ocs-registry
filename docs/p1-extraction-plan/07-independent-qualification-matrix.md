@@ -1,6 +1,6 @@
 # 7. Independent qualification matrix
 
-Status: planning only. Derived from the existing 13-gate acceptance matrix of the unmerged inventory (PR #227 head `64b4942b`, not adopted) and the qualification repository at `main` `998d39c5`. Full per-gate test lists and new-test requirements are in [`data/qualification-gate-matrix.json`](data/qualification-gate-matrix.json) (14 gates). **No gate below is met today, and none is "qualified".** Nothing was run for this plan.
+Status: planning only. Derived from the existing 13-gate acceptance matrix of the merged inventory (qualification repo merge commit `be1994a961e4e40612d999972ede6547a3729887`, accepted as analytical evidence) and the qualification repository's pre-merge `main` `998d39c5`. Full per-gate test lists and new-test requirements are in [`data/qualification-gate-matrix.json`](data/qualification-gate-matrix.json) (14 gates). **All 14 gates are retained. No gate below is met today, and none is "qualified".** No independent Tier 1 qualification is claimed; until an independent qualification lead is designated, qualification work is PREPARE-only. Nothing was run for this plan.
 
 ## Status vocabulary (binding)
 
@@ -19,7 +19,7 @@ Status: planning only. Derived from the existing 13-gate acceptance matrix of th
 | Gate | Statement | Existing tests that bear on it (true status) | New work (independent author) | Sprint |
 |---|---|---|---|---|
 | QG-01 | Differential old/new evaluator, five DIRECT fields, both routes | C11 (KNOWN_LIMIT_ASSERTED); C02, D02, C18 (PASS_RECORDED named cases, historical); `suites/v1-scenarios/test_scn_c11.py` parametrized by field; TC-L06-009/011/013 NOT_RUN; builder `test_s05_equivalence.py` G1/G2 (F1a only) | Caller x registry grid (empty, subset, superset, disjoint, equal), omitted-deployed-value fail-closed, exact-string membership, check order and reason texts, F1b trusted-context independence, caller policy not mutated; oracle written without reading `tests/s05_oracle.py` | S5-2 |
-| QG-02 | `max_amount` min semantics (conditional) | C11[max_amount] (limit), C16, C18 (historical named), TC-L06-014/016/024 NOT_RUN; builder: none | Boundary battery, encoding round-trip, registry above caller never widens, single-unit rule | S5-3 (blocked on D6 and encoding) |
+| QG-02 | `max_amount` min semantics (**retained but INACTIVE: `max_amount` is deferred and out of V1**; applies only if separately authorized) | C11[max_amount] (limit), C16, C18 (historical named), TC-L06-014/016/024 NOT_RUN; builder: none | Boundary battery, encoding round-trip, registry above caller never widens, single-unit rule | S5-3 (blocked on D6 and encoding) |
 | QG-03 | F4 status and approval age (conditional) | C01, C17, C06 (historical named), D03 (INCONCLUSIVE), H01 NOT_RUN, TC-L06-015, TC-D09-009/016 NOT_RUN; Control Plane tests exist only at the default 60 and none passes the age kwargs | bound-1/bound/bound+1, future within and beyond tolerance, registry less than/equal/greater than caller, invalid values refused, stable refusal codes, mandatory-profile no fallback | S5-3 (blocked on D4) |
 | QG-04 | F5 class status age (conditional) | C01 (historical), TC-L05-012/013 NOT_RUN (cannot detect the `bounded_tolerance` toggle, GAP-G4-05) | Per-class min, unknown class refused, irreversible never raised, effective profile equals the profile hashed into `approval_commitment`, relaxing toggles unreachable | S5-3 (blocked on W8-014, D4) |
 | QG-05 | Configuration change: selection, supersession, rollback, epoch | Builder only: `test_r08_selection.py`, `test_r08_spec_conformance.py` QC01-QC06, `test_r08_regressions.py` rollback and conflict cases (FakeVerifier, not cryptography) | Supersession effective for the next operation only; higher epoch without supersession is conflict; change between operations changes the effective set once; changed-condition negatives; real verifier once S1-7 exists; QS13 re-adjudication | S5-4 |
@@ -33,7 +33,27 @@ Status: planning only. Derived from the existing 13-gate acceptance matrix of th
 | QG-13 | Regression and disclosure | D01, C02, C12, C13, C14 (historical); D07, C07, C10, C11 (limits); 11 undeclared Runtime known-limit tests (GAP-G4-07) | Re-run at exact pins; preserved failures, skips, XFAIL, NOT RUN; known limits listed apart; MVP oracle row for a `LocalExecutionPolicy` denial (GAP-G4-09); `tests/test_s06_integrity.py` rerun | S5-6, S6-2 |
 | QG-14 | Process gate | None. No owner designated (GAP-G4-01, 02, 13) | Exact-head, independent run of every gate by a designated owner | S5, S6 |
 
-QG-02 to QG-04 apply only if the operator freezes those fields into the V1 profile. A gate whose ruling is missing is BLOCKED, not waived. QG-05, 08, 09 and 10 may have **nothing to execute** until S1/S4 code exists; they must never be reported PASS by analogy to builder tests. The batteries are predeclared before freeze so that freezing does not wait on authoring.
+QG-03 and QG-04 apply to the three operator-approved Control Plane ages; their rulings are recorded in [10](10-architect-rulings-and-repin.md). QG-02 is inactive while `max_amount` is deferred, and an inactive gate is never counted as passed. A gate whose ruling is missing is BLOCKED, not waived. QG-05, 08, 09 and 10 may have **nothing to execute** until S1/S4 code exists; they must never be reported PASS by analogy to builder tests. The batteries are predeclared before freeze so that freezing does not wait on authoring.
+
+## Required negative tests (every one is predeclared in S5-1; each maps to the gates shown)
+
+| Negative class | Minimum content | Gates |
+|---|---|---|
+| Forged claims and policy bindings | Altered, re-digested or self-asserted claim-carried identity; binding for another scope, tenant or consumer | QG-09, QG-10, QG-12 |
+| Substituted policy identities | Valid binding swapped for another valid identity; evaluator build or trust-snapshot fingerprint substituted | QG-10, QG-11, QG-12 |
+| Missing required configuration | Required policy absent, unselected, no trust root, no verifier: no dispatch and never a wider caller policy | QG-06 |
+| Invalid authenticated records | Bad signature, wrong key, unknown family, dropped field, widened value, wrong participation | QG-07, QG-12 |
+| Expired selections | Expiry before check, between check and commit, at the lock-time boundary | QG-08 |
+| Revoked selections | Selection, issuer and key revocation, before and after the lock; not resurrected by reactivation or lineage | QG-08 |
+| Stale epochs | Equal, older, and swapped epoch at activation and at commit; `min_epochs` floor; stale trust snapshot version | QG-05, QG-08 |
+| Approval/profile mismatches | Approval issued under the caller profile against the narrowed profile (`runtime_authority_approval_mismatch`); effective profile equals the approval-bound profile | QG-04, QG-10 |
+| Changes between authorization and effect | Policy or selection changed between check and commit refused; effect, claim and budget commit together | QG-09 |
+| Restore and rollback | Restored high-water store fails closed until re-baselined; revoked set and high-water roll back together (disclosed limit) | QG-05, QG-08, QG-13 |
+| Durable negative evidence | Refusals, holds and deny-all persist with exact identity in failure rows | QG-09, QG-11 |
+| Existing evaluator behaviour | Check order, reason texts, `__post_init__`, trusted-context binding, `engine/safe_executor.py` blob `2fc880da` unchanged | QG-01, QG-13 |
+| Atomic Route B effect boundaries | Crash at each transaction stage; lost-ack reconcile preserves identity; repeated runs with raw logs | QG-09 |
+
+A mutation leg applies to each refusal family (disable one refusal check; the case must fail).
 
 ## Independence given GAP-G4-13 (no independent qualification owner is designated)
 
@@ -41,7 +61,7 @@ QG-02 to QG-04 apply only if the operator freezes those fields into the V1 profi
 2. **Roles stay separate:** oracle author (blind), builder (never edits expectations), runner (retains raw output), evidence reviewer (separate from all three), final adjudicator (the operator). The architect holds none of the first four for Tier 1.
 3. **Only the designated lead can write a Tier 1 verdict.** If none is designated by S5 exit, the candidate reads "OCS-only V1: NOT INDEPENDENTLY QUALIFIED", operator-held, and GAP-G4-13 stays open. Wording is not softened to compensate.
 4. **Escalation:** if no lead can be secured, that single fact goes to the operator as a change to an authorized boundary (plan v1.3 section 8), not as a technical question.
-5. **Copilot** is the operator-designated code reviewer (review state COMMENTED, cannot approve, block or execute batteries). It is not evidence review, test execution or qualification. The operator's recorded statement "no second llm for now" means independent evidence review is not performed today and must be recorded as such.
+5. **Copilot review is technical review, not qualification.** Copilot is the operator-designated code reviewer (review state COMMENTED, cannot approve, block or execute batteries). It is not evidence review, test execution or qualification. The operator's recorded statement "no second llm for now" means independent evidence review is not performed today and must be recorded as such.
 
 ## Not verified in this lane
 
