@@ -156,6 +156,7 @@ def _verify_probe(mod):
         jr = run(canon, junk, None, "r08-v2")
         assert jr.code == "trust_snapshot_invalid" and jr.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and jr.detail_cause == cause, junk
         assert run(canon, junk, None).detail == "trust snapshot is malformed"  # legacy normalization untouched
+    grant = mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
     for junk, cause in ((b"", "key_length"), (None, "key_type")):
         other = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                                   (mod.IssuerEntry("key-test-1", "issuer-test-1", "future-alg", junk, (grant,)),))
