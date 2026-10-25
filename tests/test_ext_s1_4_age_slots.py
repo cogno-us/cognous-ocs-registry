@@ -30,7 +30,7 @@ MAX = 2147483647
 PINS = {
     "docs/r08-v2-contract.md": "64e2d6eb3af7b6024bf0ed7778fcea5ee61fd1cbad247d0199e1b15310ddff01",
     "docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md": "b9ad06be559bfb99c5e669ca7217d2ee28b62cda7738206c31fd8e6866233b67",
-    "docs/decisions/2026-10-25-dr-cp-age-1.md": "3586a82f654b464b5502946d8203e2d17d78e5c63f1c592d77093f9666ccac8c",
+    "docs/decisions/2026-10-25-dr-cp-age-1.md": "7980c8ee6e74bb2419edc407c1821fa81d960748f6bd2f7457b228d1b0c337f3",
 }
 CONTRACT_TEXT = [
     "| `f4-control-plane-age-bounds` (v2) | `status_max_age_seconds`, `approval_max_age_seconds` | strict integer seconds, `min(caller, registry)` per scalar | Control Plane |",
@@ -60,7 +60,7 @@ def test_bounds_equal_the_dr_cp_age_1_table():
     assert "## What the characterization does and does not establish" in text
     doc = (ROOT / "docs/ext-implementation/ext-s1-4-age-integer-slots.md").read_text(encoding="utf-8")
     assert "## What the characterization does and does not establish" in doc
-    for needle in ("7a4bcd40b3b49e61ff3c294dcca53b52f460b22c", "NOT re-measured", "MUST apply its own stricter bounds", "2**34"):
+    for needle in ("7a4bcd40b3b49e61ff3c294dcca53b52f460b22c", "date value out of range", "MUST apply its own stricter bounds", "2**34"):
         assert needle in text and needle in doc, needle
 
 
@@ -118,6 +118,13 @@ VALID = [1, 2, 5, 59, 60, 61, 2147483646, 2147483647]
 
 
 # ---------------------------------------------------------------- registration
+def test_family_tables_are_exactly_the_registered_families():
+    assert set(families.FAMILIES) == {c.FAMILY_F1A}
+    from registry_successor import v2_f1ab
+    assert set(families.FAMILIES_V2) == {c.FAMILY_F1A, v2_f1ab.FAMILY_F1AB, F4, F5}
+    assert len(families.FAMILIES_V2) == 4 and len(families.FAMILIES) == 1
+
+
 def test_registered_in_v2_table_only():
     assert set(families.FAMILIES) == {c.FAMILY_F1A}
     assert {F4, F5} <= set(families.FAMILIES_V2)
@@ -637,6 +644,7 @@ def _battery(mod):
     chk("caller_empty_map", lambda: comp5({F5K: {}}, p5({"a": 1})).code == "composition_caller_invalid")
     chk("unknown_class", lambda: not comp5(c5(), p5({"class-z": 1})).ok and not comp5(c5({"a": 5}), p5({"b": 1})).ok)
     chk("refusal_no_policy", lambda: comp4(c4(), p4(status_max_age_seconds=0)).effective is None and comp5(c5(), p5({})).effective is None)
+    chk("caller_output_sorted", lambda: list(comp5(c5({"class-c": 9, "class-a": 5, "class-b": 7}), p5({"class-a": 1})).effective[F5K]) == ["class-a", "class-b", "class-c"])
     chk("operator", lambda: mod.compose_f4(c4(), rec(p4(), F4), "union").code == "composition_operator_unsupported")
     chk("family", lambda: mod.compose_f4(c4(), rec(p5(), F5)).code == "composition_family_unsupported")
     return bad
@@ -669,8 +677,9 @@ MUTATIONS = {  # name -> (old, new, expected violated property)
     "refusal returns effective": ("    return CompositionResult(False, code, detail)", "    return CompositionResult(False, code, detail, {})", "refusal_no_policy"),
     "drop operator check f4": ("def compose_f4(caller: Any, record: Any, operator: Any = \"intersection\") -> CompositionResult:\n    try:\n        if operator != \"intersection\":\n            return _refuse(\"composition_operator_unsupported\")\n",
                                "def compose_f4(caller: Any, record: Any, operator: Any = \"intersection\") -> CompositionResult:\n    try:\n", "operator"),
-    "drop family check": ("    if body.get(\"family\") != family:\n        return None, \"composition_family_unsupported\"\n", "", "family"),
-    "caller empty map accepted": ("    if not isinstance(m, Mapping) or not m or len(m) > MAX_CLASSES:", "    if not isinstance(m, Mapping) or len(m) > MAX_CLASSES:", "caller_empty_map"),
+    "drop family check": ("    if family_seen != family:\n        return None, \"composition_family_unsupported\"\n", "", "family"),
+    "caller empty map accepted": ("    if m is None or not m or len(m) > MAX_CLASSES:", "    if m is None or len(m) > MAX_CLASSES:", "caller_empty_map"),
+    "caller output unsorted": ("return {F5_FIELD: {k: m[k] for k in sorted(m)}}", "return {F5_FIELD: dict(m)}", "caller_output_sorted"),
 }
 
 
@@ -699,3 +708,109 @@ def test_mutation_is_detected(name):
         mutated = src.replace(old, new)
     violated = _battery(_load(mutated))
     assert expected in violated, (name, violated)
+
+
+# ---------------------------------------------------------------- snapshot: no second read of a caller-supplied container
+class Flip(dict):
+    """Exact-dict subclass is refused outright; this one proves it (a subclass can lie on every read)."""
+    def __getitem__(self, k):
+        return -7
+
+
+class StatefulMapping:
+    """A Mapping that returns `first` on the first read of each key and `later` afterwards."""
+    def __init__(self, first, later):
+        self.first, self.later, self.reads = dict(first), dict(later), {}
+
+    def _d(self, k):
+        n = self.reads[k] = self.reads.get(k, 0) + 1
+        return self.first if n == 1 else self.later
+
+    def __getitem__(self, k):
+        return self._d(k)[k]
+
+    def get(self, k, default=None):
+        return self._d(k)[k] if k in self.first else default
+
+    def __iter__(self):
+        return iter(self.first)
+
+    def __len__(self):
+        return len(self.first)
+
+    def keys(self):
+        return self.first.keys()
+
+    def items(self):
+        return [(k, self[k]) for k in self.first]
+
+    def __contains__(self, k):
+        return k in self.first
+
+
+from collections.abc import Mapping as _M  # noqa: E402
+_M.register(StatefulMapping)
+
+
+class ChangingRecord:
+    """ok / record that change between reads: first a valid payload, then an invalid one."""
+    def __init__(self, good, bad, family):
+        self.good, self.bad, self.family, self.n = good, bad, family, 0
+
+    @property
+    def ok(self):
+        return True
+
+    @property
+    def record(self):
+        self.n += 1
+        return {**s.make_record(), "family": self.family, "payload": self.good if self.n == 1 else self.bad}
+
+
+@pytest.mark.parametrize("fam,good,bad,cal,comp", [
+    (F4, p4(), p4(status_max_age_seconds=-7, approval_max_age_seconds=-7), c4(), a.compose_f4),
+    (F5, p5({"class-a": 30}), p5({"class-a": -7}), c5({"class-a": 60}), a.compose_f5)])
+def test_record_changing_between_reads_never_composes_an_unvalidated_value(fam, good, bad, cal, comp):
+    res = comp(cal, ChangingRecord(good, bad, fam))
+    assert (not res.ok) or all(v >= 0 for v in (res.effective.values() if fam == F4 else res.effective[F5K].values()))
+    if res.ok:  # the validated copy is what is used
+        assert res.effective == ({"status_max_age_seconds": 30, "approval_max_age_seconds": 60} if fam == F4 else {F5K: {"class-a": 30}})
+
+
+def test_stateful_payload_mapping_is_refused_not_composed():
+    """A payload that is not an exact dict refuses for F4 and F5 alike, so a stateful Mapping cannot reach composition."""
+    for fam, good, bad, cal, comp in ((F4, p4(), p4(status_max_age_seconds=-7), c4(), a.compose_f4), (F5, p5({"class-a": 30}), p5({"class-a": -7}), c5({"class-a": 60}), a.compose_f5)):
+        for payload in (StatefulMapping(good, bad), Flip(good), types.MappingProxyType(good)):
+            refused(comp(cal, rec(payload, fam)), "composition_record_invalid")
+    v4, v5 = a.f4_payload_validator, a.f5_payload_validator
+    assert v4(types.MappingProxyType(p4())) == "field_type_invalid" and v5(types.MappingProxyType(p5())) == "field_type_invalid"
+    assert v5({F5K: types.MappingProxyType({"a": 1})}) == "field_type_invalid"
+    assert v5({F5K: Flip({"a": 1})}) == "field_type_invalid"
+
+
+def test_stateful_record_body_is_refused():
+    for fam, good, bad, cal, comp in ((F4, p4(), p4(status_max_age_seconds=-7), c4(), a.compose_f4), (F5, p5({"class-a": 30}), p5({"class-a": -7}), c5({"class-a": 60}), a.compose_f5)):
+        body = StatefulMapping({**s.make_record(), "family": fam, "payload": good}, {**s.make_record(), "family": fam, "payload": bad})
+        refused(comp(cal, record_mod.RecordResult(True, None, "", body, "x")), "composition_record_invalid")
+
+
+def test_stateful_caller_policy_uses_one_read_snapshot():
+    # F4: first read valid (60), later reads -7. The effective value is the first read, never the later one, and never negative.
+    cal = StatefulMapping(c4(), {k: -7 for k in F4K})
+    res = a.compose_f4(cal, rec(p4(), F4))
+    assert res.ok and res.effective == {"status_max_age_seconds": 30, "approval_max_age_seconds": 60}
+    assert all(v >= 0 for v in res.effective.values())
+    # F5 (outer container and class map stateful)
+    inner = StatefulMapping({"class-a": 60}, {"class-a": -7})
+    cal5 = StatefulMapping({F5K: inner}, {F5K: {"class-a": -7}})
+    res = a.compose_f5(cal5, rec(p5({"class-a": 30}), F5))
+    assert res.ok and res.effective == {F5K: {"class-a": 30}}
+    # a caller whose first read is invalid refuses and is never replaced
+    refused(a.compose_f4(StatefulMapping({k: -7 for k in F4K}, c4()), rec(p4(), F4)), "composition_caller_invalid")
+    refused(a.compose_f5(StatefulMapping({F5K: {"class-a": -7}}, {F5K: {"class-a": 60}}), rec(p5(), F5)), "composition_caller_invalid")
+
+
+def test_f5_caller_output_is_sorted():
+    res = compose5(c5({"class-c": 90, "class-a": 60, "class-b": 60}), p5({"class-a": 1}))
+    assert res.ok and list(res.effective[F5K]) == ["class-a", "class-b", "class-c"]
+    assert list(a.normalize_caller_f5(c5({"class-c": 1, "class-a": 1, "class-b": 1}))[F5K]) == ["class-a", "class-b", "class-c"]

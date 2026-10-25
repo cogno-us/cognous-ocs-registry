@@ -62,7 +62,7 @@ def is_caller_age(v: Any) -> bool:
 
 
 def _key_shape(payload: Any, fields: tuple) -> Optional[str]:
-    if not isinstance(payload, Mapping):
+    if type(payload) is not dict:  # exact dict for F4 and F5 alike: no Mapping subclass, no stateful container
         return "field_type_invalid"
     keys = set(payload)
     if keys - set(fields):
@@ -103,22 +103,35 @@ def f5_payload_validator(payload: dict) -> Optional[str]:
     return None
 
 
+def _snapshot(m: Any) -> Optional[dict]:
+    """One read of every key and value of a caller mapping into a plain dict, or None. Validation and composition then use only
+    the copy, so a Mapping that changes between reads cannot pass validation with one value and compose with another."""
+    if not isinstance(m, Mapping):
+        return None
+    try:
+        return {k: v for k, v in m.items()}
+    except Exception:
+        return None
+
+
 def normalize_caller_f4(caller: Any) -> Optional[dict]:
     """Copy of a well-formed F4 caller policy, or None. Exactly the two keys, each an exact int in 0..AGE_MAX."""
-    if not isinstance(caller, Mapping) or set(caller) != set(F4_FIELDS):
+    snap = _snapshot(caller)
+    if snap is None or set(snap) != set(F4_FIELDS):
         return None
-    if not all(is_caller_age(caller[k]) for k in F4_FIELDS):
+    if not all(is_caller_age(snap[k]) for k in F4_FIELDS):
         return None
-    return {k: caller[k] for k in F4_FIELDS}
+    return {k: snap[k] for k in F4_FIELDS}
 
 
 def normalize_caller_f5(caller: Any) -> Optional[dict]:
     """Copy of a well-formed F5 caller policy (sorted by class), or None. A non-empty bounded class map of valid tokens to exact
     ints in 0..AGE_MAX."""
-    if not isinstance(caller, Mapping) or set(caller) != set(F5_FIELDS):
+    snap = _snapshot(caller)
+    if snap is None or set(snap) != set(F5_FIELDS):
         return None
-    m = caller[F5_FIELD]
-    if not isinstance(m, Mapping) or not m or len(m) > MAX_CLASSES:
+    m = _snapshot(snap[F5_FIELD])
+    if m is None or not m or len(m) > MAX_CLASSES:
         return None
     if not all(type(k) is str and c.valid_token(k) for k in m):
         return None
@@ -132,19 +145,30 @@ def _refuse(code: str, detail: str = "") -> CompositionResult:
     return CompositionResult(False, code, detail)
 
 
+def _snapshot_payload(p: dict) -> dict:
+    """Plain-dict copy of a payload already known to be an exact dict (one level deeper for an exact-dict class map)."""
+    return {k: (dict(v) if type(v) is dict else v) for k, v in p.items()}
+
+
 def _record_payload(record: Any, family: str, validator) -> tuple:
-    """(payload, None) or (None, refusal code). Checks in the dispatch order: record validity, family, payload."""
+    """(payload copy, None) or (None, refusal code). Each attribute and key is read exactly once, the payload is copied, and the
+    copy is what is validated and returned: composition never re-reads the caller-supplied record. Checks in the dispatch order:
+    record validity, family, payload."""
     if getattr(record, "ok", False) is not True:
         return None, "composition_record_invalid"
     body = getattr(record, "record", None)
-    if not isinstance(body, Mapping):
+    if type(body) is not dict:
         return None, "composition_record_invalid"
-    if body.get("family") != family:
-        return None, "composition_family_unsupported"
+    family_seen = body.get("family")
     payload = body.get("payload")
-    if not isinstance(payload, Mapping) or validator(payload) is not None:
+    if family_seen != family:
+        return None, "composition_family_unsupported"
+    if type(payload) is not dict:
         return None, "composition_record_invalid"
-    return payload, None
+    snap = _snapshot_payload(payload)
+    if validator(snap) is not None:
+        return None, "composition_record_invalid"
+    return snap, None
 
 
 def _ok(effective: dict, narrowed_over: list) -> CompositionResult:

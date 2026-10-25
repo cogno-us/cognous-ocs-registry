@@ -5,6 +5,12 @@
   base=2147483648 freshness-on: ok:authorized
   base=2147483648 anchored: ok:authorized
   base=2147483648 off: ok:authorized
+== class base far above the ceiling (date overflow search), grant status age 0
+  base=200000000000: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  base=250000000000: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  base=300000000000: freshness-on:EXC:OverflowError:date value out of range | anchored:EXC:OverflowError:date value out of range | off:ok:authorized
+  base=9223372036854775808: freshness-on:EXC:OverflowError:Python int too large to convert to C int | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  base=18446744073709551616: freshness-on:EXC:OverflowError:Python int too large to convert to C int | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
 == class base MAX, grant status aged exactly MAX and MAX+1 (freshness on)
   grant age 2147483647: ok:authorized
   grant age 2147483648: ok:hold
@@ -13,11 +19,17 @@
   status_max_age_seconds=2147483648: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
   status_max_age_seconds=17179869184: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
   status_max_age_seconds=9007199254740992: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=4611686018427387904: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=9223372036854775808: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=18446744073709551616: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
   status_max_age_seconds=1000000000000000000000000000000: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
   approval_max_age_seconds=2147483647: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
   approval_max_age_seconds=2147483648: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
   approval_max_age_seconds=17179869184: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
   approval_max_age_seconds=9007199254740992: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=4611686018427387904: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=9223372036854775808: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=18446744073709551616: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
   approval_max_age_seconds=1000000000000000000000000000000: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
 == outage extension composed to the ceiling (base 60, limit MAX-60, extension to MAX), grant aged MAX
    ok:authorized
