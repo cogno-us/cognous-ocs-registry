@@ -30,7 +30,7 @@ MAX = 2147483647
 PINS = {
     "docs/r08-v2-contract.md": "64e2d6eb3af7b6024bf0ed7778fcea5ee61fd1cbad247d0199e1b15310ddff01",
     "docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md": "b9ad06be559bfb99c5e669ca7217d2ee28b62cda7738206c31fd8e6866233b67",
-    "docs/decisions/2026-10-25-dr-cp-age-1.md": "10f78e1b735d60d80c5d0354a1dba63dd7935e4b4ad9c9c26cf35ecd49109737",
+    "docs/decisions/2026-10-25-dr-cp-age-1.md": "3586a82f654b464b5502946d8203e2d17d78e5c63f1c592d77093f9666ccac8c",
 }
 CONTRACT_TEXT = [
     "| `f4-control-plane-age-bounds` (v2) | `status_max_age_seconds`, `approval_max_age_seconds` | strict integer seconds, `min(caller, registry)` per scalar | Control Plane |",
@@ -57,6 +57,11 @@ def test_bounds_equal_the_dr_cp_age_1_table():
     assert (a.AGE_MIN, a.AGE_MAX, a.CALLER_MIN) == (1, MAX, 0) == (rows["Registry-managed value"][0], rows["Registry-managed value"][1], rows["Caller value"][0])
     assert "`AGE_MIN = 1`, `AGE_MAX = 2147483647`" in text
     assert "not an operational setting" in text
+    assert "## What the characterization does and does not establish" in text
+    doc = (ROOT / "docs/ext-implementation/ext-s1-4-age-integer-slots.md").read_text(encoding="utf-8")
+    assert "## What the characterization does and does not establish" in doc
+    for needle in ("7a4bcd40b3b49e61ff3c294dcca53b52f460b22c", "NOT re-measured", "MUST apply its own stricter bounds", "2**34"):
+        assert needle in text and needle in doc, needle
 
 
 # ---------------------------------------------------------------- builders
@@ -398,6 +403,87 @@ def test_f4_inputs_not_mutated():
     cal0, pl0 = dict(cal), dict(pl)
     compose4(cal, pl)
     assert cal == cal0 and pl == pl0
+
+
+# ---------------------------------------------------------------- registry never disables a stricter component-owned bound
+CALLER_GRID = [0, 1, 2, 59, 60, 61, 3600, MAX - 1, MAX]
+REG_GRID = [1, 2, 59, 60, 61, 3600, MAX - 1, MAX]
+
+
+@pytest.mark.parametrize("caller", [1, 0, 60])
+def test_f4_f5_registry_max_never_loosens_a_stricter_caller(caller):
+    res = compose4(c4(status_max_age_seconds=caller, approval_max_age_seconds=caller), p4(status_max_age_seconds=MAX, approval_max_age_seconds=MAX))
+    assert res.ok and res.effective == {"status_max_age_seconds": caller, "approval_max_age_seconds": caller}
+    assert res.detail == "registry_value_not_narrowing:status_max_age_seconds,approval_max_age_seconds"
+    res = compose5(c5({"class-a": caller, "class-b": caller}), p5({"class-a": MAX, "class-b": MAX}))
+    assert res.ok and res.effective == {F5K: {"class-a": caller, "class-b": caller}}
+    assert res.detail == "registry_value_not_narrowing:class-a,class-b"
+
+
+def test_registry_value_equal_to_maximum_never_changes_a_stricter_caller():
+    for cal in CALLER_GRID:
+        r4 = compose4(c4(status_max_age_seconds=cal, approval_max_age_seconds=cal), p4(status_max_age_seconds=MAX, approval_max_age_seconds=MAX))
+        r5 = compose5(c5({"class-a": cal}), p5({"class-a": MAX}))
+        assert r4.ok and r5.ok
+        assert r4.effective == {k: cal for k in F4K} and r5.effective == {F5K: {"class-a": cal}}
+        # reported as not narrowing exactly when the caller is strictly stricter than the maximum
+        assert (a.NOT_NARROWING in r4.detail) == (cal < MAX) and (a.NOT_NARROWING in r5.detail) == (cal < MAX)
+        if cal == MAX:
+            assert r4.detail == "" and r5.detail == ""
+
+
+def test_no_input_yields_an_effective_value_above_the_caller():
+    """Property-style grid over boundary values: no registry value, field, operator or record shape makes any effective value exceed the caller."""
+    for cal, reg in itertools.product(CALLER_GRID, REG_GRID):
+        r4 = compose4(c4(status_max_age_seconds=cal, approval_max_age_seconds=MAX - cal), p4(status_max_age_seconds=reg, approval_max_age_seconds=reg))
+        r5 = compose5(c5({"class-a": cal, "class-b": MAX - cal}), p5({"class-a": reg, "class-b": reg}))
+        assert r4.ok and r5.ok
+        assert r4.effective["status_max_age_seconds"] == min(cal, reg) <= cal
+        assert r4.effective["approval_max_age_seconds"] == min(MAX - cal, reg) <= MAX - cal
+        assert r5.effective[F5K]["class-a"] == min(cal, reg) <= cal
+        assert r5.effective[F5K]["class-b"] == min(MAX - cal, reg) <= MAX - cal
+        assert set(r5.effective[F5K]) == {"class-a", "class-b"}
+        assert (a.NOT_NARROWING in r4.detail) == (reg > cal or reg > MAX - cal)
+        # every path that is not an acceptance returns no policy, so a refusal cannot hand back a looser value
+        for bad_reg in ABOVE[:4] + BELOW[:2] + [True, 1.5, None]:
+            for res in (compose4(c4(status_max_age_seconds=cal), p4(status_max_age_seconds=bad_reg)),
+                        compose5(c5({"class-a": cal}), p5({"class-a": bad_reg})),
+                        compose4(c4(status_max_age_seconds=cal), p4(), operator="union"),
+                        compose5(c5({"class-a": cal}), p5(), operator="max")):
+                assert res.ok is False and res.effective is None and res.deny_all is False
+
+
+def test_composer_has_no_widening_operator_or_extra_slot():
+    for operator in ("union", "max", "replace", "override", "widen", "Intersection", None, 1):
+        refused(compose4(c4(), operator=operator), "composition_operator_unsupported")
+        refused(compose5(c5(), operator=operator), "composition_operator_unsupported")
+    for extra in ("max_amount", "max_amount_minor", "identity_max_age_seconds"):
+        assert families.lookup_v2(F4).payload_validator(p4(**{extra: 1})) == "field_unknown"
+    assert families.lookup_v2(F5).payload_validator({**p5(), "max_amount": {"class-a": 1}}) == "field_unknown"
+
+
+# ---------------------------------------------------------------- contract_version dispatch for F4 and F5
+@pytest.mark.parametrize("fam,cal,pl", [(F4, c4(), p4()), (F5, c5(), p5())])
+def test_dispatch_by_contract_version_for_f4_f5(fam, cal, pl):
+    spec = families.lookup_v2(fam)
+    r = rec(pl, fam)
+    # r08-v1: table is FAMILIES, family unregistered there -> v1 behaviour
+    sel1 = families.table_for_contract_version("r08-v1")
+    assert sel1.ok and sel1.table is families.FAMILIES and fam not in sel1.table
+    assert families.lookup_for("r08-v1", fam) is None
+    refused(families.compose_for("r08-v1", cal, r), "composition_family_unsupported")
+    # r08-v2: table is FAMILIES_V2 and the family composes
+    sel2 = families.table_for_contract_version("r08-v2")
+    assert sel2.ok and sel2.table is families.FAMILIES_V2 and sel2.table[fam] is spec
+    assert families.lookup_for("r08-v2", fam) is spec
+    res = families.compose_for("r08-v2", cal, r)
+    assert res.ok and res.effective is not None and res.effective == families.compose_v2(cal, r).effective
+    # unknown versions: contract_unsupported, no table, no policy, no fallback
+    for v in ("r08-v3", "r08-v0", "R08-V2", "r08-v2 ", " r08-v2", "r08-v2\n", "", None, 2, b"r08-v2", ("r08-v2",), StrSub("r08-v2"), StrSub("r08-v1")):
+        sel = families.table_for_contract_version(v)
+        assert (sel.ok, sel.code, sel.table) == (False, "contract_unsupported", None)
+        assert families.lookup_for(v, fam) is None
+        refused(families.compose_for(v, cal, r), "contract_unsupported")
 
 
 # ---------------------------------------------------------------- F5 composition

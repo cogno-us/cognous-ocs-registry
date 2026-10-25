@@ -36,7 +36,26 @@ Gaps and judgement calls (all fail closed):
 - `registry_value_not_narrowing` is not a refusal code, so it is carried as the `detail` text of an accepted result. A consumer-side disposition vocabulary (EXT-S1-5) may promote it.
 - F5 class keys: the contract gives no token rule for action classes, and the Control Plane only requires a non-empty `class_id`. The contract section 2 opaque-token rule (the same as the five-set lists) is applied; a class id longer than 128 characters or containing a separator, control character or `*` cannot be configured through the registry. Keys must be sorted (canonical-list convention) and the map is bounded at 256.
 - The evaluator pin of an F4/F5 record is the existing `(EVALUATOR_ID, EVALUATOR_BINDING)` pair: the contract defines no Control Plane evaluator identity. EXT-S4 should define one if it wants a distinct pin.
-- ADR D-27 and contract 2.1 still say `AGE_MAX` is pending; DR-CP-AGE-1 records the Architect's ruling that supersedes that wording. The merged ADR and contract are not edited.
+- ADR D-27 and contract 2.1 still say `AGE_MAX` is pending; DR-CP-AGE-1 records the Architect's ruling that supersedes that wording (a separate docs-only amendment will record the versioned clarification). The merged ADR and contract are not edited.
+
+## What the characterization does and does not establish
+
+**Measured.** Control Plane source `cogno-us/cognous-control-plane@7a4bcd40b3b49e61ff3c294dcca53b52f460b22c`, real `BoundedAuthorizationWorkflow.decide()`, by `docs/ext-implementation/evidence/ext-s1-4-age-bound-probe.py` (output `ext-s1-4-age-bound-probe.out`; full table in [DR-CP-AGE-1](../decisions/2026-10-25-dr-cp-age-1.md)). Interpreter and platform: the probe output does not record them. The probe was re-run unchanged for this section under CPython 3.13.17, Linux x86_64 (glibc 2.39), pydantic 2.13.5, and its output was byte-identical to the committed `.out`. That one interpreter and platform is the whole measured population.
+
+- Three `decide()` modes: freshness profile ON, ON with `anchor_deadline_to_inputs`, and OFF.
+- Values tested: class base `ActionClass.max_status_age_seconds` and the scalars `status_max_age_seconds` and `approval_max_age_seconds` at `2147483647`, `2147483648`, `2**34`, `2**53` and `10**30` (the class base only at the first two); grant status aged exactly `2147483647` and `2147483648`; base 60 with an outage extension composed up to `2147483647`.
+- Float-versus-int age comparison (`(now - observed).total_seconds() <= max_age`, one microsecond above the bound): correct at `2**31-1`, `2**31` and `2**33`; the first wrong acceptance sampled is at `2**34`. Values between the sampled points were not enumerated.
+- Date overflow near 2.5e11 s with the freshness profile on is **taken from the earlier characterization report and was NOT re-measured here**. What the probe did measure beyond the ceiling is a C-int `OverflowError` for the anchored mode at `2**53` and `10**30`.
+
+**Not established.** The measurement supports the chosen bound on that source head, interpreter and platform, in those three modes. It does **not** prove that every possible timestamp, deployment environment or consumer can safely process `2147483647`. In particular it says nothing about other platforms or Python builds (32-bit time or integer widths, other C-int sizes), other timestamp or datetime libraries, deployment clocks (skew, clock steps, far-future or far-past `observed` timestamps), or other consumers, including the Execution Runtime, which was not measured.
+
+**What the ceiling is.** `AGE_MAX = 2147483647` is a chosen technical representation ceiling, not an operational freshness recommendation and not a safety certificate. About 68 years is functionally no freshness bound; no operational value is implied.
+
+**Obligations that follow.**
+
+1. A deployment must stay inside its own component-owned operational limits. The effective configuration remains bounded by them.
+2. A hosting component MUST apply its own stricter bounds in addition to the registry value. A registry value never replaces, relaxes or widens a component-owned bound. An extremely large valid registry value cannot silently disable a stricter component-owned bound; the registry can only narrow (`min(caller, registry)`), and a registry value above the caller yields the caller value, reported as `registry_value_not_narrowing`.
+3. Existing mandatory component safety bounds are unchanged by this record.
 
 ## Not done here
 
