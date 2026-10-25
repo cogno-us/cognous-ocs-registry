@@ -2,28 +2,32 @@
 
 ## Bottom line
 
-V0.2 left a usable foundation of **adopted decisions and principles** and a set of **implemented, builder-tested** components, but **no frozen registry wire profile and no independent qualification of any registry contract**. The registry program (S03–S05, R08-S01) and V0.2 share one doctrine and can be joined by adapters. There is **one genuine conflict** (who issues the epoch and owns the activation decision), and it is bounded and resolvable by an Architect ADR without operator escalation. **P1 can proceed now without another broad contract review.**
+V0.2 left a usable foundation of **adopted decisions and principles** and a set of **implemented, builder-tested** components, but **no frozen registry wire profile and no independent qualification of any registry contract**. The registry program (S03–S05, R08-S01) and V0.2 share one doctrine and can be joined by adapters. There was **one genuine conflict** (who issues the epoch and owns the activation decision). It is now **architecturally resolved** by Architect ADR-REG-TR01 (2026-10-25), without operator escalation; it is **not implemented and not qualified**. Open genuine conflicts: 0. **P1 can proceed now without another broad contract review.**
 
-## Counts (139 canonical contracts; ledger `02-contract-ledger.jsonl`)
+Disposition: the Architect has **conditionally accepted** P0 and approved the TR-01 resolution. These are reconciliation findings, not independent qualification of any component implementation. P1 readiness: PASS for planning.
 
-| Current status | Count |
-|---|---|
-| `ADOPTED_FROZEN` | 35 |
-| `IMPLEMENTED_NOT_QUALIFIED` | 44 |
-| `PROPOSED_ONLY` | 44 |
-| `UNVERIFIED` | 11 |
-| `SUPERSEDED` | 3 |
-| `CONFLICTING` | 2 (one genuine conflict, one stale status label) |
+## Counts (ledger `02-contract-ledger.jsonl`)
 
-| Disposition | Count |
-|---|---|
-| `REUSE_UNCHANGED` | 69 |
-| `REUSE_WITH_ADAPTER` | 30 |
-| `DEFER` | 36 |
-| `SUPERSEDED_BY_ADOPTED_CONTRACT` | 3 |
-| `TARGETED_RECONCILIATION` | 1 |
+P0 review baseline (head `711a09ccbdd4757edc260248c5f6d7c7633c9c2d`): 139 canonical contracts. After remediation: **140** (139 + 1 ADR row `ADR-TR-01-ACTIVATION-EPOCH-OWNERSHIP`). Only the changed figures differ; the ledger keeps the original historical status and disposition of the TR-01 rows and records the resolution in `architectural_resolution`.
 
-Of the 99 contracts with a reuse disposition, 70 are adopted or implemented (33 `ADOPTED_FROZEN`, 37 `IMPLEMENTED_NOT_QUALIFIED`). The other 29 are proposals, unverified items or one stale label, usable only as design input. No contract is `ADOPTED_FROZEN` and independently qualified.
+| Current status | P0 baseline (139) | After remediation (140) |
+|---|---|---|
+| `ADOPTED_FROZEN` | 35 | 36 (+ ADR row: decision recorded; not implemented; not qualified) |
+| `IMPLEMENTED_NOT_QUALIFIED` | 44 | 44 |
+| `PROPOSED_ONLY` | 44 | 44 |
+| `UNVERIFIED` | 11 | 11 |
+| `SUPERSEDED` | 3 | 3 |
+| `CONFLICTING` | 2 (one genuine conflict, one stale status label; historical labels as at `711a09cc`) | 2 (unchanged labels; the genuine conflict is architecturally resolved) |
+
+| Disposition | P0 baseline (139) | After remediation (140) |
+|---|---|---|
+| `REUSE_UNCHANGED` | 69 | 70 |
+| `REUSE_WITH_ADAPTER` | 30 | 30 |
+| `DEFER` | 36 | 36 |
+| `SUPERSEDED_BY_ADOPTED_CONTRACT` | 3 | 3 |
+| `TARGETED_RECONCILIATION` | 1 (historical; resolved by ADR-REG-TR01, not implemented) | 1 (same) |
+
+Baseline: of the 99 contracts with a reuse disposition, 70 were adopted or implemented (33 `ADOPTED_FROZEN`, 37 `IMPLEMENTED_NOT_QUALIFIED`). After remediation: of 100 (70 unchanged + 30 with adapter), 71 are adopted or implemented (34 `ADOPTED_FROZEN`, 37 `IMPLEMENTED_NOT_QUALIFIED`). The other 29 are proposals, unverified items or one stale label, usable only as design input. No contract is `ADOPTED_FROZEN` and independently qualified.
 
 ## What is already settled (reuse; do not reopen)
 
@@ -43,7 +47,9 @@ Contracts 1.2, 1.3 and 1.4 *as documents* (their header: "PROPOSED until the M0 
 
 ## Genuinely open
 
-**One genuine conflict (TR-01):** V0.2 proposals give the Control Plane the registry epoch and the activation decision (contract 1.3 §3/§5; Q14 default 5). Adopted plan v1.3 §3 item 3 and R08 make activation consumer-owned, with the selection authority issuing the epoch. For Runtime-enforced families the two cannot both hold. Recommended resolution: one Architect ADR assigning, per family, the enforcing component's own gate as activator and high-water holder, the selection authority as epoch issuer, and the registry as neither. Control Plane authority is preserved; none moves to the registry. See `06-targeted-conflict-register.md`.
+**One genuine conflict (TR-01), now architecturally resolved by ADR-REG-TR01 (2026-10-25); not implemented, not qualified.** Original conflict (preserved): V0.2 proposals give the Control Plane the registry epoch and the activation decision (contract 1.3 §3/§5; Q14 default 5). Adopted plan v1.3 §3 item 3 and R08 make activation consumer-owned, with the selection authority issuing the epoch. For Runtime-enforced families the two cannot both hold. See `06-targeted-conflict-register.md`.
+
+Resolution (ADR-REG-TR01): the selection issuer assigns the selection epoch; the enforcing component owns activation and its anti-rollback high-water state; the Control Plane activates Control Plane-enforced policy (F4/F5, mandatory-check registry, other proven Control Plane parameters); Runtime-enforced policy (F1a/F1b/F1c/F6, F1d only if qualified) is activated by the designated host/Runtime integration gate, subject to existing Control Plane authority; the registry stores and distributes only and never activates, issues grants or authorizes. Record succession counter and selection epoch are distinct; publication is not activation; revocation, expiry and changed-condition enforcement stay mandatory at the effect boundary; a selection never substitutes for a grant; no global atomicity or cross-domain authority transfer is implied. Control Plane authority is preserved; none moves to the registry. Implementation details are delegated as DT-01..DT-09 in the ADR (section 5). Open genuine conflicts: 0.
 
 **Missing contracts (bounded; none requires redesign):** selection validity and applicability at the commit boundary (R10); selection-withdrawal propagation to the destination; a durable carrier for registry refusal evidence; rule-set/selection identity in decision context (FP-04); evaluator `qualification_ref` for `LocalExecutionPolicy.check`; per-field composition rulings and numeric payload encoding beyond F1a; a Control Plane adapter for F4/F5; an authenticated trust root and verifier (R09).
 
@@ -59,8 +65,16 @@ Contracts 1.2, 1.3 and 1.4 *as documents* (their header: "PROPOSED until the M0 
 
 ## Operator decisions generated by P0
 
-**None.** Every item above is a technical reconciliation owned by the Architect and component owners under plan v1.3 §8. The operator-gated items that already existed (trust-root ceremony, production host owner, Tier 1 lead designation, activation, release) are unchanged and are not new questions. TR-01 escalates only if its ADR would move authority away from the Control Plane's existing gate, which the recommended resolution does not do.
+**None.** Every item above is a technical reconciliation owned by the Architect and component owners under plan v1.3 §8. The operator-gated items that already existed (trust-root ceremony, production host owner, Tier 1 lead designation, activation, release) are unchanged and are not new questions. TR-01 would have escalated only if its ADR moved authority away from the Control Plane's existing gate; ADR-REG-TR01 does not, so no operator decision arises. Release, publication and production remain on HOLD.
 
-## Architect confirmation requested (P0 exit gate)
+## Architect disposition (P0 exit gate)
 
-Confirm (a) the ledger statuses, in particular the ruling that Q1–Q17 is UNVERIFIED as adoption and ADR-P03 is not in conflict with this repository; (b) the TR-01 resolution; (c) that P1 may rely on the contracts listed in `07-p1-handoff.md`.
+The OCS Architect has **conditionally accepted** P0 and **approved the TR-01 resolution** (ADR-REG-TR01, `docs/decisions/2026-10-25-adr-tr-01-activation-and-epoch-ownership.md`). The three confirmations originally requested were: (a) the ledger statuses, including the ruling that Q1-Q17 is UNVERIFIED as adoption and ADR-P03 is not in conflict with this repository; (b) the TR-01 resolution; (c) that P1 may rely on the contracts listed in `07-p1-handoff.md`. P1 readiness: PASS for planning. The acceptance is conditional on the source-verification limitation below being carried into P1.
+
+## Source-verification limitation
+
+The P0 worker did **not** inspect Control Plane or Execution Runtime source; claims about them are second-hand from registry R08/R10 documents. P0 establishes contract and decision reconciliation, not independent verification of implementation claims. P1 **must** directly inspect exact source revisions before accepting each configurable-field extraction mapping. No broad 15-component source audit is launched. No additional source was needed to establish TR-01 (a written-requirement conflict; the resolution assigns ownership).
+
+## Nature of these findings
+
+These are reconciliation findings, not independent qualification. Nothing here implements, activates, approves or qualifies anything; no R09/R10 implementation is authorized or implied.

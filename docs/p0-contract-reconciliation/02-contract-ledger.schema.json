@@ -147,6 +147,64 @@
       "items": {
         "type": "string"
       }
+    },
+    "architectural_resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional, narrowly scoped. Records that a historical conflict or proposal was architecturally resolved or reconciled by a later recorded decision WITHOUT rewriting the row's historical status, disposition or provenance. It never implies implementation or qualification.",
+      "required": [
+        "state",
+        "adr_id",
+        "adr_path",
+        "resolved_on",
+        "implementation_state",
+        "qualification_state",
+        "summary"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "ARCHITECTURALLY_RESOLVED",
+            "RECONCILED_BY_ADR"
+          ]
+        },
+        "adr_id": {
+          "type": "string"
+        },
+        "adr_path": {
+          "type": "string"
+        },
+        "resolved_on": {
+          "type": "string"
+        },
+        "implementation_state": {
+          "enum": [
+            "NOT_IMPLEMENTED",
+            "IMPLEMENTED"
+          ]
+        },
+        "qualification_state": {
+          "enum": [
+            "NOT_QUALIFIED",
+            "QUALIFIED"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "historical_status_preserved": {
+          "type": "string"
+        },
+        "original_conflict_evidence": {
+          "type": "string"
+        },
+        "delegated_tasks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

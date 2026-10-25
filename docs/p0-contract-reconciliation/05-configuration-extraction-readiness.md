@@ -2,6 +2,8 @@
 
 Pins: hub `51c579a3` (OCS), registry `ce00520f` (`REG:`). No tests were executed. This document does not repeat the R07 rule inventory.
 
+> **Source limitation.** The P0 worker did not inspect Control Plane or Execution Runtime source; claims about them are second-hand from registry R08/R10 documents. This document establishes contract and decision reconciliation, not independent verification of implementation claims. **P1 must inspect the exact source revisions directly before accepting each configurable-field extraction mapping.** ADR-REG-TR01 needed no additional source (it assigns ownership between written requirements).
+
 ## Answer
 
 **Partly yes.** The partition rule and the mechanisms that enforce it already exist and are reusable. A multi-family parameter path does not: the only end-to-end typed-parameter path is **F1a**, hard-wired to one family. Wholesale extraction therefore needs bounded engineering prerequisites (below), not new architecture.
@@ -56,7 +58,7 @@ No V0.2 code evaluates numeric/set parameter payloads: `tools/registry_records.p
 | G3 | **Numeric payload encoding.** Both JCS (`registry_records.py`) and `common.load_document` (`_reject_float`) refuse floats. F1c `max_amount` (binary64) and F4 ages (for example `5.0`) need an integer-unit or decimal-string encoding decided per field | R07 `04` F1c row; `common.py:135` | Registry builder + Runtime/Control Plane owner | P1 decides, P3 builds |
 | G4 | **Control Plane consumer/adapter.** No Control Plane code references `LocalExecutionPolicy` or any registry consumer; F4/F5 evaluators (`bounded.py`, `freshness.py`, `runtime_authority.py`) have no registry hook. Needs an adapter under the Control Plane's existing gate, not a second engine | `REG:docs/r08-preparation/05` finding 7; `03` §3 | Control Plane owner | P3 |
 | G5 | **Authenticated trust root and verifier (R09).** `verify_selection` refuses `verifier_unavailable` when none is supplied | `verify.py:60`; plan v1.3 P2 | Operator/Architect | P2 |
-| G6 | **Activation owner for Runtime-enforced parameters** unassigned (Q14 default 5 gives the Control Plane activation only for the mandatory-check registry) | hub `2.4-architect-defaults-successor-note.md`; `REG:r08-preparation/03` §2 item 4 | Resolved by TR-01 ADR | P2/P4 |
+| G6 | **Activation owner for Runtime-enforced parameters** unassigned (Q14 default 5 gives the Control Plane activation only for the mandatory-check registry) | hub `2.4-architect-defaults-successor-note.md`; `REG:r08-preparation/03` §2 item 4 | **Architecturally resolved by ADR-REG-TR01; mechanics delegated (DT-01, DT-02, DT-04).** Not implemented | P2/P4 |
 | G7 | **Evaluator qualification references** (above) | `registry_records.py`; DGR | Qualification repo owner | P3/P6 |
 | G8 | **Independent oracle author** for Tier 1 (D13 designation unmet); the S05 oracle is builder-written | `REG:docs/sprint-status.md` "Outstanding operator decisions" (3) | Operator designates | P6 |
 | G9 | **Record the Architect R07 rulings** (D1–D13) as a decision file; today only a builder transcription exists (`R07-ARCHITECT-RULINGS-D1-D13`, UNVERIFIED) | R07 `08` ruling table | Architect | P1 |
