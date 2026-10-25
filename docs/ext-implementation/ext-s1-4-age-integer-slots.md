@@ -1,6 +1,6 @@
 # EXT-S1-4: F4 and F5 integer-second age families
 
-Status: **IMPLEMENTED / BUILDER_TESTED, not independently qualified.** No claim of independent qualification, Architect verdict or release. RELEASE, PUBLICATION and PRODUCTION: HOLD. Governing text (pinned by sha256 in `tests/test_ext_s1_4_age_slots.py`): `docs/r08-v2-contract.md` section 2, ADR EXT-S1-1 D-10, D-11, D-27, [DR-CP-AGE-1](../decisions/2026-10-25-dr-cp-age-1.md), card `EXT-S1-4`.
+Status: **IMPLEMENTED / BUILDER_TESTED, not independently qualified.** No claim of independent qualification, Architect qualification verdict or release. RELEASE, PUBLICATION and PRODUCTION: HOLD. Governing text (pinned by sha256 in `tests/test_ext_s1_4_age_slots.py`): `docs/r08-v2-contract.md` section 2, ADR EXT-S1-1 D-10, D-11, D-27, [DR-CP-AGE-1](../decisions/2026-10-25-dr-cp-age-1.md), card `EXT-S1-4`.
 
 | Item | File | Notes |
 |---|---|---|
@@ -39,7 +39,7 @@ Gaps and judgement calls (all fail closed):
 - **Exact `str` everywhere.** Family, operator and every key must be exact `str` objects; a `str` subclass is refused. Class ids are opaque exact strings with no Unicode normalization: NFC `"\u00e9"` and NFD `"e\u0301"` are two distinct valid class ids (pinned by a test).
 - **Bounded caller read.** A caller mapping is snapshotted once, at most `limit + 1` entries; a huge Mapping is refused without a full copy.
 - **`record.ok` must be exactly `True`.** A truthy non-`True` value refuses (stricter than v1, which accepts truthy values).
-- **`AGE_MAX` status: ACCEPTED by Architect Batch 6 ruling 4.2** (a Registry-hosted canonical V1 age table; ruling text not stored in this repository). The number rests on the Architect's Batch 3 ruling. The Registry table does not replace Control Plane validation or operational safety limits, which the Control Plane enforces through its S3 implementation; no Control Plane mirror exists and none is a prerequisite for merge; the in-repo pin test guards drift only. See DR-CP-AGE-1 ("Authority and caveats").
+- **`AGE_MAX` status: ACCEPTED by Architect Batch 6 ruling 4.2** (a Registry-hosted canonical V1 age table; ruling text not stored in this repository). The number rests on the Architect's Batch 3 ruling. The Registry table does not replace Control Plane validation or operational safety limits, which the Control Plane must enforce through its established S3 implementation (not verified here; no Control Plane enforcement is claimed); no Control Plane mirror exists and none is a prerequisite for merge; the in-repo pin test guards drift only. See DR-CP-AGE-1 ("Authority and caveats").
 - The evaluator pin of an F4/F5 record is the existing `(EVALUATOR_ID, EVALUATOR_BINDING)` pair: the contract defines no Control Plane evaluator identity. EXT-S4 should define one if it wants a distinct pin.
 - ADR D-27 and contract 2.1 still say `AGE_MAX` is pending (contract line 35 names `2678400`). DR-CP-AGE-1 records the accepted number. The merged ADR and contract are not edited. Dependency direction: this card (PR #31) merges first and the docs-only Amendment 1 (PR #32) follows it to record the versioned clarification; #32 is not a prerequisite for #31.
 
