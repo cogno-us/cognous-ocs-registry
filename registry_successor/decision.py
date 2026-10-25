@@ -81,12 +81,14 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) 
 
 
 def verify_and_decide(participation: Any, caller: Any, record_text: Any, selection_text: Any, context: Any,
-                      trust: Any, verifier: Any, now: Any) -> PolicyDecision:
+                      trust: Any, verifier: Any, now: Any, key_admission: Any = None) -> PolicyDecision:
     """The single public verify-and-decide entrypoint. Pure: takes raw record and selection TEXT, parses and verifies both
     internally at one `now`, binds the verified selection to the exact record parsed here, and composes only on success.
     No caller-supplied report, parsed record or timestamped verification result is accepted, so reports cannot be
     fabricated, substituted, replayed (stale), mutated after verification, or paired with a different record.
-    Required operations fail closed (never the caller policy); optional operations leave the caller policy unchanged."""
+    Required operations fail closed (never the caller policy); optional operations leave the caller policy unchanged.
+    `key_admission` is the optional trust-boundary key policy (see `key_admission.py`); it is forwarded unchanged to
+    `verify_selection`, and the default None keeps the legacy behaviour."""
     try:
         if participation not in c.PARTICIPATION:
             return _refusal("required", caller, "participation_mismatch", "operation participation is not required or optional")
@@ -96,7 +98,7 @@ def verify_and_decide(participation: Any, caller: Any, record_text: Any, selecti
         if not sel.ok:
             return _refusal(participation, caller, sel.code if sel.code in c.CODES else "selection_missing", sel.detail)
         rec = record_mod.validate_record_text(record_text)
-        report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec)
+        report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec, key_admission)
         return _decide_verified(participation, caller, rec, report)
     except Exception:  # defensive: never an acceptance on unexpected input
         return _refusal(participation if participation in c.PARTICIPATION else "required", caller, "selection_missing", "unexpected input")

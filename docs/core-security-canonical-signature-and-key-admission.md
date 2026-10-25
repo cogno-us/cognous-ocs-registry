@@ -38,8 +38,9 @@ including the identity, plus the non-canonical x = 0 sign-bit spellings).
 
 It does NOT refuse: a y that is not on the curve, or a point outside the prime-order subgroup. Mixed-order keys (A plus a
 small-order point) pass this built-in check; a test pins that limitation. The Ed25519 adapter's stricter
-`acceptable_public_key` (PR #26, unmerged) is meant to be composed in with `compose_key_admission`. Until then a mixed-order key
-fails only at signature time.
+`acceptable_public_key` (PR #26, unmerged) is meant to be composed in with `compose_key_admission`. Until a subgroup-validating policy or
+verifier is in place, mixed-order keys and signatures made with them MAY be accepted; PR #26 reports libsodium's signature check
+alone accepting mixed-order cases. This PR does not close that gap.
 
 ## 3. Evidence
 

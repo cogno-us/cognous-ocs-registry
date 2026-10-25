@@ -14,7 +14,8 @@ What `inspect_ed25519_key` DOES check (pure standard library, no optional depend
 What it does NOT check: whether the bytes decode to a point on the curve, and whether that point lies in the
 prime-order subgroup. Mixed-order keys and off-curve y values pass this built-in check. Full validation needs a real
 curve implementation; the Ed25519 adapter's `acceptable_public_key` (PR #26, not merged) is the stricter check and is
-meant to be composed in through `compose_key_admission`. Until then a mixed-order key is refused only at signature time.
+meant to be composed in through `compose_key_admission`. Until a subgroup-validating policy or verifier is in place, mixed-order keys and signatures made with them MAY be
+accepted: libsodium's signature check alone has been reported (PR #26) to accept mixed-order cases.
 
 Key admission is opt-in at `verify_selection(..., key_admission=...)`. With the default `None`, behaviour is exactly
 the legacy behaviour (existing fixtures use non-32-byte placeholder keys). Production callers must pass a policy.

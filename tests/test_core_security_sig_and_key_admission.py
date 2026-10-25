@@ -388,3 +388,23 @@ def test_admission_failure_precedes_expiry_and_missing_time():
     assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), late, key_admission=ka.builtin_key_admission).code == "trust_snapshot_invalid"
     assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), None, key_admission=ka.builtin_key_admission).code == "trust_snapshot_invalid"
     assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), late).code == "trust_snapshot_expired"
+
+
+def test_decision_pipeline_forwards_key_admission_policy():
+    from registry_successor import decision
+    seen = []
+
+    def policy(alg, key):
+        seen.append((alg, key))
+        return False
+
+    caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
+              "allowed_units": ["unit-a", "unit-b", "unit-c"]}
+    rec = r.make_record()
+    stmt = r.make_statement(rec, participation="required")
+    sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=True))
+    args = ("required", caller, r.dumps(rec), sel_text, CTX, _trust(), r.FakeVerifier(), r.NOW)
+    assert decision.verify_and_decide(*args).kind == "applied"
+    d = decision.verify_and_decide(*args, key_admission=policy)
+    assert seen == [("ed25519", PK)]
+    assert d.kind != "applied" and d.code == "trust_snapshot_invalid"

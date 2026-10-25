@@ -128,6 +128,17 @@ def _verify_probe(mod):
     assert run(canon, key, lambda a, k: (_ for _ in ()).throw(RuntimeError())).code == "trust_snapshot_invalid"
     custom = run(canon, key, lambda a, k: False)
     assert custom.code == "trust_snapshot_invalid" and "policy_refused" in custom.detail
+    # every issuer is checked: admitted first key, refused second key that did not sign
+    env = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+    env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": canon}]
+    sel = selection.parse_selection_envelope(r.dumps(env))
+    grant = mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+    two = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (
+        mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", key, (grant,)),
+        mod.IssuerEntry("key-test-2", "issuer-test-2", "ed25519", bad_key, (grant,))))
+    second = mod.verify_selection(sel, ctx, two, _V64(), r.NOW, key_admission=ka.builtin_key_admission)
+    assert second.code == "trust_snapshot_invalid" and "key-test-2" in second.detail
+    assert mod.verify_selection(sel, ctx, two, _V64(), r.NOW).ok is True
 
 
 MUTANTS = {
@@ -167,7 +178,7 @@ MUTANTS = {
         "policy_exception_admits": [("        except Exception:\n            admitted = False", "        except Exception:\n            admitted = True")],
         "drop_builtin_cause": [("cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None", "cause = None")],
         "cause_not_in_detail": [("({cause or 'policy_refused'}; key_id={key_id})", "(refused; key_id={key_id})")],
-        "admission_only_first_issuer": [("    for key_id, (entry, _grants) in trust[\"issuers\"].items():", "    for key_id, (entry, _grants) in list(trust[\"issuers\"].items())[:0]:")],
+        "admission_only_first_issuer": [("    for key_id, (entry, _grants) in trust[\"issuers\"].items():", "    for key_id, (entry, _grants) in list(trust[\"issuers\"].items())[:1]:")],
         "admission_passed_not_threaded": [("return _verify(selection, context, trust, verifier, now, record, key_admission)", "return _verify(selection, context, trust, verifier, now, record, None)")],
     }),
 }
