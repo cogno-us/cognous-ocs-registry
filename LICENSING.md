@@ -3,7 +3,7 @@
 Non-authorizing. Operator decision D3 (2026-10-24, see `docs/decisions/2026-10-24-operator-decisions-D1-D5.md`). No publication authorization is granted.
 
 ## Newly authored material — Apache-2.0
-Documents, tests, `pytest.ini`, `.gitignore` and other files authored for this repository outside `baseline/` are licensed under Apache-2.0 (root `LICENSE`), Copyright 2026 Cognous, as declared by the operator in D3. The builder has not independently verified copyright ownership of these files; the declaration is the operator's. Files were written by the operator's builder sessions on Cognous's behalf.
+Documents, tests, `pytest.ini`, `.gitignore` and other files authored for this repository outside `baseline/` are licensed under Apache-2.0 (root `LICENSE`) per operator decision D3. No copyright-holder statement is made for them: no ownership record for these files exists in this repository, and authorship is not inferred from operator status. They were written by builder sessions working at the operator's direction; if ownership or rights in any file is later found to be in question, the operator resolves the exception. The root `LICENSE` is the unmodified Apache-2.0 text.
 
 ## Imported material under `baseline/execution-runtime/` — unchanged, own terms
 Governed by its own retained notices, not by the root `LICENSE`:

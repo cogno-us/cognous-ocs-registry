@@ -1,6 +1,6 @@
 # Operator decision record — D1 to D5 (S01)
 
-- Date: 2026-10-24
+- Decision date: 2026-10-24 (as issued by the operator). GitHub recording time: this file's first commit in PR #1 (see `git log`); the decisions were issued before they were recorded, and no retrospective GitHub approval date is claimed.
 - Authority: Cognous operator (plan authority per OCS-REG-PLAN v1.1)
 - Source: operator instruction delivered in the Claude Code S01 builder session on 2026-10-24 (attachment `fe645684-attachment.txt`, "OPERATOR DECISION RECORD — D1 THROUGH D5"). Recorded here by the builder; not independently countersigned. No retrospective approvals are fabricated.
 - Reviewed candidate head named by the operator: `d6e39d34945e39e2d34cab85ffb7822e721875c4`. The builder's later head adds only the documentation and test-comment changes listed in PR #1; it is validated separately.
@@ -36,6 +36,9 @@ Builder-side self-review does not establish independent qualification; where ind
 
 ## D5 — Conditional S02 authorization
 APPROVED: S02 is pre-authorized, subject to successful S01 closure. Effective only after: (1) S01 satisfies D4; (2) PR #1 is merged; (3) the accepted baseline and merge SHA are recorded; (4) `docs/sprint-status.md` records S01 PASS; (5) the next assignment is checked against the unchanged S02 section of OCS-REG-PLAN v1.1. If S01 remains BLOCKED, S02 remains BLOCKED. S02 must not modify runtime behavior, implement the registry, import the historical rule catalogue, or begin S03.
+
+## Architect Q&A confirmations relevant to the record (2026-10-24, corrected disposition; guidance, not operator decisions)
+Tier 1 is critical, Tier 3 routine (Constitution table); the earlier inverted mapping was withdrawn. D3 ownership: the Architect advised that operator status alone does not establish copyright ownership; see `LICENSING.md`. Formal Constitution adoption is not required for S01 and none is claimed.
 
 ## Standing instructions recorded
 Static plan not rewritten; the v1.1 custody-path wording is an editorial defect that does not block S01 and gets no new revision. After merge, update operational references to canonical main-branch paths. `docs/sprint-status.md` is the sole live status document. Release, publication and production remain HOLD.
