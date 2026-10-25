@@ -1,6 +1,6 @@
 # 3. Configuration-field extraction register
 
-Status: planning only. The manifest is **PR #227 head `64b4942b`, unmerged, not adopted** (`docs/registry-v1-scope-assessment/data/configuration-extraction-manifest.jsonl`, 96 rows). Each of the nine rows below was re-read against source at the exact pins (Runtime `c5e97e87`, Control Plane `7a4bcd40`); no test was run. Benefit and complexity levels are the manifest's reasoned inference, not demand data.
+Status: planning only. The manifest is **PR #227 head `64b4942b`, unmerged, not adopted** (`docs/registry-v1-scope-assessment/data/configuration-extraction-manifest.jsonl`, 96 rows). Each of the nine rows below was re-read against source at the exact pins (Runtime `c5e97e87`, Control Plane `7a4bcd40`); no repository test was run. Benefit and complexity levels are the manifest's reasoned inference, not demand data.
 
 ## Manifest totals (96 rows)
 
@@ -30,7 +30,7 @@ Columns: scenarios are existing IDs from the crosswalk (not restated); "Decision
 | 8 | CP-F4-07 | `approval_max_age_seconds` (int seconds, default 60) | `bounded.py:1274`, consumer `:2505`; not hashed into the approval commitment | CONDITIONAL | MEDIUM / HIGH | D4, W6-042 | H01, TC-L06-015, D03 | Same |
 | 9 | CP-F5-01 | `ActionClass.max_status_age_seconds` (int seconds, default 60, `ge=0`) | `runtime_authority.py:87`; consumers `bounded.py:2394-2399`, `:2082-2088`, `:2163`, `runtime_authority.py:341` | CONDITIONAL | MEDIUM / HIGH | D4, W6-042, W8-014 | C01, TC-D09-016 | Per-class `min` on the profile before construction; serialized after F4 |
 
-### Semantics that matter (verified at the pins)
+### Semantics that matter (read at the pins; no repository test was run)
 
 - **Runtime sets.** Each is `frozenset` of non-empty `str`, validated in `__post_init__` (`safe_executor.py:374-395`). An empty set is accepted and means deny-all for that dimension; an omitted argument is a constructor `TypeError`, never an allow. `check` order is fixed and first failure wins: ceiling validation, institution, domain, adapter, action, target, unit, amount, one effect, effect count. Exact membership; no case folding or wildcard. S03/S04 already cover the three F1a fields as intersection; **F1b is new** (S03 `supplies` is fixed at three, so F1b needs a new contract version).
 - **`max_amount`.** Validated inside `check` (`:411`), not `__post_init__`. A bad ceiling raises `ValueError` before the institution check: Route A `observe` catches only `PermissionError`, so it escapes without `local_refusal`; Route B maps it to `local_policy_evaluation_error`. That behaviour is preserved, not changed.
@@ -48,7 +48,7 @@ Assessed against the manifest's benefit levels and the lane source reads. None c
 | F6 permissions | 1 CONDITIONAL, 1 UNRESOLVED | LOW / NONE | Only the unsupported legacy shell is file-driven; supported path uses grants. No gap. |
 | F7 dedupe/funded authorities | 1 CONDITIONAL, 4 UNRESOLVED | LOW | Default-off operation identity is GAP-G1-01 (not a registry remedy). No registry gap. |
 | F3 operational timeouts | 2 CONDITIONAL | LOW | Operational tunables. No governance need shown. |
-| F4 identity/mandate ages, tolerance, extension | 5 CONDITIONAL/UNRESOLVED | LOW | Same code shape; validate them in the same helper for near-zero cost (CP-PR-1) but do not extract. State in exclusions that central freshness covers status and approval only. |
+| F4 identity/mandate ages, tolerance, extension, and the other F4 rows | 10 (5 CONDITIONAL, 5 UNRESOLVED, including the two extracted ages counted separately) | LOW | Same code shape; validate them in the same helper for near-zero cost (CP-PR-1) but do not extract. State in exclusions that central freshness covers status and approval only. |
 | F5 `requires_revocation_assurance` | 1 CONDITIONAL | LOW | Needs the holder-inventory profile. |
 | F8 tool lists | 1 UNRESOLVED (MEDIUM) | MEDIUM | `PolicyConfig.allowed_tools/blocked_tools` JSON file: unresolved, and the family is otherwise guardrail or not relevant. Revisit only with a scenario. |
 | F9, F10 | guardrail / not relevant | NONE | None. |

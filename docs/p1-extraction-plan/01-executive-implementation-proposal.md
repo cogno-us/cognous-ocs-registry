@@ -13,7 +13,7 @@ Build a governed configuration capability for the **Execution Runtime** and the 
 1. **Adopt as V1 acceptance scope: the five mandatory fields plus the three Control Plane freshness ages (eight fields).** The ages are plain integer seconds in source, only ever tighten, and are low in cost (see [03](03-field-extraction-register.md)).
 2. **Keep `max_amount` designed but not in V1 acceptance.** It needs a ruling that the caller's value stays authoritative (D6) and a numeric encoding, and it must stay single-unit. It is specified in [04](04-component-ownership-and-adapter-matrix.md) so that it can be added later without redesign; activation is a separate decision.
 3. **Scope the integration to Route B (the atomic Runtime route).** Route A cannot be closed at the commit boundary with the available mechanism. Whether Route A is in the V1 profile is an operator decision ([09](09-operator-scope-decision.md)).
-4. Everything produced remains developer-tested and **not independently qualified** until an independent lead is designated (GAP-G4-13).
+4. Everything produced would be developer-tested only and **not independently qualified** until an independent lead is designated (GAP-G4-13). Nothing described here is built yet.
 
 ## Answers to the ten integration questions
 
@@ -35,7 +35,7 @@ Build a governed configuration capability for the **Execution Runtime** and the 
 
 **5. What is the minimum PR sequence?** Thirty-odd bounded PRs across six sprints; the first, `EXT-S1-1`, is a docs-only contract-delta ADR. See [06](06-pr-and-sprint-execution-plan.md).
 
-**6. Which workstreams can execute in parallel?** Runtime characterization tests (RT-PR-1), Control Plane characterization and helper (CP-PR-0, CP-PR-1), the Ed25519 adapter, the conformance kit, S4 drafting, and the independent oracle predeclaration all start without waiting for registry code. See [05](05-contract-and-integration-dependency-graph.md).
+**6. Which workstreams can execute in parallel?** Runtime characterization tests (`EXT-S2-1`), Control Plane characterization and helper (`EXT-S3-1`, `EXT-S3-2`), the Ed25519 adapter, the conformance kit, S4 drafting, and the independent oracle predeclaration all start without waiting for registry code. See [05](05-contract-and-integration-dependency-graph.md).
 
 **7. Which dependencies force serialization?** The contract freeze; shared registry core files (`common.py` CODES, `decision.py`, `verify.py`); the two shared Runtime files; the exact-source-candidate selection (R10-F-03); the F4-then-F5 order; any head change, which invalidates evidence at the old tuple.
 

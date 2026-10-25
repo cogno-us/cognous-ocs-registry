@@ -2,7 +2,7 @@
 
 Status: **proposed, not adopted.** It becomes the V1 scope only on the operator's approval ([09](09-operator-scope-decision.md)). The baseline classification (mandatory F1a+F1b; conditional F1c `max_amount`, F4 selected ages, F5 selected age; deferred F6, F1d, F7, F3, F8, F9, F10, F11) is the planning baseline from the brief; it is an analytical recommendation, not an adopted scope.
 
-## Customer capabilities V1 provides
+## Customer capabilities V1 is proposed to provide (none is built yet)
 
 | ID | Capability | Fields | Owner of enforcement |
 |---|---|---|---|
@@ -19,7 +19,9 @@ Status: **proposed, not adopted.** It becomes the V1 scope only on the operator'
 
 Conditional (decision-gated, not in the recommended V1 acceptance scope): **CAP-11** centrally tighten the spend ceiling `max_amount`, single declared unit only, caller value stays authoritative.
 
-## What V1 guarantees, and what it does not
+## What V1 is designed to guarantee, and what it does not
+
+Nothing in this section is built or tested yet: the only verifier today is the `FakeVerifier` test double, and the commit-time mechanism is an untested source reading.
 
 - Narrow-only: the effective policy is never wider than the caller's. Unsupported or widening values are refused, never applied.
 - Code keeps: check order and reason texts, `__post_init__` validation, exactly-one-effect, `max_effects`, target well-formedness, trusted-context binding, claim-versus-operation equality, single-effect gate, authorization/evidence separation, approval and grant binding.

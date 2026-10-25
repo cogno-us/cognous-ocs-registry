@@ -1,6 +1,6 @@
 # P1 — Configuration-extraction design and execution plan
 
-Status: **DOCUMENTATION ONLY. DRAFT FOR ARCHITECT ACCEPTANCE AND OPERATOR SCOPE APPROVAL.** This is one finite plan. It is not an authorization to implement anything. It authorizes no sprint, no migration, no source change, no activation, and no change to any qualified expectation. RELEASE: HOLD. PUBLICATION: HOLD. PRODUCTION: HOLD.
+Status: **DOCUMENTATION ONLY. DRAFT FOR ARCHITECT ACCEPTANCE AND OPERATOR SCOPE APPROVAL.** This is one finite plan. It is not an authorization to implement anything. It authorizes no sprint, no migration, no source change, no activation, and no change to any recorded test expectation. RELEASE: HOLD. PUBLICATION: HOLD. PRODUCTION: HOLD.
 
 Governing plan: `docs/plans/PROJECT_PLAN-v1.3-DRAFT.md` (phase P1). Contract baseline: `docs/p0-contract-reconciliation/` and ADR-REG-TR01 (`docs/decisions/2026-10-25-adr-tr-01-activation-and-epoch-ownership.md`). Engineering constitution: pinned `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b` (formal adoption of that revision is not established; ledger `CONSTITUTION-REVISION-1C2E920F`).
 
@@ -35,7 +35,7 @@ This plan therefore cites the inventory as **"PR #227 head 64b4942b, unmerged, n
 | `cogno-us/cognous-stack-qualification` | `main` `998d39c5ba1c9d537be8289f7658f2e9cde6cbba`; PR #227 head `64b4942b4c3cd142db26482af85cbaec024aa043` (unmerged) | Scenario catalog, existing tests; inventory package (unmerged) |
 | Hub `cognous-open-control-stack` | `51c579a3` | V0.2 program documents (not re-read for this plan) |
 
-Source was read, not executed: **no test was run for this plan.** Every statement about a test's pass state is taken from recorded documents and is labelled accordingly. Components not read (Exchange, Replay, Evidence Pack, ODES, Verifier, BitRep, Index, Action Manifest) are UNVERIFIED here.
+Source was read, not executed: **no repository test was run for this plan.** Two throwaway read-only probes were executed, writing nothing to any repository: a pydantic coercion probe on `ActionClass`, and construction of a `LocalExecutionPolicy` with an empty set. Every statement about a test's pass state is taken from recorded documents and is labelled accordingly. Components not read (Exchange, Replay, Evidence Pack, ODES, Verifier, BitRep, Index, Action Manifest) are UNVERIFIED here.
 
 ## Vocabulary and evidence rules
 

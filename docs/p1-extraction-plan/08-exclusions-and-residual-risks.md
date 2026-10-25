@@ -4,7 +4,7 @@ Status: planning only. Exclusions are stated as customer capability that is not 
 
 ## Evidence limits of this plan
 
-- **No test was run** and no source was changed. Every status of a test is read from recorded documents. Lane findings are source readings at the exact pins and are labelled as such.
+- **No repository test was run** and no source was changed (two read-only probes were executed: pydantic coercion on `ActionClass`, and construction of a `LocalExecutionPolicy` with an empty set). Every status of a test is read from recorded documents. Lane findings are source readings at the exact pins and are labelled as such.
 - The inventory baseline (PR #227 head `64b4942b`) is unmerged (gate G-0). Its manifest has seven known discrepancies listed in [03](03-field-extraction-register.md).
 - Control Plane and Runtime behaviour was re-read at `7a4bcd40` and `c5e97e87`; P0 had only second-hand claims. The kwarg-carriage mechanism for the commit-time check (B-lite) is a source reading, not a tested result.
 - Two lanes disagreed on whether `LocalExecutionPolicy` accepts an empty set; this was checked directly at the pin and it **does** accept one (see [04](04-component-ownership-and-adapter-matrix.md), decision 4).

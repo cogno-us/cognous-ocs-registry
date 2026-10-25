@@ -13,6 +13,7 @@ flowchart TD
   S12 --> S13[EXT-S1-3 r08-v2 five-set family]
   S12 --> S14[EXT-S1-4 integer and capped-min slots]
   S13 --> S15[EXT-S1-5 identity object and outcome map]
+  S14 --> S15
   S15 --> S16[EXT-S1-6 snapshot floor and builder]
   S11 --> S17[EXT-S1-7 Ed25519 adapter]
   S11 --> S18[EXT-S1-8 conformance kit]
@@ -72,7 +73,7 @@ The dotted edges are parallel work: they start without waiting for registry code
 
 ## Critical path
 
-`G-0, G-1, G-2` then `EXT-S1-1`, `S1-2`, `S1-3`, `S1-5`, `S1-6` (serialized registry core), then the merges of `EXT-S2-2` and `EXT-S3-3`/`S3-4`, then `EXT-S4-3`, then S5 execution, then S6. The Runtime and Control Plane work is off the critical path until its merge point. The longest single risk is serialization of the registry core files, followed by S4's new durable state and its custody review.
+`G-0, G-1, G-2` then `EXT-S1-1`, `S1-2`, `S1-3`, `S1-4`, `S1-5`, `S1-6` (serialized registry core), then the merges of `EXT-S2-2` and `EXT-S3-3`/`S3-4`, then `EXT-S4-3`, then S5 execution, then S6. The Runtime and Control Plane work is off the critical path until its merge point. The longest single risk is serialization of the registry core files, followed by S4's new durable state and its custody review.
 
 ## Edges that are not mine to decide
 
