@@ -53,8 +53,8 @@ Build a governed configuration capability for the **Execution Runtime** and the 
 | G-0 | Inventory baseline merged | **CLOSED**: PR #227 merged, `be1994a961e4e40612d999972ede6547a3729887` | Acceptance of this plan |
 | G-1 | Architect accepts this integrated plan | Architect finalizing in this revision; acceptance is recorded by the PR #22 merge | Operator scope decision |
 | G-2 | Operator approves the V1 capability scope | **CLOSED**: Option B, eight fields, Route B only ([09](09-operator-scope-decision.md)) | Planning of implementation PRs |
-| G-3 | `EXT-S1-1` ADR accepted by the Architect | OPEN | S1 code PRs and S2/S3 merges |
-| G-4 | R10-F-01/02/03 disposition (carriage mechanism and exact source candidate) | **Carriage RULED**: claim-carried, B-lite rejected, `EXT-S4-4` mandatory. Exact source candidate (R10-F-03) still to be recorded in `EXT-S4-0` | `EXT-S4-2` |
+| G-3 | `EXT-S1-1` ADR accepted by the Architect; it records the exact source candidate (R10-F-03) | OPEN | Every source edit in S1, S2 and S3 (test-only PRs merge after it) |
+| G-4 | R10-F-01/02/03 disposition (carriage mechanism and exact source candidate) | **Carriage RULED**: claim-carried, B-lite rejected, `EXT-S4-4` mandatory. The exact source candidate (R10-F-03) is recorded earlier, in `EXT-S1-1` (G-3) | `EXT-S4-2` |
 | G-5 | Rulings D4, MC-06 G2/G3, W8-014 | **Recorded in [10](10-architect-rulings-and-repin.md)** (per-scalar min; strict integer seconds; no universal floor; no cross-bound; approval binds to the effective narrowed profile; outage extensions cannot widen). `max_amount` rulings (D6, encoding) are deferred with the field | The conditional PRs that depend on them |
 | G-6 | Independent qualification lead designated in writing | OPEN; qualification is PREPARE-only until closed | S5 in non-PREPARE mode |
 | G-7 | Release, publication, production: HOLD stays until the operator lifts it | HOLD | Never inferred |
@@ -79,4 +79,4 @@ With three builders in parallel and one independent author, the critical path is
 
 ## Items still open for the Architect (not the operator)
 
-`r08-v2` versioning details (additive; `r08-v1` behaviour preserved); B-10 verifier and dependency; LD-02 mapping; R10-F-03 exact source candidate; DT-01 emulator host placement (ruled: Registry, not Qualification); custody review of the new mutable destination state. Settled rulings are in [10](10-architect-rulings-and-repin.md) and are not reopened. See [05](05-contract-and-integration-dependency-graph.md).
+`r08-v2` versioning details (additive; `r08-v1` behaviour preserved); B-10 verifier and dependency; LD-02 mapping; R10-F-03 exact source candidate (recorded in `EXT-S1-1`); DT-01 emulator host placement (ruled: Registry, not Qualification); custody review of the new mutable destination state. Settled rulings are in [10](10-architect-rulings-and-repin.md) and are not reopened. See [05](05-contract-and-integration-dependency-graph.md).

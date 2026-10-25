@@ -76,7 +76,7 @@
   },
   {
     "gate_id": "QG-03",
-    "name": "F4 status_max_age_seconds and approval_max_age_seconds differential (conditional; D4, W6-042)",
+    "name": "F4 status_max_age_seconds and approval_max_age_seconds differential",
     "statement": "Freshness bounds only tighten; stale/future/missing refused or held; tolerance never extends the window.",
     "existing_test_ids": [
       "suites/v1-scenarios/test_add_molt_verify.py::test_add_molt_verify_e3_grant_status_freshness_is_not_per_item",
@@ -99,7 +99,7 @@
     "new_tests_needed": [
       "per field age = bound-1, bound, bound+1",
       "future observation at 0, tolerance, tolerance+1",
-      "registry <, =, > caller (effective = caller)",
+      "registry < caller => effective = registry (e.g. caller 60, registry 30 => 30); registry = caller => effective = caller; registry > caller => effective = caller (registry value recorded as not narrowing); effective = min(caller, registry) per scalar",
       "registry 0, negative, bool, float, huge refused (code floor)",
       "stable refusal codes grant/conflict/policy/approval_status_stale_or_future",
       "old vs new at real bounded.py _fresh at CP 7a4bcd40",
@@ -108,7 +108,7 @@
       "clock_tolerance_seconds not weakened",
       "60-vs-300 relationship neither assumed nor resolved"
     ],
-    "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; blocked until D4 direction ruling",
+    "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; direction ruled (per-scalar min, Architect rulings in doc 10): not a blocker; remaining prerequisites are the implementation PRs EXT-S1-4, EXT-S3-2, EXT-S3-3 and the independent-lead restriction",
     "sprint": "S5-3",
     "v1_status": "ACTIVE",
     "qualification_mode": "PREPARE_ONLY_UNTIL_INDEPENDENT_LEAD_DESIGNATED",
@@ -116,7 +116,7 @@
   },
   {
     "gate_id": "QG-04",
-    "name": "F5 max_status_age_seconds differential (conditional; D4, W6-042, W8-014)",
+    "name": "F5 ActionClass.max_status_age_seconds differential",
     "statement": "Per-class status age bound can only be lowered; profile commitment reflects the effective profile.",
     "existing_test_ids": [
       "suites/v1-scenarios/test_add_molt_verify.py::test_add_molt_verify_e3_grant_status_freshness_is_not_per_item",
@@ -131,13 +131,13 @@
     "new_tests_needed": [
       "min-only per class",
       "action_class_unknown refused",
-      "zero semantics preserved",
+      "existing zero-bound behaviour characterized (`_fresh` at `7a4bcd40` accepts an observation at now and a future one within tolerance when the bound is 0); the new helper floor of at least 1 refuses values below 1 before `_fresh`",
       "irreversible class never raised by extension",
       "effective profile == profile hashed into approval_commitment (CP-F5-12)",
       "relaxing toggles (on_unreadable, allow_synthetic_resolver) unreachable from registry",
       "class bounds 5 and 120 old vs new"
     ],
-    "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; blocked on W8-014 and D4",
+    "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; W8-014 and D4 are ruled (doc 10): not blockers; remaining prerequisites are EXT-S3-3, EXT-S3-4 and the independent-lead restriction",
     "sprint": "S5-3",
     "v1_status": "ACTIVE",
     "qualification_mode": "PREPARE_ONLY_UNTIL_INDEPENDENT_LEAD_DESIGNATED",
@@ -431,7 +431,7 @@
   {
     "gate_id": "QG-14",
     "name": "Process: exact-head independent run by designated owner",
-    "statement": "Every gate above has a PASS at the exact candidate pins run by a designated independent qualifier.",
+    "statement": "Every ACTIVE gate above has a PASS at the exact candidate pins run by a designated independent qualifier; INACTIVE gates (QG-02 while `max_amount` is deferred) are reported as inactive, never as PASS.",
     "existing_test_ids": [],
     "scenario_ids": [
       "all"

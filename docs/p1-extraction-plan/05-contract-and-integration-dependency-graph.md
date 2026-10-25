@@ -8,8 +8,10 @@ Status: planning only. Edges below are the dependencies that force order. "S" ma
 flowchart TD
   G0[G-0 closed: inventory merged be1994a9] --> G1[G-1 Architect accepts plan]
   G1 --> G2[G-2 closed: operator Option B Route B]
-  G2 --> S11[EXT-S1-1 contract delta ADR]
+  G2 --> S11[EXT-S1-1 contract delta ADR and source candidate]
   S11 --> S12[EXT-S1-2 family dispatch]
+  S11 --> S2b
+  S11 --> S3b
   S12 --> S13[EXT-S1-3 r08-v2 five-set family]
   S12 --> S14[EXT-S1-4 integer-seconds slots F4 and F5]
   S13 --> S15[EXT-S1-5 identity object and 46-code outcome map]
@@ -25,7 +27,7 @@ flowchart TD
   S3b[EXT-S3-2 CP age_bounds helper] -.parallel.-> S3c
   S14 --> S3c[EXT-S3-3 CP F4 wiring]
   S3c --> S3d[EXT-S3-4 CP F5 wiring]
-  S11 --> S40[EXT-S4-0 integration ADR and source candidate]
+  S11 --> S40[EXT-S4-0 integration ADR]
   S15 --> S41[EXT-S4-1 identity wiring]
   S40 --> S44[EXT-S4-4 CP claim-carried binding and successor profile]
   S41 --> S44
@@ -55,9 +57,9 @@ The dotted edges are parallel work: they start without waiting for registry code
 | `EXT-S1-3` (five-set shape frozen) before `EXT-S2-2` merges | Names and empty/absent rules must be frozen; the adapter may be built earlier against a fixture mapping |
 | `EXT-S1-4` before `EXT-S3-3` | Typed F4/F5 payload with strict-integer-second slots |
 | `EXT-S3-3` (F4) before `EXT-S3-4` (F5) | The F5 profile change alters `approval_commitment`; approvals bind to the effective narrowed profile |
-| `EXT-S4-0` and `EXT-S1-5` before `EXT-S4-4` | The claim-carried binding needs the identity tuple and the recorded exact source candidate (R10-F-03) |
+| `EXT-S4-0` and `EXT-S1-5` before `EXT-S4-4` | The claim-carried binding needs the identity tuple and the integration ADR (the exact source candidate was already recorded in `EXT-S1-1`) |
 | `EXT-S4-4` then `EXT-S4-5` (re-pin) then `EXT-S4-2` | The Runtime guard reads the claim-carried binding, so it can only be built and tested against the re-pinned Control Plane and Runtime |
-| R10-F-03 (exact source candidate) before any Runtime or Control Plane source edit | Heads `c5e97e87`/`7a4bcd40` add terminal approval revocation not present in the S01 pin; any later head change invalidates evidence at the old tuple |
+| `EXT-S1-1` (which records R10-F-03, the exact source candidate) before any Runtime, Control Plane or registry source edit, including `EXT-S2-2` and `EXT-S3-2` | Heads `c5e97e87`/`7a4bcd40` add terminal approval revocation not present in the S01 pin; any later head change invalidates evidence at the old tuple |
 | One owner, one PR for `local_authority_effect.py` and `atomic_local_control_plane_executor.py` | Shared Runtime files; no concurrent edit |
 | `safe_executor.py` never edited | Blob `2fc880da` is the pinned evaluator; an edit forces a re-pin of S01, all records and S05 |
 | `EXT-S1-7` (real verifier) before the authenticity claim in `EXT-S4-3` | Until then, authenticity evidence is test-double only (`FakeVerifier`) |
@@ -68,8 +70,8 @@ The dotted edges are parallel work: they start without waiting for registry code
 
 | Lane | Starts after | Owned files (no other lane edits them) |
 |---|---|---|
-| `EXT-S2-1` Runtime characterization battery | Implementation authorization | Runtime `tests/` only; no `src`/`engine` diff |
-| `EXT-S3-1`, `EXT-S3-2` Control Plane characterization and `age_bounds` helper | Authorization | Control Plane `tests/`; new helper module; no wiring |
+| `EXT-S2-1` Runtime characterization battery | Implementation authorization (merge after `EXT-S1-1` records the candidate) | Runtime `tests/` only; no `src`/`engine` diff |
+| `EXT-S3-1` characterization (test-only), `EXT-S3-2` `age_bounds` helper (new source file) | Authorization; `EXT-S3-2` only after `EXT-S1-1` | Control Plane `tests/`; new helper module; no wiring |
 | `EXT-S1-7` Ed25519 adapter, `EXT-S1-8` conformance kit | `EXT-S1-1` | New registry modules; the dependency lock is the only shared touch |
 | `EXT-S2-2` build against a fixture mapping | `EXT-S1-3` shape known | New Runtime file `engine/local_policy_narrowing.py`; merge waits for the freeze |
 | `EXT-S4-0` drafting | `EXT-S1-1` | Registry docs only |
@@ -83,4 +85,4 @@ Serialized registry core (`common.py`, `decision.py`, `verify.py`, `selection.py
 
 ## Edges that are not mine to decide
 
-The exact source candidate (R10-F-03) is an Architect disposition. The following are operator items if they arise: activation of a mandatory ("required") profile (D7 permits it only as a design capability), adding `max_amount` or any other family, bringing Route A into scope, and any trust root, key ceremony, production host, publication or production activation.
+The exact source candidate (R10-F-03) is an Architect disposition, taken in `EXT-S1-1`. The following are operator items if they arise: activation of a mandatory ("required") profile (D7 permits it only as a design capability), adding `max_amount` or any other family, bringing Route A into scope, and any trust root, key ceremony, production host, publication or production activation.
