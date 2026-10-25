@@ -6,9 +6,9 @@ No other key (no amount key, no age key): a sixth key refuses `field_unknown`, a
 never an implicit allow or deny). An empty list is a valid explicit deny-all for that dimension.
 
 List entries: plain `str`, sorted, duplicate-free, at most MAX_ENTRIES, each valid under `common.valid_token` (1..128, no
-control, separator or `*`). Matching is exact-string: no case folding, trimming, normalization or wildcard. `allowed_institutions`
-and `allowed_authority_domains` entries are values of the v2 scope identifiers, so they must also match the V1 ASCII identifier
-grammar `\\A[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\\Z` on the raw string (non-ASCII refused, never normalized).
+control, separator or `*`). Matching is exact-string: no case folding, trimming, normalization or wildcard. Payload entries keep
+the section 2 opaque-token rule in all five lists; the V1 ASCII identifier grammar is NOT applied here (Architect: it applies only to
+the canonical policy-binding identifier fields, owned by EXT-S1-5; section 4.1).
 
 Composition: effective = caller INTERSECTION registry per key (subset of both, never widening). Any empty effective set is
 reported as deny-all; the composer never constructs a Runtime policy and every refusal carries no effective policy, so no
@@ -17,7 +17,6 @@ refusal can return the caller policy.
 Pure and non-authorizing; unqualified (BUILDER_TESTED). Registered ONLY in the `r08-v2` table (`families.FAMILIES_V2`), never
 in the `r08-v1` table: a v1 entry point still refuses this family `family_unsupported` (golden-replay proved).
 """
-import re
 from collections.abc import Mapping
 from typing import Any, Optional
 
@@ -26,21 +25,10 @@ from registry_successor.compose import CompositionResult
 
 FAMILY_F1AB = "f1ab-local-execution-allowlist"
 F1AB_FIELDS = ("allowed_actions", "allowed_adapters", "allowed_units", "allowed_institutions", "allowed_authority_domains")
-# Dimensions whose entries are values of ASCII-grammar scope identifiers.
-ASCII_GRAMMAR_FIELDS = ("allowed_institutions", "allowed_authority_domains")
-
-_V1_ASCII_IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\Z")
-
-
-def valid_ascii_identifier(value: Any) -> bool:
-    """V1 ASCII grammar on the raw string: no normalization, no case folding, no trimming."""
-    return type(value) is str and _V1_ASCII_IDENTIFIER.match(value) is not None
 
 
 def _entry_ok(field: str, item: Any) -> bool:
-    if type(item) is not str or not c.valid_token(item):
-        return False
-    return valid_ascii_identifier(item) if field in ASCII_GRAMMAR_FIELDS else True
+    return type(item) is str and c.valid_token(item)
 
 
 def _list_ok(field: str, value: Any) -> bool:

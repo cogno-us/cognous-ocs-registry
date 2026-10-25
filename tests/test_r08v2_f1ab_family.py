@@ -183,26 +183,30 @@ def test_str_subclass_entries_refused():
     assert f.payload_validator(payload(allowed_actions=type("L", (list,), {})(["a"]))) == "field_type_invalid"
 
 
-# ---------------------------------------------------------------- ASCII grammar on institution / authority-domain entries
-@pytest.mark.parametrize("field", f.ASCII_GRAMMAR_FIELDS)
-@pytest.mark.parametrize("bad", ["é", "café", "café", "İnst", "inst\U0001F600", "ａbc", "-inst", ".inst", "_inst", ":inst",
-                                 "in st", "in/st", "in*st", " inst", "inst ", "inst\n", "inst\t", "inst​", "a" * 129, "inst@x"])
-def test_ascii_grammar_negative_institution_and_domain(field, bad):
+# ---------------------------------------------------------------- section 2 token rule applies to all five lists (no ASCII grammar)
+@pytest.mark.parametrize("field", f.F1AB_FIELDS)
+@pytest.mark.parametrize("ok", ["é", "Inst-A", "inst\U0001F600", "a" * 128, "u:1/2"])
+def test_section2_opaque_tokens_accepted_in_every_list(field, ok):
+    # Copilot/Architect: the ASCII grammar is for canonical binding identifiers only, not payload entries.
+    assert f.payload_validator(payload(**{field: [ok]})) is None
+
+
+@pytest.mark.parametrize("field", f.F1AB_FIELDS)
+@pytest.mark.parametrize("bad", ["in st", "in*st", " inst", "inst\n", "inst\t", "", "a" * 129])
+def test_section2_token_rule_negative_in_every_list(field, bad):
     assert f.payload_validator(payload(**{field: [bad]})) == "field_invalid"
 
 
-@pytest.mark.parametrize("good", ["a", "A", "0", "inst-a", "Inst.A:b_c-d", "a" * 128, "9z"])
-def test_ascii_grammar_positive(good):
-    assert f.valid_ascii_identifier(good)
-    assert f.payload_validator(payload(allowed_institutions=[good], allowed_authority_domains=[good])) is None
+def test_non_ascii_entry_does_not_poison_ascii_caller_intersection():
+    r = compose(caller(allowed_institutions=["a"]), payload(allowed_institutions=["a", "\u00e9"]))
+    assert r.ok and r.effective["allowed_institutions"] == ("a",)
 
 
-def test_ascii_grammar_has_no_normalization_or_case_folding():
-    # precomposed vs decomposed are both refused, never conflated; case variants are distinct strings
-    assert not f.valid_ascii_identifier("é") and not f.valid_ascii_identifier("é")
+def test_no_normalization_or_case_folding_in_matching():
     r = compose(caller(allowed_institutions=["Inst-A"]), payload(allowed_institutions=["inst-a"]))
     assert r.ok and r.effective["allowed_institutions"] == () and "allowed_institutions" in r.deny_all_fields
-    assert not f.valid_ascii_identifier("a\n")  # `$`-style trailing newline is not accepted
+    r = compose(caller(allowed_institutions=["\u00e9"]), payload(allowed_institutions=["e\u0301"]))
+    assert r.ok and r.effective["allowed_institutions"] == ()  # NFC vs NFD stay distinct
 
 
 def test_non_grammar_tokens_allowed_for_non_identifier_dimensions():
@@ -307,7 +311,7 @@ def test_f1a_record_with_three_key_payload_still_composes_via_v2_table():
 
 
 def test_hand_built_record_payload_tampering_is_refused_at_compose():
-    for pl in (payload(allowed_units=["b", "a"]), payload(allowed_institutions=["é"]), dict(payload(), max_amount=1), {}, None, [],
+    for pl in (payload(allowed_units=["b", "a"]), payload(allowed_institutions=["in st"]), dict(payload(), max_amount=1), {}, None, [],
                payload(allowed_actions=("a",))):
         body = dict(s.make_record(), family=f.FAMILY_F1AB, payload=pl)
         r = families.compose_v2(caller(), record_mod.RecordResult(True, None, "", body, None))
