@@ -17,6 +17,8 @@ import ast
 import dataclasses
 import hashlib
 import json
+import os
+import threading
 from pathlib import Path
 
 import pytest
@@ -560,6 +562,63 @@ def test_N23_oversized_files_are_refused_even_when_otherwise_valid_and_approved(
     refused(result, policy, "record_file_mismatch")
 
 
+def _run_with_timeout(fn, timeout=5.0):
+    box = {}
+    thread = threading.Thread(target=lambda: box.update(result=fn()), daemon=True)
+    thread.start()
+    thread.join(timeout)
+    assert not thread.is_alive(), "consumer blocked instead of returning a refusal"
+    return box["result"]
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="needs POSIX FIFOs")
+def test_N24_fifo_record_or_manifest_path_is_refused_without_blocking(tmp_path):
+    s = Scenario(tmp_path)
+    fifo = tmp_path / "fifo"
+    os.mkfifo(fifo)
+    policy, result = _run_with_timeout(lambda: s.run(record_path=fifo))
+    refused(result, policy, "record_missing")
+    policy, result = _run_with_timeout(lambda: s.run(manifest_path=fifo))
+    refused(result, policy, "manifest_missing")
+
+
+@pytest.mark.skipif(not Path("/dev/zero").exists(), reason="needs /dev/zero")
+@pytest.mark.parametrize("device", ["/dev/zero", "/dev/null"])
+def test_N25_device_and_directory_paths_are_not_regular_files(tmp_path, device):
+    s = Scenario(tmp_path)
+    for target in (device, str(tmp_path)):
+        policy, result = _run_with_timeout(lambda: s.run(record_path=target))
+        refused(result, policy, "record_missing")
+        policy, result = _run_with_timeout(lambda: s.run(manifest_path=target))
+        refused(result, policy, "manifest_missing")
+
+
+@pytest.mark.skipif(not Path("/proc/self/fd").exists(), reason="needs /proc/self/fd")
+def test_N27_refusing_non_regular_files_does_not_leak_descriptors(tmp_path):
+    s = Scenario(tmp_path)
+
+    def open_fds():
+        return len(os.listdir("/proc/self/fd"))
+
+    s.run()  # warm up
+    before = open_fds()
+    for _ in range(60):
+        s.run(record_path="/dev/null")
+        s.run(manifest_path=tmp_path)
+    assert open_fds() <= before + 1
+
+
+def test_N26_symlinked_record_is_still_verified_by_hash(tmp_path):
+    s = Scenario(tmp_path)
+    link = tmp_path / "link.json"
+    link.symlink_to(s.record_path)
+    policy, result = s.run(record_path=link)
+    assert result.disposition == "ACCEPT"
+    s.record_path.write_bytes(record_bytes(make_record(units=("EUR", "USD"))))
+    policy, result = s.run(record_path=link)
+    refused(result, policy, "record_file_mismatch")
+
+
 # ------------------------------------------------------------------ representation coverage (S05 hand-off)
 
 @pytest.mark.parametrize("name,mutate", [
@@ -672,9 +731,12 @@ def test_B4_documented_candidate_digest_matches_the_committed_manifest():
 
 
 def test_B2_consumer_has_no_discovery_network_process_or_dynamic_code():
-    banned_modules = {"os", "subprocess", "socket", "importlib", "glob", "shutil", "urllib", "http", "requests"}
-    banned_attrs = {"glob", "iglob", "rglob", "listdir", "scandir", "walk", "iterdir", "system", "popen"}
+    banned_modules = {"subprocess", "socket", "importlib", "glob", "shutil", "urllib", "http", "requests", "tempfile"}
+    banned_attrs = {"glob", "iglob", "rglob", "listdir", "scandir", "walk", "iterdir", "system", "popen", "remove",
+                    "unlink", "rmdir", "rename", "mkdir", "makedirs", "chmod", "chown", "fork", "kill", "symlink",
+                    "link", "truncate", "write", "write_bytes", "write_text", "execv", "execve", "spawnv"}
     banned_calls = {"eval", "exec", "compile", "__import__"}
+    allowed_open_flags = {"O_RDONLY", "O_NONBLOCK", "O_CLOEXEC"}
     files = sorted(CONSUMER_DIR.glob("*.py"))
     assert files
     for path in files:
@@ -688,6 +750,11 @@ def test_B2_consumer_has_no_discovery_network_process_or_dynamic_code():
                 assert node.attr not in banned_attrs, (path, node.attr)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 assert node.func.id not in banned_calls, path
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "open"
+                    and isinstance(node.func.value, ast.Name) and node.func.value.id == "os"):
+                flags = {n.attr for n in ast.walk(node.args[1]) if isinstance(n, ast.Attribute)}
+                flags |= {n.value for n in ast.walk(node.args[1]) if isinstance(n, ast.Constant) and isinstance(n.value, str)}
+                assert flags and flags <= allowed_open_flags, (path, flags)
 
 
 def test_B3_consumer_never_imports_policy_internals_it_must_not_change():

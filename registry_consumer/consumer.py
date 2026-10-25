@@ -15,13 +15,15 @@ Semantics: effective = caller ∩ registry for exactly allowed_actions, allowed_
 returns the caller policy object unchanged with overlay_applied False. This is an optional-overlay profile: a refusal
 is not a denial and not a compliance claim. Excluded attackers and limits are in docs/s04-implementation.md.
 
-No discovery (explicit paths only), no network, no processes, no dynamic code, no writes. Files are read once and the
-same bytes are verified and parsed. The S03 validator and the baseline Runtime are imported unchanged.
+No discovery (explicit paths only), no network, no processes, no dynamic code, no writes. Files are read once, only if
+they are regular files (opened non-blocking), and the same bytes are verified and parsed. The S03 validator and the baseline Runtime are imported unchanged.
 """
 import dataclasses
 import hashlib
 import json
+import os
 import re
+import stat
 import sys
 from pathlib import Path
 from typing import Any, Optional
@@ -105,14 +107,27 @@ def _is_str(value: Any, pattern: str) -> bool:
 
 
 def _read(path: Any, limit: int):
-    """Return ("ok", bytes), ("missing", None) or ("oversize", None). One read; bounded."""
+    """Return ("ok", bytes), ("missing", None) or ("oversize", None). One bounded read of a regular file.
+
+    The descriptor is opened non-blocking and checked with fstat, so a candidate path that names a FIFO, device,
+    socket or directory is refused without blocking and without a check-then-open race. Symlinks are followed: the
+    bytes read are still verified against a trusted hash before use.
+    """
     if not isinstance(path, (str, Path)):
         return "missing", None
+    fd = None
     try:
-        with Path(path).open("rb") as handle:
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_CLOEXEC", 0))
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            return "missing", None
+        with os.fdopen(fd, "rb", closefd=True) as handle:
+            fd = None
             data = handle.read(limit + 1)
     except (OSError, ValueError):
         return "missing", None
+    finally:
+        if fd is not None:
+            os.close(fd)
     if len(data) > limit:
         return "oversize", None
     return "ok", data
