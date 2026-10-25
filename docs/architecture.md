@@ -1,4 +1,4 @@
-# Architecture (S01)
+# Architecture (S01 baseline; later components listed below)
 
 Non-authorizing, builder-side. HOLD unchanged. This page describes what S01 contains and the one baseline behaviour it reproduces; it describes no future design and makes no qualification claim.
 
@@ -36,3 +36,15 @@ The module does not establish institutional authorization. Per the hub's documen
 - Rules are not extracted or migrated in S01. The list of restrictions above is a description of existing code, not a schema.
 - Constitutional floors, authority and revocation logic, and the Control Plane's reason-code and mandatory-check tables are outside this baseline.
 - Existing OCS repositories remain authoritative; this repository does not duplicate them.
+
+## Later components (added S03 to S05; see [sprint-status.md](sprint-status.md))
+
+```
+registry_contract/   S03: record schema and pure validator (frozen)
+registry_consumer/   S04: manifest-pinned overlay that can only narrow a caller policy (frozen, not wired to Runtime)
+registry_records/    S04: one synthetic candidate record and manifest (test fixtures, not an approved selection)
+tests/               S01 baseline fixture; S03, S04 batteries; S05 frozen expectations, oracle and differential harness; S06 integrity pins
+docs/s05-results/    recorded differential results
+```
+
+The baseline decision path above is unchanged. Nothing in the Runtime calls the consumer. Limits and no-claims: [trust-limitations.md](trust-limitations.md).

@@ -1,0 +1,23 @@
+# Operator decision record — S06 authorization (2026-10-24)
+
+- Decision date: 2026-10-24 (as issued by the operator). GitHub recording time: this file's first commit in the S06 PR; the decision was issued before it was recorded, and no retrospective approval date is claimed.
+- Authority: Cognous operator (André de Lima), per OCS-REG-PLAN v1.1 change control.
+- Source: the operator's instruction document "Execute S06 — Consolidation and Next-Increment Recommendation", attached to the Claude Code S06 builder session on 2026-10-24 (attachment `ddea0adc-attachment.txt`). This file is a builder transcription, not independently countersigned. The Architect's S05 disposition, adopted by the operator, is referenced by that document and was not itself attached to this session; it is cited only as the operator states it.
+- Plan: https://github.com/cogno-us/cognous-ocs-registry/blob/main/docs/plans/PROJECT_PLAN-v1.1.md (blob `6ece90f6697320fd305d8eb8c1e3a7f2f1f428a2`, unchanged). The plan heading "S06 ... PLANNED; NOT AUTHORIZED" is static plan text; authorization is carried by this decision, as for S02 to S05.
+- Constitution (pinned): https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md
+
+## Operator decision (summarized from the source; quoted text is verbatim)
+
+- "S06 IS AUTHORIZED." The operator adopts the Architect's S05 disposition "ACCEPT WITH CONDITIONS." S05 "remains PASS, limited to bounded behavioral equivalence for the tested, representable LocalExecutionPolicy profile." S03, S04 and S05 "must not be reopened without a demonstrated material defect and the applicable authority."
+- Authorized: S06 consolidation; documentation reconciliation; removal of demonstrated redundancy; preservation and organization of qualification evidence; next-family recommendation; autonomous routine fixes, testing, review and eligible merge. "No additional registry migration is authorized. No shared ISS/OCS registry implementation is authorized."
+- Deliverables A to F: representation-contract disposition; E05 surrogate boundary (preserve the three behavioral SKIPs, do not reclassify them as PASS); one consolidated trust-limitations document; test-helper consolidation only where it weakens nothing (otherwise leave unchanged and document why; do not edit `tests/s05_expectations.json` or `tests/s05_oracle.py`; do not alter prior raw results); documentation reconciliation with `docs/sprint-status.md` as the single live status document; a next-family recommendation evaluating at least F6, F1, F4 and F5, without implementing it and preserving the 32 unresolved S02 classifications and the unresolved 60-versus-300 relationship.
+- Exclusions (non-negotiable): no change to frozen S03 validator semantics, S04 consumer semantics, historical Runtime enforcement, S05 expected outcomes or prior raw evidence; no expansion of supported rule families; no policy interpreter or registry infrastructure; no approval or activation of a manifest pin; no connection to production Runtime; no shared ISS/OCS contracts; no change to the plan or the Constitution.
+- Review: GitHub Copilot (`copilot-pull-request-reviewer[bot]`) on the exact final PR head is the operator-designated independent technical reviewer for S06; this is not formal independent qualification or production certification. Merge authority is standing, under the conditions in the source.
+- Acceptance language, if all conditions pass: "S06 PASS — bounded consolidation complete. Historical baseline, S03 contract, S04 consumer and S05 differential evidence preserved. Copilot-reviewed; not formally independently qualified." The program may then be marked "DEVELOPMENT PROGRAM COMPLETE — BOUNDED." No production-readiness, independent-certification or full-OCS-integration claim.
+- After S06 merge and closeout: STOP. New rule families, shared ISS/OCS registry integration, dynamic activation, approval of a manifest selection pin, publication, production deployment and formal independent qualification each need separate operator authorization. The shared-registry recommendations in COG-REG-SHARED-ADD-01 remain deferred. RELEASE: HOLD. PUBLICATION: HOLD. PRODUCTION: HOLD.
+
+## Builder notes (recorded, not an expansion)
+
+- Verified before starting: `main` at `091355fd0abc368d07c71bfa0673f25feaa97979` (S05 implementation merge `e10e8077…`, closeout merge `091355fd…`); `docs/sprint-status.md` recorded S05 PASS.
+- COG-REG-SHARED-ADD-01 is named by the operator and was not provided to this session; nothing here relies on its content.
+- Approving a manifest pin remains an operator-only decision that S06 does not make.
