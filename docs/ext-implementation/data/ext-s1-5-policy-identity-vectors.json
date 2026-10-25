@@ -1,7 +1,7 @@
 {
  "schema": "ocs-ext-s1-5-policy-identity-vectors/1",
  "status": "BUILDER_TESTED",
- "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5 and Batch-4 rulings N-1, N-3, N-4, N-5, N-6 (2026-10-25). Revised after the PR #30 AI technical reviews, two rounds (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
+ "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5, Batch-4 rulings N-1, N-3, N-4, N-5, N-6 and the Batch 6 rulings N-10, N-11, N-12, N-13 and 4.3 (2026-10-25), and the Architect final rulings N-10(c), N-12(c) and N-13 (Unicode 15.1.0 frozen); N-7, N-8 and N-9 stay UNRESOLVED (no canonical source in this repository rules on them). Revised after the PR #30 AI technical reviews, two rounds (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
  "spec": "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md",
  "pins": {
   "contract_file": "docs/r08-v2-contract.md",
@@ -60,7 +60,44 @@
   "outcome_map_sha256": "dcb14ec1067ccf3218949de57312040dad9df926b134a67f2826e3f0c37d535c",
   "readme_file": "docs/conformance/README.md",
   "readme_git_blob_informational": "ec03cd26fab0b2f5a7421484ec3f5d065a932454",
-  "readme_sha256_informational": "ffa04af23daf9baa4369261627932da16321c9f9ab1e2fd970444b336aae175f"
+  "readme_sha256_informational": "ffa04af23daf9baa4369261627932da16321c9f9ab1e2fd970444b336aae175f",
+  "token_unicode_table": {
+   "file": "docs/ext-implementation/data/ext-s1-5-token-unicode-15.1-excluded-ranges.json",
+   "sha256": "8c85813d25f6ed53371e27f0e4895a89de44a619824486dcff8d48ff8b607474",
+   "unicode_version": "15.1.0",
+   "status": "FROZEN (Architect final ruling N-13): Unicode 15.1.0 is the frozen token-property version for the bounded V1 profile; a later Unicode version is a new contract version with its own table and vectors",
+   "full_scan": {
+    "range": "U+0000..U+10FFFF",
+    "encoding": "one ASCII character per code point, '1' = excluded, '0' = permitted",
+    "bitmap_sha256": "1978dfa22dcdd956939b670185e1bd519c59bc8599ce4d053b91b1ffbe390ed5",
+    "excluded_count": 964488
+   },
+   "independent_verification": {
+    "status": "VERIFIED_AGAINST_THREE_UNICODE_15_1_0_SOURCES_UNICODE_ORG_NOT_REACHABLE",
+    "note": "The table (713 ranges, 964488 excluded code points) was regenerated from three sources that carry Unicode 15.1.0 and compared range for range; all three equal the committed table. unicode.org (UCD 15.1.0 UnicodeData.txt and DerivedGeneralCategory.txt) could not be fetched from the build environment (outbound proxy refused the host with HTTP 403), so the table is NOT compared with the UCD text files themselves; the three sources below are packaged builds of those files.",
+    "sources": [
+     {
+      "name": "CPython unicodedata",
+      "version": "3.13.17, unicodedata.unidata_version 15.1.0",
+      "method": "category(chr(cp))[0] in C or Z, merged into inclusive ranges"
+     },
+     {
+      "name": "PyPI unicodedata2",
+      "version": "15.1.0",
+      "artifact_sha256": "cb30f189ad66482f8529a45da71b2a8841e9bd2bb376cc2933003a4a55a07648",
+      "method": "same procedure, an independent C build of the 15.1.0 tables (not CPython's database)"
+     },
+     {
+      "name": "npm @unicode/unicode-15.1.0",
+      "version": "2.1.0",
+      "artifact_sha256": "841a96a343bfee1c7a0e12d24616038f5ad5485c76273ee6cd0bfc43ea8cea37",
+      "integrity": "sha512-g9mFpv6R921GiY4vxMMXO3SIoWcx5jnbbUwHV6jE2zzIT++WB97HCgWihasCqDzTjW4jlW2NzWLJJ9rG8WsE8Q==",
+      "method": "union of General_Category/Other (Cc, Cf, Cs, Co, Cn) and General_Category/Separator (Zs, Zl, Zp) range files read by Node.js, independent of Node's own ICU database (Unicode 17.0)"
+     }
+    ],
+    "node_runtime_unicode": "17.0 (ICU 78.3, Node 22.23.4): not consulted for any decision; see divergence_measured"
+   }
+  }
  },
  "profile": {
   "binding_profile": "ocs-policy-binding/1",
@@ -193,7 +230,8 @@
      "approval_max_age_seconds",
      "class_status_max_age_seconds",
      "policy_generation"
-    ]
+    ],
+    "ingest_bound": "RULED (Architect final ruling N-10(c)): the bound [1, 2^53 - 1] and the strict-integer representation are applied to a delivered TrustSnapshot.version BEFORE the snapshot is used in authorization or projection; an unsupported representation is refused (trust_snapshot_invalid, stage ingest) and never reaches authority evaluation. The shipped verifier at the pinned head applies only version >= 1: that is a source gap, not a contract position."
    },
    "status_max_age_seconds": {
     "domain": "effective-policy",
@@ -411,6 +449,20 @@
     "optional"
    ],
    "unknown_participation": "refused field_invalid at member participation, never read as optional"
+  },
+  "token": {
+   "rule": "1..128 code points, no '*', every code point outside the excluded ranges of the pinned table (pins.token_unicode_table)",
+   "unicode_version": "15.1.0",
+   "table": "pins.token_unicode_table",
+   "normalization": "none",
+   "unlisted_or_ambiguous": "refuse",
+   "platform_database_consulted": false,
+   "applies_to": [
+    "effective-payload list entries",
+    "F5 class names"
+   ],
+   "not_replaced_by_ascii_grammar": true,
+   "citation": "Architect Batch 6 rulings, N-13"
   }
  },
  "outcome_map": {
@@ -2246,6 +2298,114 @@
     "code": "field_unknown",
     "layer": "shape",
     "member": "scope.scope.x"
+   }
+  },
+  {
+   "id": "TSV-ZERO",
+   "category": "non-canonical integer",
+   "description": "trust_snapshot_version 0 (below the strict minimum 1)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 0, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "trust_snapshot_version"
+   }
+  },
+  {
+   "id": "TSV-NEGATIVE",
+   "category": "non-canonical integer",
+   "description": "trust_snapshot_version -1",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": -1, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "trust_snapshot_version"
+   }
+  },
+  {
+   "id": "TSV-OVER-MAX",
+   "category": "non-canonical integer",
+   "description": "trust_snapshot_version 2^53 (above 2^53 - 1)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 9007199254740992, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "trust_snapshot_version"
+   }
+  },
+  {
+   "id": "TSV-FLOAT",
+   "category": "non-canonical integer",
+   "description": "trust_snapshot_version 7.0 (no coercion of a float)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7.0, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_number_unsupported",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "TSV-EXPONENT",
+   "category": "non-canonical integer",
+   "description": "trust_snapshot_version 7e0 (no coercion of an exponent form)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7e0, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_number_unsupported",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "TSV-LEADING-ZERO",
+   "category": "non-canonical integer",
+   "description": "trust_snapshot_version 07 (not canonical JSON)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 07, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "TSV-STRING",
+   "category": "wrong type",
+   "description": "trust_snapshot_version \"7\" (no coercion of a string)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": \"7\", \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_type_invalid",
+    "layer": "shape",
+    "member": "trust_snapshot_version"
+   }
+  },
+  {
+   "id": "TSV-TRUE",
+   "category": "wrong type",
+   "description": "trust_snapshot_version true (bool is not an integer)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": true, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_type_invalid",
+    "layer": "shape",
+    "member": "trust_snapshot_version"
+   }
+  },
+  {
+   "id": "TSV-NULL",
+   "category": "wrong type",
+   "description": "trust_snapshot_version null (no coercion of null)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": null, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_type_invalid",
+    "layer": "shape",
+    "member": "trust_snapshot_version"
    }
   }
  ],
@@ -6089,7 +6249,9 @@
   "observed_value_class",
   "original_selection_digest",
   "effective_policy_digest",
-  "projection_refusal_code"
+  "projection_refusal_code",
+  "stage_version",
+  "determination_basis"
  ],
  "defect_mapping": [
   {
@@ -6283,7 +6445,7 @@
   },
   {
    "id": "MP-field_invalid-projection",
-   "defect": "a verified input that cannot be projected into the binding (a statement scope token outside the ASCII grammar, a trust snapshot version above 2^53 - 1, or a refused derivation of effective_policy_digest): any projection-stage refusal",
+   "defect": "a verified input that cannot be projected into the binding (a statement scope token outside the ASCII grammar, a trust snapshot version above 2^53 - 1 (defence in depth only: the N-10(c) ingest bound refuses it earlier, see MP-trust_snapshot_invalid), or a refused derivation of effective_policy_digest): any projection-stage refusal",
    "verdict_class": "REFUSE",
    "registry_code": "field_invalid",
    "decision_kind": "required_policy_unavailable",
@@ -6334,7 +6496,8 @@
     "stage",
     "member"
    ],
-   "source": "spec 6"
+   "source": "spec 6",
+   "optional_rule": "REFUSE for every participation; never an optional fallback and never overlay_not_applied unless a separate authenticated non-participation determination exists (Architect Batch 6 rulings, N-12)"
   },
   {
    "id": "MP-contract_unsupported",
@@ -6351,7 +6514,8 @@
     "stage",
     "member"
    ],
-   "source": "spec 6"
+   "source": "spec 6",
+   "optional_rule": "REFUSE for every participation; never an optional fallback and never overlay_not_applied unless a separate authenticated non-participation determination exists (Architect Batch 6 rulings, N-12)"
   },
   {
    "id": "MP-composition_caller_invalid",
@@ -6415,7 +6579,7 @@
   },
   {
    "id": "MP-trust_snapshot_invalid",
-   "defect": "a trust snapshot DELIVERED for the fingerprint or verification is malformed: a duplicate issuer key_id, revoked_selections pair, min_epochs selection id or revoked_key_ids entry (TI-001 to TI-004)",
+   "defect": "a trust snapshot DELIVERED for the fingerprint or verification is malformed: a duplicate issuer key_id, revoked_selections pair, min_epochs selection id or revoked_key_ids entry (TI-001 to TI-004); or a delivered snapshot whose version is not a strict integer in [1, 2^53 - 1] (N-10(c): the representation bound is applied at ingest, before the snapshot is used in authorization or projection; vectors SIB-001 to SIB-013)",
    "verdict_class": "REFUSE",
    "registry_code": "trust_snapshot_invalid",
    "decision_kind": "required_policy_unavailable",
@@ -6426,9 +6590,11 @@
     "participation",
     "decision_kind",
     "stage",
-    "trust_snapshot_version"
+    "trust_snapshot_version",
+    "member"
    ],
-   "source": "contract 5; registry_successor/verify.py:245; PROPOSED verdict class (this PR): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped"
+   "source": "contract 5; registry_successor/verify.py:245; verdict class (accepted, Architect Batch 7): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped",
+   "ingest_bound": "N-10(c) RULED: stage `ingest`, member `trust_snapshot_version`; the refusal precedes every authority evaluation and every projection. The code reuses the existing trust_snapshot_invalid (the N-11 invalid-input refusal); the exact stage vocabulary and code are flagged for Architect confirmation"
   },
   {
    "id": "MP-selection_withdrawn",
@@ -6454,7 +6620,7 @@
     "decision_kind": "overlay_not_applied",
     "registry_code": "selection_withdrawn",
     "applied": false,
-    "only_through": "the authenticated optional-state determination (contract 3.2, 7.4 line 8); the fallback reason `withdrawn` is preserved in evidence"
+    "only_through": "the authenticated optional-state determination (contract 3.2, 7.4 line 8); the fallback reason `withdrawn` is preserved in evidence; permitted only as a valid explicit withdrawal or fallback transition that does not revive previous authority (Architect Batch 6 rulings, N-12)"
    }
   },
   {
@@ -6515,12 +6681,7 @@
     "selection_epoch"
    ],
    "source": "contract 7.4 line 5; kit REFUSE",
-   "optional_branch": {
-    "decision_kind": "overlay_not_applied",
-    "registry_code": "selection_expired",
-    "applied": false,
-    "only_through": "the authenticated optional-state determination (contract 7.4 line 8(c): an optional row past its verified valid_until); the fallback reason `expired` is preserved in evidence"
-   }
+   "optional_rule": "RULED (Architect final ruling N-12(c)): not a fallback basis for any participation. Definitive expiry refuses the expired selection (REFUSE); authoritative state unavailable is UNKNOWN_FAIL_CLOSED; only an independently authenticated never-required or valid withdrawn state permits an otherwise-permitted optional fallback, and then on that state, not on the expiry"
   },
   {
    "id": "MP-selection_not_yet_effective",
@@ -6580,8 +6741,8 @@
    "source": "contract 7.1; kit REFUSE"
   },
   {
-   "id": "MP-trust_snapshot_missing-verify",
-   "defect": "no trust snapshot was supplied to a verification call (the contract 3.3 meaning of the code)",
+   "id": "MP-trust_snapshot_missing-input",
+   "defect": "INPUT stage: the operation requires a trust snapshot and none was supplied (contract 3.3 meaning): required authoritative trust state is unavailable to the call",
    "verdict_class": "UNKNOWN_FAIL_CLOSED",
    "registry_code": "trust_snapshot_missing",
    "decision_kind": "required_policy_unavailable",
@@ -6592,15 +6753,17 @@
     "participation",
     "decision_kind",
     "stage",
+    "stage_version",
     "trust_snapshot_version"
    ],
    "source": "contract 3.3; conformance README lists the code under UNKNOWN_FAIL_CLOSED only",
-   "note": "one code, one class in every context: UNKNOWN_FAIL_CLOSED (HOLD), never an optional fallback by itself. The verification context (no snapshot supplied to this call) and the guard context (no accepted snapshot in durable state) are told apart by the mandatory evidence field `stage` (`verify` versus `guard`), not by a second code or a second class. Whether contract 3.3 intends one meaning for both contexts is an open owner question (spec section 12, N-11); either answer keeps UNKNOWN_FAIL_CLOSED.",
-   "stage_value": "verify"
+   "note": "Architect Batch 6 rulings, N-11: one code, because both stages mean the authoritative trust state the operation needs is unavailable; one class, UNKNOWN_FAIL_CLOSED. The stage is typed and versioned evidence (`stage` = INPUT, `stage_version` = ocs-evidence-stage/1). INPUT and DURABLE_STATE are NOT equivalent causes (a call was not given a required snapshot, versus durable state holds no applicable accepted snapshot) and are never merged into one cause or one stage value. Definitive malformed input (a snapshot supplied but not parseable or not well formed) is never `trust_snapshot_missing`: it is `trust_snapshot_invalid` or the applicable invalid-input refusal. Never an optional fallback by itself.",
+   "stage_value": "INPUT",
+   "stage_version": "ocs-evidence-stage/1"
   },
   {
-   "id": "MP-trust_snapshot_missing-guard",
-   "defect": "no accepted trust snapshot in durable state (support indeterminate): the guard context of the same code",
+   "id": "MP-trust_snapshot_missing-durable-state",
+   "defect": "DURABLE_STATE stage: no applicable trusted snapshot has been accepted in authoritative durable state (support indeterminate): required authoritative trust state is unavailable",
    "verdict_class": "UNKNOWN_FAIL_CLOSED",
    "registry_code": "trust_snapshot_missing",
    "decision_kind": "required_policy_unavailable",
@@ -6611,12 +6774,14 @@
     "participation",
     "decision_kind",
     "stage",
+    "stage_version",
     "scope_key_digest",
     "trust_snapshot_version"
    ],
    "source": "kit UNKNOWN_FAIL_CLOSED (HOLD)",
-   "note": "guard context only; the verification context has its own row (MP-trust_snapshot_missing-verify). Same code, same class UNKNOWN_FAIL_CLOSED in both; the contexts differ in the evidence field `stage`. Owner question N-11 (spec section 12).",
-   "stage_value": "guard"
+   "note": "Architect Batch 6 rulings, N-11: the same code and class as the INPUT stage (MP-trust_snapshot_missing-input), told apart only by the typed, versioned evidence stage; not an equivalent underlying cause. Never an optional fallback by itself.",
+   "stage_value": "DURABLE_STATE",
+   "stage_version": "ocs-evidence-stage/1"
   },
   {
    "id": "MP-trust_snapshot_expired-delivered",
@@ -6671,7 +6836,9 @@
     "unknown_cause"
    ],
    "source": "contract 7.4 preamble; kit UNKNOWN_FAIL_CLOSED (HOLD)",
-   "ruled_additive_code": true
+   "ruled_additive_code": true,
+   "optional_rule": "HOLD (UNKNOWN_FAIL_CLOSED) for every participation; never overlay_not_applied merely because the durable state is unknown (Architect Batch 6 rulings, N-12)",
+   "note": "N-12: an unknown store is never read as 'never activated'; an optional scope under an unknown store is HOLD, not an optional fallback."
   },
   {
    "id": "MP-not_activated",
@@ -6694,7 +6861,7 @@
   },
   {
    "id": "MP-policy_identity_mismatch",
-   "defect": "claim member differs from the durable row (scope key, selection_id, selection_digest, record triple, activation_ref)",
+   "defect": "a claim or binding identity member differs from the authoritative durable row (scope_key, selection_id, selection_epoch ahead of the row, selection_digest, selected record identity, activation_ref); a claim epoch BEHIND the row is not this defect: it is selection_epoch_stale (REFUSE_STALE)",
    "verdict_class": "REFUSE",
    "registry_code": "policy_identity_mismatch",
    "decision_kind": "required_policy_unavailable",
@@ -6708,14 +6875,36 @@
     "scope_key_digest",
     "member",
     "selection_id",
+    "selection_epoch",
+    "high_water_epoch",
     "selection_digest",
     "record_id",
     "record_version",
     "record_digest",
     "activation_ref"
    ],
-   "source": "contract 7.4 lines 2 and 3; kit REFUSE",
-   "ruled_additive_code": true
+   "source": "contract 7.4 lines 2 and 3; kit REFUSE; Architect Batch 6 rulings, ruling 4.3",
+   "ruled_additive_code": true,
+   "member_set": [
+    "scope_key",
+    "selection_id",
+    "selection_epoch",
+    "selection_digest",
+    "record",
+    "activation_ref"
+   ],
+   "member_values": [
+    "scope_key",
+    "selection_id",
+    "selection_epoch",
+    "selection_digest",
+    "record_id",
+    "record_version",
+    "record_digest",
+    "activation_ref"
+   ],
+   "stale_epoch_routes_to": "selection_epoch_stale",
+   "note": "All applicable authoritative identity members of the complete declared canonical binding version (ocs-policy-binding/1) are accounted for; see `policy_identity_members`. A member a historical binding or contract version does not declare is never manufactured and never checked."
   },
   {
    "id": "MP-deny_all",
@@ -6886,7 +7075,7 @@
     "proposed_layer": "identity",
     "verdict_class": "REFUSE",
     "retry": "never_same_input",
-    "needed_for": "guard 7.4 lines 2 and 3: a claim member (scope key, selection_id, selection_digest, record triple, activation_ref) differs from the durable row; the failing member travels as structured evidence field `member`, so one code does not collapse the causes"
+    "needed_for": "guard 7.4 lines 2 and 3: a claim or binding identity member (scope_key, selection_id, selection_epoch ahead of the row, selection_digest, selected record identity, activation_ref) differs from the durable row; a claim epoch behind the row is selection_epoch_stale (REFUSE_STALE), not this code; the failing member travels as structured evidence field `member`, so one code does not collapse the causes (Architect Batch 6 rulings, ruling 4.3)"
    },
    {
     "code": "store_unknown",
@@ -7494,7 +7683,7 @@
    }
   }
  ],
- "projection_stage_refusals_rule": "Any refusal at the projection stage (a scope token, a snapshot version, or any later verified-input-to-binding refusal) creates no binding for any participation and has exactly the participation effects of scope_projection_effects: required refuses (HOLD only if state is indeterminate), optional never falls back by the refusal itself, only through the authenticated optional-state determination; never overlay_not_applied or ACCEPT by itself. The effect function takes no member argument by construction.",
+ "projection_stage_refusals_rule": "Any refusal at the projection stage (a scope token, a snapshot version, or any later verified-input-to-binding refusal) creates no binding for any participation and has exactly the participation effects of scope_projection_effects: required refuses (HOLD only if state is indeterminate), optional never falls back by the refusal itself, only through the authenticated optional-state determination; never overlay_not_applied or ACCEPT by itself. The effect function takes no member argument by construction. Under the Architect final ruling N-10(c) the snapshot-version kind is defence in depth: the representation bound is applied at ingest (snapshot_version_ingest_bound), so an out-of-range verified version never reaches projection in a conforming implementation.",
  "projection_effect_matrix": [
   {
    "id": "PEM-11",
@@ -8015,5 +8204,1208 @@
    }
   }
  ],
- "projection_effect_matrix_rule": "Every projection-stage refusal kind (scope token, snapshot version, and each refused derivation of effective_policy_digest) has one and the same effect for a given participation, activation state and optional-state determination; the effect function takes no refusal kind and no member. Residuals recorded for the Architect, not decided here: (1) a refused projection leaves the scope reading never-activated, the state that permits the optional fallback; (2) a verified snapshot version above 2^53 - 1 affects every scope at once."
+ "projection_effect_matrix_rule": "Every projection-stage refusal kind (scope token, snapshot version, and each refused derivation of effective_policy_digest) has one and the same effect for a given participation, activation state and optional-state determination; the effect function takes no refusal kind and no member. Residuals recorded for the Architect, not decided here: (1) RULED (Architect Batch 6 rulings, N-12): a refused projection does not establish 'never activated' and never justifies a fallback, see `optional_fallback_determination`; (2) a verified snapshot version above 2^53 - 1 affects every scope at once.",
+ "token_unicode": {
+  "rule": "vectors for the frozen token membership table (spec 6.1, Architect Batch 6 rulings N-13); the expected result is a function of the table alone, never of a runtime Unicode database",
+  "vectors": [
+   {
+    "id": "TU-001",
+    "description": "ASCII entry",
+    "code_points": [
+     "0061",
+     "0062"
+    ],
+    "expected": {
+     "valid": true
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-002",
+    "description": "Cyrillic capital Zhe (assigned before 15.1)",
+    "code_points": [
+     "0416"
+    ],
+    "expected": {
+     "valid": true
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-003",
+    "description": "non-BMP Deseret capital (assigned before 15.1)",
+    "code_points": [
+     "10400"
+    ],
+    "expected": {
+     "valid": true
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-004",
+    "description": "CJK ideograph",
+    "code_points": [
+     "4E2D"
+    ],
+    "expected": {
+     "valid": true
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-005",
+    "description": "128 code points is the maximum",
+    "code_points": [
+     "0078"
+    ],
+    "expected": {
+     "valid": true
+    },
+    "kind": "control",
+    "repeat": 128
+   },
+   {
+    "id": "TU-006",
+    "description": "129 code points",
+    "code_points": [
+     "0078"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control",
+    "repeat": 129
+   },
+   {
+    "id": "TU-007",
+    "description": "empty token",
+    "code_points": [],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-008",
+    "description": "asterisk",
+    "code_points": [
+     "002A"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-009",
+    "description": "space (Zs)",
+    "code_points": [
+     "0020"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-010",
+    "description": "no-break space (Zs)",
+    "code_points": [
+     "00A0"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-011",
+    "description": "line separator (Zl)",
+    "code_points": [
+     "2028"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-012",
+    "description": "zero width space (Cf)",
+    "code_points": [
+     "200B"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-013",
+    "description": "control (Cc) newline",
+    "code_points": [
+     "000A"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-014",
+    "description": "private use (Co)",
+    "code_points": [
+     "E000"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-015",
+    "description": "surrogate code point (Cs)",
+    "code_points": [
+     "D800"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-016",
+    "description": "noncharacter U+FFFF (Cn)",
+    "code_points": [
+     "FFFF"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-017",
+    "description": "last code point U+10FFFF (Cn)",
+    "code_points": [
+     "10FFFF"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-018",
+    "description": "code point assigned exactly in Unicode 15.1 (CJK Extension I, U+2EBF0, Lo): permitted by the table, and refused by a runtime database older than 15.1",
+    "code_points": [
+     "2EBF0"
+    ],
+    "expected": {
+     "valid": true
+    },
+    "kind": "control"
+   },
+   {
+    "id": "TU-D01",
+    "description": "divergent code point U+088F: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "088F"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D02",
+    "description": "divergent code point U+1ACF: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "1ACF"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D03",
+    "description": "divergent code point U+20C1: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "20C1"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D04",
+    "description": "divergent code point U+31E4: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "31E4"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D05",
+    "description": "divergent code point U+A7CB: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "A7CB"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D06",
+    "description": "divergent code point U+FBC3: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "FBC3"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D07",
+    "description": "divergent code point U+105C0: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "105C0"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D08",
+    "description": "divergent code point U+11380: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "11380"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D09",
+    "description": "divergent code point U+13460: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "13460"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D10",
+    "description": "divergent code point U+14000: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "14000"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D11",
+    "description": "divergent code point U+16100: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "16100"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D12",
+    "description": "divergent code point U+187F8: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "187F8"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D13",
+    "description": "divergent code point U+1CC00: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "1CC00"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D14",
+    "description": "divergent code point U+1E5D0: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "1E5D0"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D15",
+    "description": "divergent code point U+1F6D8: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "1F6D8"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D16",
+    "description": "divergent code point U+2B73A: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "2B73A"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D17",
+    "description": "divergent code point U+2CEA2: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
+    "code_points": [
+     "2CEA2"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D18",
+    "description": "divergent code point inside an otherwise valid token",
+    "code_points": [
+     "0061",
+     "088F",
+     "0062"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D19",
+    "description": "divergent plane 3 code point U+323B0 (first of 4298 in U+30000..U+33479): Cn in 15.1, assigned in 17.0",
+    "code_points": [
+     "323B0"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D20",
+    "description": "divergent plane 3 code point U+33479 (last): Cn in 15.1, assigned in 17.0",
+    "code_points": [
+     "33479"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   }
+  ],
+  "divergence_measured": {
+   "between": "Python 3.13 (Unicode 15.1) and Node 22 (Unicode 17.0)",
+   "range": "U+0080..U+2FFFF",
+   "count": 5690,
+   "direction": "unassigned in 15.1, assigned in 17.0; none in the other direction",
+   "first": "U+088F",
+   "last": "U+2CEAD",
+   "whole_range": {
+    "between": "Python 3.13 (Unicode 15.1) and Node 22.23.4 (Unicode 17.0)",
+    "range": "U+0000..U+10FFFF",
+    "count": 9988,
+    "plane3_extra": {
+     "range": "U+30000..U+33479",
+     "count": 4298,
+     "first": "U+323B0",
+     "last": "U+33479"
+    },
+    "direction": "unassigned in 15.1, assigned in 17.0; none in the other direction"
+   },
+   "note": "'count' (5690) is for U+0080..U+2FFFF only; the whole-range total is 9988. Both are one comparison on one release pair, not a bound."
+  }
+ },
+ "policy_identity_members": {
+  "binding_profile": "ocs-policy-binding/1",
+  "rule": "The canonical row accounts for ALL applicable authoritative identity members of the complete declared binding version; a member a version does not declare is never manufactured (Architect Batch 6 rulings, ruling 4.3). A definitively stale epoch is REFUSE_STALE `selection_epoch_stale`, never `policy_identity_mismatch`.",
+  "members": [
+   {
+    "member": "scope_key",
+    "binding_members": [
+     "scope",
+     "consumer_id",
+     "family",
+     "operation",
+     "selection_id"
+    ],
+    "selection_id_included": true,
+    "canonical": "difference -> policy_identity_mismatch (member scope_key) (the scope key is the seven-member key of spec 5.7, selection_id included; its selection_id component is also accounted by its own member row below, and this document does not decide which member name a pure selection_id difference is reported under)",
+    "kit": "the kit selects the durable row BY scope key (seven members, selection_id included): a claim whose scope key has no row is not_activated, and a different selection_id within one chain is selection_conflict; the kit never compares a scope key against an already selected row",
+    "agreement": "overlap is the row lookup only; see not_activated and selection_conflict rows"
+   },
+   {
+    "member": "selection_id",
+    "binding_members": [
+     "selection_id"
+    ],
+    "canonical": "difference -> policy_identity_mismatch (member selection_id)",
+    "kit": "selection_id is a member of the kit's scope key: no row -> not_activated; another row of the same chain -> selection_conflict",
+    "agreement": "overlap is the row lookup only"
+   },
+   {
+    "member": "selection_epoch",
+    "binding_members": [
+     "selection_epoch"
+    ],
+    "canonical": "claim epoch < row epoch -> REFUSE_STALE selection_epoch_stale; claim epoch > row epoch -> REFUSE policy_identity_mismatch (member selection_epoch)",
+    "kit": "b.selection_epoch < row.epoch -> REFUSE_STALE selection_epoch_stale; b.selection_epoch != row.epoch (ahead) -> REFUSE policy_identity_mismatch",
+    "agreement": "identical (kit vector GD-02)"
+   },
+   {
+    "member": "selection_digest",
+    "binding_members": [
+     "selection_digest"
+    ],
+    "canonical": "difference -> policy_identity_mismatch (member selection_digest)",
+    "kit": "b.selection_digest != row.selection_digest -> REFUSE policy_identity_mismatch",
+    "agreement": "identical (kit vector GD-02)"
+   },
+   {
+    "member": "record",
+    "binding_members": [
+     "record_id",
+     "record_version",
+     "record_digest"
+    ],
+    "canonical": "difference in any of the three -> policy_identity_mismatch (member record_id, record_version or record_digest)",
+    "kit": "b.record != row.record -> REFUSE policy_identity_mismatch",
+    "agreement": "identical"
+   },
+   {
+    "member": "activation_ref",
+    "binding_members": [
+     "activation_ref"
+    ],
+    "canonical": "difference -> policy_identity_mismatch (member activation_ref)",
+    "kit": "b.activation_ref != row.activation_ref -> REFUSE policy_identity_mismatch",
+    "agreement": "identical (kit vector GD-02)"
+   }
+  ],
+  "kit_guard_order": [
+   "row lookup by scope key (not_activated, selection_conflict)",
+   "selection_revoked",
+   "selection_withdrawn",
+   "selection_epoch_stale (claim epoch behind the row)",
+   "policy_identity_mismatch (epoch ahead, selection_digest, record, activation_ref)"
+  ],
+  "kit_code_changed": false
+ },
+ "optional_fallback_determination": {
+  "rule": "Architect Batch 6 rulings, N-12. An optional fallback is allowed ONLY on authenticated consumer-owned state that independently establishes that the scope never required governed policy (basis never_required_governed_policy), or on a valid explicit withdrawal or fallback transition that does not revive previous authority (basis valid_withdrawal_fallback_transition). A refused projection does not establish 'never activated' and never justifies a fallback. An unknown store is UNKNOWN_FAIL_CLOSED and never overlay_not_applied. REQUIRED participation fails closed. family_unsupported and contract_unsupported are REFUSE unless a separate authenticated non-participation determination exists (basis authenticated_non_participation). N-12(c) (Architect final ruling): selection_expired does NOT establish eligibility for optional fallback. A definitive expiry refuses the expired selection (REFUSE) for every participation. If the applicable authoritative state is unavailable the verdict is UNKNOWN_FAIL_CLOSED. Only an independently authenticated never-required state or a valid withdrawn state is a fallback basis; expiry is never one, and a withdrawn row that is also past its valid_until is decided on the withdrawal (code selection_withdrawn), never on the expiry.",
+  "bases": [
+   "never_required_governed_policy",
+   "valid_withdrawal_fallback_transition",
+   "authenticated_non_participation"
+  ],
+  "vectors": [
+   {
+    "id": "OFD-001",
+    "description": "optional, scope_token refusal, authenticated consumer state independently shows the scope never required governed policy",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "optional_fallback_via_determination",
+     "fallback_permitted": true,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-002",
+    "description": "optional, scope_token refusal, a valid explicit withdrawal transition that does not revive prior authority",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "valid_withdrawal_fallback_transition",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "optional_fallback_via_determination",
+     "fallback_permitted": true,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-003",
+    "description": "optional, a withdrawal transition that would revive previous authority is not a fallback",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "valid_withdrawal_fallback_transition",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": true,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-004",
+    "description": "optional, the 'never activated' reading comes only from the refused projection itself (no state row because binding creation was refused)",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": true,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-005",
+    "description": "optional, determination not authenticated",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": false,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-006",
+    "description": "optional under an unknown store: HOLD, never overlay_not_applied",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "unknown",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-007",
+    "description": "optional under an unknown store even with an authenticated claim of never_required: still HOLD",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "unknown",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-008",
+    "description": "required participation fails closed whatever the determination",
+    "refusal_kind": "scope_token",
+    "participation": "required",
+    "store": "known",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-009",
+    "description": "required under an unknown store is HOLD",
+    "refusal_kind": "scope_token",
+    "participation": "required",
+    "store": "unknown",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-010",
+    "description": "optional family_unsupported with only the generic never_required determination: REFUSE",
+    "refusal_kind": "effective_family_unsupported",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-011",
+    "description": "optional contract_unsupported with only the generic withdrawal determination: REFUSE",
+    "refusal_kind": "effective_contract_unsupported",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "valid_withdrawal_fallback_transition",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-012",
+    "description": "optional family_unsupported with a separate authenticated non-participation determination",
+    "refusal_kind": "effective_family_unsupported",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "authenticated_non_participation",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "optional_fallback_via_determination",
+     "fallback_permitted": true,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-013",
+    "description": "optional contract_unsupported with a separate authenticated non-participation determination",
+    "refusal_kind": "effective_contract_unsupported",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "authenticated_non_participation",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "optional_fallback_via_determination",
+     "fallback_permitted": true,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-014",
+    "description": "a non-participation determination does not turn a scope_token refusal into a fallback",
+    "refusal_kind": "scope_token",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "authenticated_non_participation",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-015",
+    "description": "optional row past its verified valid_until, authenticated determination: expiry is not a fallback basis (N-12(c)), so the expired selection is refused",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "row_past_valid_until",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-016",
+    "description": "optional row past valid_until under an unknown store: UNKNOWN_FAIL_CLOSED (HOLD), never a fallback (N-12(c))",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "unknown",
+    "determination_basis": "row_past_valid_until",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-017",
+    "description": "optional, expired selection with an authenticated never-required claim: the expiry still refuses the expired selection (a row that expired was activated, so the claim cannot be independent evidence for it)",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-018",
+    "description": "optional, expired selection with a valid withdrawal transition: the expired selection is refused; any fallback is decided on the selection_withdrawn state, not on the expiry",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "valid_withdrawal_fallback_transition",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-019",
+    "description": "required, definitive expiry, known state: REFUSE",
+    "refusal_kind": "selection_expired",
+    "participation": "required",
+    "store": "known",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-020",
+    "description": "required, expiry under an unknown store: UNKNOWN_FAIL_CLOSED (HOLD)",
+    "refusal_kind": "selection_expired",
+    "participation": "required",
+    "store": "unknown",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-021",
+    "description": "optional, expiry with no determination at all: REFUSE",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   }
+  ],
+  "expiry_rule": "RULED (Architect final ruling N-12(c)): expiry (selection_expired) is never a fallback basis. It refuses the expired selection; with unavailable authoritative state it is UNKNOWN_FAIL_CLOSED; no determination basis converts a selection_expired outcome into a fallback."
+ },
+ "n10_input_contract": {
+  "rule": "Architect Batch 6 rulings, N-10 (syntax-first parsing accepted). The canonical v2 identity boundary does not reuse load_document where it differs from this contract.",
+  "requirements": {
+   "deterministic_byte_level_parsing": [
+    "IBND-NOT-TEXT-INVALID-BYTE",
+    "IBND-NOT-TEXT-OVERLONG",
+    "IBND-BOM-NOT-STRIPPED",
+    "BI-PARSE-ORDER-FLOAT-THEN-TRAILING",
+    "BI-PARSE-ORDER-DUP-THEN-TRAILING"
+   ],
+   "duplicate_member_rejection": [
+    "BI-DUP-TOPLEVEL",
+    "BI-DUP-NESTED",
+    "BI-DUP-ESCAPED-KEY",
+    "IBND-DEEP-10000-DUP"
+   ],
+   "ambiguous_key_rejection": [
+    "BI-DUP-ESCAPED-PAIR-VS-RAW",
+    "BI-SCOPE-LITERAL-DOT-KEY-AFTER",
+    "BI-SCOPE-LITERAL-DOT-KEY-IMPERSONATES-MISSING"
+   ],
+   "strict_numeric_parsing": [
+    "BI-INT-FLOAT",
+    "BI-INT-EXPONENT",
+    "BI-INT-LEADING-ZERO",
+    "BI-INT-NAN",
+    "BI-INT-NEGATIVE-ZERO",
+    "BI-INT-5000-DIGITS",
+    "TSV-FLOAT",
+    "TSV-EXPONENT",
+    "TSV-LEADING-ZERO"
+   ],
+   "bounded_input_size": [
+    "IBND-LIMIT-OK",
+    "IBND-OVER-LIMIT",
+    "IBND-MULTIBYTE-OVER-LIMIT",
+    "IBND-DEEP-OVER-SIZE-LIMIT"
+   ],
+   "canonical_serialization": [
+    "BV-001"
+   ],
+   "no_coercion_of_malformed_values": [
+    "BI-TYPE-EPOCH-TRUE",
+    "BI-TYPE-EPOCH-STRING",
+    "TSV-STRING",
+    "TSV-TRUE",
+    "TSV-NULL"
+   ]
+  },
+  "snapshot_version": {
+   "min": 1,
+   "max": 9007199254740991,
+   "type": "strict integer, exact canonical JSON integer text",
+   "not_an_operational_freshness_bound": true,
+   "vectors": [
+    "TSV-ZERO",
+    "TSV-NEGATIVE",
+    "TSV-OVER-MAX",
+    "TSV-FLOAT",
+    "TSV-EXPONENT",
+    "TSV-LEADING-ZERO",
+    "TSV-STRING",
+    "TSV-TRUE",
+    "TSV-NULL"
+   ]
+  }
+ },
+ "snapshot_version_ingest_bound": {
+  "rule": "Architect final ruling N-10(c): the snapshot-version representation bound (a strict integer in [1, 9007199254740991], exact canonical JSON integer text) is applied to a delivered TrustSnapshot.version BEFORE the snapshot is used in authorization or projection. An unsupported representation is refused at ingest and never reaches authority evaluation, the fingerprint, the floor comparison or the projection. The bound is a representation bound, not an operational freshness bound.",
+  "stage": "ingest",
+  "code": "trust_snapshot_invalid",
+  "member": "trust_snapshot_version",
+  "min": 1,
+  "max": 9007199254740991,
+  "code_status": "The ruling fixes the ordering, not the code name. This maps the refusal onto the existing trust_snapshot_invalid (N-11: definitive malformed input uses the invalid-input refusal, never missing). ACCEPTED mapping (ACCEPTED by the Architect (Batch 7, 2026-10-25)) as typed diagnostic metadata, never canonical digest data. A source that still refuses at the projection stage with field_invalid (defence in depth) is not conforming to the ordering.",
+  "representations": [
+   "int",
+   "float",
+   "string",
+   "bool",
+   "null"
+  ],
+  "vectors": [
+   {
+    "id": "SIB-001",
+    "description": "minimum version",
+    "representation": "int",
+    "text": "1",
+    "expected": {
+     "result": "accepted_for_authority_evaluation",
+     "authority_evaluation_reached": true,
+     "projection_reached": true
+    }
+   },
+   {
+    "id": "SIB-002",
+    "description": "above int32, valid (the verifier accepted it and the representation carries it)",
+    "representation": "int",
+    "text": "2147483648",
+    "expected": {
+     "result": "accepted_for_authority_evaluation",
+     "authority_evaluation_reached": true,
+     "projection_reached": true
+    }
+   },
+   {
+    "id": "SIB-003",
+    "description": "maximum, 2^53 - 1",
+    "representation": "int",
+    "text": "9007199254740991",
+    "expected": {
+     "result": "accepted_for_authority_evaluation",
+     "authority_evaluation_reached": true,
+     "projection_reached": true
+    }
+   },
+   {
+    "id": "SIB-004",
+    "description": "zero",
+    "representation": "int",
+    "text": "0",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-005",
+    "description": "negative",
+    "representation": "int",
+    "text": "-1",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-006",
+    "description": "2^53: not exact in every JSON implementation",
+    "representation": "int",
+    "text": "9007199254740992",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-007",
+    "description": "a 41-digit integer",
+    "representation": "int",
+    "text": "1000000000000000000000000000000000000000",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-008",
+    "description": "a float literal, even with an integral value",
+    "representation": "float",
+    "text": "7.0",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-009",
+    "description": "a string that reads as an integer",
+    "representation": "string",
+    "text": "7",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-010",
+    "description": "boolean true (a bool is never an integer)",
+    "representation": "bool",
+    "text": "true",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-011",
+    "description": "null",
+    "representation": "null",
+    "text": "null",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-012",
+    "description": "a 700-digit integer literal (beyond the 640-digit interpreter setting): refused by length, never converted",
+    "representation": "int",
+    "text_repeat": [
+     "9",
+     700
+    ],
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-013",
+    "description": "a 5000-digit integer literal (beyond Python's default 4300-digit limit): refused with trust_snapshot_invalid, never an uncaught interpreter error",
+    "representation": "int",
+    "text_repeat": [
+     "1",
+     5000
+    ],
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   }
+  ]
+ }
 }

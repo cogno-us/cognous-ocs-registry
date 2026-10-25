@@ -196,7 +196,7 @@
   {
     "gate_id": "QG-06",
     "name": "Required-policy refusal",
-    "statement": "A required registry policy that is unavailable/invalid/stale/revoked/expired never falls back to a broader caller policy; optional mode is overlay_not_applied.",
+    "statement": "A required registry policy that is unavailable/invalid/stale/revoked/expired never falls back to a broader caller policy; optional mode is overlay_not_applied only through the authenticated optional-state determination (an unknown store is UNKNOWN_FAIL_CLOSED and selection_expired is refused for every participation: rulings N-12 and N-12(c)).",
     "existing_test_ids": [
       "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_required_refusal_never_returns_caller_policy",
       "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_missing_required_selection_never_falls_back_to_broader_caller",
@@ -216,7 +216,7 @@
       "each mapped code keeps detail.registry_code; overloaded codes keep their subcause text distinguishable",
       "verifier failure and malformed caller policy on a required profile: no dispatch, no fallback to the caller policy",
       "falling back to the caller per failure class, or deleting a code from the map, must make its case fail (mutation leg)",
-      "a required scope that is withdrawn, revoked, expired or unavailable never returns the caller policy and never succeeds; optional returns overlay_not_applied with the caller policy unchanged"
+      "a required scope that is withdrawn, revoked, expired or unavailable never returns the caller policy and never succeeds; optional returns overlay_not_applied with the caller policy unchanged only through the authenticated optional-state determination (never for expiry or an unknown store)"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
     "sprint": "S5-4",
