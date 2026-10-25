@@ -1,0 +1,685 @@
+{
+ "schema": "ocs-conformance-vectors/1",
+ "label": "SYNTHETIC-TEST-ONLY",
+ "status": "IMPLEMENTED / DEVELOPER-TESTED; not independently qualified",
+ "scope_base": {
+  "consumer_id": "runtime-emulator",
+  "tenant": "tenant-a",
+  "institution": "inst-a",
+  "authority_domain": "domain-a",
+  "operation": "op-transfer",
+  "family": "f1ab-local-execution-allowlist"
+ },
+ "defaults": {
+  "select": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "valid_from": 100,
+   "valid_until": 1000,
+   "issuer_key_id": "key-1",
+   "supersedes": null,
+   "record": {
+    "record_id": "rec-1",
+    "record_version": 1,
+    "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+   }
+  },
+  "withdraw": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "issuer_key_id": "key-1"
+  },
+  "sync": {
+   "now": 200
+  },
+  "external_floor": {
+   "now": 200
+  },
+  "read": {
+   "now": 200
+  },
+  "guard": {
+   "now": 300
+  },
+  "restore": {
+   "now": 200
+  },
+  "lose_state": {
+   "now": 200
+  },
+  "rebaseline": {
+   "now": 200
+  },
+  "relax_scope_required": {
+   "now": 200
+  }
+ },
+ "vectors": [
+  {
+   "id": "SN-01-below-floor-refused",
+   "title": "A snapshot version below the external floor is refused",
+   "cites": [
+    "contract 5",
+    "ADR D-25"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "external_floor",
+      "min_trust_snapshot_version": 5
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "floor_raised"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 4,
+       "fingerprint": "sha256:cd45bf46df2cac79622ae2084ed5da3c5389535234e967ea8988c5d4760004e3",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_version_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 5,
+       "fingerprint": "sha256:98348be9e7b0f373e7771050b117368e8321e9a01d7fb63b2067f29ab8dbca9b",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 1,
+      "evidence_count": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "SN-02-below-last-accepted-refused",
+   "title": "A snapshot older than the last accepted one is refused (rollback by older snapshot)",
+   "cites": [
+    "contract 5",
+    "ADR D-25",
+    "plan 08 risks 8 and 9"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 5,
+       "fingerprint": "sha256:98348be9e7b0f373e7771050b117368e8321e9a01d7fb63b2067f29ab8dbca9b",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 3,
+       "fingerprint": "sha256:2c26640759cebfd3cc0f53d21f4e3cd6dbed474d7784b513824d817a04a4dd40",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_version_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 4,
+       "fingerprint": "sha256:cd45bf46df2cac79622ae2084ed5da3c5389535234e967ea8988c5d4760004e3",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-z",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_version_stale"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 1,
+      "evidence_count": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "SN-03-equal-version-idempotent-only",
+   "title": "Equal version is accepted only as an identical redelivery; a different fingerprint is refused",
+   "cites": [
+    "contract 5 equal version",
+    "ADR D-25"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 5,
+       "fingerprint": "sha256:98348be9e7b0f373e7771050b117368e8321e9a01d7fb63b2067f29ab8dbca9b",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 5,
+       "fingerprint": "sha256:98348be9e7b0f373e7771050b117368e8321e9a01d7fb63b2067f29ab8dbca9b",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "idempotent_redelivery"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 1,
+      "evidence_count": 0
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 5,
+       "fingerprint": "sha256:00693f087c75013f10b7eb8ddb7c1a849686dec4a7920d1207b5b1cdc87bc17f",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_version_stale"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "evidence_count": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "SN-04-expiry-edge",
+   "title": "A snapshot expired at the observation instant is refused; one second of validity is accepted",
+   "cites": [
+    "contract 5 expiry before version",
+    "clock-skew edge"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 200,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "trust_snapshot_expired"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 201,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 1,
+      "evidence_count": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "SN-05-external-floor-never-lowered",
+   "title": "The external floor is raise-only",
+   "cites": [
+    "contract 8.3 external floor",
+    "ADR D-04"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "external_floor",
+      "min_trust_snapshot_version": 3
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "floor_raised"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "external_floor",
+      "min_trust_snapshot_version": 2
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "external_floor_lowered"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "external_floor",
+      "min_trust_snapshot_version": 3
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "floor_unchanged"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "evidence_count": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "SN-06-min-epoch-floor-never-lowered",
+   "title": "A snapshot lowering or dropping a min_epochs floor is refused",
+   "cites": [
+    "contract 5",
+    "ADR D-04"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         3
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         2
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "min_epoch_floor_lowered"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "min_epoch_floor_lowered"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         5
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 2,
+      "evidence_count": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "SN-07-rollback-hiding-revocation",
+   "title": "An older or lower snapshot that hides a revocation cannot clear it",
+   "cites": [
+    "plan 08 risk 9",
+    "contract 5 grow-only"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 3,
+       "fingerprint": "sha256:2c26640759cebfd3cc0f53d21f4e3cd6dbed474d7784b513824d817a04a4dd40",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_version_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 4,
+       "fingerprint": "sha256:cd45bf46df2cac79622ae2084ed5da3c5389535234e967ea8988c5d4760004e3",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_revocation_omitted"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "revoked": [
+       [
+        "sel-a",
+        1
+       ]
+      ],
+      "row": {
+       "A": {
+        "activation_state": "revoked",
+        "epoch": 1
+       }
+      }
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked"
+     }
+    }
+   ]
+  },
+  {
+   "id": "SN-08-superseded-by-floor",
+   "title": "A row below a newer min_epochs floor reads as superseded",
+   "cites": [
+    "contract 7.2 superseded"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         2
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "superseded"
+     }
+    }
+   ]
+  }
+ ]
+}

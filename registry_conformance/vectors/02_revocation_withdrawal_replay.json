@@ -1,0 +1,1435 @@
+{
+ "schema": "ocs-conformance-vectors/1",
+ "label": "SYNTHETIC-TEST-ONLY",
+ "status": "IMPLEMENTED / DEVELOPER-TESTED; not independently qualified",
+ "scope_base": {
+  "consumer_id": "runtime-emulator",
+  "tenant": "tenant-a",
+  "institution": "inst-a",
+  "authority_domain": "domain-a",
+  "operation": "op-transfer",
+  "family": "f1ab-local-execution-allowlist"
+ },
+ "defaults": {
+  "select": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "valid_from": 100,
+   "valid_until": 1000,
+   "issuer_key_id": "key-1",
+   "supersedes": null,
+   "record": {
+    "record_id": "rec-1",
+    "record_version": 1,
+    "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+   }
+  },
+  "withdraw": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "issuer_key_id": "key-1"
+  },
+  "sync": {
+   "now": 200
+  },
+  "external_floor": {
+   "now": 200
+  },
+  "read": {
+   "now": 200
+  },
+  "guard": {
+   "now": 300
+  },
+  "restore": {
+   "now": 200
+  },
+  "lose_state": {
+   "now": 200
+  },
+  "rebaseline": {
+   "now": 200
+  },
+  "relax_scope_required": {
+   "now": 200
+  }
+ },
+ "vectors": [
+  {
+   "id": "RV-01-revoked-set-monotonic",
+   "title": "A newer snapshot omitting an earlier revocation is refused; the revoked set only grows",
+   "cites": [
+    "contract 5, 7.1 revoke/sync",
+    "ADR D-04"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "revoked": [
+       [
+        "sel-a",
+        1
+       ]
+      ],
+      "row": {
+       "A": {
+        "activation_state": "revoked",
+        "epoch": 1
+       }
+      }
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_revocation_omitted"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "revoked": [
+       [
+        "sel-a",
+        1
+       ]
+      ],
+      "row": {
+       "A": {
+        "activation_state": "revoked",
+        "epoch": 1
+       }
+      },
+      "log_length": 3,
+      "evidence_count": 1
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ],
+        [
+         "sel-x",
+         9
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "revoked": [
+       [
+        "sel-a",
+        1
+       ],
+       [
+        "sel-x",
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked",
+      "display": "revoked"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-02-sync-never-reactivates",
+   "title": "Sync never activates, withdraws or changes unrelated rows; it only records and appends revokes",
+   "cites": [
+    "ADR D-04",
+    "contract 7.1 sync"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-other",
+         4
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "active",
+        "epoch": 1
+       }
+      },
+      "log_length": 2,
+      "high_water": {
+       "A": 1
+      }
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-other",
+         4
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "withdrawn",
+        "epoch": 2
+       }
+      }
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "withdrawn",
+      "display": "DISABLED"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-03-withdraw-epoch-ordering",
+   "title": "Withdraw at equal or lower epoch is refused; strictly higher naming the current row is accepted",
+   "cites": [
+    "contract 7.1 withdraw",
+    "ADR D-04",
+    "R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:e5b2c285068cc0c713e6e063902af55f7ec8963ae146f2b7a8eb716a86748fc9",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:ce825ae82501271ba19f3f391443b8d61cc57d94b07f56dfbdaa92c7b14fac72",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "withdrawn",
+        "epoch": 3
+       }
+      },
+      "high_water": {
+       "A": 3
+      },
+      "evidence_count": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-04-activate-after-revoke-refused",
+   "title": "Activating a revoked pair (same or pre-revoked epoch) is refused; the revoked pair is never resurrected",
+   "cites": [
+    "contract 7.1 revoked epoch never resurrected",
+    "ADR D-04",
+    "R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ],
+        [
+         "sel-a",
+         2
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:b0e3c461cee4c603bd987c3f1456c44198252a2dfd66eac8fc40b7d03fb73f05",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_revoked"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_revoked"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "revoked",
+        "epoch": 1
+       }
+      },
+      "revoked": [
+       [
+        "sel-a",
+        1
+       ],
+       [
+        "sel-a",
+        2
+       ]
+      ],
+      "evidence_count": 2
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked",
+      "display": "revoked"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-05-reversal-only-by-fresh-higher-epoch",
+   "title": "The only way past a revoked row is a fresh higher-epoch select naming that row; the revoked pair stays revoked",
+   "cites": [
+    "ADR D-04 reactivation",
+    "contract 7.1",
+    "R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "active",
+        "epoch": 3
+       }
+      },
+      "revoked": [
+       [
+        "sel-a",
+        1
+       ]
+      ]
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 3,
+       "statement_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_revoked"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-06-issuer-key-revocation",
+   "title": "A revoked issuer key revokes rows it signed (cause kept distinct) and blocks new statements under that key",
+   "cites": [
+    "contract 7.1 revoke via revoked_key_ids",
+    "issuer_key_revoked"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [
+        "key-1"
+       ],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "revoked",
+        "epoch": 1
+       }
+      },
+      "revoked": [
+       [
+        "sel-a",
+        1
+       ]
+      ]
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "issuer_key_revoked"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "issuer_key_id": "key-2"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_revocation_omitted"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-07-replay-refused",
+   "title": "Replaying an older select, an already-applied select or a withdrawn statement changes nothing",
+   "cites": [
+    "ADR D-01/D-04",
+    "R3 no implicit reactivation through replay"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:ce825ae82501271ba19f3f391443b8d61cc57d94b07f56dfbdaa92c7b14fac72",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:c61086f2da28771a8ffc95a3173c8447dba9f7921999ba08e56ea18adcbc2afe",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "withdrawn",
+        "epoch": 3
+       }
+      },
+      "log_length": 3,
+      "evidence_count": 3,
+      "high_water": {
+       "A": 3
+      }
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "withdrawn"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-08-withdrawal-is-not-reactivation-path",
+   "title": "Reactivation after withdrawal needs a fresh higher-epoch select naming the withdrawn row",
+   "cites": [
+    "ADR D-04",
+    "R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_supersession_invalid"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-09-withdraw-preconditions",
+   "title": "Withdraw with no row, wrong predecessor, unverified, or over a revoked row is refused",
+   "cites": [
+    "contract 7.1 withdraw",
+    "ADR D-01"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:e5b2c285068cc0c713e6e063902af55f7ec8963ae146f2b7a8eb716a86748fc9",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_supersession_invalid"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:ca3704aa0b06f5954c79ee837faa152d84d6b2d42838f0637a15eda8337dbdce"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_supersession_invalid"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "verified": false
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "statement_not_verified"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_revoked"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "revoked",
+        "epoch": 1
+       }
+      },
+      "evidence_count": 4
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-10-every-rejection-leaves-evidence",
+   "title": "Every rejected transition leaves exactly one preserved negative-evidence record; accepts leave none",
+   "cites": [
+    "contract 7.1 negative evidence",
+    "R3",
+    "ADR D-01"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:e5b2c285068cc0c713e6e063902af55f7ec8963ae146f2b7a8eb716a86748fc9",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 5,
+      "selection_digest": "sha256:12b61a7f9c3ed6ecb0a630ed4b5c558661a1c6df70058f2ff7b4b73fe96e5cf4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 3,
+       "statement_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_supersession_invalid"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "verified": false
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "statement_not_verified"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "evidence_count": 4,
+      "log_length": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-11-withdraw-of-prerevoked-epoch-refused",
+   "title": "A withdraw at an epoch already in the revoked set is refused",
+   "cites": [
+    "contract 7.1 revoked set",
+    "ADR D-04"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         2
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_revoked"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "row": {
+       "A": {
+        "activation_state": "active",
+        "epoch": 1
+       }
+      },
+      "evidence_count": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "RV-12-withdraw-under-revoked-key-refused",
+   "title": "A withdraw signed under a revoked issuer key is refused with the distinct cause; the row stays active",
+   "cites": [
+    "contract 7.1",
+    "issuer_key_revoked"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "issuer_key_id": "key-2"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [
+        "key-1"
+       ],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "issuer_key_id": "key-1"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "issuer_key_revoked"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "issuer_key_id": "key-2"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    }
+   ]
+  }
+ ]
+}

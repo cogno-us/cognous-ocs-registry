@@ -1,0 +1,394 @@
+{
+ "schema": "ocs-conformance-vectors/1",
+ "label": "SYNTHETIC-TEST-ONLY",
+ "status": "IMPLEMENTED / DEVELOPER-TESTED; not independently qualified",
+ "scope_base": {
+  "consumer_id": "runtime-emulator",
+  "tenant": "tenant-a",
+  "institution": "inst-a",
+  "authority_domain": "domain-a",
+  "operation": "op-transfer",
+  "family": "f1ab-local-execution-allowlist"
+ },
+ "defaults": {
+  "select": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "valid_from": 100,
+   "valid_until": 1000,
+   "issuer_key_id": "key-1",
+   "supersedes": null,
+   "record": {
+    "record_id": "rec-1",
+    "record_version": 1,
+    "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+   }
+  },
+  "withdraw": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "issuer_key_id": "key-1"
+  },
+  "sync": {
+   "now": 200
+  },
+  "external_floor": {
+   "now": 200
+  },
+  "read": {
+   "now": 200
+  },
+  "guard": {
+   "now": 300
+  },
+  "restore": {
+   "now": 200
+  },
+  "lose_state": {
+   "now": 200
+  },
+  "rebaseline": {
+   "now": 200
+  },
+  "relax_scope_required": {
+   "now": 200
+  }
+ },
+ "vectors": [
+  {
+   "id": "CW-01-conflicting-activations",
+   "title": "Two writers racing to supersede the same row: exactly one wins in any serial order; the host must serialize",
+   "cites": [
+    "contract 7.4 atomicity",
+    "ADR D-24 one trusted writer"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "concurrent",
+     "observations": [
+      {
+       "kind": "select",
+       "scope": "A",
+       "epoch": 2,
+       "selection_digest": "sha256:dca347f71c62c2eed9e74ad03df98c2066938fd589c750a7049b14c6be003d6c",
+       "supersedes": {
+        "selection_id": "sel-a",
+        "epoch": 1,
+        "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+       }
+      },
+      {
+       "kind": "select",
+       "scope": "A",
+       "epoch": 2,
+       "selection_digest": "sha256:c05e33c19cb61c14545abe8881b4e170302c596241836f8a6bbac9c513a2b1ec",
+       "supersedes": {
+        "selection_id": "sel-a",
+        "epoch": 1,
+        "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+       }
+      }
+     ],
+     "expect": {
+      "accepted_count": 1,
+      "allowed_final": [
+       {
+        "A": {
+         "activation_state": "active",
+         "epoch": 2
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "CW-02-select-vs-withdraw-same-epoch",
+   "title": "A select and a withdraw at the same epoch: one wins, outcome depends on serial order (not order independent)",
+   "cites": [
+    "contract 7.4",
+    "R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "concurrent",
+     "observations": [
+      {
+       "kind": "select",
+       "scope": "A",
+       "epoch": 2,
+       "selection_digest": "sha256:dca347f71c62c2eed9e74ad03df98c2066938fd589c750a7049b14c6be003d6c",
+       "supersedes": {
+        "selection_id": "sel-a",
+        "epoch": 1,
+        "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+       }
+      },
+      {
+       "kind": "withdraw",
+       "scope": "A",
+       "epoch": 2,
+       "selection_digest": "sha256:b3224224eb56bdd87008b0c499e20d802619ea13e195748a74a75572dadfb88a",
+       "supersedes": {
+        "selection_id": "sel-a",
+        "epoch": 1,
+        "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+       }
+      }
+     ],
+     "expect": {
+      "accepted_count": 1,
+      "allowed_final": [
+       {
+        "A": {
+         "activation_state": "active",
+         "epoch": 2
+        }
+       },
+       {
+        "A": {
+         "activation_state": "withdrawn",
+         "epoch": 2
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "CW-03-independent-scopes-commute",
+   "title": "Writers on independent scopes commute: both accepted, same final rows in every order",
+   "cites": [
+    "contract 7 scope key"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    },
+    "B": {
+     "selection_id": "sel-b",
+     "operation": "op-audit"
+    }
+   },
+   "steps": [
+    {
+     "op": "concurrent",
+     "observations": [
+      {
+       "kind": "select",
+       "scope": "A",
+       "epoch": 1,
+       "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      {
+       "kind": "select",
+       "scope": "B",
+       "epoch": 1,
+       "selection_digest": "sha256:204d878fef3f2986ef5d63c29de9bbb3671f3ce51a0e3ff1b7d43f90540d757e"
+      }
+     ],
+     "expect": {
+      "accepted_count": 2,
+      "allowed_final": [
+       {
+        "A": {
+         "activation_state": "active",
+         "epoch": 1
+        },
+        "B": {
+         "activation_state": "active",
+         "epoch": 1
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "CW-04-sync-revoke-vs-supersede",
+   "title": "A revoking sync and a superseding select commute on the final row; the revoked pair is retained in every order",
+   "cites": [
+    "contract 7.1",
+    "ADR D-04"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "concurrent",
+     "observations": [
+      {
+       "kind": "sync",
+       "snapshot": {
+        "version": 1,
+        "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+        "valid_until": 5000,
+        "revoked_selections": [
+         [
+          "sel-a",
+          1
+         ]
+        ],
+        "revoked_key_ids": [],
+        "min_epochs": []
+       }
+      },
+      {
+       "kind": "select",
+       "scope": "A",
+       "epoch": 2,
+       "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+       "supersedes": {
+        "selection_id": "sel-a",
+        "epoch": 1,
+        "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+       }
+      }
+     ],
+     "expect": {
+      "accepted_count": 2,
+      "allowed_final": [
+       {
+        "A": {
+         "activation_state": "active",
+         "epoch": 2
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "CW-05-stale-vs-newer-writer",
+   "title": "Epochs 2 and 3 racing from epoch 1: epoch 3 can win either way, epoch 2 is stale if it arrives second",
+   "cites": [
+    "contract 7.1",
+    "R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "concurrent",
+     "observations": [
+      {
+       "kind": "select",
+       "scope": "A",
+       "epoch": 2,
+       "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+       "supersedes": {
+        "selection_id": "sel-a",
+        "epoch": 1,
+        "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+       }
+      },
+      {
+       "kind": "select",
+       "scope": "A",
+       "epoch": 3,
+       "selection_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb",
+       "supersedes": {
+        "selection_id": "sel-a",
+        "epoch": 1,
+        "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+       }
+      }
+     ],
+     "expect": {
+      "accepted_count": [
+       1
+      ],
+      "allowed_final": [
+       {
+        "A": {
+         "activation_state": "active",
+         "epoch": 2
+        }
+       },
+       {
+        "A": {
+         "activation_state": "active",
+         "epoch": 3
+        }
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

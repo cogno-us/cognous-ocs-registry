@@ -1,0 +1,410 @@
+{
+ "schema": "ocs-conformance-vectors/1",
+ "label": "SYNTHETIC-TEST-ONLY",
+ "status": "IMPLEMENTED / DEVELOPER-TESTED; not independently qualified",
+ "scope_base": {
+  "consumer_id": "runtime-emulator",
+  "tenant": "tenant-a",
+  "institution": "inst-a",
+  "authority_domain": "domain-a",
+  "operation": "op-transfer",
+  "family": "f1ab-local-execution-allowlist"
+ },
+ "defaults": {
+  "select": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "valid_from": 100,
+   "valid_until": 1000,
+   "issuer_key_id": "key-1",
+   "supersedes": null,
+   "record": {
+    "record_id": "rec-1",
+    "record_version": 1,
+    "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+   }
+  },
+  "withdraw": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "issuer_key_id": "key-1"
+  },
+  "sync": {
+   "now": 200
+  },
+  "external_floor": {
+   "now": 200
+  },
+  "read": {
+   "now": 200
+  },
+  "guard": {
+   "now": 300
+  },
+  "restore": {
+   "now": 200
+  },
+  "lose_state": {
+   "now": 200
+  },
+  "rebaseline": {
+   "now": 200
+  },
+  "relax_scope_required": {
+   "now": 200
+  }
+ },
+ "vectors": [
+  {
+   "id": "MF-01-malformed-observations-refused",
+   "title": "Malformed observations are refused observation_malformed with evidence; state is unchanged",
+   "cites": [
+    "kit contract",
+    "fail closed"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "frobnicate",
+      "now": 1
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "unknown kind"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "missing now",
+     "raw": true
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read",
+      "now": true
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "bool now"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read",
+      "now": 1.5
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "float now"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read",
+      "now": -1
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "negative now"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read",
+      "now": 1,
+      "extra": 1
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "extra key"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": true,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "bool epoch"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 0,
+      "selection_digest": "sha256:2569122b53ea23aed05a395c8cb544351523c0a1c2c8abc40dcbe0efbdbd2b33"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "zero epoch"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:XYZ"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "bad digest"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "verified": "yes"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "non-bool verified"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "participation": "maybe"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "bad participation"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "valid_from": 500,
+      "valid_until": 500
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "empty window"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": {
+       "selection_id": "x",
+       "consumer_id": "x",
+       "tenant": "x",
+       "institution": "x",
+       "authority_domain": "x",
+       "operation": "x"
+      },
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "scope missing family"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": {
+       "consumer_id": "runtime-emulator",
+       "tenant": "t\u00e9nant",
+       "institution": "inst-a",
+       "authority_domain": "domain-a",
+       "operation": "op-transfer",
+       "family": "f1ab-local-execution-allowlist",
+       "selection_id": "sel-a"
+      },
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "non-ASCII scope"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "issuer_key_id": "bad key!"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "bad key id"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "partial snapshot",
+     "raw": true
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "now": 1,
+      "snapshot": {
+       "version": 0,
+       "fingerprint": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+       "valid_until": 9,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "version zero"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "now": 1,
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+       "valid_until": 9,
+       "revoked_selections": [
+        [
+         "a",
+         1
+        ],
+        [
+         "a",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "duplicate revoked"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "external_floor",
+      "now": 1,
+      "min_trust_snapshot_version": -1
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "negative floor"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "rebaseline",
+      "now": 1,
+      "authorized": "true",
+      "decision_ref": "x"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "non-bool authorized"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "now": 1,
+      "claim": {
+       "scope": "A"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "claim missing binding",
+     "raw": true
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 0,
+      "store": "known",
+      "evidence_count": 21
+     }
+    }
+   ]
+  }
+ ]
+}

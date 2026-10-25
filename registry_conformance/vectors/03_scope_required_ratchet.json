@@ -1,0 +1,534 @@
+{
+ "schema": "ocs-conformance-vectors/1",
+ "label": "SYNTHETIC-TEST-ONLY",
+ "status": "IMPLEMENTED / DEVELOPER-TESTED; not independently qualified",
+ "scope_base": {
+  "consumer_id": "runtime-emulator",
+  "tenant": "tenant-a",
+  "institution": "inst-a",
+  "authority_domain": "domain-a",
+  "operation": "op-transfer",
+  "family": "f1ab-local-execution-allowlist"
+ },
+ "defaults": {
+  "select": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "valid_from": 100,
+   "valid_until": 1000,
+   "issuer_key_id": "key-1",
+   "supersedes": null,
+   "record": {
+    "record_id": "rec-1",
+    "record_version": 1,
+    "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+   }
+  },
+  "withdraw": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "issuer_key_id": "key-1"
+  },
+  "sync": {
+   "now": 200
+  },
+  "external_floor": {
+   "now": 200
+  },
+  "read": {
+   "now": 200
+  },
+  "guard": {
+   "now": 300
+  },
+  "restore": {
+   "now": 200
+  },
+  "lose_state": {
+   "now": 200
+  },
+  "rebaseline": {
+   "now": 200
+  },
+  "relax_scope_required": {
+   "now": 200
+  }
+ },
+ "vectors": [
+  {
+   "id": "RT-01-optional-select-cannot-downgrade",
+   "title": "Once a required selection activates the ratchet is set; an optional select refuses participation_mismatch",
+   "cites": [
+    "ADR D-06",
+    "contract 7.3",
+    "R1/A4"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "scope_required": [
+       "A"
+      ]
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "participation_mismatch"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "scope_required": [
+       "A"
+      ],
+      "high_water": {
+       "A": 1
+      },
+      "evidence_count": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "RT-02-optional-withdraw-cannot-downgrade",
+   "title": "An optional withdrawal cannot downgrade a required scope; a required withdrawal leaves REQUIRED - UNAVAILABLE",
+   "cites": [
+    "ADR D-06",
+    "ADR D-07",
+    "R1"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "participation_mismatch"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "scope_required": [
+       "A"
+      ]
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "withdrawn",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RT-03-optional-then-required-sets-ratchet",
+   "title": "Optional first, later required: the ratchet is set and a later optional statement is refused",
+   "cites": [
+    "contract 7.3",
+    "ADR D-06"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "participation_mismatch"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "scope_required": [
+       "A"
+      ],
+      "evidence_count": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "RT-04-relaxation-defined-not-authorized",
+   "title": "relax_scope_required is a named administrative transition that is documented but refused by default in V1",
+   "cites": [
+    "ADR D-06",
+    "contract 7.3 defined, not authorized"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "relax_scope_required",
+      "scope": "A"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "relaxation_not_authorized_v1"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "relax_scope_required",
+      "scope": "A",
+      "ratchet_digest": "sha256:7e44b435ca864457b9332718a10934705aed4ba9121799b0a9ea6b96cc7337e0",
+      "ratchet_generation": 2,
+      "decision_ref": "op-approved-1",
+      "authorized": true
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "relaxation_not_authorized_v1"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "scope_required": [
+       "A"
+      ],
+      "log_length": 1,
+      "evidence_count": 2
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "participation_mismatch"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RT-05-restore-cannot-clear-ratchet",
+   "title": "Restoring a store from before the ratchet was set fails closed and keeps the ratchet set",
+   "cites": [
+    "contract 7.3 restore cannot clear it",
+    "contract 8.3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "save",
+     "name": "before"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "restore",
+      "backup": {
+       "$saved": "before"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_older_than_anchor"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "store": "unknown",
+      "scope_required": [
+       "A"
+      ]
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "unknown",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RT-06-ratchet-survives-revocation",
+   "title": "A revoked required scope stays REQUIRED - UNAVAILABLE; the ratchet is not cleared by revocation",
+   "cites": [
+    "contract 7.3",
+    "ADR D-05"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "scope_required": [
+       "A"
+      ]
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    }
+   ]
+  }
+ ]
+}
