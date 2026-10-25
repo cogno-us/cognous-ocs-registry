@@ -2188,7 +2188,8 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     assert got["token:full_scan"] == [pin["bitmap_sha256"], pin["excluded_count"]]  # all 1114112 code points agree between the two runtimes
     # informational: where the Node runtime database is newer than 15.1 it ACCEPTS the divergent code points the frozen table refuses (that is
     # the dependence N-13 removes); where it is not newer there is nothing to show, and the frozen decision above is the only claim made
-    if tuple(int(x) for x in got["token:node_unicode"].split(".")[:2]) > (15, 1):
+    # (restricted to Node databases at least as new as 17.0, the measured divergence: a 16.x database has not yet assigned every sample vector)
+    if tuple(int(x) for x in got["token:node_unicode"].split(".")[:2]) >= (17, 0):
         assert all(got["live:" + v["id"]] is True for v in V["token_unicode"]["vectors"] if v["kind"] == "divergent")
     assert n >= 80
 
@@ -2210,7 +2211,7 @@ def test_frozen_token_table_is_hash_pinned_and_covers_the_whole_code_point_range
     assert pin["file"] == "docs/ext-implementation/data/ext-s1-5-token-unicode-15.1-excluded-ranges.json" and pin["unicode_version"] == "15.1.0"
     assert pin["status"].startswith("FROZEN") and "PROPOSED" not in pin["status"]  # N-13 ruled: Unicode 15.1.0 is frozen, no longer a proposal
     ver = pin["independent_verification"]  # provenance of the table against three independent 15.1.0 sources, with the one thing that could not be checked
-    assert len(ver["sources"]) == 3 and "unicode.org" in ver["note"] and "NOT compared with the UCD text files" in ver["note"]
+    assert len(ver["sources"]) == 3 and "HTTP 403" in ver["note"] and "NOT compared with the UCD text files" in ver["note"]
     doc = json.loads(_TOKEN_TABLE_BYTES.decode("ascii"))
     assert doc["schema"] == "ocs-token-unicode-table/1" and doc["unicode_version"] == "15.1.0"
     prev_end = -2

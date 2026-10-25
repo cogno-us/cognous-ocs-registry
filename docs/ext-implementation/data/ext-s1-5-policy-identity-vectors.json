@@ -8701,10 +8701,11 @@
      "scope",
      "consumer_id",
      "family",
-     "operation"
+     "operation",
+     "selection_id"
     ],
-    "selection_id_included": false,
-    "canonical": "difference -> policy_identity_mismatch (member scope_key)",
+    "selection_id_included": true,
+    "canonical": "difference -> policy_identity_mismatch (member scope_key) (the scope key is the seven-member key of spec 5.7, selection_id included; its selection_id component is also accounted by its own member row below, and this document does not decide which member name a pure selection_id difference is reported under)",
     "kit": "the kit selects the durable row BY scope key (seven members, selection_id included): a claim whose scope key has no row is not_activated, and a different selection_id within one chain is selection_conflict; the kit never compares a scope key against an already selected row",
     "agreement": "overlap is the row lookup only; see not_activated and selection_conflict rows"
    },
