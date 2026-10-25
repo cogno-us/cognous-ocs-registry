@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from . import common as c
+from . import families
 
 TOP_FIELDS = (
     "contract_version", "kind", "family", "record_id", "record_version", "non_authorizing", "supersedes",
@@ -39,7 +40,7 @@ def _version_ok(value: Any) -> bool:
     return c.is_int(value) and 1 <= value <= c.MAX_INT
 
 
-def _shape(record: dict) -> Optional[str]:
+def _shape(record: dict, spec: families.FamilySpec) -> Optional[str]:
     code = c.exact_fields(record, TOP_FIELDS)
     if code:
         return code
@@ -48,14 +49,14 @@ def _shape(record: dict) -> Optional[str]:
         if code:
             return code
     for name, fields in (("evaluator", EVALUATOR_FIELDS), ("source", SOURCE_FIELDS),
-                         ("payload", c.F1A_FIELDS), ("provenance", PROVENANCE_FIELDS)):
+                         ("payload", spec.payload_fields), ("provenance", PROVENANCE_FIELDS)):
         code = c.exact_fields(record[name], fields)
         if code:
             return code
     return None
 
 
-def _values(record: dict) -> Optional[str]:
+def _values(record: dict, spec: families.FamilySpec) -> Optional[str]:
     if not c.valid_identifier(record["record_id"]) or not _version_ok(record["record_version"]):
         return "field_invalid"
     if record["non_authorizing"] is not True:
@@ -63,7 +64,7 @@ def _values(record: dict) -> Optional[str]:
     ev = record["evaluator"]
     if not all(isinstance(ev[k], str) for k in EVALUATOR_FIELDS):
         return "field_type_invalid"
-    if ev["evaluator_id"] != c.EVALUATOR_ID or ev["binding"] != c.EVALUATOR_BINDING:
+    if (ev["evaluator_id"], ev["binding"]) != spec.evaluator_binding:
         return "evaluator_unsupported"
     if not c.valid_hex40(ev["source_blob_id"]) or not c.valid_sha_ref(ev["source_sha256"]):
         return "field_invalid"
@@ -73,11 +74,9 @@ def _values(record: dict) -> Optional[str]:
     if not (c.valid_token(src["repository"]) and c.valid_token(src["path"]) and c.valid_hex40(src["commit"])
             and c.valid_hex40(src["blob_id"]) and c.valid_sha_ref(src["sha256"])):
         return "field_invalid"
-    payload = record["payload"]
-    if not all(isinstance(payload[k], list) for k in c.F1A_FIELDS):
-        return "field_type_invalid"
-    if not all(c.valid_entry_list(payload[k], allow_empty=True) for k in c.F1A_FIELDS):
-        return "field_invalid"
+    code = spec.payload_validator(record["payload"])
+    if code:
+        return code
     prov = record["provenance"]
     if not all(isinstance(prov[k], str) for k in PROVENANCE_FIELDS):
         return "field_type_invalid"
@@ -107,12 +106,13 @@ def _validate(text: Any) -> RecordResult:
         return _refuse("contract_unsupported")
     if record.get("kind") != "record":
         return _refuse("kind_unsupported")
-    if record.get("family") != c.FAMILY_F1A:
+    spec = families.lookup(record.get("family"))
+    if spec is None:
         return _refuse("family_unsupported")
-    code = _shape(record)
+    code = _shape(record, spec)
     if code:
         return _refuse(code)
-    code = _values(record)
+    code = _values(record, spec)
     if code:
         return _refuse(code)
     if not _supersession_ok(record):
