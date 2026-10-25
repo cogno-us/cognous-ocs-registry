@@ -1,6 +1,6 @@
 # OCS Registry — Static Project Plan v1.3 (DRAFT FOR OPERATOR ADOPTION)
 Date: 2026-10-24
-Status: **PROPOSED; NOT ADOPTED.** Supersedes v1.2 only if separately approved and merged. No sprint, migration, operational activation, release or production authority is created by this document.
+Status: **OPERATOR-APPROVED 2026-10-24; EFFECTIVE UPON MERGE.** Supersedes v1.2 when merged. Plan adoption does not authorize migrations, operational activation, release or production.
 
 ## 1. Objective and stopping rule
 Build a **broad but finite, customer-scenario-supported, governed configuration registry** for OCS by externalizing *safe configurable policy values* while retaining the already implemented deterministic evaluators and code-owned mandatory guardrails. Avoid duplicating enforcement or creating a universal policy interpreter. A registry cannot issue OCS grants, substitute for the Control Plane, or authorize effects.
@@ -75,13 +75,20 @@ R14–R16 GCR comparison and consumer work remain independent, optional *subsequ
 - One PR per bounded owner increment, with no concurrent edits to canonical contract/activation files. One review cycle for material correctness; no editorial loop. No auto merge except separately authorized exact-head changes.
 - A new issue is a V1 blocker only if it violates an approved scenario, mandatory security boundary or explicit gate. Otherwise mark `DEFERRED` with owner and impact. Scope changes require operator approval; never auto-add a family.
 
-## 8. Operator decisions required before implementation
-1. Adopt the canonical V1 customer/security scenario denominator and configuration extraction profile (after worker handoff).
-2. Confirm V0.2 contract ledger: which clauses are actually adopted and which are drafts; settle only conflicts, avoiding a fresh architecture.
-3. Designate the registry approval/trust authority and key custody path (B-10), production host owner (C-01) and independent Tier 1 lead (F-01).
-4. Resolve mandatory activation failure-code mappings (LD-02), effect-time expiry/commit rules (LD-09), maximum selection duration (A-05), and field-specific unresolved D1/D5/D6/D12 only when affected by included scope.
-5. Establish source custody for COG-REG-SHARED-ADD-01 (G-09) before treating it as normative.
-6. Approve individual sprint source pins, active environments and merge boundaries. No implicit authorization from plan adoption.
+## 8. Decision rights — minimize operator escalation
+The operator sets product/architectural direction; engineers and architects own technical implementation decisions. **Do not ask the operator to adjudicate field names, expiry constants, numeric ranges, mappings, source SHAs, interface details, key algorithms, or test plumbing.** Escalate only genuine strategic tradeoffs or changes to authorized boundaries.
+
+**Operator decisions (only these, when needed):**
+1. Adopt the final V1 customer/security capability profile, including meaningful inclusion/exclusion tradeoffs after the inventory report.
+2. Approve any material architectural departure from the existing OCS/V0.2 authority separation, code-owned guardrails, or supported trust model; otherwise reuse what exists.
+3. Authorize material new spending, production effects, publication/release or changes to held deployment scope.
+4. Resolve a material cross-domain OCS/GCR responsibility choice, if the existing architectural division cannot decide it.
+
+**Delegated to the OCS Architect and component owners:** V0.2 clause/status reconciliation, B-10 cryptographic adapter recommendation and explicit trust implementation specification, C-01 integration host identification, LD-02 failure mapping, LD-09 expiry and effect-time contract, A-05 duration limits, affected D1/D5/D6/D12 semantics, G-09 provenance retrieval, evaluator ownership, field schemas and versioning, compatibility plans, and technical PR review. Document source-backed decisions as ADRs; respect component boundaries. If a choice substantively changes approved security architecture, escalate *that specific tradeoff*, not the technical details.
+
+**Independent qualification owner:** nominate and appoint a lead with genuine independence from the implementation, working within the pre-existing qualification governance. F-01 is a role-assignment coordination task; escalate only if an independent lead cannot be secured or qualification scope changes materially. The architect may not self-certify Tier 1 qualification.
+
+**Execution authorization:** plan approval authorizes non-effecting inventory, P0 reconciliation, scope proposals and technical design within existing access. It does not blanket-authorize P2–P6 implementation, environment activation or merges. Builders submit bounded PRs; technical owners handle routine fixes. Seek an operator decision only where authorization or material architectural scope genuinely changes. Do not create an operator-decision queue from ordinary engineering tasks.
 
 ## 9. Immediate next step
 Finish the existing scenario Inventory Worker; do **not** restart that audit. In parallel, **read-only** reconcile the V0.2 contracts into P0, not a 15-repo redesign. After worker results, a lead architect merges the scenario crosswalk and source-owned configuration manifest, recommends exact V1 extraction scope and requests a single operator freeze decision. Only then initiate P2/P3 authorized implementation.
