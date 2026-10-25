@@ -1,0 +1,41 @@
+PROBE ENVIRONMENT: python 3.13.17 | CPython | Linux-6.18.44-fc-v153-x86_64-with-glibc2.39 | pydantic 2.13.5 | control-plane HEAD 7a4bcd40b3b49e61ff3c294dcca53b52f460b22c
+== class base ActionClass.max_status_age_seconds, grant status age 0
+  base=2147483647 freshness-on: ok:authorized
+  base=2147483647 anchored: ok:authorized
+  base=2147483647 off: ok:authorized
+  base=2147483648 freshness-on: ok:authorized
+  base=2147483648 anchored: ok:authorized
+  base=2147483648 off: ok:authorized
+== class base far above the ceiling (date overflow search), grant status age 0
+  base=200000000000: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  base=250000000000: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  base=300000000000: freshness-on:EXC:OverflowError:date value out of range | anchored:EXC:OverflowError:date value out of range | off:ok:authorized
+  base=9223372036854775808: freshness-on:EXC:OverflowError:Python int too large to convert to C int | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  base=18446744073709551616: freshness-on:EXC:OverflowError:Python int too large to convert to C int | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+== class base MAX, grant status aged exactly MAX and MAX+1 (freshness on)
+  grant age 2147483647: ok:authorized
+  grant age 2147483648: ok:hold
+== workflow scalars status_max_age_seconds / approval_max_age_seconds
+  status_max_age_seconds=2147483647: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  status_max_age_seconds=2147483648: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  status_max_age_seconds=17179869184: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  status_max_age_seconds=9007199254740992: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=4611686018427387904: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=9223372036854775808: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=18446744073709551616: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=1000000000000000000000000000000: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=2147483647: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  approval_max_age_seconds=2147483648: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  approval_max_age_seconds=17179869184: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  approval_max_age_seconds=9007199254740992: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=4611686018427387904: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=9223372036854775808: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=18446744073709551616: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=1000000000000000000000000000000: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+== outage extension composed to the ceiling (base 60, limit MAX-60, extension to MAX), grant aged MAX
+   ok:authorized
+== float-vs-int comparison edge `(now - observed).total_seconds() <= max_age` (bounded.py _fresh): +1 microsecond
+  B=2147483647: age=B+1us accepted=False (must be False)
+  B=2147483648: age=B+1us accepted=False (must be False)
+  B=8589934592: age=B+1us accepted=False (must be False)
+  B=17179869184: age=B+1us accepted=True (must be False)
