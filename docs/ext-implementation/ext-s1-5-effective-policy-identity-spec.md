@@ -2,6 +2,7 @@
 
 - Status: **CONTRACT PREPARATION ONLY.** Documentation and data. No source change anywhere (no file under `registry_successor/`, `registry_consumer/`, `registry_records/`, `registry_contract/`, `registry_adapters/` or `registry_conformance/` is added or edited; no existing file is modified). The full `EXT-S1-5` source change (identity module, `verify.py`/`decision.py` hooks, outcome-map code) is **not** implemented here and stays a later serial PR after `EXT-S1-3`/`EXT-S1-4`.
 - Authorization: Architect authorization to prepare the contract and vectors ahead of `EXT-S1-3` merge (Architect O-3 and the policy-binding serialization ruling).
+- Architect rulings incorporated: **OQ-1 to OQ-5** (final rulings of 2026-10-25, project doc `ocs-p1-architect-final-rulings-2026-10-25`): per-field integer ranges (section 5.2), typed closed reason-code mapping (section 8.1), domain-separated effective-policy digest (section 6), identity scope-token projection (section 5.6) and the versioned scope key (section 5.7). Each is stated where it applies and closed in section 12. The rulings change this document, the vectors and the test only; the pinned contract and ADR text are unchanged (the places where their wording now lags a ruling are listed in section 11).
 - Vector status: **BUILDER_TESTED.** Vectors are builder-authored and were recomputed by an independent in-test reference serializer and one non-Python (Node.js) implementation. They are not independently qualified, and no Runtime or Control Plane implementation has been run against them. Nothing here is "qualified". RELEASE: HOLD. PUBLICATION: HOLD. PRODUCTION: HOLD.
 - Companion files: [`data/ext-s1-5-policy-identity-vectors.json`](data/ext-s1-5-policy-identity-vectors.json) (the vectors) and [`tests/test_ext_s1_5_vectors.py`](../../tests/test_ext_s1_5_vectors.py) (self-contained validation; imports no registry module).
 - Relationship to the existing contract: this document **does not define a second binding**. The one canonical binding is [`docs/r08-v2-contract.md`](../r08-v2-contract.md) section 4 (member table), 4.1 (serialization and digest), 4.2 (two states) and 4.3 (claim carriage), decided in [ADR EXT-S1-1](../decisions/2026-10-25-adr-ext-s1-1-v1-contract.md) D-14 and D-15. Where this document restates a rule it quotes the section and adds nothing to the member list. Where the existing text is silent or ambiguous (section 11) this document says so and records a proposal, never a silent decision.
@@ -25,6 +26,8 @@ All hashes are SHA-256 of the exact UTF-8 text of the section (trailing whitespa
 | ADR D-15 (serialization profile) | `**D-15 Serialization profile for the binding (round-2 ruling).**` | `42a37b50857771e2371b843815be8f404eaf9f082991919c7975cf3cd3f73c8e` |
 | ADR D-02 (`CODES_V2`, 48) | `**D-02 ` | `55e9f022b539fa2df20038a86e5b119dac8de72b95687710b6dcb9bf629468ee` |
 | outcome map (informational file hash and enforced) | `docs/p1-extraction-plan/data/ld02-outcome-map.json` | `dcb14ec1067ccf3218949de57312040dad9df926b134a67f2826e3f0c37d535c` |
+
+Informational: the verdict vocabulary of section 8.1 is the one adopted in `docs/conformance/README.md` (merged by PR #28; git blob `ec03cd26fab0b2f5a7421484ec3f5d065a932454`, sha256 `ffa04af23daf9baa4369261627932da16321c9f9ab1e2fd970444b336aae175f`). This branch predates that merge, so the test reads the README only when it is present in the checkout (the four verdict names are then asserted) and the vector file embeds the vocabulary otherwise. It is not an enforced pin.
 
 Informational whole-file hashes at repository head `efeb8cb`: `docs/r08-v2-contract.md` sha256 `64e2d6eb3af7b6024bf0ed7778fcea5ee61fd1cbad247d0199e1b15310ddff01` (git blob `ab66cc0e12eda4e5eaf9fb7642fb4fffb5110d4f`); ADR sha256 `b9ad06be559bfb99c5e669ca7217d2ee28b62cda7738206c31fd8e6866233b67` (git blob `f5ca77f9d21689f28066b62b1aba8587102c9cba`); outcome map git blob `2752800d240d4255af3e62d2e911b0821c8e2af4`.
 
@@ -68,6 +71,8 @@ The ASCII-only restriction (section 5.1) applies **only** to the eight identifie
 - the values inside an effective policy payload (for example an allow-list entry), which are governed by their own family rules (contract 2: 1 to 128 characters, no control, separator or `*` characters) and are escaped, never rejected, by the serializer (vector `EP-006`);
 - strings inside the trust snapshot (`issuer_id`, `authority` entries and so on), which are governed by the snapshot rules and escaped by the serializer (vector `TF-003`).
 
+The scope tokens of a signed statement are **not** exempt: the three scope members are binding identifiers, and a statement scope token that the statement validator accepts but the grammar rejects is handled by the projection rule of section 5.6.
+
 If a component wants to record a hash of human-readable metadata as evidence, that hash is a separate evidence value outside this binding; it must never be added as a member or mixed into `binding_digest`. This document defines no such hash.
 
 ## 4. Two forms of the object and when an identity is complete
@@ -91,7 +96,7 @@ Completeness by registry decision kind (EXT-S1-5 card, criterion 5; to be implem
 
 ## 5. Serialization rules (exact)
 
-These restate contract 4.1 (pinned) and fix what it leaves implicit. Where this section says more than 4.1, the extra is labelled **(proposed)** and listed in section 11.
+These restate contract 4.1 (pinned) and fix what it leaves implicit. Where this section says more than 4.1, the extra is a ruling (sections 5.2, 5.6 and 5.7) or is listed in section 11.
 
 ### 5.1 Identifier grammar (Architect ACCEPTED)
 
@@ -106,14 +111,25 @@ The eight identifier members (`record_id`, `selection_id`, `family`, `consumer_i
 - ASCII only. **Unsupported Unicode is rejected, never normalized**: no NFC or NFKC, no case folding, no trimming, no transcoding, no silent rewriting, no replacement. Fullwidth forms, homoglyphs (Cyrillic, Greek, U+2010), case-fold hazards (Kelvin sign U+212A, dotless i U+0131, long s U+017F), NFC and NFD forms of the same text, zero-width and byte-order-mark characters, NBSP, NUL, newline, DEL, `*`, `/` and `%` are all refused `field_invalid`. Both NFC and NFD of the same text are refused, so no component can conflate them.
 - Case is significant and preserved: `tenant-a` and `Tenant-a` are two valid, distinct identifiers with different digests (`BV-005`).
 - Comparison anywhere (guard, evidence, tests) is exact byte equality of the strings.
-- This is a V1 interoperability restriction on canonical identity members only (section 3.2 lists what it does not cover).
+- This is a V1 interoperability restriction on canonical identity members only (section 3.2 lists what it does not cover). The Registry statement validators still accept Unicode scope tokens; where that statement is projected into a binding, section 5.6 applies.
 
-### 5.2 Value rules
+### 5.2 Value rules and per-field integer ranges (ruling OQ-1)
 
-- Integers (`record_version`, `selection_epoch`, `trust_snapshot_version`): JSON integers in base 10, no sign, leading zero, fraction or exponent, not `bool`, at least 1. **Upper bound (proposed, interim): 2147483647 (2^31 - 1)**, equal to the existing registry `MAX_INT` already applied to record version and epoch; contract 4.1 states no maximum (OQ-1).
+Integers are **strict bounded integers with an explicit range per field**. No field borrows another field's domain: the freshness-age ceiling is a separate technical limit, epochs and counters have their own monotone domains, and the entries below are independent rows that happen to be equal today. A value must be a JSON integer in base 10, no sign (except a minus that is then out of range), leading zero, fraction or exponent, not `bool`, not a string, and inside the row's range. Refusals: outside the range, zero or negative is `field_invalid`; `bool`, string or `null` is `field_type_invalid`; a float or exponent literal is `json_number_unsupported` (parse).
+
+| Field | Domain | Range | Status | Source and rationale |
+|---|---|---|---|---|
+| `record_version` | binding member | 1 to 2147483647 | SOURCE_JUSTIFIED | `registry_successor/record.py` validates `1 <= value <= MAX_INT` (`common.py` `MAX_INT = 2**31 - 1`); `docs/s03-contract.md` fixes 1 to 2147483647 with strictly increasing versions per `record_id`. The binding accepts exactly what a verified record pin can carry. |
+| `selection_epoch` | binding member | 1 to 2147483647 | SOURCE_JUSTIFIED | `registry_successor/selection.py` `_epoch_ok` validates `1 <= value <= MAX_INT`; contract 7.1 activates only an epoch strictly above the high-water. Its own row, independent of `record_version`. At the maximum no higher epoch exists, so that scope cannot advance and stays fail-closed (see section 12, N-1). |
+| `trust_snapshot_version` | binding member | 1 to 2147483647 | **OPEN ITEM, bounded** | `registry_successor/verify.py` requires an integer of at least 1 and states **no maximum** anywhere in the Registry; the ceiling is not source-justified. A bounded strict domain is fixed so non-Python implementations interoperate (JSON numbers above 2^53 are not exact everywhere); the value is open for the owner of the snapshot floor (section 12, N-1). |
+| `status_max_age_seconds`, `approval_max_age_seconds`, `class_status_max_age_seconds.<class>` | effective-policy payload (section 6), **not** a binding member | registry input 1 to 2147483647; caller 0 to 2147483647; effective (`min(caller, registry)`) 0 to 2147483647 | ARCHITECT_RULED | The age ceiling 2147483647 seconds is a **technical representation ceiling, not an operational setting**; `AGE_MIN = 1` for registry input (ADR D-27); a caller value of 0 stays 0. One row per field (three rows in the vector file), not an alias. **Timestamp-safety qualification:** the ceiling is valid only while `observed_at + age` is representable in the enforcing component's time arithmetic (about 68 years, fine for any current timestamp); an implementation must refuse, fail closed, any value for which that arithmetic would overflow, and must never clamp it. |
+| `policy_generation` | **RESERVED**, not a binding member | 1 to 9007199254740991 (reserved) | RESERVED, open | A future approval-generation (ADR D-16, contract 7.5) or ratchet-generation (contract 7.3) counter is monotone and never reused, so it owns its own validated domain and is **not** tied to the epoch or age domains. This document defines no Control Plane generation, no member and no vector for it; the bound is the largest integer exact in every JSON implementation and is open for `EXT-S3-4`. |
+
 - Digest members (`record_digest`, `selection_digest`, `effective_policy_digest`, `activation_ref`, `trust_snapshot_fingerprint`): match `\Asha256:[0-9a-f]{64}\Z` exactly, 71 characters, lowercase hex only. Uppercase hex, any other prefix case or algorithm, missing or doubled prefix, 63 or 65 hex digits, whitespace and non-ASCII digits (fullwidth) are refused. A component never lowercases, trims or re-prefixes a digest.
 - `binding_profile`: the constant `ocs-policy-binding/1`, exact bytes.
 - No `null`, float, boolean or array appears in a completed binding. `scope` is an object with exactly `authority_domain`, `institution`, `tenant`.
+
+Boundary vectors: `integer_boundary` holds, for each of the three binding integers, the minimum, the maximum, maximum plus 1, 0, -1, `true`, a float literal, an exponent literal, a string and 2^53 (`IB-<field>-<case>`, 30 vectors); `effective_integer_boundary` holds, for each of the three age fields and for the registry and effective roles, the minimum or 0, the maximum, maximum plus 1, -1, `true`, a float and a string (45 vectors). The contract text (section 2.1, D-27) still says the maximum is pending; this ruling is recorded here and the contract is not edited by this work (section 11, item 9).
 
 ### 5.3 Canonical JSON and byte encoding
 
@@ -132,7 +148,7 @@ P = the 30 bytes of the ASCII text  ocs-reg/r08-v2/policy-binding  followed by o
 P (hex) = 6f63732d7265672f7230382d76322f706f6c6963792d62696e64696e670a
 ```
 
-The prefix is not JSON, not part of `canonical_bytes`, and is never emitted. Hashing without the prefix, with the prefix minus its newline, or with a changed prefix yields a different digest (each is asserted by the mutation control). The same hashed-prefix rule does **not** apply to `effective_policy_digest` or `trust_snapshot_fingerprint`, which are plain registry `digest` values (`"sha256:" + hex(SHA-256(canonical_bytes(x)))`, no prefix) per contract 4 and 5.
+The prefix is not JSON, not part of `canonical_bytes`, and is never emitted. Hashing without the prefix, with the prefix minus its newline, or with a changed prefix yields a different digest (each is asserted by the mutation control). Each digest has its own prefix: `effective_policy_digest` uses `E` (section 6) and `scope_key_digest` uses `S` (section 5.7); the three prefixes are distinct. Only `trust_snapshot_fingerprint` stays a plain registry `digest` value (`"sha256:" + hex(SHA-256(canonical_bytes(x)))`, no prefix) per contract 5 (pinned).
 
 ### 5.5 Validation order and refusal codes
 
@@ -140,7 +156,7 @@ A multi-defect input is refused with the first failing check in this fixed order
 
 1. parse; 2. document is an object; `scope` is an object; 3. member set, missing first, in sorted path order (`scope.*` paths are `scope.authority_domain`, `scope.institution`, `scope.tenant`); 4. member set, unknown; 5. member types, in sorted path order; 6. member values, in sorted path order.
 
-No new codes are introduced: every refusal below is an entry of the 48-code `CODES_V2` map (section 8). Contract 4.1 names `field_invalid` explicitly only for identifiers; the other assignments are **proposed from existing codes** (OQ-2) and each vector marks them.
+No new codes are introduced: every refusal below is an entry of the 48-code `CODES_V2` map (section 8). Contract 4.1 names `field_invalid` explicitly only for identifiers; the other assignments were proposed from existing codes and are now ruled (OQ-2) into the typed mapping of section 8.1, which also assigns the verdict class and the structured evidence fields. Guard-state causes that have no existing code are listed once, in section 8.2, never by repurposing an existing code.
 
 | Defect | Code | Layer |
 |---|---|---|
@@ -154,18 +170,80 @@ No new codes are introduced: every refusal below is an entry of the 48-code `COD
 | a member is absent (including `scope` and any `scope.*`) | `field_missing` | shape |
 | an unlisted member (including `scope.*`) | `field_unknown` | shape |
 | wrong JSON type, `bool` as integer, `null`, non-object `scope` | `field_type_invalid` | shape |
-| identifier outside the grammar; digest malformed; wrong `binding_profile`; integer below 1 or above the bound | `field_invalid` | shape |
-| carried `binding_digest` differs from the recomputed one (guard) | `digest_mismatch` (proposed) | integrity |
+| identifier outside the grammar; digest malformed; wrong `binding_profile`; integer outside its per-field range (section 5.2) | `field_invalid` | shape |
+| statement scope token that cannot be projected into the grammar (section 5.6) | `field_invalid`, stage `projection`, member `scope.<name>` | shape |
+| carried `binding_digest` differs from the recomputed one (guard) | `digest_mismatch` | integrity |
 
-## 6. `effective_policy_digest` (proposed preimage)
+### 5.6 Scope-token projection from a signed statement (ruling OQ-4)
 
-Contract 4 says: `digest` of the canonical composed effective payload (record payload composed with the caller policy by `min`). It gives no worked example, and the contract's section 9 vector shows only the resulting digest. **(Proposed, OQ-3.)** The preimage is the composed effective payload object holding **exactly the family payload keys of contract section 2 and nothing else**:
+The Registry statement validators accept scope tokens (`tenant`, `institution`, `authority_domain`) that are 1 to 128 characters with no control, separator or `*` characters; that admits Unicode and ASCII characters such as `/`, `%`, `@` and a leading `_`. The binding identifiers are ASCII-grammar only (section 5.1). The projection from a verified statement scope into the binding `scope` is therefore **identity or refusal, nothing else**:
 
-- `f1ab-local-execution-allowlist`: `allowed_actions`, `allowed_adapters`, `allowed_units`, `allowed_institutions`, `allowed_authority_domains`, each a sorted, duplicate-free list of strings (an explicit deny-all dimension is `[]`);
-- `f4-control-plane-age-bounds`: `status_max_age_seconds`, `approval_max_age_seconds`, integers (the composed `min(caller, registry)` values);
-- `f5-action-class-age-bounds`: `class_status_max_age_seconds`, an object of action class to integer seconds.
+1. If a scope token is a string, is ASCII and matches the identifier grammar, it is copied into the binding **byte for byte**.
+2. Otherwise binding creation is **refused**: `field_invalid`, layer `shape`, stage `projection`, member `scope.<name>` (the first failing member in sorted path order: `scope.authority_domain`, `scope.institution`, `scope.tenant`).
+3. A refused projection produces **no binding**: for a required scope the decision is `required_policy_unavailable` (it refuses and never falls back to the caller policy); for an optional scope the decision is `overlay_not_applied` with `applied=false` and the caller policy unchanged. The failure evidence carries `registry_code = field_invalid`, `stage = projection`, the member and the `original_selection_digest`.
+4. **Never** transliterate, normalize (NFC, NFKC, NFD, NFKD), case-fold, trim, truncate to 128 characters, percent-encode or hash a scope token into something that looks like an equivalent identifier. Any such mapping needs a separately defined collision-resistant encoding contract, and this document defines none. NFC and NFD forms of the same text are two different refused values.
+5. **Provenance.** The original statement scope bytes stay in the signed statement, which the binding commits through the `selection_digest` member (the digest of the canonical statement, scope included). Nothing re-encodes them and no separate provenance digest is defined (none could be defined without a second preimage for the same bytes). A verified statement with an unprojectable scope remains a verified statement.
 
-The digest is plain `"sha256:" + hex(SHA-256(canonical_bytes(payload)))` (no domain prefix). The family is **not** in the preimage because it is its own binding member. No registry bookkeeping (selection id, epoch, caller digest, validity window) is in the preimage. Because the value depends on the caller policy, it is evidence only. Vectors `EP-001` to `EP-006`, including a key-order variant (`EP-002` equals `EP-001`), an explicit deny-all (`EP-004`) and a non-ASCII entry (`EP-006`), pin this construction; `BV-014` embeds `EP-004` in a binding.
+Vectors `scope_projection` (17): ASCII scopes projected unchanged (`PJ-001` to `PJ-003`); Unicode tokens in a statement the existing validator accepts, refused (NFC, NFD, Cyrillic, fullwidth, Kelvin sign, CJK, non-BMP, ligature, 100-character CJK, two bad members); ASCII tokens outside the grammar (`/`, `%`, leading `_`, `@`). Every vector records `statement_validator_accepts: true` (the test re-implements the statement token rule and asserts it) and the original scope bytes as hex. The test asserts that several refused tokens would become valid identifiers under NFKC, case folding or truncation, which is exactly what the rule forbids.
+
+### 5.7 Scope key (ruling OQ-5)
+
+Contract 7.4 line 2 and the consumer state (contract 7, "one row per scope key") need one key that Runtime, Control Plane and evidence all derive identically. The identifier grammar allows `:`, `.`, `_` and `-`, so any delimiter-joined or concatenated key is ambiguous (a consumer `a:b` with tenant `c` against a consumer `a` with tenant `b:c`). The scope key is therefore a **versioned canonical JSON object**, with the same canonical rules as section 5.3:
+
+```
+scope_key        = canonical_bytes({
+                     "scope_key_profile": "ocs-scope-key/1",
+                     "tenant": ..., "institution": ..., "authority_domain": ...,
+                     "consumer_id": ..., "operation": ..., "family": ..., "selection_id": ... })
+scope_key_digest = "sha256:" + lowercase_hex( SHA-256( S || scope_key ) )
+S = the ASCII text  ocs-reg/r08-v2/scope-key  followed by one LF (0x0a)
+S (hex) = 6f63732d7265672f7230382d76322f73636f70652d6b65790a
+```
+
+Every member is a quoted JSON string under its own key, so tuple boundaries are preserved structurally and no concatenation or delimiter collision is possible; keys sort by code point, so the member order never matters. The members are **exactly the seven the contract's own scope-key definition lists** (contract 7.4 line 2; the conformance kit uses the same seven), each an identifier of section 5.1:
+
+| Member | Why it is in the key |
+|---|---|
+| `tenant`, `institution`, `authority_domain` | the enforcing scope of the verified statement (binding `scope`); prevents cross-tenant, cross-institution and cross-authority-domain substitution |
+| `consumer_id` | the enforcing component; the same policy at another component is another scope |
+| `operation` | the governed operation; a selection for one operation never governs another |
+| `family` | the policy family; prevents substituting one family's selection for another's |
+| `selection_id` | the selection identity whose epochs succeed one another; epochs of one `selection_id` keep continuity on one row, a different `selection_id` is a different row |
+
+**Deliberately not members** (each would orphan the row at every transition and make the high-water and continuity impossible, or is not scope identity): `selection_epoch` (the high-water compares it **against** the row), `selection_digest`, `record_id`, `record_version`, `record_digest` (a new record version under the same selection is a transition of the same row), `participation` (the ratchet is per scope key), `activation_ref` (produced by activation of the row), `effective_policy_digest` (caller-dependent evidence), `trust_snapshot_version` and `trust_snapshot_fingerprint`, `valid_from`, `valid_until`, the issuer key id, and `binding_profile`. No identifier is added that a legitimate successor statement would change, and none of the seven is dropped, because contract 7.4 names all seven.
+
+`scope_key` (the canonical bytes) is the identity; `scope_key_digest` is a compact index and evidence value (`ocs-registry-failure-detail/1` carries it as `scope_key_digest`). A store must not derive the key from a delimiter-joined string. The conformance kit's local `scope_key` string (a JSON array of the same seven in a fixed order, unversioned and not domain-separated) is a model-only rendering; `EXT-S4-0` adopts this profile and the mapping between the two is one-to-one. A key derived from a completed binding (`scope.*`, `consumer_id`, `operation`, `family`, `selection_id`) validates for every valid binding vector.
+
+Vectors (`scope_keys`, 12; `scope_key_collision_pairs`, 6; `scope_keys_invalid`, 13): `SK-001` derived from `BV-001` (digest `sha256:0060b8e5d3b226b2bd206606bd32ccb8b2356da3ce7317ef63a0d755fbb9ea31`); a reversed-order twin equal to it; one single-member mutation per member (`SK-MUT-*`, 7), each with a different key; a case variant; minimum and maximum lengths. The six collision pairs (`SKC-001` to `SKC-006`) cover the colon, dot, hyphen, underscore and no-delimiter cases at several member boundaries; for each pair the naive join of the same members is **equal**, while the canonical keys and digests **differ** (the test asserts both, plus an exhaustive 125-tuple check). Invalid keys refuse a missing or extra member (an added `selection_epoch` or `record_version` is `field_unknown`), a wrong profile, non-ASCII or empty members, wrong types, a duplicate key and a non-object.
+
+## 6. `effective_policy_digest` (ruling OQ-3)
+
+The effective policy digest is **claim-carried evidence about the policy the enforcing gate actually applied**. It is derived from the canonical serialized **effective** policy data, which already includes every applicable narrowed value (the composed `min(caller, registry)` values and per-dimension intersections), plus the versioned policy context. It is **not** derived from mutable display metadata, selection bookkeeping or anything a caller can relabel. The preimage is deterministic, domain-separated and reproducible by every consumer from the vectors.
+
+```
+effective_policy_digest = "sha256:" + lowercase_hex( SHA-256( E || canonical_bytes(preimage) ) )
+E = the ASCII text  ocs-reg/r08-v2/effective-policy  followed by one LF (0x0a)
+E (hex) = 6f63732d7265672f7230382d76322f6566666563746976652d706f6c6963790a
+preimage = {
+  "effective_policy_profile": "ocs-effective-policy/1",
+  "contract_version":         "r08-v2",
+  "family":                   <the binding `family` identifier>,
+  "family_version":           <the contract section 2 table tag for that family: "v1" for f1a, "v2" for f1ab, f4, f5>,
+  "deny_all":                 <sorted list of the payload dimensions whose effective set is the explicit empty set; [] for F4 and F5>,
+  "effective":                <the composed effective payload: exactly the family payload keys of contract section 2, nothing else>
+}
+```
+
+- `effective` holds, for `f1ab-local-execution-allowlist`, the five sorted, duplicate-free lists `allowed_actions`, `allowed_adapters`, `allowed_units`, `allowed_institutions`, `allowed_authority_domains` (an explicit deny-all dimension is `[]`; an **omitted** dimension refuses `field_missing`, so omitted never means empty); for `f1a-local-execution-allowlist` the first three; for `f4-control-plane-age-bounds` the two composed integers; for `f5-action-class-age-bounds` the composed per-class map. List entries follow contract 2 (1 to 128 characters, no control, separator or `*` characters, exact strings, at most 256 entries) and are escaped, never rejected, by the serializer. Integers follow the age rows of section 5.2 (effective range 0 to 2147483647).
+- `deny_all` is redundant by construction (derived from `effective`) and is checked: a presented preimage whose flags do not equal the empty dimensions is refused `field_invalid` (`EPI-004`, `EPI-006`). It makes the explicit empty-set decision visible in the preimage and keeps "explicit deny-all" distinct from any absent value.
+- Family id, `family_version`, `contract_version` and the preimage profile are the **versioned policy context**: the same effective data under another family, another family version, another contract version or another preimage profile has a different digest (controls `EC-001` to `EC-004`). A family not in the dispatch table, or a `family_version` that is not that family's table tag, refuses (`family_unsupported`, or `field_invalid` on a presented preimage, `EPI-001`).
+- **Not in the preimage:** display names, titles, descriptions or any metadata (adding one is refused `field_unknown`, `EI-006`, `EPI-005`; control `EC-007` shows it would change the digest); selection id, epoch or digest, record triple, caller policy digest, validity window, `activation_ref`, trust snapshot identity and every other binding member (each is its own binding member or consumer state). The registry and caller inputs of a composition are not in the preimage either: only the narrowed result is, so two routes to the same effective sets give the same digest (`EP-012` equals `EP-011`).
+- The preimage uses the same canonical JSON rules as section 5.3 (`ensure_ascii`, sorted keys). The prefix `E` is distinct from the binding prefix and the scope-key prefix, and hashing without it, with it minus its newline or with the binding prefix gives a different digest (asserted).
+- **Caller-dependent evidence, never compared to durable selection state.** Because narrowing depends on the caller policy, the digest legitimately differs per caller under one unchanged selection epoch (`EP-007` and `EP-008` share a registry payload and differ in digest). It is bound by the claim commitment and checked only for self-consistency with the claim; **the guard does not compare it to durable selection state**, as if selection state alone determined its value, and it is never authority and never widens what the selection permits (contract 4 and 7.4 line 3, unchanged).
+
+Vectors (`effective_payloads`, 14; `effective_policy_controls`, 7; `effective_payloads_invalid`, 15; `effective_preimage_invalid`, 7): `EP-001` to `EP-006` are the original five-set, F4, F5, deny-all and non-ASCII cases under the ruled preimage (key-order twin `EP-002`); `EP-007` and `EP-008` narrowed F1ab values for two callers; `EP-009` and `EP-010` narrowed F4 and F5; `EP-011` one deny-all dimension; `EP-012` an empty intersection equal to it; `EP-013` effective 0 and the ceiling; `EP-014` the f1a family. Each narrowed vector carries its registry and caller inputs, and the test recomputes the composition independently before the digest. `BV-006`, `BV-007`, `BV-014` and `BV-015` embed the digests of `EP-003`, `EP-005`, `EP-004` and `EP-001`.
+
+**Relation to the contract text.** Contract 4 (pinned) describes the digest as the `digest` of the canonical composed effective payload, and the contract's section 9 worked example (`BV-001`) prints a digest in that earlier form. The ruling supersedes the wording for new implementations. `BV-001` still reproduces the contract's printed `binding_digest`, because the binding digest treats `effective_policy_digest` as an opaque, format-checked digest string and never recomputes it, so the printed value stays a valid member value. The contract wording and worked example need one amendment when next edited (section 11, item 10; section 12, N-2). The `legacy_payload_only_digest_control` field of each `EP-*` vector holds the earlier payload-only digest so the difference is visible.
 
 ## 7. Trust snapshot identity
 
@@ -175,24 +253,95 @@ The fingerprint's input strings are not ASCII-restricted. It is computed by the 
 
 ## 8. The code outcome map (reused, not extended)
 
-The outcome map is `docs/p1-extraction-plan/data/ld02-outcome-map.json` (pinned above): **48 codes** = the 46 `r08-v1` `CODES` entries plus exactly `trust_snapshot_version_stale` (layer `trust`) and `selection_withdrawn` (layer `disposition`) (contract 3.3, ADR D-02; declared as `CODES_V2` by `EXT-S1-2`). This work **invents no code**. The identity validators above use ten of the existing codes: `input_not_text`, `input_too_large`, `json_malformed`, `json_duplicate_key`, `json_number_unsupported`, `json_nesting_too_deep`, `field_type_invalid`, `field_missing`, `field_unknown`, `field_invalid`, plus the guard `digest_mismatch` and the snapshot `trust_snapshot_invalid`. The vector file embeds the 48 codes with their layers and the test requires them to equal the map and every vector code to be a member.
+The outcome map is `docs/p1-extraction-plan/data/ld02-outcome-map.json` (pinned above): **48 codes** = the 46 `r08-v1` `CODES` entries plus exactly `trust_snapshot_version_stale` (layer `trust`) and `selection_withdrawn` (layer `disposition`) (contract 3.3, ADR D-02; declared as `CODES_V2` by `EXT-S1-2`). This work **invents no code and repurposes none**. The vector file embeds the 48 codes with their layers; the test requires them to equal the map, every code a vector expects to be a member, and every code of section 8.1 to be a member or a marked proposal.
 
 Contract points that the later `EXT-S1-5` source change implements and that this document carries forward unchanged: the completeness test iterates **every `CODES_V2` entry (48)** and fails on any unmapped code; no required-policy code maps to an authorizing disposition (the map records `can_authorize_action: false` for every code); distinct codes keep distinct cause fields and the original `registry_code` travels as structured negative evidence (`ocs-registry-failure-detail/1`); `selection_withdrawn` and `trust_snapshot_version_stale` stay distinct causes; no policy decision is derived from message text. Note that the map's own `meta` text still says the two v2 codes are `in_CODES false until EXT-S1-2 declares CODES_V2`; `registry_successor/v2_codes.py` now declares `CODES_V2`, so that sentence is historical (not edited here; the map is pinned and unchanged).
 
+### 8.1 Typed, closed reason-code mapping (ruling OQ-2)
+
+Each binding or identity defect maps to **(verdict class, registry code, structured evidence fields)** using only the 48 `CODES_V2` entries and the **four-verdict vocabulary** adopted in the merged conformance kit (`docs/conformance/README.md`, ruling R1):
+
+| Verdict class | Meaning here | ADR D-21 term |
+|---|---|---|
+| `ACCEPT` | the supplied comparison is valid under authenticated authority and monotonic state; never an authorization | |
+| `REFUSE` | definitive invalidity or authority violation (malformed, unverified, withdrawn, revoked, expired, conflicting, mismatched); retrying the same input never succeeds | REFUSE |
+| `REFUSE_STALE` | definitive stale, replayed or rolled-back epoch or snapshot version: the state is known and the input is behind it | REFUSE |
+| `UNKNOWN_FAIL_CLOSED` | authority or durable state is indeterminate (unavailable, lost, torn, tampered, absent, snapshot support missing or expired); no effect may proceed; never success, never an optional fallback | HOLD |
+
+Three further outcomes are **kept distinct and are not verdict classes of a refusal**: the Registry **deny-all** (`applied_deny_all`, a policy applied whose effective sets are explicit empty sets, section 6), the **existing evaluator denial** (the enforcing component's evaluator denies an action under an applied policy; no Registry code), and `overlay_not_applied` (optional scope only, `applied=false`). Rules the test enforces over the table: terminal revocation and withdrawal (`selection_revoked`, `issuer_key_revoked`, `selection_withdrawn`) are `REFUSE` and never `REFUSE_STALE` or HOLD; a stale epoch or snapshot version (`selection_epoch_stale`, `trust_snapshot_version_stale`) is `REFUSE_STALE` and never an ordinary retryable HOLD; `UNKNOWN_FAIL_CLOSED` is the only class whose retry condition is the return of authoritative state; one code names one class (the documented dual-class code `trust_snapshot_expired` appears here only in its guard form); every row keeps the five mandatory evidence fields (`registry_code`, `layer`, `participation`, `decision_kind`, `stage`) of `ocs-registry-failure-detail/1`, so the **original Registry cause is preserved** and never collapsed into a component category; no decision is derived from message text.
+
+Retry vocabulary: `never same input` (the same input never succeeds), `fresh statement required` (only a new authenticated statement or claim changes the outcome), `after authoritative state available` (HOLD ends only when the durable state is readable again, and the result is then decided afresh), `after validity window opens`, `n/a`.
+
+| Id | Defect | Verdict class | Registry code | Decision kind | Retry | Structured evidence fields beyond the five mandatory |
+|---|---|---|---|---|---|---|
+| MP-input_not_text | binding or effective document is not text | `REFUSE` | `input_not_text` | refused | never same input | `member` |
+| MP-input_too_large | document over 65536 bytes | `REFUSE` | `input_too_large` | refused | never same input | `member` |
+| MP-json_malformed | not JSON, trailing text, BOM, leading zero, trailing comma | `REFUSE` | `json_malformed` | refused | never same input | `member` |
+| MP-json_duplicate_key | duplicate key at any depth | `REFUSE` | `json_duplicate_key` | refused | never same input | `member` |
+| MP-json_number_unsupported | float, exponent, NaN or Infinity literal (including an integer field written as 1.0) | `REFUSE` | `json_number_unsupported` | refused | never same input | `member` |
+| MP-json_nesting_too_deep | nesting deeper than 8 | `REFUSE` | `json_nesting_too_deep` | refused | never same input | `member` |
+| MP-field_missing | a binding, scope, effective or scope-key member is absent | `REFUSE` | `field_missing` | refused | never same input | `member` |
+| MP-field_unknown | an unlisted member (including display metadata) | `REFUSE` | `field_unknown` | refused | never same input | `member` |
+| MP-field_type_invalid | wrong JSON type, bool as integer, null, non-object scope, null activation_ref (registry form presented as completed) | `REFUSE` | `field_type_invalid` | refused | never same input | `member`, `observed_value_class` |
+| MP-field_invalid-identifier | identifier, digest or profile outside its grammar | `REFUSE` | `field_invalid` | refused | never same input | `member` |
+| MP-field_invalid-integer | integer outside its per-field range (0, negative, above the maximum) | `REFUSE` | `field_invalid` | refused | never same input | `member`, `expected_range` |
+| MP-field_invalid-projection | signed statement scope token that cannot be projected into the ASCII grammar | `REFUSE` | `field_invalid` | required_policy_unavailable (required) or overlay_not_applied (optional) | fresh statement required | `member`, `original_selection_digest` |
+| MP-digest_mismatch | carried binding_digest differs from the recomputed digest (guard) | `REFUSE` | `digest_mismatch` | refused | never same input | `carried_digest`, `recomputed_digest` |
+| MP-family_unsupported | family or family_version not registered in the dispatch table (effective digest) | `REFUSE` | `family_unsupported` | refused | never same input | `member` |
+| MP-composition_caller_invalid | caller policy invalid for composition | `REFUSE` | `composition_caller_invalid` | refused | never same input | `member` |
+| MP-selection_epoch_stale | claim epoch below the high-water or the trusted min_epochs floor, replay, rollback | `REFUSE_STALE` | `selection_epoch_stale` | refused | fresh statement required | `scope_key_digest`, `selection_id`, `selection_epoch`, `high_water_epoch`, `min_epoch_floor`, `selection_digest` |
+| MP-trust_snapshot_version_stale | snapshot version below the floor, or equal with a different fingerprint | `REFUSE_STALE` | `trust_snapshot_version_stale` | refused | fresh statement required | `scope_key_digest`, `trust_snapshot_version`, `trust_snapshot_fingerprint`, `snapshot_floor` |
+| MP-selection_withdrawn | authenticated, current withdrawal applies | `REFUSE` | `selection_withdrawn` | refused | fresh statement required | `scope_key_digest`, `selection_id`, `selection_epoch`, `selection_digest` |
+| MP-selection_revoked | (selection_id, epoch) is in the revoked set (terminal) | `REFUSE` | `selection_revoked` | refused | fresh statement required | `scope_key_digest`, `selection_id`, `selection_epoch`, `selection_digest` |
+| MP-issuer_key_revoked | issuing key is in the revoked key set | `REFUSE` | `issuer_key_revoked` | refused | fresh statement required | `scope_key_digest`, `selection_id`, `selection_epoch` |
+| MP-selection_expired | lock-time clock at or after valid_until | `REFUSE` | `selection_expired` | refused | fresh statement required | `scope_key_digest`, `selection_id`, `selection_epoch` |
+| MP-selection_not_yet_effective | lock-time clock before valid_from | `REFUSE` | `selection_not_yet_effective` | refused | after validity window opens | `scope_key_digest`, `selection_id`, `selection_epoch` |
+| MP-participation_mismatch | optional row against a required scope ratchet | `REFUSE` | `participation_mismatch` | refused | never same input | `scope_key_digest`, `selection_id` |
+| MP-selection_conflict | same selection id and epoch with different content | `REFUSE` | `selection_conflict` | refused | never same input | `scope_key_digest`, `selection_id`, `selection_epoch`, `selection_digest` |
+| MP-trust_snapshot_missing | no accepted snapshot in durable state (support indeterminate) | `UNKNOWN_FAIL_CLOSED` | `trust_snapshot_missing` | refused | after authoritative state available | `scope_key_digest`, `trust_snapshot_version` |
+| MP-trust_snapshot_expired-guard | current snapshot high-water record expired at the guard (indeterminate trusted state) | `UNKNOWN_FAIL_CLOSED` | `trust_snapshot_expired` | refused | after authoritative state available | `scope_key_digest`, `trust_snapshot_version` |
+| MP-store_unknown | authoritative durable state unavailable, lost, torn, rolled back or tampered | `UNKNOWN_FAIL_CLOSED` | `store_unknown` (proposed, section 8.2) | refused | after authoritative state available | `scope_key_digest`, `unknown_cause` |
+| MP-not_activated | no state row for the scope key | `REFUSE` | `not_activated` (proposed, section 8.2) | refused | fresh statement required | `scope_key_digest`, `selection_id` |
+| MP-policy_identity_mismatch | claim member differs from the durable row (scope key, selection_id, selection_digest, record triple, activation_ref) | `REFUSE` | `policy_identity_mismatch` (proposed, section 8.2) | refused | never same input | `scope_key_digest`, `member`, `selection_id`, `selection_digest`, `record_id`, `record_version`, `record_digest`, `activation_ref` |
+| MP-deny_all | Registry deny-all: an applied explicit empty-set narrowing (not a refusal, not an evaluator denial) | none | none | applied_deny_all | n/a | `scope_key_digest`, `selection_id`, `selection_epoch` |
+| MP-evaluator_denial | existing evaluator denial: the Runtime or Control Plane evaluator denies an action under an applied effective policy | none | none | evaluator_denied | n/a | `effective_policy_digest` |
+
+The mapping is the vector set `defect_mapping` (31 rows). Layers are those of the 48-code map for existing codes; the evidence field names come from the closed list `evidence_field_vocabulary` in the vector file.
+
+### 8.2 Proposed additive codes (not in CODES_V2)
+
+Three causes in the guard path have **no existing code**, and none of the 48 may be repurposed for them (for example `selection_scope_mismatch` means a statement scope that is not the consumer's scope, not a claim that differs from a durable row). They are recorded as proposals only; **nothing here adds them**, and adding any to the closed map needs an ADR D-02 amendment and a new pinned map. The names are the kit-local names of `docs/conformance/README.md`, which states they are conformance vocabulary and not additions to `CODES_V2`.
+
+| Proposed code | Proposed layer | Verdict class | Needed for |
+|---|---|---|---|
+| `not_activated` | `selection` | `REFUSE` | guard line 2: no state row exists for the scope key |
+| `policy_identity_mismatch` | `identity` | `REFUSE` | guard lines 2 and 3: a claim member (scope key, `selection_id`, `selection_digest`, record triple, `activation_ref`) differs from the durable row; the failing member travels in evidence field `member`, so one code does not collapse the causes |
+| `store_unknown` | `trust` | `UNKNOWN_FAIL_CLOSED` | guard preamble: authoritative state unavailable, lost or indeterminate; the kit's finer causes (`state_lost`, `state_malformed`, `state_older_than_anchor`, `anchor_head_mismatch`, `state_log_mismatch`, `log_chain_broken`) are sub-causes carried in evidence field `unknown_cause` |
+
+Until the Architect decides, a component keeps these as component-local reason names in `detail`, never as `registry_code`, and never maps them to an existing code. The kit's other local names (`required_binding_missing`, `binding_omitted_over_active_policy`, `optional_state_undetermined`, `issuer_revoked`, `record_revoked`) concern a claim with no binding or the kit's snapshot extensions and are outside the binding and identity defects of this document.
+
 ## 9. The vectors
 
-File: `docs/ext-implementation/data/ext-s1-5-policy-identity-vectors.json` (ASCII-only JSON, schema `ocs-ext-s1-5-policy-identity-vectors/1`, status `BUILDER_TESTED`).
+File: `docs/ext-implementation/data/ext-s1-5-policy-identity-vectors.json` (ASCII-only JSON, schema `ocs-ext-s1-5-policy-identity-vectors/1`, status `BUILDER_TESTED`). Every integer, digest, key and verdict in it is derived by an independent computation in the test and, where it is a byte or digest, by Node.js.
 
 | Set | Count | Content |
 |---|---|---|
-| `valid` | 14 | each carries `input_json`, `canonical_bytes_hex`, `canonical_ascii`, `binding_digest` and an unprefixed-digest control; includes the contract's worked example (`BV-001`, reproduced from the contract text), min and max length, punctuation, case-variant distinctness, F4 and F5 families, integer boundaries, digest boundaries, reordered, pretty-printed and `\u`-escaped inputs that must equal `BV-001` |
+| `valid` | 15 | each carries `input_json`, `canonical_bytes_hex`, `canonical_ascii`, `binding_digest` and an unprefixed-digest control; includes the contract's worked example (`BV-001`, reproduced from the contract text), min and max length, punctuation, case-variant distinctness, F4 and F5 families, integer boundaries, digest boundaries, reordered, pretty-printed and `\u`-escaped inputs that must equal `BV-001`, and `BV-015` (the ruled effective digest) |
 | `invalid` | 87 | each carries `category`, `input_json` or `input_hex`, and `expected` `{result: refuse, code, layer, member}`; categories: non-ASCII, homoglyph, fullwidth, case-fold hazard, NFC/NFD, whitespace, empty, over-length (129), bad leading character, control (NUL, newline, DEL), out-of-set ASCII, uppercase hex, wrong prefix, short and long digest, non-hex, wrong profile, missing and extra members (top level and `scope`), wrong type (including `bool`, `null`, string integer, non-object `scope`, array document), non-canonical integer (zero, negative, `-0`, float, exponent, leading zero, `NaN`, over bound), duplicate keys (top level, nested, same value, escaped), malformed JSON, BOM, nesting depth, null `activation_ref` (registry form), and validation-order cases |
 | `identifier_matrix` | 34 bad values x 8 identifier members = 272 derived refusals | every bad identifier value in every identifier member |
+| `integer_boundary` | 30 | 3 binding integers x 10 cases (section 5.2): min, max, max+1, 0, -1, `true`, float, exponent, string, 2^53 |
+| `effective_integer_boundary` | 45 | 3 age fields x 15 role cases (registry and effective): min or 0, max, max+1, -1, `true`, float, string |
 | `guard_digest_checks` | 4 | carried `binding_digest` equal, one hex digit off, unprefixed, uppercase |
-| `effective_payloads` | 6 | section 6 preimages and digests |
+| `effective_payloads` | 14 | section 6 preimages and digests, including narrowed values, deny-all, one deny-all dimension, empty intersection, effective 0 and the ceiling, f1a |
+| `effective_policy_controls` | 7 | single-variable changes that change the digest: family version, family id, contract version, preimage profile, inconsistent deny-all flags, an element removed, display metadata added (control only, not registrable) |
+| `effective_payloads_invalid` | 15 | omitted versus empty, unsorted, duplicate, extra key, display metadata, unknown family, entry rules, F4 third key, F5 empty map |
+| `effective_preimage_invalid` | 7 | family version, contract version, profile, deny-all flag, display metadata and absent-family refusals on a presented preimage |
+| `scope_projection` | 17 | section 5.6: ASCII projected unchanged; Unicode and out-of-grammar tokens in a signed statement refused |
+| `scope_keys` / `scope_key_collision_pairs` / `scope_keys_invalid` | 12 / 6 / 13 | section 5.7: derived key, member mutations, delimiter-collision pairs, invalid keys |
+| `defect_mapping` / `proposed_additive_codes` | 31 rows / 3 | section 8.1 and 8.2 |
 | `trust_snapshots` / `trust_snapshots_invalid` | 4 / 4 | section 7 fingerprints, unsorted input, non-ASCII with divergent-serializer control, empty collections; duplicate refusals |
 
-The test (`tests/test_ext_s1_5_vectors.py`) contains its own hand-written canonical serializer (not `json.dumps`), cross-checks it against `json.dumps(sort_keys, compact, ensure_ascii=True)`, recomputes every vector, requires exact bytes, digests, refusal code and member, runs a mutation control (changing any single member of every valid binding to another valid value changes the digest; removing any member or adding one refuses; no-prefix, wrong-prefix and truncated-prefix digests differ; twelve snapshot-field mutations give twelve distinct fingerprints), asserts the 48-code map and the section pins, and, when Node.js is present, recomputes every valid binding, effective payload and snapshot in a second language and requires byte equality. The test imports nothing from the registry packages and is not a shared module.
+The test (`tests/test_ext_s1_5_vectors.py`) contains its own hand-written canonical serializer (not `json.dumps`), cross-checks it against `json.dumps(sort_keys, compact, ensure_ascii=True)`, recomputes every vector, requires exact bytes, digests, refusal code and member, runs mutation controls (changing any single binding member or scope-key member changes the digest; removing any member or adding one refuses; no-prefix, wrong-prefix and truncated-prefix digests differ; twelve snapshot-field mutations give twelve distinct fingerprints), re-derives each narrowed effective payload from its registry and caller inputs, asserts the per-field ranges against the Registry source text (reading, never importing), asserts the 48-code map, the section pins and the section 8.1 class rules, and, when Node.js is present, recomputes every valid binding, effective preimage and digest (with composition), scope key, collision pair, trust snapshot and projection verdict in a second language and requires equality. The test imports nothing from the registry packages and is not a shared module.
 
 Evidence level: a Python reference, an independent Node.js recomputation and the contract's own printed digests (`BV-001`, `TF-001`) agree. **No Control Plane serializer has been run against these vectors** (no Control Plane code was available to this work); contract 4.1's claim that the Control Plane `commitment` serializer is byte-identical for ASCII input remains a source reading (ADR D-15) until `EXT-S4-4` runs it.
 
@@ -201,42 +350,56 @@ Evidence level: a Python reference, an independent Node.js recomputation and the
 Nothing below is implemented here. These are the obligations the later PRs take on against these vectors. The vector file is data owned by the Registry contract owner: consumers copy it into their repositories with its SHA-256 recorded and must not edit it; a change is a new schema version.
 
 **Runtime (EXT-S2-x, and the Runtime-owned destination guard `EXT-S4-2`).**
-1. Implement the published profile independently (section 5): identifier grammar, ASCII rule, value rules, canonical serializer, domain-separated digest, validation order. **Do not import registry code.** Reproduce every `valid` vector byte for byte (`canonical_bytes_hex`, `binding_digest`) and refuse every `invalid` vector with a typed refusal; map codes to Runtime reasons per the outcome map (`registry_binding_rejected`, `registry_input_rejected`) while keeping the registry code in `detail.registry_code`.
+1. Implement the published profile independently (section 5): identifier grammar, ASCII rule, **per-field integer ranges (5.2)**, canonical serializer, domain-separated digest, validation order. **Do not import registry code.** Reproduce every `valid` vector byte for byte (`canonical_bytes_hex`, `binding_digest`), every `integer_boundary` vector and every `invalid` vector with a typed refusal; map codes to Runtime reasons per the outcome map (`registry_binding_rejected`, `registry_input_rejected`) and the **typed verdict mapping of section 8.1** (`REFUSE`, `REFUSE_STALE`, `UNKNOWN_FAIL_CLOSED` as HOLD, kept distinct from Registry deny-all and the evaluator's own denial) while keeping the registry code and original cause in `detail.registry_code` and the structured evidence fields.
 2. At the guard (contract 7.4): refuse a binding failing section 5 before any comparison; refuse null `activation_ref`; **recompute `binding_digest` from the members and never trust a carried digest string**; compare `selection_id`, `selection_epoch`, `selection_digest`, the record triple and `activation_ref` to the trusted row by exact equality; **do not compare `effective_policy_digest` to durable state**; keep it as claim-bound evidence in the effect row.
-3. Do not normalize, case-fold, trim or re-encode any member anywhere (including when building the scope key). The identifier grammar permits `:`, `.` and `-`, so a delimiter-joined scope key is ambiguous; use an unambiguous encoding (OQ-5).
-4. `S2-2` narrowing adapter computes no identity; if it exposes the composed effective sets, `EP-001` to `EP-006` fix the `effective_policy_digest` preimage a Runtime gate must reproduce when it builds the completed object from a registry-form identity.
+3. Do not normalize, case-fold, trim or re-encode any member anywhere. **Build the scope key only as the versioned canonical object of section 5.7** (never a delimiter-joined string) and reproduce every `scope_keys` vector and all six collision pairs. Project a signed statement's scope into the binding only by the identity-or-refusal rule of section 5.6 (reproduce every `scope_projection` vector); never transliterate, normalize or hash a scope token.
+4. `S2-2` narrowing adapter computes no identity; if it exposes the composed effective sets, `EP-001` to `EP-014` fix the domain-separated `effective_policy_digest` preimage (section 6) a Runtime gate must reproduce when it builds the completed object from a registry-form identity, including narrowed values and explicit deny-all. The gate must never compare that digest to durable selection state.
 5. Put the vector file (hash-pinned) in the Runtime test corpus and run it in the Runtime core job.
 
 **Control Plane (EXT-S3-x, `EXT-S4-0`, `EXT-S4-4`, `EXT-S4-5`).**
 1. `EXT-S4-0` consumes this member list and specializes only effect-boundary requirements; **a divergent member list is a stop** (card EXT-S1-5, "stop if the `S4-0` member list diverges"). It may refine the `activation_ref` log-entry layout but must keep the properties of section 3.1.
-2. `EXT-S4-4` carries the completed binding as a declared optional claim field (omitted when absent) under the successor claim profile; the claim commitment covers it. Run **every valid vector through the Control Plane `commitment` serializer** and require byte equality with `canonical_bytes_hex`; run every invalid vector and require refusal **before** commitment, because `ensure_ascii=False` would otherwise diverge from the registry bytes for any non-ASCII member (this is exactly what the ASCII restriction prevents).
+2. `EXT-S4-4` carries the completed binding as a declared optional claim field (omitted when absent) under the successor claim profile; the claim commitment covers it. Run **every valid vector (including `integer_boundary`) through the Control Plane `commitment` serializer** and require byte equality with `canonical_bytes_hex`; run every invalid vector and require refusal **before** commitment, because `ensure_ascii=False` would otherwise diverge from the registry bytes for any non-ASCII member (this is exactly what the ASCII restriction prevents). The Control Plane owns the age safety bounds (D-27): copy the three age rows of section 5.2 (ceiling 2147483647 s, a technical representation ceiling, with the timestamp-safety qualification) into its contract table and cite them.
 3. A claim-carried binding with null `activation_ref` is refused; a claim with no binding stays byte-identical to today (contract 4.3).
-4. The Control Plane only carries `trust_snapshot_fingerprint` and `effective_policy_digest` as opaque validated digest strings. It must not recompute the fingerprint with `ensure_ascii=False` (section 7).
-5. The approval-generation mechanism (ADR D-16) is `EXT-S3-4`'s; nothing here defines it and no member for it is added to the binding.
+4. The Control Plane only carries `trust_snapshot_fingerprint` and `effective_policy_digest` as opaque validated digest strings. It must not recompute the fingerprint with `ensure_ascii=False` (section 7). `EXT-S4-0` derives its scope key from section 5.7 and runs the `scope_keys` and collision-pair vectors on its own serializer (cross-component golden vectors); a different member list or a delimiter-joined key is a stop.
+5. The approval-generation mechanism (ADR D-16) is `EXT-S3-4`'s; nothing here defines it and no member for it is added to the binding. Only the reserved range note `policy_generation` (section 5.2) exists, and `EXT-S3-4` must validate and publish its own domain for the counter.
 
 **Both.** No component keeps a second `activation_ref` form. Guard and evidence code use the codes in section 5.5 and the 48-code map; any code not in the map is a contract change. Each side adds a mutation test of its own (changing any single member changes the digest; adding or removing one refuses).
 
-**Registry (later `EXT-S1-5` source PR, after `EXT-S1-3` and `EXT-S1-4`).** Implements the projection from verified inputs, the effective-digest function (section 6), the fingerprint hook (section 7) and the 48-code map, and replaces this file's reference serializer test with a test that checks the shipped module against the same vectors (the vectors, not this reference, are the oracle).
+**Registry (later `EXT-S1-5` source PR, after `EXT-S1-3` and `EXT-S1-4`).** Implements the projection from verified inputs (including the scope-token projection of section 5.6, `field_invalid` at the `projection` stage), the per-field integer validators (section 5.2), the effective-digest function (section 6), the scope-key function (section 5.7), the fingerprint hook (section 7), the typed mapping of section 8.1 and the 48-code map, and replaces this file's reference serializer test with a test that checks the shipped module against the same vectors (the vectors, not this reference, are the oracle).
 
 ## 11. Ambiguities found in the existing contract (recorded, not resolved by fiat)
 
 1. **Null versus complete.** Contract 4.1 forbids `null` in a completed binding; 4.2 has the Registry produce `activation_ref = null`. Reconciled here as two forms (section 4). The contract should say so in one sentence when next edited.
-2. **Typed codes.** 4.1 requires "each refused with a typed code" but names only `field_invalid` (identifiers). Mapping the other defects to existing codes is a proposal (section 5.5, OQ-2).
-3. **Effective payload preimage** is described in words only, with no worked example (section 6, OQ-3).
-4. **Integer upper bound** is absent from 4.1 although the registry already bounds epoch and record version at 2^31 - 1 (OQ-1).
-5. **ASCII restriction versus statement validation.** The existing statement validators accept Unicode scope tokens (`valid_token`, scope fields) and lowercase 3 to 64 character identifiers for the others; 4.1 says v2 refuses non-ASCII but does not say at which layer. A signed statement with a non-ASCII tenant can verify yet cannot be projected into a binding (OQ-4).
+2. **Typed codes.** 4.1 requires "each refused with a typed code" but names only `field_invalid` (identifiers). The mapping of the other defects is ruled (OQ-2) and recorded in section 8.1.
+3. **Effective payload preimage** was described in words only, with no worked example; fixed by ruling OQ-3 (section 6).
+4. **Integer upper bound** is absent from 4.1 although the registry already bounds epoch and record version at 2^31 - 1; fixed per field by ruling OQ-1 (section 5.2).
+5. **ASCII restriction versus statement validation.** The existing statement validators accept Unicode scope tokens (`valid_token`, scope fields) and lowercase 3 to 64 character identifiers for the others; 4.1 says v2 refuses non-ASCII but does not say at which layer. A signed statement with a non-ASCII tenant can verify yet cannot be projected into a binding; ruled (OQ-4) as identity-or-refusal projection (section 5.6).
 6. **Card title.** The `EXT-S1-5` card heading says "46-code outcome map"; its criterion and ADR D-02 say 48 (46 plus two). This document uses 48.
 7. **Stale map note.** The outcome map `meta` still says the v2 codes are `in_CODES false until EXT-S1-2 declares CODES_V2`; `CODES_V2` now exists. Historical, harmless.
 8. **Control Plane serializer equivalence** is a source reading (ADR D-15), not a tested result, until `EXT-S4-4`.
+9. **Age maximum still reads "pending".** Contract 2, 2.1 and ADR D-27 say `AGE_MAX` is not adopted. Ruling OQ-1 sets the technical representation ceiling 2147483647 s with the timestamp-safety qualification (section 5.2). The contract and the Control Plane table need the update when next edited; this work edits neither.
+10. **Effective digest wording.** Contract 4 describes `effective_policy_digest` as the plain `digest` of the composed payload and the section 9 worked example prints a digest of that form; ruling OQ-3 requires the domain-separated preimage of section 6. `BV-001` stays valid because the binding never recomputes that member.
+11. **Scope key.** Contract 7.4 line 2 lists seven members but no serialization; the conformance kit renders them as an unversioned JSON array string. Section 5.7 fixes one versioned, domain-separated form (ruling OQ-5).
 
 ## 12. Open questions for Architect
 
-- **OQ-1 Integer ceiling.** Confirm 2147483647 (the existing registry `MAX_INT`) as the upper bound for `record_version`, `selection_epoch` and `trust_snapshot_version` in the binding, or give another value. Contract 4.1 states no maximum and non-Python implementations need one (JSON numbers beyond 2^53 are not interoperable). Vectors `BV-008` and `BI-INT-OVER-MAX` are marked interim.
-- **OQ-2 Typed codes for non-identifier defects.** Confirm the section 5.5 mapping to existing codes (missing to `field_missing`, extra to `field_unknown`, wrong type to `field_type_invalid`, bad digest, profile or integer to `field_invalid`, guard digest difference to `digest_mismatch`), or name different existing codes. No new code is requested.
-- **OQ-3 `effective_policy_digest` preimage.** Confirm the preimage is the family-payload object only, plain `digest` with no domain prefix, sorted lists, no family or bookkeeping inside (section 6). A different preimage changes `EP-*` and `BV-014` only.
-- **OQ-4 Where the ASCII rule is enforced.** Confirm that a verified statement whose scope token is outside the identifier grammar remains a verified statement, and that the binding projection refuses it `field_invalid` (a required scope refuses and never falls back; an optional scope reports `overlay_not_applied`), rather than tightening the v2 statement validators now (a shared-core change that belongs after `EXT-S1-3`).
-- **OQ-5 Scope-key construction.** Contract 7.4 line 2 builds a "scope key" from seven members, but the identifier grammar allows `:`, `.`, `_` and `-`, so a delimiter-joined key is ambiguous (for example consumer `a:b` with tenant `c` versus consumer `a` with tenant `b:c`). Please rule, in `EXT-S4-0`, on an unambiguous key (this document suggests the canonical JSON of the ordered seven-member array, hashed or not). Nothing in this document builds a scope key.
+### Closed by ruling (2026-10-25)
+
+- **OQ-1 Integer range: CLOSED.** Strict bounded integers with explicit per-field ranges (section 5.2): `record_version` and `selection_epoch` 1 to 2147483647 (each source-justified by its own Registry validator), `trust_snapshot_version` 1 to 2147483647 (bounded, source silent, open item N-1), the three age fields registry 1, caller and effective 0, ceiling 2147483647 s as a technical representation ceiling with the timestamp-safety qualification, and a separate reserved range for any future policy-generation counter. The interim shared bound and vectors `BV-008`, `BI-INT-OVER-MAX` are re-described per field; boundary vectors added for every field.
+- **OQ-2 Typed codes: CLOSED.** Typed, closed, versioned mapping from each defect to (verdict class, existing `CODES_V2` code, structured evidence fields) with the four-verdict vocabulary; terminal revocation, stale epoch, HOLD, Registry deny-all and evaluator denial stay distinct (section 8.1). Three causes without a code are recorded only as proposed additive codes (section 8.2).
+- **OQ-3 Effective policy digest preimage: CLOSED.** Domain-separated preimage of the canonical effective data plus versioned policy context (section 6); caller-dependent evidence, never compared to durable selection state.
+- **OQ-4 Unicode scope tokens: CLOSED.** Identity-or-refusal projection into the ASCII grammar; original statement bytes retained as provenance through `selection_digest`; no normalization or hashing (section 5.6).
+- **OQ-5 Scope key: CLOSED.** Versioned canonical object of the contract's seven members with a domain-separated digest, collision-pair vectors and member-mutation vectors (section 5.7).
+
+### New and remaining (genuine)
+
+- **N-1 Ranges still without a source ceiling.** (a) `trust_snapshot_version` has no source-stated maximum; 2147483647 is a bounded strict choice, not a derived one. (b) The reserved `policy_generation` range (1 to 2^53 - 1) is a placeholder owned by `EXT-S3-4`. (c) A scope whose `selection_epoch` has reached 2147483647 cannot advance (no strictly higher epoch exists and a successor must name the same `selection_id`), so it stays fail-closed with no defined remedy in V1; confirm that fail-closed with an operator procedure outside the Registry is acceptable, or set a different ceiling.
+- **N-2 Contract text amendment.** Contract 4 (effective digest wording), the section 9 worked example, contract 2/2.1 and ADR D-27 (age maximum) lag rulings OQ-1 and OQ-3 (section 11, items 9 and 10). Confirm that these are amended when the contract is next edited, by the contract owner, and that `BV-001`'s printed legacy `effective_policy_digest` value may stay as an opaque member value.
+- **N-3 `family_version` token.** The versioned policy context uses the contract section 2 table tag (`v1` for `f1a`, `v2` for `f1ab`, `f4`, `f5`) as a closed enumeration. Confirm this source for the family version, or name another (a change affects `EP-*`, `EC-*`, `EPI-*`, `BV-006`, `BV-007`, `BV-014`, `BV-015` only).
+- **N-4 Proposed additive codes.** Decide whether `not_activated`, `policy_identity_mismatch` and `store_unknown` (section 8.2) are added to `CODES_V2` (ADR D-02 amendment and a re-pinned outcome map) or stay component-local reason names. Until then they are never emitted as `registry_code`.
+- **N-5 Optional scope with an unprojectable token.** Ruling OQ-4 fixes the required case (refuse). For an optional scope this document keeps the contract's decision kind `overlay_not_applied` with `applied=false` and the caller policy unchanged (no binding is created, so nothing is applied). Confirm.
+- **N-6 Process note.** This branch predates the merge of the conformance kit (PR #28), so the verdict vocabulary is embedded and the README is asserted only when present in a checkout; the coordinator may add an enforced pin after the branch is updated.
 
 ## 13. What this document does not do
 
-It adds no code, constant, module, schema, workflow or dependency; edits no existing file; implements no part of `EXT-S1-5`'s source change; defines no approval-generation member, claim field name or log-entry layout; makes no qualification, release or publication claim; and does not claim that Runtime or Control Plane conform.
+It adds no code, constant, module, schema, workflow or dependency; edits no existing file; implements no part of `EXT-S1-5`'s source change; defines no approval-generation member (only the reserved range note of section 5.2), no Control Plane generation, claim field name or log-entry layout; adds no `CODES_V2` entry (section 8.2 lists proposals only); makes no qualification, release or publication claim; and does not claim that Runtime or Control Plane conform.

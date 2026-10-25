@@ -14,6 +14,7 @@ import json
 import re
 import shutil
 import subprocess
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -24,9 +25,28 @@ V = json.loads(VECTORS.read_text(encoding="ascii"))
 
 DOMAIN_PREFIX = b"ocs-reg/r08-v2/policy-binding\n"
 PROFILE = "ocs-policy-binding/1"
-INT_MAX = 2**31 - 1  # INTERIM (spec open question OQ-1): equals registry common.MAX_INT
+EFFECTIVE_PREFIX = b"ocs-reg/r08-v2/effective-policy\n"
+EFFECTIVE_PROFILE = "ocs-effective-policy/1"
+CONTRACT_VERSION = "r08-v2"
+SCOPE_KEY_PREFIX = b"ocs-reg/r08-v2/scope-key\n"
+SCOPE_KEY_PROFILE = "ocs-scope-key/1"
 MAX_DOCUMENT_BYTES = 65536
 MAX_DEPTH = 8
+
+# Explicit PER-FIELD integer domains (Architect ruling OQ-1). Each field has its OWN entry; the entries are independent and
+# merely happen to be equal today. They are deliberately written as separate literals, never derived from one shared constant.
+RANGES = {
+    "record_version": (1, 2147483647),           # SOURCE_JUSTIFIED: record.py 1 <= v <= MAX_INT; s03-contract 1..2147483647
+    "selection_epoch": (1, 2147483647),          # SOURCE_JUSTIFIED: selection.py _epoch_ok 1 <= v <= MAX_INT
+    "trust_snapshot_version": (1, 2147483647),   # OPEN_ITEM_BOUNDED: verify.py requires int >= 1 and states no maximum
+}
+AGE_RANGES = {                                   # RULED (OQ-1): technical representation ceiling, not an operational setting
+    "registry": (1, 2147483647),                 # AGE_MIN = 1 adopted for registry input
+    "caller": (0, 2147483647),                   # the Control Plane models admit 0
+    "effective": (0, 2147483647),                # min(caller, registry); a caller 0 stays 0
+}
+RESERVED_POLICY_GENERATION = (1, 9007199254740991)  # RESERVED ONLY: not a binding member, no vectors, owner EXT-S3-4 (D-16)
+VERDICT_CLASSES = ("ACCEPT", "REFUSE", "REFUSE_STALE", "UNKNOWN_FAIL_CLOSED")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Reference canonical serializer (hand-written)
@@ -210,7 +230,8 @@ def validate_binding(doc):
     for path in sorted(flat):  # phase 4: values
         val = flat[path]
         if path in INT_MEMBERS:
-            if not 1 <= val <= INT_MAX:
+            lo, hi = RANGES[path]
+            if not lo <= val <= hi:
                 raise Refuse("field_invalid", path)
         elif path in ID_MEMBERS:
             if not val.isascii() or IDENT.fullmatch(val) is None:
@@ -251,6 +272,193 @@ def check_snapshot_duplicates(s):
     if len(set(keys)) != len(keys) or len(set(floors)) != len(floors) or len(set(pairs)) != len(pairs) \
             or len(set(s["revoked_key_ids"])) != len(s["revoked_key_ids"]):
         raise Refuse("trust_snapshot_invalid")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Statement token replica, scope projection (OQ-4)
+# ----------------------------------------------------------------------------------------------------------------------
+def statement_valid_token(value):
+    """Replica of registry_successor/common.py valid_token (the check a signed v2 statement's scope fields pass today): 1..128
+    characters, no '*', no Unicode category C* or Z* character. It accepts non-ASCII text, which is why projection must refuse it."""
+    if not isinstance(value, str) or not 1 <= len(value) <= 128 or "*" in value:
+        return False
+    return all(unicodedata.category(ch)[0] not in ("C", "Z") for ch in value)
+
+
+def project_scope(statement_scope):
+    """IDENTITY projection only: each of the three scope tokens is passed through byte for byte when it already matches the ASCII
+    identifier grammar, otherwise binding creation is refused field_invalid at member scope.<name> (first in sorted path order).
+    No transliteration, normalization, case folding, truncation or hashing is ever applied."""
+    if not isinstance(statement_scope, dict) or set(statement_scope) != set(SCOPE_KEYS):
+        raise Refuse("field_invalid", "scope")
+    for k in sorted(SCOPE_KEYS):
+        v = statement_scope[k]
+        if not (isinstance(v, str) and v.isascii() and IDENT.fullmatch(v)):
+            raise Refuse("field_invalid", "scope." + k)
+    return {k: statement_scope[k] for k in SCOPE_KEYS}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Scope key (OQ-5)
+# ----------------------------------------------------------------------------------------------------------------------
+SK_MEMBERS = ("authority_domain", "consumer_id", "family", "institution", "operation", "selection_id", "tenant")  # sorted
+SK_TOP = ("scope_key_profile",) + SK_MEMBERS
+
+
+def validate_scope_key(doc):
+    if not isinstance(doc, dict):
+        raise Refuse("field_type_invalid")
+    missing = sorted(set(SK_TOP) - set(doc))
+    if missing:
+        raise Refuse("field_missing", missing[0])
+    unknown = sorted(set(doc) - set(SK_TOP))
+    if unknown:
+        raise Refuse("field_unknown", unknown[0])
+    for k in sorted(doc):
+        if not isinstance(doc[k], str):
+            raise Refuse("field_type_invalid", k)
+    for k in sorted(doc):
+        if k == "scope_key_profile":
+            if doc[k] != SCOPE_KEY_PROFILE:
+                raise Refuse("field_invalid", k)
+        elif not (doc[k].isascii() and IDENT.fullmatch(doc[k])):
+            raise Refuse("field_invalid", k)
+    return doc
+
+
+def scope_key_text(doc):
+    return canon(validate_scope_key(doc))
+
+
+def scope_key_digest(doc):
+    return "sha256:" + sha_hex(SCOPE_KEY_PREFIX + scope_key_text(doc))
+
+
+def scope_key_from_binding(b):
+    return {"scope_key_profile": SCOPE_KEY_PROFILE, "tenant": b["scope"]["tenant"], "institution": b["scope"]["institution"],
+            "authority_domain": b["scope"]["authority_domain"], "consumer_id": b["consumer_id"], "operation": b["operation"],
+            "family": b["family"], "selection_id": b["selection_id"]}
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Effective policy identity (OQ-3)
+# ----------------------------------------------------------------------------------------------------------------------
+F1AB_KEYS = ("allowed_actions", "allowed_adapters", "allowed_units", "allowed_institutions", "allowed_authority_domains")
+FAMILIES = {  # contract section 2 table: family id, table tag, payload shape
+    "f1a-local-execution-allowlist": {"version": "v1", "kind": "lists", "keys": ("allowed_actions", "allowed_adapters", "allowed_units")},
+    "f1ab-local-execution-allowlist": {"version": "v2", "kind": "lists", "keys": F1AB_KEYS},
+    "f4-control-plane-age-bounds": {"version": "v2", "kind": "ints", "keys": ("status_max_age_seconds", "approval_max_age_seconds")},
+    "f5-action-class-age-bounds": {"version": "v2", "kind": "classmap", "keys": ("class_status_max_age_seconds",)},
+}
+
+
+def _strict_int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def validate_effective_payload(family, payload, role="effective"):
+    """Strict validator of a composed (or, with role registry/caller, an input) family payload. First failing phase wins:
+    family, shape (missing, unknown), types, values; sorted path order inside each phase."""
+    if not isinstance(family, str) or family not in FAMILIES:
+        raise Refuse("family_unsupported", "family")
+    fam = FAMILIES[family]
+    if not isinstance(payload, dict):
+        raise Refuse("field_type_invalid")
+    keys = set(fam["keys"])
+    missing = sorted(keys - set(payload))
+    if missing:
+        raise Refuse("field_missing", missing[0])
+    unknown = sorted(set(payload) - keys)
+    if unknown:
+        raise Refuse("field_unknown", unknown[0])
+    flat = {}
+    for k in payload:
+        if fam["kind"] == "classmap" and isinstance(payload[k], dict):
+            for c, v in payload[k].items():
+                flat[k + "." + c] = v
+        else:
+            flat[k] = payload[k]
+    for path in sorted(flat):  # types
+        v = flat[path]
+        if fam["kind"] == "lists":
+            if not isinstance(v, list) or not all(isinstance(x, str) for x in v):
+                raise Refuse("field_type_invalid", path)
+        elif fam["kind"] == "ints":
+            if not _strict_int(v):
+                raise Refuse("field_type_invalid", path)
+        elif path == "class_status_max_age_seconds" or not _strict_int(v):
+            raise Refuse("field_type_invalid", path)
+    lo, hi = AGE_RANGES[role]
+    for path in sorted(flat):  # values
+        v = flat[path]
+        if fam["kind"] == "lists":
+            if len(v) > 256 or not all(statement_valid_token(x) for x in v) or v != sorted(set(v)):
+                raise Refuse("field_invalid", path)
+        elif not lo <= v <= hi:
+            raise Refuse("field_invalid", path)
+    if fam["kind"] == "classmap":
+        m = payload["class_status_max_age_seconds"]
+        if not m or not all(statement_valid_token(c) for c in m):
+            raise Refuse("field_invalid", "class_status_max_age_seconds")
+    return payload
+
+
+def deny_all_dimensions(family, payload):
+    if FAMILIES[family]["kind"] != "lists":
+        return []
+    return sorted(k for k, v in payload.items() if v == [])
+
+
+def effective_preimage(family, payload):
+    validate_effective_payload(family, payload)
+    return {"effective_policy_profile": EFFECTIVE_PROFILE, "contract_version": CONTRACT_VERSION, "family": family,
+            "family_version": FAMILIES[family]["version"], "deny_all": deny_all_dimensions(family, payload), "effective": payload}
+
+
+def effective_digest_of_preimage(pre):
+    return "sha256:" + sha_hex(EFFECTIVE_PREFIX + canon(pre))
+
+
+def effective_policy_digest(family, payload):
+    return effective_digest_of_preimage(effective_preimage(family, payload))
+
+
+def validate_preimage(doc):
+    """A presented preimage must equal the one rebuilt from its own family and effective payload (no free-standing flags)."""
+    top = ("contract_version", "deny_all", "effective", "effective_policy_profile", "family", "family_version")
+    if not isinstance(doc, dict):
+        raise Refuse("field_type_invalid")
+    missing = sorted(set(top) - set(doc))
+    if missing:
+        raise Refuse("field_missing", missing[0])
+    unknown = sorted(set(doc) - set(top))
+    if unknown:
+        raise Refuse("field_unknown", unknown[0])
+    if doc["effective_policy_profile"] != EFFECTIVE_PROFILE:
+        raise Refuse("field_invalid", "effective_policy_profile")
+    if doc["contract_version"] != CONTRACT_VERSION:
+        raise Refuse("field_invalid", "contract_version")
+    validate_effective_payload(doc["family"], doc["effective"])
+    if doc["family_version"] != FAMILIES[doc["family"]]["version"]:
+        raise Refuse("field_invalid", "family_version")
+    if doc["deny_all"] != deny_all_dimensions(doc["family"], doc["effective"]):
+        raise Refuse("field_invalid", "deny_all")
+    return doc
+
+
+def compose(family, registry, caller):
+    """Independent restatement of contract section 2 composition for the vectors: F1ab/f1a intersection per key, F4 min per scalar,
+    F5 min per class (the vectors use identical class sets)."""
+    validate_effective_payload(family, registry, "registry")
+    validate_effective_payload(family, caller, "caller")
+    kind = FAMILIES[family]["kind"]
+    if kind == "lists":
+        return {k: sorted(set(registry[k]) & set(caller[k])) for k in registry}
+    if kind == "ints":
+        return {k: min(registry[k], caller[k]) for k in registry}
+    r, c = registry["class_status_max_age_seconds"], caller["class_status_max_age_seconds"]
+    assert set(r) == set(c)
+    return {"class_status_max_age_seconds": {k: min(r[k], c[k]) for k in r}}
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -462,37 +670,83 @@ def test_guard_digest_checks():
             assert got["code"] == exp["code"] and exp["code"] in codes, g["id"]
 
 
-def test_effective_payload_digests():
+def test_effective_payload_digests_use_the_domain_separated_preimage():
+    by_id = {e["id"]: e for e in V["effective_payloads"]}
+    assert V["profile"]["effective_policy"]["domain_prefix_hex"] == EFFECTIVE_PREFIX.hex()
+    assert EFFECTIVE_PREFIX == b"ocs-reg/r08-v2/effective-policy\n"
     for ep in V["effective_payloads"]:
-        c = canon(ep["payload"])
-        assert c.hex() == ep["expected"]["canonical_bytes_hex"], ep["id"]
-        assert c.decode("ascii") == ep["expected"]["canonical_ascii"]
-        assert plain_digest(ep["payload"]) == ep["expected"]["effective_policy_digest"], ep["id"]
-        # the payload carries exactly the family payload keys and no registry bookkeeping
-        keys = set(ep["payload"])
-        fam = ep["family"]
-        if fam == "f1ab-local-execution-allowlist":
-            assert keys == {"allowed_actions", "allowed_adapters", "allowed_units", "allowed_institutions", "allowed_authority_domains"}
-            for lst in ep["payload"].values():
-                assert lst == sorted(lst) and len(lst) == len(set(lst))
-        elif fam == "f4-control-plane-age-bounds":
-            assert keys == {"status_max_age_seconds", "approval_max_age_seconds"}
-        elif fam == "f5-action-class-age-bounds":
-            assert keys == {"class_status_max_age_seconds"}
-        else:
-            raise AssertionError(fam)
+        exp = ep["expected"]
+        pre = effective_preimage(ep["family"], ep["payload"])
+        c = canon(pre)
+        assert c.hex() == exp["preimage_canonical_bytes_hex"], ep["id"]
+        assert c.decode("ascii") == exp["preimage_canonical_ascii"], ep["id"]
+        assert effective_policy_digest(ep["family"], ep["payload"]) == exp["effective_policy_digest"], ep["id"]
+        # domain separation and the preimage wrapper both change the digest relative to the interim plain digests
+        assert exp["effective_policy_digest"] != exp["digest_without_prefix_control"] == plain_digest(pre), ep["id"]
+        assert exp["effective_policy_digest"] != exp["legacy_payload_only_digest_control"] == plain_digest(ep["payload"]), ep["id"]
+        assert set(pre) == {"contract_version", "deny_all", "effective", "effective_policy_profile", "family", "family_version"}
+        assert pre["family_version"] == FAMILIES[ep["family"]]["version"] and pre["contract_version"] == "r08-v2"
+        if "inputs" in ep:  # narrowed values: the digest covers the NARROWED effective data, recomputed independently
+            assert compose(ep["family"], ep["inputs"]["registry"], ep["inputs"]["caller"]) == ep["payload"], ep["id"]
         if "equivalent_to" in ep:
-            ref = next(x for x in V["effective_payloads"] if x["id"] == ep["equivalent_to"])
-            assert ref["expected"] == ep["expected"]
+            assert by_id[ep["equivalent_to"]]["expected"] == exp, ep["id"]
     digests = [e["expected"]["effective_policy_digest"] for e in V["effective_payloads"] if "equivalent_to" not in e]
     assert len(digests) == len(set(digests))
+    # explicit empty set (deny-all) differs from every non-empty case and lists its dimensions; routes to the same sets agree
+    assert by_id["EP-004"]["expected"]["preimage_canonical_ascii"].count('"deny_all":["allowed_actions"') == 1
+    assert effective_preimage("f1ab-local-execution-allowlist", by_id["EP-011"]["payload"])["deny_all"] == ["allowed_units"]
+    assert by_id["EP-012"]["expected"] == by_id["EP-011"]["expected"]
+    # caller dependence: same registry payload, different caller, different effective digest (so it can never be compared to durable state)
+    assert by_id["EP-007"]["inputs"]["registry"] == by_id["EP-008"]["inputs"]["registry"]
+    assert by_id["EP-007"]["expected"]["effective_policy_digest"] != by_id["EP-008"]["expected"]["effective_policy_digest"]
     # changing any single set element changes the effective digest
-    p = json.loads(json.dumps(V["effective_payloads"][0]["payload"]))
-    base = plain_digest(p)
+    fam = "f1ab-local-execution-allowlist"
+    p = json.loads(json.dumps(by_id["EP-001"]["payload"]))
+    base = effective_policy_digest(fam, p)
     for k in list(p):
         q = json.loads(json.dumps(p))
-        q[k] = q[k] + ["extra-zz"]
-        assert plain_digest(q) != base
+        q[k] = sorted(q[k] + ["extra-zz"])
+        assert effective_policy_digest(fam, q) != base
+    # an explicitly empty dimension differs from a non-empty one; an omitted dimension refuses
+    q = json.loads(json.dumps(p))
+    q["allowed_units"] = []
+    assert effective_policy_digest(fam, q) != base
+    del q["allowed_units"]
+    with pytest.raises(Refuse) as info:
+        effective_policy_digest(fam, q)
+    assert (info.value.code, info.value.member) == ("field_missing", "allowed_units")
+
+
+def test_effective_policy_controls_and_invalid_inputs():
+    base = next(e for e in V["effective_payloads"] if e["id"] == "EP-001")
+    for c in V["effective_policy_controls"]:
+        pre = json.loads(json.dumps(effective_preimage(base["family"], base["payload"])))
+        assert canon(load(c["preimage_canonical_ascii"])).decode("ascii") == c["preimage_canonical_ascii"]
+        assert effective_digest_of_preimage(load(c["preimage_canonical_ascii"])) == c["effective_policy_digest"], c["id"]
+        assert c["effective_policy_digest"] != base["expected"]["effective_policy_digest"], c["id"]
+        assert c["registrable"] is False
+    ids = {c["id"] for c in V["effective_policy_controls"]}
+    assert {"EC-001", "EC-002", "EC-003", "EC-007"} <= ids  # family version, family id, contract version, display metadata
+    # wrong-prefix and no-prefix preimage digests differ
+    pre = effective_preimage(base["family"], base["payload"])
+    assert "sha256:" + sha_hex(canon(pre)) != effective_digest_of_preimage(pre)
+    assert "sha256:" + sha_hex(EFFECTIVE_PREFIX[:-1] + canon(pre)) != effective_digest_of_preimage(pre)
+    assert "sha256:" + sha_hex(DOMAIN_PREFIX + canon(pre)) != effective_digest_of_preimage(pre)  # not the binding prefix either
+    codes = _outcome_codes()
+    for vec in V["effective_payloads_invalid"]:
+        exp = vec["expected"]
+        assert exp["code"] in codes, vec["id"]
+        with pytest.raises(Refuse) as info:
+            validate_effective_payload(vec["family"], load(vec["payload_json"]), vec["role"])
+        assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
+    for vec in V["effective_preimage_invalid"]:
+        exp = vec["expected"]
+        assert exp["code"] in codes, vec["id"]
+        with pytest.raises(Refuse) as info:
+            validate_preimage(load(vec["input_json"]))
+        assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
+    for e in V["effective_payloads"]:
+        validate_preimage(effective_preimage(e["family"], e["payload"]))
 
 
 def test_trust_snapshot_fingerprints_and_mutation_control():
@@ -565,6 +819,9 @@ def test_outcome_map_is_the_48_code_map_and_no_new_codes_are_used():
     assert used <= set(codes)
     expected_used = {v["expected"]["code"] for v in V["invalid"]} | {g["expected"]["code"] for g in V["guard_digest_checks"] if "code" in g["expected"]} \
         | {t["expected"]["code"] for t in V["trust_snapshots_invalid"]}
+    for key in ("integer_boundary", "effective_integer_boundary", "effective_payloads_invalid", "effective_preimage_invalid", "scope_keys_invalid"):
+        expected_used |= {x["expected"]["code"] for x in V[key] if x["expected"]["result"] == "refuse"}
+    expected_used |= {x["expected"]["code"] for x in V["scope_projection"] if x["expected"]["result"] == "refuse"}
     assert used == expected_used
     ld_bytes = (ROOT / "docs" / "p1-extraction-plan" / "data" / "ld02-outcome-map.json").read_bytes()
     assert sha_hex(ld_bytes) == V["pins"]["outcome_map_sha256"], "ld02 outcome map changed: re-review the identity spec and vectors"
@@ -595,8 +852,14 @@ def test_contract_section_pins():
 
 def test_spec_document_exists_and_references_the_pins():
     spec = (ROOT / V["spec"]).read_text(encoding="utf-8")
-    for heading in ("Consumers and handoff", "Open questions for Architect"):
-        assert heading in spec
+    for heading in ("Consumers and handoff", "Open questions for Architect", "proposed additive codes (not in CODES_V2)"):
+        assert heading.lower() in spec.lower()
+    for oq in ("OQ-1", "OQ-2", "OQ-3", "OQ-4", "OQ-5"):
+        assert oq in spec
+    for domain in ("ocs-reg/r08-v2/effective-policy", "ocs-reg/r08-v2/scope-key", "ocs-scope-key/1", "ocs-effective-policy/1"):
+        assert domain in spec, domain
+    for field, rng in V["profile"]["integer_ranges"].items():
+        assert "`%s" % field in spec, field
     assert V["pins"]["contract_file_sha256_informational"] in spec
     for name in V["pins"]["enforced_section_hashes"]:
         assert V["pins"]["enforced_section_hashes"][name]["sha256"] in spec, name
@@ -605,10 +868,275 @@ def test_spec_document_exists_and_references_the_pins():
         assert "`%s`" % member in spec, member
 
 
+def _binding_with(member, literal_text):
+    d = load(next(v for v in V["valid"] if v["id"] == "BV-001")["input_json"])
+    d[member] = "@@LIT@@"
+    return json.dumps(d).replace('"@@LIT@@"', literal_text)
+
+
+def test_integer_ranges_are_explicit_per_field_and_independent():
+    ranges = V["profile"]["integer_ranges"]
+    assert set(ranges) >= {"record_version", "selection_epoch", "trust_snapshot_version", "status_max_age_seconds", "approval_max_age_seconds",
+                           "class_status_max_age_seconds", "policy_generation"}
+    for field, (lo, hi) in RANGES.items():
+        assert (ranges[field]["min"], ranges[field]["max"]) == (lo, hi), field
+        assert ranges[field]["domain"] == "binding"
+    for field in ("status_max_age_seconds", "approval_max_age_seconds", "class_status_max_age_seconds"):
+        assert ranges[field]["max"] == AGE_RANGES["effective"][1] == AGE_RANGES["registry"][1] == AGE_RANGES["caller"][1] == 2147483647
+        assert {k: AGE_RANGES[k][0] for k in AGE_RANGES} == ranges[field]["role_min"] == {"registry": 1, "caller": 0, "effective": 0}
+        assert ranges[field]["status"] == "ARCHITECT_RULED"
+    # statuses are honest: two are source-justified, the snapshot version is an explicit open item, the generation counter is reserved
+    assert ranges["record_version"]["status"] == ranges["selection_epoch"]["status"] == "SOURCE_JUSTIFIED"
+    assert ranges["trust_snapshot_version"]["status"] == "OPEN_ITEM_BOUNDED"
+    gen = ranges["policy_generation"]
+    assert gen["status"] == "RESERVED" and (gen["min"], gen["max"]) == RESERVED_POLICY_GENERATION
+    assert "policy_generation" not in V["profile"]["members"] and "policy_generation" not in V["profile"]["integer_members"]
+    assert not any("policy_generation" in v.get("input_json", "") for v in V["valid"] + V["invalid"])
+    # the epoch and age domains are different entries and the generation domain is wider than both (never assumed equal)
+    assert gen["max"] > RANGES["selection_epoch"][1]
+    assert V["profile"]["integer_members"] == list(INT_MEMBERS)
+    # source ties (reads text only, imports nothing): the two source-justified bounds are the Registry's own
+    common = (ROOT / "registry_successor" / "common.py").read_text(encoding="utf-8")
+    assert "MAX_INT = 2**31 - 1" in common
+    assert "1 <= value <= c.MAX_INT" in (ROOT / "registry_successor" / "record.py").read_text(encoding="utf-8")
+    assert "1 <= value <= c.MAX_INT" in (ROOT / "registry_successor" / "selection.py").read_text(encoding="utf-8")
+    assert "trust.version < 1" in (ROOT / "registry_successor" / "verify.py").read_text(encoding="utf-8")  # snapshot version: floor only, no ceiling
+
+
+def test_integer_boundary_vectors_cover_every_integer_field():
+    required = {"min", "max", "max-plus-1", "zero", "minus-1", "bool-true", "float", "string"}
+    seen = {}
+    for vec in V["integer_boundary"]:
+        seen.setdefault(vec["field"], set()).add(vec["case"])
+        lo, hi = RANGES[vec["field"]]
+        exp = vec["expected"]
+        if vec["case"] == "min":
+            assert vec["literal"] == str(lo) and exp["result"] == "valid"
+        if vec["case"] == "max":
+            assert vec["literal"] == str(hi) and exp["result"] == "valid"
+        if vec["case"] == "max-plus-1":
+            assert vec["literal"] == str(hi + 1) and exp["result"] == "refuse" and exp["code"] == "field_invalid"
+        assert vec["input_json"] == _binding_with(vec["field"], vec["literal"]), vec["id"]
+        if exp["result"] == "valid":
+            got = run_binding(vec)
+            assert got["canonical_bytes_hex"] == exp["canonical_bytes_hex"] and got["binding_digest"] == exp["binding_digest"], vec["id"]
+        else:
+            with pytest.raises(Refuse) as info:
+                run_binding(vec)
+            assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
+            assert exp["code"] in _outcome_codes()
+    assert set(seen) == set(INT_MEMBERS)
+    for field, cases in seen.items():
+        assert required <= cases, (field, required - cases)
+    # the three fields reach their maximum independently: a vector where only one is at its maximum is valid for each
+    assert len({v["expected"]["binding_digest"] for v in V["integer_boundary"] if v["expected"]["result"] == "valid"}) == 6
+
+
+def test_effective_integer_boundary_vectors_per_age_field_and_role():
+    required = {("registry", "min"), ("registry", "zero"), ("registry", "max"), ("registry", "max-plus-1"), ("registry", "minus-1"), ("registry", "bool-true"),
+                ("registry", "float"), ("registry", "string"), ("effective", "zero"), ("effective", "max"), ("effective", "max-plus-1"),
+                ("effective", "minus-1"), ("effective", "bool-true"), ("effective", "float"), ("effective", "string")}
+    seen = {}
+    for vec in V["effective_integer_boundary"]:
+        seen.setdefault(vec["field"], set()).add((vec["role"], vec["case"]))
+        exp = vec["expected"]
+        try:
+            doc = validate_effective_payload(vec["family"], load(vec["payload_json"]), vec["role"])
+            got = ("valid", None, None)
+        except Refuse as r:
+            got = ("refuse", r.code, r.member)
+        assert got[0] == exp["result"], vec["id"]
+        if exp["result"] == "refuse":
+            assert got[1:] == (exp["code"], exp["member"]) and exp["code"] in _outcome_codes(), vec["id"]
+        elif vec["role"] == "effective":
+            pre = effective_preimage(vec["family"], doc)
+            assert canon(pre).hex() == exp["preimage_canonical_bytes_hex"] and effective_digest_of_preimage(pre) == exp["effective_policy_digest"], vec["id"]
+        if vec["case"] in ("max", "max-plus-1"):
+            assert vec["literal"] == str(2147483647 + (vec["case"] == "max-plus-1"))
+    assert set(seen) == {"status_max_age_seconds", "approval_max_age_seconds", "class_status_max_age_seconds.class-a"}
+    for field, cases in seen.items():
+        assert required <= cases, (field, required - cases)
+    # registry 0 refuses while effective 0 (a caller value of 0 stays 0) is valid
+    r0 = {(v["field"], v["role"], v["case"]): v["expected"]["result"] for v in V["effective_integer_boundary"]}
+    assert r0[("status_max_age_seconds", "registry", "zero")] == "refuse" and r0[("status_max_age_seconds", "effective", "zero")] == "valid"
+
+
+def test_scope_projection_is_identity_or_refusal_never_normalization():
+    codes = _outcome_codes()
+    assert V["profile"]["scope_projection"]["error"] == {"code": "field_invalid", "layer": "shape", "stage": "projection"}
+    kinds = {v["category"] for v in V["scope_projection"]}
+    assert {"ascii", "unicode", "ascii-out-of-grammar"} <= kinds
+    assert any(v["expected"]["result"] == "projected" for v in V["scope_projection"])
+    for vec in V["scope_projection"]:
+        scope, exp = vec["statement_scope"], vec["expected"]
+        # every vector is a scope a signed statement carries today: it passes the existing statement token validator
+        assert vec["statement_validator_accepts"] is True and all(statement_valid_token(v) for v in scope.values()), vec["id"]
+        # original statement scope bytes are retained verbatim as provenance
+        assert {k: bytes.fromhex(h).decode("utf-8") for k, h in vec["original_scope_utf8_hex"].items()} == scope, vec["id"]
+        if exp["result"] == "projected":
+            out = project_scope(scope)
+            assert out == scope == exp["scope"] and all(out[k] is scope[k] or out[k] == scope[k] for k in out)
+            assert all(out[k].encode("utf-8") == scope[k].encode("utf-8") for k in out)
+        else:
+            with pytest.raises(Refuse) as info:
+                project_scope(scope)
+            assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
+            assert exp["code"] in codes and exp["layer"] == "shape" and exp["stage"] == "projection" and exp["binding_created"] is False
+            assert exp["decision_required"] == "required_policy_unavailable" and exp["decision_optional"] == "overlay_not_applied"
+            # a binding built by hand around that scope is refused by the binding validator too (the two layers agree)
+            doc = load(next(v for v in V["valid"] if v["id"] == "BV-001")["input_json"])
+            doc["scope"] = scope
+            with pytest.raises(Refuse) as info2:
+                validate_binding(doc)
+            assert (info2.value.code, info2.value.member) == ("field_invalid", exp["member"]), vec["id"]
+    # the hazard the rule exists for: the refused tokens WOULD become valid identifiers under normalization, truncation or folding
+    hazards = 0
+    for vec in V["scope_projection"]:
+        if vec["expected"]["result"] != "refuse":
+            continue
+        for tok in vec["statement_scope"].values():
+            for variant in (unicodedata.normalize("NFC", tok), unicodedata.normalize("NFKC", tok), unicodedata.normalize("NFKD", tok), tok.casefold(), tok[:128]):
+                if variant != tok and variant.isascii() and IDENT.fullmatch(variant):
+                    hazards += 1
+    assert hazards >= 3, "the vectors must contain tokens that normalization would silently turn into valid identifiers"
+    # two distinct refused tokens are never collapsed: they refuse independently (no hash or transliteration can make them equal)
+    nfc = next(v for v in V["scope_projection"] if v["id"] == "PJ-010")["statement_scope"]["tenant"]
+    nfd = next(v for v in V["scope_projection"] if v["id"] == "PJ-011")["statement_scope"]["tenant"]
+    assert nfc != nfd and unicodedata.normalize("NFC", nfd) == nfc
+    # sorted-path first failing member is reported when several scope members are bad
+    multi = next(v for v in V["scope_projection"] if v["id"] == "PJ-019")
+    assert multi["expected"]["member"] == "scope.authority_domain"
+
+
+def test_scope_key_unambiguous_versioned_and_domain_separated():
+    sk = V["profile"]["scope_key"]
+    assert sk["profile"] == SCOPE_KEY_PROFILE and tuple(sk["members"]) == SK_MEMBERS and tuple(sk["all_members_with_profile"]) == SK_TOP
+    assert sk["domain_prefix_hex"] == SCOPE_KEY_PREFIX.hex()
+    # the seven members are exactly the contract's seven (7.4 line 2): selection_id, consumer_id, tenant, institution, authority_domain, operation, family
+    contract = (ROOT / "docs" / "r08-v2-contract.md").read_text(encoding="utf-8")
+    assert "the scope key built from the claim's `selection_id`, `consumer_id`, `tenant`, `institution`, `authority_domain`, `operation` and `family`" in contract
+    assert set(SK_MEMBERS) == {"selection_id", "consumer_id", "tenant", "institution", "authority_domain", "operation", "family"}
+    # nothing that changes at a transition is a member
+    assert set(sk["omitted_on_purpose"]).isdisjoint(SK_TOP) and {"selection_epoch", "record_version", "activation_ref"} <= set(sk["omitted_on_purpose"])
+    by_id = {}
+    for vec in V["scope_keys"]:
+        doc = validate_scope_key(load(vec["input_json"]))
+        exp = vec["expected"]
+        assert scope_key_text(doc).hex() == exp["scope_key_canonical_bytes_hex"] and scope_key_text(doc).decode("ascii") == exp["scope_key_canonical_ascii"], vec["id"]
+        assert scope_key_digest(doc) == exp["scope_key_digest"], vec["id"]
+        assert exp["scope_key_digest"] != exp["digest_without_prefix_control"] == plain_digest(doc), vec["id"]
+        by_id[vec["id"]] = vec
+    # derived from the binding vector: Runtime and Control Plane derive the same key from the same completed binding
+    bv = load(next(v for v in V["valid"] if v["id"] == "BV-001")["input_json"])
+    assert scope_key_from_binding(bv) == load(by_id["SK-001"]["input_json"])
+    for v in V["valid"]:
+        key = scope_key_from_binding(load(v["input_json"]))
+        validate_scope_key(key)  # every valid binding yields a valid key
+    assert scope_key_text(load(by_id["SK-002"]["input_json"])) == scope_key_text(load(by_id["SK-001"]["input_json"]))
+    # changing ANY member changes the key; a case change changes it; digests are pairwise distinct
+    muts = [v for v in V["scope_keys"] if v["id"].startswith("SK-MUT-")]
+    assert {m["mutated_member"] for m in muts} == set(SK_MEMBERS)
+    base = by_id["SK-001"]["expected"]
+    for m in muts + [by_id["SK-CASE"]]:
+        assert m["expected"]["scope_key_digest"] != base["scope_key_digest"] and m["expected"]["scope_key_canonical_bytes_hex"] != base["scope_key_canonical_bytes_hex"]
+    digests = [v["expected"]["scope_key_digest"] for v in V["scope_keys"] if "equivalent_to" not in v]
+    assert len(digests) == len(set(digests))
+    # delimiter-collision pairs: a naive join collides, the versioned canonical key does not
+    order = ["selection_id", "consumer_id", "tenant", "institution", "authority_domain", "operation", "family"]
+    assert len(V["scope_key_collision_pairs"]) >= 5
+    for pr_ in V["scope_key_collision_pairs"]:
+        a, b = validate_scope_key(pr_["a"]), validate_scope_key(pr_["b"])
+        d = pr_["naive_delimiter"]
+        assert d.join(a[k] for k in order) == d.join(b[k] for k in order) == pr_["naive_join_a"] == pr_["naive_join_b"], pr_["id"]
+        assert a != b and scope_key_text(a) != scope_key_text(b), pr_["id"]
+        assert scope_key_digest(a) == pr_["expected"]["scope_key_digest_a"] != scope_key_digest(b) == pr_["expected"]["scope_key_digest_b"], pr_["id"]
+        assert scope_key_text(a).decode("ascii") == pr_["expected"]["canonical_ascii_a"] and scope_key_text(b).decode("ascii") == pr_["expected"]["canonical_ascii_b"]
+        # every member is a quoted JSON string with its own key: no value can run into the next member
+        assert all(('"%s":"%s"' % (k, a[k])) in pr_["expected"]["canonical_ascii_a"] for k in SK_MEMBERS)
+    # exhaustive small-domain check: no two distinct 7-tuples over a tiny alphabet containing every delimiter collide
+    import itertools
+    alphabet = ["a", "a:b", "b:c", "c", "a.b"]
+    seen_keys = {}
+    for tup in itertools.product(alphabet, repeat=3):
+        key = scope_key_text(dict(zip(("scope_key_profile",) + ("tenant", "consumer_id", "operation"), (SCOPE_KEY_PROFILE,) + tup),
+                                   authority_domain="d", family="f", institution="i", selection_id="s"))
+        assert key not in seen_keys
+        seen_keys[key] = tup
+    # invalid keys
+    codes = _outcome_codes()
+    for vec in V["scope_keys_invalid"]:
+        exp = vec["expected"]
+        assert exp["code"] in codes
+        with pytest.raises(Refuse) as info:
+            validate_scope_key(load(vec["input_json"]))
+        assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
+    # domain separation: not the binding prefix, not no prefix
+    key = load(by_id["SK-001"]["input_json"])
+    assert "sha256:" + sha_hex(DOMAIN_PREFIX + canon(key)) != scope_key_digest(key)
+    assert "sha256:" + sha_hex(SCOPE_KEY_PREFIX[:-1] + canon(key)) != scope_key_digest(key)
+
+
+def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdict_classes_apart():
+    codes = _outcome_codes()
+    assert tuple(V["profile"]["verdict_classes"]) == VERDICT_CLASSES
+    prop = V["proposed_additive_codes"]
+    assert prop["status"] == "PROPOSED_NOT_IN_CODES_V2"
+    proposed = {c["code"]: c for c in prop["codes"]}
+    assert set(proposed).isdisjoint(codes), "a proposed code must never repurpose or shadow an existing CODES_V2 entry"
+    assert len(codes) == 48
+    vocab = set(V["evidence_field_vocabulary"])
+    ids = [r["id"] for r in V["defect_mapping"]]
+    assert len(ids) == len(set(ids))
+    by_code = {}
+    for r in V["defect_mapping"]:
+        assert set(r["evidence_fields"]) <= vocab and {"registry_code", "layer", "participation", "decision_kind", "stage"} <= set(r["evidence_fields"]), r["id"]
+        code, cls = r["registry_code"], r["verdict_class"]
+        if code is None:  # deny-all and evaluator denial are not Registry refusals and carry no Registry verdict class
+            assert cls is None and r["decision_kind"] in ("applied_deny_all", "evaluator_denied"), r["id"]
+            continue
+        assert cls in VERDICT_CLASSES, r["id"]
+        if r.get("proposed_additive_code"):
+            assert code in proposed and proposed[code]["verdict_class"] == cls, r["id"]
+        else:
+            assert code in codes, ("no existing CODES_V2 entry named", r["id"], code)
+        by_code.setdefault(code, set()).add(cls)
+    # the proposal list is exactly the proposed codes that rows use
+    assert set(proposed) == {r["registry_code"] for r in V["defect_mapping"] if r.get("proposed_additive_code")}
+    # a cause code names one class (the single documented dual-class code is trust_snapshot_expired, mapped here only in its guard form)
+    assert all(len(v) == 1 for v in by_code.values()), {k: v for k, v in by_code.items() if len(v) > 1}
+    stale = {c for c, v in by_code.items() if v == {"REFUSE_STALE"}}
+    assert stale == {"selection_epoch_stale", "trust_snapshot_version_stale"}
+    terminal = {"selection_revoked", "selection_withdrawn", "issuer_key_revoked"}
+    assert all(by_code[c] == {"REFUSE"} for c in terminal)  # terminal revocation and withdrawal are never stale and never HOLD
+    hold = {c for c, v in by_code.items() if v == {"UNKNOWN_FAIL_CLOSED"}}
+    assert hold == {"trust_snapshot_missing", "trust_snapshot_expired", "store_unknown"}
+    assert hold.isdisjoint(terminal | stale)
+    retry = {r["registry_code"]: r["retry"] for r in V["defect_mapping"] if r["registry_code"]}
+    assert all(retry[c] == "after_authoritative_state_available" for c in hold) and all(retry[c] != "after_authoritative_state_available" for c in terminal | stale)
+    # the original Registry cause is always preserved as structured evidence and distinct causes keep distinct rows
+    assert len([r for r in V["defect_mapping"] if r["registry_code"]]) == len({(r["registry_code"], r["id"]) for r in V["defect_mapping"] if r["registry_code"]})
+    for c in ("selection_withdrawn", "selection_revoked", "selection_epoch_stale", "trust_snapshot_version_stale", "issuer_key_revoked", "store_unknown"):
+        assert c in by_code
+    kinds = {r["decision_kind"] for r in V["defect_mapping"]}
+    assert {"applied_deny_all", "evaluator_denied"} <= kinds
+    # every code used by an identity validator in this file appears in the mapping
+    mapped = set(by_code)
+    for c in V["outcome_map"]["codes_used_by_this_file"]:
+        assert c in mapped or c == "trust_snapshot_invalid", c
+    # the vocabulary matches the merged conformance kit when that README is present in this checkout (branch predates PR #28)
+    readme = ROOT / "docs" / "conformance" / "README.md"
+    if readme.exists():
+        text = readme.read_text(encoding="utf-8")
+        for v in VERDICT_CLASSES:
+            assert "`%s`" % v in text, v
+
+
 _JS = r"""
 const fs = require('fs');
 const V = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const crypto = require('crypto');
+const cmp = (a, b) => { const x = Array.from(a), y = Array.from(b); const n = Math.min(x.length, y.length);
+ for (let i = 0; i < n; i++) { const d = x[i].codePointAt(0) - y[i].codePointAt(0); if (d) return d; } return x.length - y.length; };
 function ss(s){let o='"';for(const ch of s){const c=ch.codePointAt(0);
  if(c===0x22)o+='\\"';else if(c===0x5c)o+='\\\\';else if(c===8)o+='\\b';else if(c===12)o+='\\f';else if(c===10)o+='\\n';
  else if(c===13)o+='\\r';else if(c===9)o+='\\t';else if(c<0x20||c===0x7f)o+='\\u'+c.toString(16).padStart(4,'0');
@@ -616,21 +1144,53 @@ function ss(s){let o='"';for(const ch of s){const c=ch.codePointAt(0);
  else{const d=c-0x10000;o+='\\u'+(0xd800+(d>>10)).toString(16)+'\\u'+(0xdc00+(d&0x3ff)).toString(16);}}return o+'"';}
 function ser(v){if(v===null)return 'null';if(typeof v==='number')return String(v);if(typeof v==='string')return ss(v);
  if(Array.isArray(v))return '['+v.map(ser).join(',')+']';
- return '{'+Object.keys(v).sort().map(k=>ss(k)+':'+ser(v[k])).join(',')+'}';}
-const pre=Buffer.from(V.profile.domain_prefix_hex,'hex');
-const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
-const out={};
-for(const x of V.valid){const c=Buffer.from(ser(JSON.parse(x.input_json)),'ascii');
- out[x.id]=[c.toString('hex'),'sha256:'+sha(Buffer.concat([pre,c]))];}
-for(const x of V.effective_payloads){const c=Buffer.from(ser(x.payload),'ascii');out[x.id]=[c.toString('hex'),'sha256:'+sha(c)];}
-for(const x of V.trust_snapshots){const c=Buffer.from(ser(x.expected_normalized||JSON.parse(x.normalized_json)),'ascii');out[x.id]=[c.toString('hex'),'sha256:'+sha(c)];}
+ return '{'+Object.keys(v).sort(cmp).map(k=>ss(k)+':'+ser(v[k])).join(',')+'}';}
+const hex = s => Buffer.from(s, 'hex');
+const sha = b => crypto.createHash('sha256').update(b).digest('hex');
+const pre = hex(V.profile.domain_prefix_hex), preEff = hex(V.profile.effective_policy.domain_prefix_hex), preSk = hex(V.profile.scope_key.domain_prefix_hex);
+const FAM = V.profile.effective_policy.families;
+const out = {};
+const bindingOut = x => { const c = Buffer.from(ser(JSON.parse(x.input_json)), 'ascii'); return [c.toString('hex'), 'sha256:' + sha(Buffer.concat([pre, c]))]; };
+for (const x of V.valid) out[x.id] = bindingOut(x);
+for (const x of V.integer_boundary) if (x.expected.result === 'valid') out[x.id] = bindingOut(x);
+function compose(fam, reg, cal) {
+  const kind = FAM[fam].kind;
+  if (kind === 'lists') { const r = {}; for (const k of Object.keys(reg)) r[k] = reg[k].filter(v => cal[k].includes(v)).sort(cmp); return r; }
+  if (kind === 'ints') { const r = {}; for (const k of Object.keys(reg)) r[k] = Math.min(reg[k], cal[k]); return r; }
+  const m = {}; const rr = reg.class_status_max_age_seconds, cc = cal.class_status_max_age_seconds;
+  for (const k of Object.keys(rr)) m[k] = Math.min(rr[k], cc[k]); return { class_status_max_age_seconds: m };
+}
+function preimage(fam, payload) {
+  const f = FAM[fam]; const deny = [];
+  if (f.kind === 'lists') for (const k of Object.keys(payload).sort(cmp)) if (payload[k].length === 0) deny.push(k);
+  return { effective_policy_profile: V.profile.effective_policy.profile, contract_version: V.profile.effective_policy.contract_version, family: fam,
+           family_version: f.version, deny_all: deny, effective: payload };
+}
+const effOut = (fam, payload) => { const c = Buffer.from(ser(preimage(fam, payload)), 'ascii'); return [c.toString('hex'), 'sha256:' + sha(Buffer.concat([preEff, c]))]; };
+for (const x of V.effective_payloads) {
+  out[x.id] = effOut(x.family, x.payload);
+  if (x.inputs) out[x.id + ':compose'] = ser(compose(x.family, x.inputs.registry, x.inputs.caller)) === ser(x.payload);
+}
+for (const x of V.effective_integer_boundary) if (x.expected.result === 'valid' && x.role === 'effective') out[x.id] = effOut(x.family, JSON.parse(x.payload_json));
+for (const x of V.effective_policy_controls) { const c = Buffer.from(ser(JSON.parse(x.preimage_canonical_ascii)), 'ascii'); out[x.id] = [c.toString('hex'), 'sha256:' + sha(Buffer.concat([preEff, c]))]; }
+for (const x of V.trust_snapshots) { const c = Buffer.from(ser(x.expected_normalized || JSON.parse(x.normalized_json)), 'ascii'); out[x.id] = [c.toString('hex'), 'sha256:' + sha(c)]; }
+const skOut = o => { const c = Buffer.from(ser(o), 'ascii'); return [c.toString('hex'), 'sha256:' + sha(Buffer.concat([preSk, c]))]; };
+for (const x of V.scope_keys) out[x.id] = skOut(JSON.parse(x.input_json));
+for (const x of V.scope_key_collision_pairs) out[x.id] = [skOut(x.a)[1], skOut(x.b)[1]];
+const IDENT = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+for (const x of V.scope_projection) {
+  let res = ['projected', null];
+  for (const k of ['authority_domain', 'institution', 'tenant']) { const v = x.statement_scope[k]; if (!(/^[\x00-\x7f]*$/.test(v) && IDENT.test(v))) { res = ['refuse', 'scope.' + k]; break; } }
+  out[x.id] = res;
+}
 console.log(JSON.stringify(out));
 """
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not installed; non-Python cross-check is optional in this environment")
 def test_non_python_reference_agrees_byte_for_byte(tmp_path):
-    """One non-Python implementation (Node.js, written inline) recomputes every valid binding, effective payload and snapshot."""
+    """One non-Python implementation (Node.js, written inline) recomputes every valid binding, effective preimage and digest (including
+    composition of narrowed values), scope key and scope-key collision pair, trust snapshot and scope projection verdict."""
     data = json.loads(VECTORS.read_text(encoding="ascii"))
     for t in data["trust_snapshots"]:
         t["normalized_json"] = json.dumps(normalize_snapshot(t["input"]))
@@ -640,9 +1200,38 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     js.write_text(_JS, encoding="utf-8")
     res = subprocess.run(["node", str(js), str(p)], capture_output=True, text=True, timeout=60, check=True)
     got = json.loads(res.stdout)
+    n = 0
     for vec in V["valid"]:
         assert got[vec["id"]] == [vec["expected"]["canonical_bytes_hex"], vec["expected"]["binding_digest"]], vec["id"]
+        n += 1
+    for vec in V["integer_boundary"]:
+        if vec["expected"]["result"] == "valid":
+            assert got[vec["id"]] == [vec["expected"]["canonical_bytes_hex"], vec["expected"]["binding_digest"]], vec["id"]
+            n += 1
     for ep in V["effective_payloads"]:
-        assert got[ep["id"]] == [ep["expected"]["canonical_bytes_hex"], ep["expected"]["effective_policy_digest"]], ep["id"]
+        assert got[ep["id"]] == [ep["expected"]["preimage_canonical_bytes_hex"], ep["expected"]["effective_policy_digest"]], ep["id"]
+        if "inputs" in ep:
+            assert got[ep["id"] + ":compose"] is True, ep["id"]
+        n += 1
+    for vec in V["effective_integer_boundary"]:
+        if vec["expected"]["result"] == "valid" and vec["role"] == "effective":
+            assert got[vec["id"]] == [vec["expected"]["preimage_canonical_bytes_hex"], vec["expected"]["effective_policy_digest"]], vec["id"]
+            n += 1
+    for c in V["effective_policy_controls"]:
+        assert got[c["id"]] == [c["preimage_canonical_bytes_hex"], c["effective_policy_digest"]], c["id"]
+        n += 1
     for t in V["trust_snapshots"]:
         assert got[t["id"]] == [t["expected"]["canonical_bytes_hex"], t["expected"]["trust_snapshot_fingerprint"]], t["id"]
+        n += 1
+    for sk in V["scope_keys"]:
+        assert got[sk["id"]] == [sk["expected"]["scope_key_canonical_bytes_hex"], sk["expected"]["scope_key_digest"]], sk["id"]
+        n += 1
+    for pr_ in V["scope_key_collision_pairs"]:
+        assert got[pr_["id"]] == [pr_["expected"]["scope_key_digest_a"], pr_["expected"]["scope_key_digest_b"]] and got[pr_["id"]][0] != got[pr_["id"]][1], pr_["id"]
+        n += 1
+    for pj in V["scope_projection"]:
+        exp = pj["expected"]
+        want = ["projected", None] if exp["result"] == "projected" else ["refuse", exp["member"]]
+        assert got[pj["id"]] == want, pj["id"]
+        n += 1
+    assert n >= 80
