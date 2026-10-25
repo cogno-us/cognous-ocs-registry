@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "P0 contract ledger row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_name",
+    "source_repository",
+    "source_path",
+    "source_commit",
+    "decision_reference",
+    "owning_component",
+    "consumer_components",
+    "v0_2_status",
+    "current_status",
+    "implementation_reference",
+    "qualification_reference",
+    "registry_v1_3_mapping",
+    "compatibility_disposition",
+    "required_action",
+    "responsible_engineering_owner"
+  ],
+  "properties": {
+    "contract_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "contract_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_repository": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decision_reference": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "owning_component": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "consumer_components": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "v0_2_status": {
+      "enum": [
+        "ADOPTED_FROZEN",
+        "IMPLEMENTED_NOT_QUALIFIED",
+        "PROPOSED_ONLY",
+        "SUPERSEDED",
+        "CONFLICTING",
+        "UNVERIFIED",
+        null
+      ]
+    },
+    "current_status": {
+      "enum": [
+        "ADOPTED_FROZEN",
+        "IMPLEMENTED_NOT_QUALIFIED",
+        "PROPOSED_ONLY",
+        "SUPERSEDED",
+        "CONFLICTING",
+        "UNVERIFIED"
+      ]
+    },
+    "implementation_reference": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "qualification_reference": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "registry_v1_3_mapping": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "compatibility_disposition": {
+      "enum": [
+        "REUSE_UNCHANGED",
+        "REUSE_WITH_ADAPTER",
+        "TARGETED_RECONCILIATION",
+        "SUPERSEDED_BY_ADOPTED_CONTRACT",
+        "DEFER"
+      ]
+    },
+    "required_action": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "responsible_engineering_owner": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resolution_note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "additional_source_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lane_row_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
