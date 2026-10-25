@@ -1,0 +1,70 @@
+# 05 Common envelope proposal
+
+**Proposal only. Not implemented. Not authorized.** Labels: [V] [R] [I].
+
+## 0. Source limitation
+
+`COG-REG-SHARED-ADD-01` (2026-10-24, seven pages) is recorded by the adopted plan v1.2 as architectural direction approved in principle, not an implemented contract (`docs/plans/PROJECT_PLAN-v1.2.md` §2 and its crosswalk). Its text was **not** available to this analysis, which used only the envelope field list in its brief and the current S03/S04 documents; source revision and digest custody for the addendum is a separate adoption requirement in v1.2. If the addendum differs, the addendum governs and this file is wrong in that respect.
+
+## 1. Three separate things
+
+| Concept | What it is | Who controls it | Where it lives |
+|---|---|---|---|
+| RECORD | Versioned, typed, digest-bearing statement of a family's data | Author (unauthenticated provenance) | Registry repository |
+| SELECTION | A manifest that names which record versions a consumer may consider, selected under a separately attributable decision | Operator or delegate, separately attributable (T3); delegates are named only in host or operator custody, never by a record or manifest | Registry repository (the bytes); approval and pin held outside |
+| ACTIVATION | The host's decision to use a selection: pin custody, optional or mandatory profile, trusted clock, trusted source | Host trusted configuration (`TrustConfig` today holds the pin, trusted runtime source and verifier settings; a trusted clock and an evaluator registry would be new inputs) | Outside the registry |
+
+Rules:
+
+1. A record must not authenticate or authorize itself. A digest is integrity, not authenticity (T2).
+2. An approved selection manifest is not an execution grant. It narrows what a consumer may consider; it never grants an effect.
+3. Neither a record nor a selection can declare itself mandatory, active or approved. Whether registry failure is fatal is a property of ACTIVATION (§4). A record that fails to load cannot force anything, so a self-declared "mandatory" flag is unenforceable.
+4. A registry value may only narrow what the caller already permits (CR-NW generalised per family, 04 §3). No record can issue a grant, approval, resolver or holder.
+
+## 2. RECORD envelope
+
+| Field | Req | Meaning | S03 counterpart |
+|---|---|---|---|
+| `envelope_version` | yes | version of this envelope layout | new |
+| `record_id`, `record_version` | yes | identity; version is a positive integer | `record_id`, `record_version` |
+| `family` | yes | typed family id (for example `local-execution-allowlist`) | `record_type` |
+| `contract_version` | yes | version of the family payload contract | `contract_version` (`s03-v1`) |
+| `non_authorizing` | yes | constant `true` | same |
+| `source` | yes | repository, commit, path, blob id, sha256, line ranges of the governing source | `source` |
+| `provenance` | yes | decision reference, authored time, author; informational, unauthenticated | `provenance` |
+| `canonicalization` | yes | exact-match label of the canonical form used for digests (for example `json-sorted-compact-ascii/1`). The supported set is fixed by the host; a record cannot introduce a form | implicit |
+| `data` and `data_digest` | yes | family payload and sha256 of its canonical form | same |
+| `record_digest` | yes | sha256 over the canonical envelope excluding itself | same |
+| `applicability` | yes | `target_consumer` (consumer id; a system-namespace part is conditional on the ISS Architect's answer to 08 Q4), exact component source blob id(s), optional `consumer_profile_id` (narrows applicability only; it can never select the host's optional or mandatory ACTIVATION profile) | `runtime_source_blob_id` |
+| `evaluator` | yes | registered code reference: id, exact source blob id, and `supplies` | `evaluator` (no revision today) |
+| `governing_refs` | optional | references to decisions or constitutional clauses; informational | `decision_ref` |
+| (no time window) | n/a | Time windows live in the selection (`valid_from`, `valid_until`), not in the record, so a record cannot state its own activity period | none |
+| `supersedes` | yes | null, or id, version, digest of the immediately preceding version | same |
+
+Deliberately absent: signatures or key identifiers (Architect ruling D2: operational selection requires authenticated authority and pin-only integrity is insufficient as a general authorization mechanism; the trust root, signing and custody mechanism are R09 design and operator approval, 08 D2); an `approved`, `active` or `mandatory` flag; any expression, predicate or script field (no general-purpose policy interpretation); any grant-bearing field; any reference to an ISS authority.
+
+Open point: S03 includes `status` (`proposed`, `active`, `superseded`, `withdrawn`) inside the record, so a record states its own activity. In the successor, activity is a property of SELECTION and ACTIVATION. The record would keep only author intent (`proposed`, `withdrawn`); `active` and `superseded` would remain meaningful only for `s03-v1` records, whose frozen gate (non-`active` records are refused) is preserved unchanged. This is a design question for the Architect (08 D3).
+
+## 3. SELECTION manifest
+
+| Field | Meaning |
+|---|---|
+| `selection_id`, `selection_version` | identity |
+| `target_consumer` | must equal the consumer's own namespace and id, else refused |
+| `entries[]` | each: family, record id, record version, `record_digest`, `file_sha256` of the record bytes, as `s04-v1` does (re-serialized bytes are caught). `s04-v1` reads the explicitly supplied record path and does **not** bind a record to its path (`record_source.path` is informational, T6), so identical bytes at another path are accepted today; a successor path-binding check would be new, not inherited, and is a design option (08); exactly one entry per record id; no ranges |
+| `runtime_source` | exact blob id, compared with the host's trusted value and never read as the source (in `s04-v1` the manifest value must equal `TrustConfig`) |
+| `selected_by` | reference to the separately attributable decision; informational |
+| `valid_from`, `valid_until` | optional; UTC `YYYY-MM-DDTHH:MM:SSZ` (the S03 `authored_at` pattern), `valid_from` not after `valid_until`, evaluated by the host's trusted clock. Absent means no time limit, so such a selection is perpetual; that default is flagged for review (08). Expiry under the optional profile reverts to the caller's possibly broader policy (T7 by time) |
+
+The manifest digest is compared to a pin supplied by trusted invocation, never read from the repository (T4). The committed candidate manifest digest `sha256:948ab4f4…` is not an approved pin (T8) and is unaffected by this proposal.
+
+## 4. ACTIVATION (not stored in the registry)
+
+Host configuration: the pin, a trusted clock (new), the trusted evaluator source and evaluator registry (the registry is new; records and selections never register evaluators), and a **per-consumer profile** that is either *optional overlay* (a refusal means the overlay is not applied and the caller policy stands, T7) or *mandatory* (a refusal makes the consumer deny). Mandatory participation is permitted as an architectural design capability (Architect ruling D7) but is not authorized for activation; required-policy failure must never fall back to a broader caller policy. The profile is chosen by the host, not by a record.
+
+## 5. GCR and OCS (written as "ISS" before v1.2; terminology below follows v1.2: GCR is the architectural role, ISS V6 its current reference implementation)
+
+- [I, pending the ISS Architect, 08 ISS Q3 and Q5] Each system keeps its own authority boundary, selection custody and pin custody. There is no shared registry service and no shared authority ledger.
+- The envelope is a layout, not a shared service. It does not require common family payloads: an ISS family, if one exists, is defined only by the ISS Architect.
+- `applicability.target_consumer` includes a system namespace. A consumer refuses records and selections whose namespace is not its own.
+- No ISS architecture source was available to this analysis; no ISS family or ISS semantics are asserted (08, section for the ISS Architect).
