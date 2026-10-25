@@ -11,6 +11,7 @@ json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=True), which is w
 """
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -127,25 +128,30 @@ class Refuse(Exception):
         self.member = member
 
 
-class _Dup(Exception):
-    pass
+class _Obj(list):
+    """An object whose (key, value) pairs are preserved in document order, so duplicate keys can be examined AFTER the syntax phase."""
 
 
-class _Num(Exception):
-    pass
+BIG_INT_SENTINEL = 10 ** 40  # any integer literal longer than 4000 digits is syntactically valid; the reference maps it to a value
+#                              strictly outside every field range (it never reaches canonical bytes: it is refused by the range rule)
 
 
-def _pairs(pairs):
-    out = {}
-    for k, v in pairs:
-        if k in out:
-            raise _Dup(k)
-        out[k] = v
-    return out
+def _parse_int(text):
+    digits = text.lstrip("-")
+    if len(digits) <= 4000:
+        return int(text)  # below the CPython 4300-digit conversion limit, so the result never depends on sys.set_int_max_str_digits
+    return -BIG_INT_SENTINEL if text.startswith("-") else BIG_INT_SENTINEL
 
 
-def _reject(_x):
-    raise _Num(_x)
+def _walk(node):
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if isinstance(n, _Obj):
+            yield n
+            stack.extend(v for _, v in n)
+        elif isinstance(n, list):
+            stack.extend(n)
 
 
 def _depth(value):
@@ -154,36 +160,66 @@ def _depth(value):
         node, d = stack.pop()
         if d > MAX_DEPTH:
             return False
-        if isinstance(node, dict):
-            stack.extend((c, d + 1) for c in node.values())
+        if isinstance(node, _Obj):
+            stack.extend((v, d + 1) for _, v in node)
         elif isinstance(node, list):
             stack.extend((c, d + 1) for c in node)
     return True
 
 
+def _materialize(node):
+    if isinstance(node, _Obj):
+        return {k: _materialize(v) for k, v in node}
+    if isinstance(node, list):
+        return [_materialize(c) for c in node]
+    return node
+
+
 def load(raw):
-    if isinstance(raw, bytes):
+    """Normative parse order (spec 5.5.1), identical for every implementation regardless of its parser's streaming order:
+    1 input boundary: strict UTF-8 or text (input_not_text), then size of the UTF-8 bytes (input_too_large);
+    2 SYNTAX on the whole text: JSON grammar extended only by the tokens NaN, Infinity, -Infinity (json_malformed); a byte order mark is
+      not stripped, an integer literal of any length is valid syntax;
+    3 number literals: any float, exponent or NaN/Infinity token anywhere (json_number_unsupported);
+    4 duplicate object keys at any depth, after unescaping (json_duplicate_key);
+    5 nesting deeper than 8 (json_nesting_too_deep)."""
+    if isinstance(raw, (bytes, bytearray)):
+        data = bytes(raw)
         try:
-            text = raw.decode("utf-8")
+            text = data.decode("utf-8")  # strict: overlong forms, encoded surrogates and truncated sequences refuse
         except UnicodeDecodeError:
             raise Refuse("input_not_text")
-    else:
+    elif isinstance(raw, str):
         text = raw
-    if len(text.encode("utf-8", "surrogatepass")) > MAX_DOCUMENT_BYTES:
+        try:
+            data = text.encode("utf-8")  # a lone surrogate cannot be encoded
+        except UnicodeEncodeError:
+            raise Refuse("input_not_text")
+    else:
+        raise Refuse("input_not_text")
+    if len(data) > MAX_DOCUMENT_BYTES:  # bytes, not characters
         raise Refuse("input_too_large")
+    seen_number = []
+
+    def _flag(_x):
+        seen_number.append(_x)
+        return 0
+
     try:
-        value = json.loads(text, object_pairs_hook=_pairs, parse_float=_reject, parse_constant=_reject)
-    except _Dup:
-        raise Refuse("json_duplicate_key")
-    except _Num:
-        raise Refuse("json_number_unsupported")
-    except RecursionError:
+        value = json.loads(text, object_pairs_hook=_Obj, parse_float=_flag, parse_constant=_flag, parse_int=_parse_int)
+    except RecursionError:  # reference-parser limit only (about 900 levels); no vector exceeds depth 12
         raise Refuse("json_nesting_too_deep")
     except ValueError:
         raise Refuse("json_malformed")
+    if seen_number:
+        raise Refuse("json_number_unsupported")
+    for obj in _walk(value):
+        keys = [k for k, _ in obj]
+        if len(keys) != len(set(keys)):
+            raise Refuse("json_duplicate_key")
     if not _depth(value):
         raise Refuse("json_nesting_too_deep")
-    return value
+    return _materialize(value)
 
 
 IDENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}")  # used with fullmatch (== \A...\Z); classes are explicit ASCII ranges
@@ -370,7 +406,7 @@ FAMILIES = {  # contract section 2 table: family id, table tag, payload shape
 }
 
 
-REGISTERED_CONTRACT_VERSIONS = {  # contract section 2 table is registered for contract_version r08-v2 only
+REGISTERED_CONTRACT_VERSIONS = {  # an effective-policy identity exists for contract_version r08-v2 ONLY, for every family (even f1a, which the shipped r08-v1 table also registers)
     "f1a-local-execution-allowlist": ("r08-v2",), "f1ab-local-execution-allowlist": ("r08-v2",),
     "f4-control-plane-age-bounds": ("r08-v2",), "f5-action-class-age-bounds": ("r08-v2",)}
 
@@ -490,10 +526,13 @@ def validate_preimage(doc):
         raise Refuse("field_unknown", unknown[0])
     if doc["effective_policy_profile"] != EFFECTIVE_PROFILE:
         raise Refuse("field_invalid", "effective_policy_profile")
-    if doc["contract_version"] != CONTRACT_VERSION:
-        raise Refuse("field_invalid", "contract_version")
+    if not isinstance(doc["family"], str):
+        raise Refuse("field_type_invalid", "family")
+    if not isinstance(doc["contract_version"], str):
+        raise Refuse("field_type_invalid", "contract_version")
+    registered = registered_family_version(doc["family"], doc["contract_version"])  # family_unsupported, then contract_unsupported (same as the input path)
     validate_effective_payload(doc["family"], doc["effective"])
-    if doc["family_version"] != registered_family_version(doc["family"], doc["contract_version"]):  # compared with the registered tag, never trusted
+    if doc["family_version"] != registered:  # compared with the registered tag, never trusted
         raise Refuse("field_invalid", "family_version")
     if doc["deny_all"] != deny_all_dimensions(doc["family"], doc["effective"]):
         raise Refuse("field_invalid", "deny_all")
@@ -595,7 +634,7 @@ def test_every_invalid_vector_is_refused_with_the_expected_code_and_member():
         exp = vec["expected"]
         assert exp["result"] == "refuse"
         assert exp["code"] in codes, "no new codes: " + vec["id"]
-        assert exp["layer"] == codes[exp["code"]] or vec["expected"].get("code_status") == "PROPOSED_FROM_EXISTING_CODES", vec["id"]
+        assert exp["layer"] == codes[exp["code"]], vec["id"]
         with pytest.raises(Refuse) as info:
             run_binding(vec)
         assert info.value.code == exp["code"], (vec["id"], info.value.code)
@@ -722,6 +761,8 @@ def test_guard_digest_checks():
         assert got["result"] == exp["result"], g["id"]
         if exp["result"] == "refuse":
             assert got["code"] == exp["code"] and exp["code"] in codes, g["id"]
+            assert exp["layer"] == codes[exp["code"]], g["id"]  # the layer is checked against the outcome map for every guard vector (no label bypass)
+        assert "code_status" not in exp, g["id"]
 
 
 def test_effective_payload_digests_use_the_domain_separated_preimage():
@@ -1259,6 +1300,9 @@ def test_scope_key_unambiguous_versioned_and_domain_separated():
     assert "sha256:" + sha_hex(SCOPE_KEY_PREFIX[:-1] + canon(key)) != scope_key_digest(key)
 
 
+CONTRACT_DECISION_KINDS = ("applied", "applied_deny_all", "overlay_not_applied", "required_policy_unavailable")  # contract 3.2 (closed set)
+
+
 def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdict_classes_apart():
     codes = _outcome_codes()
     assert tuple(V["profile"]["verdict_classes"]) == VERDICT_CLASSES
@@ -1274,9 +1318,11 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
     for r in V["defect_mapping"]:
         assert set(r["evidence_fields"]) <= vocab and {"registry_code", "layer", "participation", "decision_kind", "stage"} <= set(r["evidence_fields"]), r["id"]
         code, cls = r["registry_code"], r["verdict_class"]
+        assert r["decision_kind"] in CONTRACT_DECISION_KINDS or r["decision_kind"] is None, (r["id"], "decision kind outside contract 3.2")
         if code is None:  # deny-all and evaluator denial are not Registry refusals and carry no Registry verdict class
-            assert cls is None and r["decision_kind"] in ("applied_deny_all", "evaluator_denied"), r["id"]
+            assert cls is None and (r["decision_kind"] == "applied_deny_all" or r.get("non_registry_outcome") == "evaluator_denied"), r["id"]
             continue
+        assert r["decision_kind"] == "required_policy_unavailable", r["id"]  # every refusal row is the required-participation kind; optional never gets a shortcut
         assert cls in VERDICT_CLASSES, r["id"]
         assert "proposed_additive_code" not in r, r["id"]
         if r.get("ruled_additive_code"):
@@ -1286,34 +1332,232 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
         by_code.setdefault(code, set()).add(cls)
     # the proposal list is exactly the proposed codes that rows use
     assert set(proposed) == {r["registry_code"] for r in V["defect_mapping"] if r.get("ruled_additive_code")}
-    # a cause code names one class (the single documented dual-class code is trust_snapshot_expired, mapped here only in its guard form)
-    assert all(len(v) == 1 for v in by_code.values()), {k: v for k, v in by_code.items() if len(v) > 1}
+    # a cause code names one class; the single documented dual-class code is trust_snapshot_expired (README): REFUSE for a delivered expired
+    # snapshot, UNKNOWN_FAIL_CLOSED for the expired current snapshot at the guard. trust_snapshot_missing is mapped in its guard form only.
+    assert {k for k, v in by_code.items() if len(v) > 1} == {"trust_snapshot_expired"}, {k: v for k, v in by_code.items() if len(v) > 1}
+    assert by_code["trust_snapshot_expired"] == {"REFUSE", "UNKNOWN_FAIL_CLOSED"} and by_code["trust_snapshot_missing"] == {"UNKNOWN_FAIL_CLOSED"}
+    withdrawn = next(r for r in V["defect_mapping"] if r["id"] == "MP-selection_withdrawn")
+    assert withdrawn["optional_branch"]["decision_kind"] == "overlay_not_applied" and withdrawn["optional_branch"]["registry_code"] == "selection_withdrawn"
+    assert "authenticated optional-state determination" in withdrawn["optional_branch"]["only_through"]
     stale = {c for c, v in by_code.items() if v == {"REFUSE_STALE"}}
     assert stale == {"selection_epoch_stale", "trust_snapshot_version_stale"}
     terminal = {"selection_revoked", "selection_withdrawn", "issuer_key_revoked"}
     assert all(by_code[c] == {"REFUSE"} for c in terminal)  # terminal revocation and withdrawal are never stale and never HOLD
-    hold = {c for c, v in by_code.items() if v == {"UNKNOWN_FAIL_CLOSED"}}
+    hold = {c for c, v in by_code.items() if "UNKNOWN_FAIL_CLOSED" in v}
     assert hold == {"trust_snapshot_missing", "trust_snapshot_expired", "store_unknown"}
     assert hold.isdisjoint(terminal | stale)
-    retry = {r["registry_code"]: r["retry"] for r in V["defect_mapping"] if r["registry_code"]}
-    assert all(retry[c] == "after_authoritative_state_available" for c in hold) and all(retry[c] != "after_authoritative_state_available" for c in terminal | stale)
+    for r in V["defect_mapping"]:
+        if r["registry_code"]:
+            assert (r["retry"] == "after_authoritative_state_available") == (r["verdict_class"] == "UNKNOWN_FAIL_CLOSED"), r["id"]
+    assert all(r["verdict_class"] in ("REFUSE", "REFUSE_STALE") for r in V["defect_mapping"] if r["registry_code"] in terminal | stale or r["id"] == "MP-trust_snapshot_expired-delivered")
     # the original Registry cause is always preserved as structured evidence and distinct causes keep distinct rows
     assert len([r for r in V["defect_mapping"] if r["registry_code"]]) == len({(r["registry_code"], r["id"]) for r in V["defect_mapping"] if r["registry_code"]})
     for c in ("selection_withdrawn", "selection_revoked", "selection_epoch_stale", "trust_snapshot_version_stale", "issuer_key_revoked", "store_unknown"):
         assert c in by_code
     kinds = {r["decision_kind"] for r in V["defect_mapping"]}
-    assert {"applied_deny_all", "evaluator_denied"} <= kinds
+    assert "applied_deny_all" in kinds and any(r.get("non_registry_outcome") == "evaluator_denied" for r in V["defect_mapping"])
     # every code used by an identity validator in this file appears in the mapping
     mapped = set(by_code)
     for c in V["outcome_map"]["codes_used_by_this_file"]:
         assert c in mapped or c == "trust_snapshot_invalid", c
-    # the vocabulary matches the merged conformance kit when that README is present in this checkout (branch predates PR #28)
+    # the vocabulary matches the merged conformance kit when that README is present in this checkout (PR #28 is merged; the README is present at base f618cdf)
     # the vocabulary is the one in the merged conformance README, whose verdict section is an ENFORCED pin (test_contract_section_pins; ruling N-6)
     readme = ROOT / "docs" / "conformance" / "README.md"
     assert readme.exists(), "docs/conformance/README.md (PR #28) must be present: the four-verdict vocabulary is pinned"
     text = readme.read_text(encoding="utf-8")
     for v in VERDICT_CLASSES:
         assert "`%s`" % v in text, v
+
+
+def _generate(gen):
+    if gen["kind"] == "bv1_padded":
+        base = next(v for v in V["valid"] if v["id"] == "BV-001")["input_json"].encode("utf-8")
+        return base + b" " * (gen["total_bytes"] - len(base))
+    if gen["kind"] == "multibyte_string":
+        return ('{"x":"' + "\u00e9" * gen["count"] + '"}').encode("utf-8")
+    assert gen["kind"] == "nested"
+    o, c = ('{"a":', "}") if gen["container"] == "object" else ("[", "]")
+    containers = gen["depth"] - 1  # "depth" is the depth of the deepest value; the scalar leaf counts as a level (root = 1)
+    return (o * containers + "1" + c * containers).encode("utf-8")
+
+
+def test_input_boundary_vectors_pin_size_text_and_depth_edges():
+    """Spec 5.5.1 and 5.5.2: size is counted in UTF-8 bytes before parsing; input is strict UTF-8; a BOM is not stripped; depth 8 passes and 9 refuses."""
+    codes = _outcome_codes()
+    by_id = {v["id"]: v for v in V["valid"]}
+    seen = set()
+    for vec in V["input_boundary"]:
+        raw = _generate(vec["generate"]) if "generate" in vec else (bytes.fromhex(vec["input_hex"]) if "input_hex" in vec else vec["input_json"])
+        exp = vec["expected"]
+        if exp["result"] == "valid":
+            doc = validate_binding(load(raw))
+            assert binding_digest(doc) == by_id[exp["equals"]]["expected"]["binding_digest"] and canon(doc).hex() == by_id[exp["equals"]]["expected"]["canonical_bytes_hex"], vec["id"]
+            assert len(raw) == MAX_DOCUMENT_BYTES
+        else:
+            assert exp["code"] in codes and codes[exp["code"]] == exp["layer"], vec["id"]
+            with pytest.raises(Refuse) as info:
+                validate_binding(load(raw))
+            assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
+        seen.add(exp.get("code", "valid"))
+    assert {"valid", "input_not_text", "input_too_large", "json_nesting_too_deep", "json_malformed", "field_missing", "field_type_invalid", "field_invalid"} <= seen
+    # the byte-versus-character distinction is real in the vectors: the over-limit multibyte document is under 65536 CHARACTERS
+    over = _generate(next(v for v in V["input_boundary"] if v["id"] == "IBND-MULTIBYTE-OVER-LIMIT")["generate"])
+    assert len(over) > MAX_DOCUMENT_BYTES and len(over.decode("utf-8")) < MAX_DOCUMENT_BYTES
+    # a str entry point (the registry loader takes str only) agrees with the bytes entry point on every vector it can receive
+    for vec in V["input_boundary"]:
+        if "generate" in vec or "input_hex" in vec:
+            data = _generate(vec["generate"]) if "generate" in vec else bytes.fromhex(vec["input_hex"])
+            try:
+                text = data.decode("utf-8")
+            except UnicodeDecodeError:
+                assert vec["expected"]["code"] == "input_not_text", vec["id"]
+                continue
+            if vec["expected"]["result"] == "valid":
+                continue
+            with pytest.raises(Refuse) as a:
+                validate_binding(load(data))
+            with pytest.raises(Refuse) as b:
+                validate_binding(load(text))
+            assert (a.value.code, a.value.member) == (b.value.code, b.value.member), vec["id"]
+    with pytest.raises(Refuse) as info:
+        load("\ud800")  # a lone surrogate in a str cannot be encoded as UTF-8
+    assert info.value.code == "input_not_text"
+    for not_text in (None, 5, [], {}):
+        with pytest.raises(Refuse) as info:
+            load(not_text)
+        assert info.value.code == "input_not_text"
+
+
+def test_parse_order_is_syntax_then_numbers_then_duplicates_then_depth_and_huge_integers_are_syntactically_valid():
+    """Spec 5.5.1: a single total order, independent of a parser's streaming order."""
+    order = {v["id"]: v["expected"]["code"] for v in V["invalid"] if v["category"] == "parse order"}
+    assert order["BI-PARSE-ORDER-DUP-THEN-TRAILING"] == "json_malformed"
+    assert order["BI-PARSE-ORDER-FLOAT-BEFORE-DUP"] == order["BI-PARSE-ORDER-FLOAT-BEFORE-DEPTH"] == order["BI-PARSE-ORDER-NAN-BEFORE-DUP"] == "json_number_unsupported"
+    assert order["BI-PARSE-ORDER-DUP-BEFORE-DEPTH"] == "json_duplicate_key"
+    assert order["BI-PARSE-ORDER-DEPTH-THEN-TRAILING"] == order["BI-PARSE-ORDER-FLOAT-THEN-TRAILING"] == "json_malformed"
+    # a streaming implementation (object hook fires on close, float hook fires on parse) gives the other answer: the order is not accidental
+    class _Stream(Exception):
+        pass
+
+    def _hook(pairs):
+        out = {}
+        for k, v in pairs:
+            if k in out:
+                raise _Stream("dup")
+            out[k] = v
+        return out
+    with pytest.raises(_Stream):  # the object hook fires as soon as the object closes, before the trailing text is examined
+        json.loads('{"a":1,"a":2} x', object_pairs_hook=_hook)
+    # huge integers: valid syntax at any length, refused only by the field range, never json_malformed (CPython's digit limit is not a code)
+    for vid, member in (("BI-INT-5000-DIGITS", "selection_epoch"), ("BI-INT-5000-DIGITS-NEGATIVE", "selection_epoch")):
+        vec = next(v for v in V["invalid"] if v["id"] == vid)
+        assert vec["expected"] == {"result": "refuse", "code": "field_invalid", "layer": "shape", "member": member}
+        doc = load(vec["input_json"])
+        assert abs(doc[member]) >= BIG_INT_SENTINEL
+        with pytest.raises(Refuse) as info:
+            validate_binding(doc)
+        assert (info.value.code, info.value.member) == ("field_invalid", member)
+    import sys
+    saved = sys.get_int_max_str_digits()
+    try:
+        for limit in (0, 4300, 640):
+            sys.set_int_max_str_digits(limit if limit == 0 or limit >= 640 else 640)
+            vec = next(v for v in V["invalid"] if v["id"] == "BI-INT-5000-DIGITS")
+            with pytest.raises(Refuse) as info:
+                run_binding(vec)
+            assert info.value.code == "field_invalid", limit  # independent of the interpreter's int conversion limit
+    finally:
+        sys.set_int_max_str_digits(saved)
+
+
+def test_sorted_means_unicode_code_point_order_and_utf16_order_is_refused():
+    """Spec 5.3 and 6: every 'sorted' list (payload lists, trust snapshot arrays) is ordered by code point, equal to UTF-8 byte order."""
+    a, b = "\uff21", "\U00010400"  # code point order a < b; UTF-16 code unit order b < a
+    assert sorted([a, b]) == [a, b] and sorted([a, b], key=lambda x: x.encode("utf-16-be")) == [b, a]
+    assert sorted([a, b], key=lambda x: x.encode("utf-8")) == [a, b]
+    assert statement_valid_token(a) and statement_valid_token(b)
+    assert not statement_valid_token("\uffff")  # U+FFFF is a noncharacter (Cn): a different example is needed to separate the orders
+    ep = next(e for e in V["effective_payloads"] if e["id"] == "EP-015")
+    assert ep["payload"]["allowed_actions"] == [a, b]
+    assert effective_policy_digest(ep["family"], ep["payload"]) == ep["expected"]["effective_policy_digest"]
+    swapped = json.loads(json.dumps(ep["payload"]))
+    swapped["allowed_actions"] = [b, a]
+    with pytest.raises(Refuse) as info:
+        validate_effective_payload(ep["family"], swapped)
+    assert (info.value.code, info.value.member) == ("field_invalid", "allowed_actions")
+    assert effective_digest_of_preimage({**effective_preimage(ep["family"], ep["payload"]), "effective": swapped}) != ep["expected"]["effective_policy_digest"]
+    assert compose(ep["family"], ep["inputs"]["registry"], ep["inputs"]["caller"]) == ep["payload"]
+    inv = next(v for v in V["effective_payloads_invalid"] if v["id"] == "EI-016")
+    with pytest.raises(Refuse) as info:
+        validate_effective_payload(inv["family"], load(inv["payload_json"]), inv["role"])
+    assert (info.value.code, info.value.member) == ("field_invalid", "allowed_actions")
+
+
+def test_contract_version_keying_one_code_on_both_paths_and_identity_exists_for_r08_v2_only():
+    """Spec 6: the shipped r08-v1 table registers f1a, but no effective-policy identity exists for r08-v1 for any family."""
+    for family in FAMILIES:
+        assert REGISTERED_CONTRACT_VERSIONS[family] == ("r08-v2",)
+        with pytest.raises(Refuse) as info:
+            registered_family_version(family, "r08-v1")
+        assert (info.value.code, info.value.member) == ("contract_unsupported", "contract_version")
+    f1a_in = next(v for v in V["effective_inputs"] if v["id"] == "EFV-020")
+    f1a_pre = next(v for v in V["effective_preimage_invalid"] if v["id"] == "EPI-008")
+    assert load(f1a_in["input_json"])["family"] == "f1a-local-execution-allowlist" == load(f1a_pre["input_json"])["family"]
+    assert f1a_in["expected"] == {"result": "refuse", "code": "contract_unsupported", "member": "contract_version"}
+    assert f1a_pre["expected"] == f1a_in["expected"]
+    assert next(v for v in V["effective_preimage_invalid"] if v["id"] == "EPI-002")["expected"] == next(v for v in V["effective_inputs"] if v["id"] == "EFV-016")["expected"]
+    for fam, ver in (("f1a-local-execution-allowlist", "r08-v1"), ("f1ab-local-execution-allowlist", "r08-v1")):
+        base = next(e for e in V["effective_payloads"] if e["family"] == fam)["payload"]
+        for fn in (lambda: validate_effective_inputs({"family": fam, "contract_version": ver, "effective": base}),
+                   lambda: validate_preimage({"effective_policy_profile": EFFECTIVE_PROFILE, "contract_version": ver, "family": fam, "family_version": "v1", "deny_all": [], "effective": base})):
+            with pytest.raises(Refuse) as info:
+                fn()
+            assert info.value.code == "contract_unsupported"
+
+
+def project_snapshot_version(v):
+    """Projection of a verified TrustSnapshot.version into the binding: identity or refusal at the projection stage (the verifier itself accepts any
+    strict int >= 1 and applies no ceiling)."""
+    lo, hi = RANGES["trust_snapshot_version"]
+    if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= hi:
+        raise Refuse("field_invalid", "trust_snapshot_version")
+    return v
+
+
+def test_every_projection_stage_refusal_has_the_same_participation_effects_and_never_falls_open():
+    """Spec 5.6 (generalized, review S-5): a scope token and a snapshot version above 2^53-1 are both projection-stage refusals with one effect rule."""
+    assert "exactly the participation effects of scope_projection_effects" in V["projection_stage_refusals_rule"]
+    import inspect
+    assert list(inspect.signature(projection_effect).parameters) == ["participation", "activation_state", "determination"]  # no member argument
+    refused = projected = 0
+    for vec in V["projection_stage_refusals"]:
+        exp = vec["expected"]
+        assert vec["verifier_accepts"] is True and vec["trust_snapshot_version"] >= 1
+        if exp["result"] == "projected":
+            assert project_snapshot_version(vec["trust_snapshot_version"]) == exp["trust_snapshot_version"]
+            projected += 1
+            continue
+        refused += 1
+        with pytest.raises(Refuse) as info:
+            project_snapshot_version(vec["trust_snapshot_version"])
+        assert (info.value.code, info.value.member) == (exp["code"], exp["member"])
+        assert exp["stage"] == "projection" and exp["binding_created"] is False and exp["projection_refusal_code"] == "field_invalid"
+        assert exp["yields_overlay_not_applied"] is False and exp["yields_accept"] is False
+        doc = load(next(v for v in V["valid"] if v["id"] == "BV-001")["input_json"])
+        doc["trust_snapshot_version"] = vec["trust_snapshot_version"]
+        with pytest.raises(Refuse) as info2:
+            validate_binding(doc)  # the binding validator agrees with the projection
+        assert (info2.value.code, info2.value.member) == ("field_invalid", "trust_snapshot_version")
+    assert refused >= 2 and projected >= 1
+    # the effect rule is the same function for both kinds: only (optional, permits_optional, authenticated) may fall back
+    for part in ("required", "optional"):
+        for st in ("known", "permits_optional", "forbids_fallback", "indeterminate"):
+            for det in ("authenticated", "not_authenticated", "n/a"):
+                out = projection_effect(part, st, det)
+                assert out["decision_kind"] != "overlay_not_applied" and out["effect_outcome"] != "ACCEPT"
+                assert out["fallback_permitted"] is ((part, st, det) == ("optional", "permits_optional", "authenticated"))
+    row = next(r for r in V["defect_mapping"] if r["id"] == "MP-field_invalid-projection")
+    assert "trust snapshot version" in row["defect"] and "any projection-stage refusal" in row["defect"]
 
 
 _JS = r"""
@@ -1386,11 +1630,23 @@ for (const x of V.scope_projection) {
   for (const k of ['authority_domain', 'institution', 'tenant']) { const v = x.statement_scope[k]; if (!(/^[\x00-\x7f]*$/.test(v) && IDENT.test(v))) { res = ['refuse', 'scope.' + k]; break; } }
   out[x.id] = res;
 }
+// review N-d additions: the identifier matrix, the snapshot version bound, and code point sortedness of every list, recomputed in a second language
+V.identifier_matrix.bad_values.forEach((e, i) => { out['IM:' + i] = /^[\x00-\x7f]*$/.test(e.value) && IDENT.test(e.value); });
+for (const x of V.projection_stage_refusals) { const v = BigInt(x.trust_snapshot_version); out[x.id] = (v >= 1n && v <= 9007199254740991n) ? 'projected' : 'refuse'; }
+const sortedLists = p => Object.values(p).every(l => !Array.isArray(l) || l.every((v, i) => i === 0 || cmp(l[i - 1], v) < 0));
+for (const x of V.effective_payloads) out[x.id + ':sorted'] = sortedLists(x.payload);
+for (const x of V.effective_payloads_invalid) if (x.id === 'EI-016') out[x.id + ':sorted'] = sortedLists(JSON.parse(x.payload_json));
 console.log(JSON.stringify(out));
 """
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed; non-Python cross-check is optional in this environment")
+def test_node_is_available_under_ci():
+    """The second-language check is skipped on a machine without Node.js, but it must never be silently skipped in CI (GitHub-hosted runners ship Node)."""
+    if os.environ.get("CI") == "true":
+        assert shutil.which("node") is not None, "CI=true but node is missing: the non-Python cross-check would be silently skipped"
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed; the non-Python cross-check runs where Node.js is present and is required under CI=true")
 def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     """One non-Python implementation (Node.js, written inline) recomputes every valid binding, effective preimage and digest (including
     composition of narrowed values), scope key and scope-key collision pair, trust snapshot and scope projection verdict."""
@@ -1450,4 +1706,13 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     for se in V["scope_projection_effects"]:
         assert got[se["id"]] == se["expected"]["effect_outcome"], se["id"]
         n += 1
+    for i, entry in enumerate(V["identifier_matrix"]["bad_values"]):
+        assert got["IM:%d" % i] is False, entry  # every bad identifier fails the grammar in the second language too
+        n += 1
+    for vec in V["projection_stage_refusals"]:
+        assert got[vec["id"]] == ("projected" if vec["expected"]["result"] == "projected" else "refuse"), vec["id"]
+        n += 1
+    for ep in V["effective_payloads"]:
+        assert got[ep["id"] + ":sorted"] is True, ep["id"]
+    assert got["EI-016:sorted"] is False  # UTF-16 order is not code point order
     assert n >= 80
