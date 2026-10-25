@@ -1,7 +1,7 @@
 {
  "schema": "ocs-token-unicode-table/1",
  "unicode_version": "15.1.0",
- "status": "PROPOSED for owner confirmation (Architect Batch 6 rulings, N-13): the version the reference already used",
+ "status": "FROZEN (Architect N-13 ruling): Unicode 15.1.0 is the frozen token-property version for the bounded V1 profile; a later Unicode version is a new contract version with its own table and vectors",
  "rule": "A token (effective-payload list entry, F5 class name) is valid iff 1..128 code points, no '*', and no code point inside any excluded range below. Excluded = every code point whose Unicode 15.1.0 general category starts with C (Cc, Cf, Cs, Co, Cn: control, format, surrogate, private use, unassigned) or Z (Zs, Zl, Zp). Code points assigned only after 15.1.0 are Cn in this table and are refused. No normalization is applied.",
  "domain": "U+0000..U+10FFFF, ranges inclusive, ascending, non-adjacent",
  "generator": "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md section 6.1 (procedure); the test regenerates and compares when the runtime is Unicode 15.1.0",

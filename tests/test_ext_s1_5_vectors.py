@@ -492,7 +492,7 @@ def statement_valid_token(value):
 # interpreter's own Unicode database. The statement_valid_token replica above stays runtime-dependent on purpose: it replicates the shipped
 # validator, which is exactly the dependence this ruling removes from the new contract.
 TOKEN_TABLE_FILE = ROOT / "docs" / "ext-implementation" / "data" / "ext-s1-5-token-unicode-15.1-excluded-ranges.json"
-TOKEN_TABLE_SHA256 = "b6dd5fcaeb77cf0b2c54ff4e4af14c2ce039bda87eb57f702b8a55fa67fb24d9"  # literal pin, also recorded in the vectors (pins.token_unicode_table)
+TOKEN_TABLE_SHA256 = "8c85813d25f6ed53371e27f0e4895a89de44a619824486dcff8d48ff8b607474"  # literal pin, also recorded in the vectors (pins.token_unicode_table)
 _TOKEN_TABLE_BYTES = TOKEN_TABLE_FILE.read_bytes()
 _TOKEN_RANGES = [(int(a, 16), int(b, 16)) for a, b in json.loads(_TOKEN_TABLE_BYTES.decode("ascii"))["excluded_ranges"]]
 _TOKEN_STARTS = [a for a, _ in _TOKEN_RANGES]
@@ -1268,13 +1268,15 @@ def test_trust_snapshot_version_bound_is_tied_to_source_text_never_imports():
     body = verify[verify.index("def _normalize_trust"):]
     body = body[:body.index("\ndef ", 10)]
     assert "trust.version < 1" in body
-    for ceiling in ("MAX_INT", "MAX_VERSION", "2**31", "2**53", "2147483647", "9007199254740991"):
+    # N-10(c) (RULED) requires the 2^53 - 1 representation bound at ingest, so that exact bound is allowed to appear in the verifier once the source
+    # PR applies it; any OTHER ceiling (the int32 record/epoch domain) would be a wrong borrowed bound and still fails here.
+    for ceiling in ("MAX_INT", "MAX_VERSION", "2**31", "2147483647"):
         assert ceiling not in body, ("a snapshot-version ceiling appeared in the verifier: re-derive the bound", ceiling)
     scanned = [p for pkg in ("registry_successor", "registry_consumer") for p in sorted((ROOT / pkg).glob("*.py"))] + [ROOT / "registry_conformance" / "highwater.py"]
     users = set()
     for path in scanned:
         for line in path.read_text(encoding="utf-8").splitlines():
-            if "snapshot" in line.lower() and any(t in line for t in ("MAX_INT", "MAX_VERSION", "2**31", "2**53", "2147483647")):
+            if "snapshot" in line.lower() and any(t in line for t in ("MAX_INT", "MAX_VERSION", "2**31", "2147483647")):
                 pytest.fail("snapshot line with a ceiling in %s: %s" % (path.name, line))
             if "MAX_INT" in line or "MAX_VERSION" in line:
                 users.add(path.name)
@@ -1570,11 +1572,11 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
     assert all(r["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and r["retry"] == "after_authoritative_state_available" and "definitive" not in r["defect"].lower() for r in miss)
     assert not any("definitive input fact" in json.dumps(r) for r in V["defect_mapping"])
     # review SF-6, narrowed by the N-12 ruling: an optional branch exists only for the withdrawn row (a valid withdrawal transition); expiry matches no
-    # permitted basis, so it carries no branch and is marked as an open owner decision; never_activated has no registry code
+    # permitted basis, so it carries no branch and is RULED not a fallback basis (N-12(c)); never_activated has no registry code
     branches = {r["registry_code"]: r["optional_branch"] for r in V["defect_mapping"] if "optional_branch" in r}
     assert set(branches) == {"selection_withdrawn"}
     exp_row = next(r for r in V["defect_mapping"] if r["id"] == "MP-selection_expired")
-    assert "optional_branch" not in exp_row and "NOT a permitted fallback under N-12" in exp_row["optional_rule"] and "owner decision needed" in exp_row["optional_rule"]
+    assert "optional_branch" not in exp_row and "RULED" in exp_row["optional_rule"] and "N-12(c)" in exp_row["optional_rule"] and "not a fallback basis" in exp_row["optional_rule"] and "owner decision" not in exp_row["optional_rule"]
     for code, br in branches.items():
         assert br["decision_kind"] == "overlay_not_applied" and br["registry_code"] == code and br["applied"] is False, code
         assert "authenticated optional-state determination" in br["only_through"], code
@@ -2071,6 +2073,7 @@ for (const x of V.scope_projection) {
 // review N-d additions: the identifier matrix, the snapshot version bound, and code point sortedness of every list, recomputed in a second language
 V.identifier_matrix.bad_values.forEach((e, i) => { out['IM:' + i] = /^[\x00-\x7f]*$/.test(e.value) && IDENT.test(e.value); });
 for (const x of V.projection_stage_refusals) { const v = BigInt(x.trust_snapshot_version); out[x.id] = (v >= 1n && v <= 9007199254740991n) ? 'projected' : 'refuse'; }
+for (const x of V.snapshot_version_ingest_bound.vectors) { out[x.id] = (x.representation === 'int' && /^-?(0|[1-9][0-9]*)$/.test(x.text) && BigInt(x.text) >= 1n && BigInt(x.text) <= 9007199254740991n) ? 'accepted' : 'refuse'; }
 const sortedLists = p => Object.values(p).every(l => !Array.isArray(l) || l.every((v, i) => i === 0 || cmp(l[i - 1], v) < 0));
 for (const x of V.effective_payloads) out[x.id + ':sorted'] = sortedLists(x.payload);
 for (const x of V.effective_payloads_invalid) if (x.id === 'EI-016') out[x.id + ':sorted'] = sortedLists(JSON.parse(x.payload_json));
@@ -2170,6 +2173,9 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     for vec in V["projection_stage_refusals"]:
         assert got[vec["id"]] == ("projected" if vec["expected"]["result"] == "projected" else "refuse"), vec["id"]
         n += 1
+    for vec in V["snapshot_version_ingest_bound"]["vectors"]:  # N-10(c): the ingest bound decided identically in the second language
+        assert got[vec["id"]] == ("accepted" if vec["expected"]["result"] == "accepted_for_authority_evaluation" else "refuse"), vec["id"]
+        n += 1
     for ep in V["effective_payloads"]:
         assert got[ep["id"] + ":sorted"] is True, ep["id"]
     assert got["EI-016:sorted"] is False  # UTF-16 order is not code point order
@@ -2202,7 +2208,9 @@ def test_frozen_token_table_is_hash_pinned_and_covers_the_whole_code_point_range
     pin = V["pins"]["token_unicode_table"]
     assert sha_hex(_TOKEN_TABLE_BYTES) == TOKEN_TABLE_SHA256 == pin["sha256"], "token table changed: re-review N-13 and re-pin"
     assert pin["file"] == "docs/ext-implementation/data/ext-s1-5-token-unicode-15.1-excluded-ranges.json" and pin["unicode_version"] == "15.1.0"
-    assert "PROPOSED" in pin["status"]  # the version is a proposal for the owner to confirm
+    assert pin["status"].startswith("FROZEN") and "PROPOSED" not in pin["status"]  # N-13 ruled: Unicode 15.1.0 is frozen, no longer a proposal
+    ver = pin["independent_verification"]  # provenance of the table against three independent 15.1.0 sources, with the one thing that could not be checked
+    assert len(ver["sources"]) == 3 and "unicode.org" in ver["note"] and "NOT compared with the UCD text files" in ver["note"]
     doc = json.loads(_TOKEN_TABLE_BYTES.decode("ascii"))
     assert doc["schema"] == "ocs-token-unicode-table/1" and doc["unicode_version"] == "15.1.0"
     prev_end = -2
@@ -2318,7 +2326,7 @@ def optional_fallback(refusal_kind, participation, store, basis, authenticated, 
     if not authenticated or not independent or revives:
         return {"effect_outcome": "REFUSE", "fallback_permitted": False}
     if refusal_kind == "selection_expired":
-        ok = False  # not a permitted fallback under N-12; owner decision needed (spec 12, N-12(c)): never decided here
+        ok = False  # N-12(c) RULED: expiry is never a fallback basis; it refuses the expired selection (a withdrawn row is decided on the withdrawal)
     elif refusal_kind in ("effective_family_unsupported", "effective_contract_unsupported"):
         ok = basis == "authenticated_non_participation"
     else:
@@ -2330,7 +2338,7 @@ def test_optional_fallback_rules_n12():
     sec = V["optional_fallback_determination"]
     assert "Architect Batch 6 rulings, N-12" in sec["rule"] and set(sec["bases"]) == {"never_required_governed_policy", "valid_withdrawal_fallback_transition", "authenticated_non_participation"}
     ids = [v["id"] for v in sec["vectors"]]
-    assert len(ids) == len(set(ids)) >= 16 and "owner decision needed" in sec["open_interpretation"]
+    assert len(ids) == len(set(ids)) >= 16 and "open_interpretation" not in sec and "RULED" in sec["expiry_rule"] and "N-12(c)" in sec["rule"]
     for v in sec["vectors"]:
         got = optional_fallback(v["refusal_kind"], v["participation"], v["store"], v["determination_basis"], v["authenticated"], v["independent_of_refusal"], v["revives_previous_authority"])
         assert got == {k: v["expected"][k] for k in got}, v["id"]
@@ -2357,7 +2365,7 @@ def test_optional_fallback_rules_n12():
                                 assert out["effect_outcome"] != "ACCEPT"
                                 if out["fallback_permitted"]:
                                     assert (part, store, auth, indep, rev) == ("optional", "known", True, True, False)
-                                    assert kind != "selection_expired" and basis != "row_past_valid_until"  # expiry never falls back (N-12(c), owner decision needed)
+                                    assert kind != "selection_expired" and basis != "row_past_valid_until"  # expiry never falls back (N-12(c) RULED)
                                 if store == "unknown":
                                     assert out["effect_outcome"] == "UNKNOWN_FAIL_CLOSED"
     with pytest.raises(Refuse):
@@ -2369,6 +2377,96 @@ def test_optional_fallback_rules_n12():
     su = next(x for x in V["defect_mapping"] if x["id"] == "MP-store_unknown")
     assert su["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and "never overlay_not_applied" in su["optional_rule"] and "optional_branch" not in su
     assert "RULED" in V["projection_effect_matrix_rule"] and "never justifies a fallback" in V["projection_effect_matrix_rule"]
+
+
+def test_expiry_is_never_a_fallback_basis_n12c():
+    """N-12(c) (Architect final ruling): selection_expired does not establish eligibility for optional fallback. Definitive expiry refuses the expired
+    selection; unavailable authoritative state is UNKNOWN_FAIL_CLOSED; only an independently authenticated never-required or valid withdrawn state
+    permits an otherwise permitted fallback, and that state is decided on its own code, never on the expiry."""
+    sec = V["optional_fallback_determination"]
+    expiry = [v for v in sec["vectors"] if v["refusal_kind"] == "selection_expired"]
+    assert {v["id"] for v in expiry} >= {"OFD-015", "OFD-016", "OFD-017", "OFD-018", "OFD-019", "OFD-020", "OFD-021"}
+    for v in expiry:
+        want = "UNKNOWN_FAIL_CLOSED" if v["store"] != "known" else "REFUSE"
+        assert v["expected"]["effect_outcome"] == want and v["expected"]["fallback_permitted"] is False, v["id"]
+    # even the two bases the ruling names cannot turn an expiry into a fallback, with every authentication, independence and revival value
+    for basis in ("never_required_governed_policy", "valid_withdrawal_fallback_transition", "authenticated_non_participation", "row_past_valid_until", None):
+        for auth in (True, False):
+            for indep in (True, False):
+                for rev in (True, False):
+                    assert optional_fallback("selection_expired", "optional", "known", basis, auth, indep, rev) == {"effect_outcome": "REFUSE", "fallback_permitted": False}
+                    assert optional_fallback("selection_expired", "optional", "unknown", basis, auth, indep, rev) == {"effect_outcome": "UNKNOWN_FAIL_CLOSED", "fallback_permitted": False}
+    # the same bases DO permit a fallback for a kind they apply to, so the expiry refusal is the ruling and not a blanket rule of the function
+    assert optional_fallback("scope_token", "optional", "known", "never_required_governed_policy", True, True, False)["fallback_permitted"] is True
+    assert optional_fallback("scope_token", "optional", "known", "valid_withdrawal_fallback_transition", True, True, False)["fallback_permitted"] is True
+    row = next(r for r in V["defect_mapping"] if r["id"] == "MP-selection_expired")
+    assert row["verdict_class"] == "REFUSE" and "optional_branch" not in row and "UNKNOWN_FAIL_CLOSED" in row["optional_rule"]
+    spec = (ROOT / V["spec"]).read_text(encoding="utf-8")
+    assert "owner decision that this document does not make" not in spec and "RULED (Architect final ruling, N-12(c))" in spec
+
+
+class _AuthorityProbe:
+    """Records whether authority evaluation or projection was reached."""
+    def __init__(self):
+        self.authority_calls = self.projection_calls = 0
+
+    def authority(self, version):
+        self.authority_calls += 1
+
+    def project(self, version):
+        self.projection_calls += 1
+        return project_snapshot_version(version)
+
+
+def ingest_snapshot_version(representation, text, probe):
+    """N-10(c) reference: the representation bound is applied FIRST. Only a strict integer in [1, 2^53 - 1] (exact canonical JSON integer text) goes on
+    to authority evaluation and projection; anything else is refused at ingest and neither is called."""
+    lo, hi = RANGES["trust_snapshot_version"]
+    ok = representation == "int" and re.fullmatch(r"-?(0|[1-9][0-9]*)", text) is not None and lo <= int(text) <= hi
+    if not ok:
+        raise Refuse("trust_snapshot_invalid", "trust_snapshot_version")
+    version = int(text)
+    probe.authority(version)
+    probe.project(version)
+    return version
+
+
+def test_snapshot_version_bound_is_applied_before_authority_evaluation_n10c():
+    """N-10(c) (Architect final ruling): the representation bound precedes authorization and projection; an unsupported representation never
+    reaches authority evaluation."""
+    sec = V["snapshot_version_ingest_bound"]
+    assert "BEFORE the snapshot is used in authorization or projection" in sec["rule"] and sec["stage"] == "ingest" and sec["code"] == "trust_snapshot_invalid"
+    assert (sec["min"], sec["max"]) == RANGES["trust_snapshot_version"] and "PROPOSED mapping" in sec["code_status"]
+    ids = [v["id"] for v in sec["vectors"]]
+    assert ids == ["SIB-%03d" % i for i in range(1, 12)]
+    accepted = refused = 0
+    for v in sec["vectors"]:
+        probe, exp = _AuthorityProbe(), v["expected"]
+        if exp["result"] == "refuse":
+            with pytest.raises(Refuse) as info:
+                ingest_snapshot_version(v["representation"], v["text"], probe)
+            assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), v["id"]
+            assert (probe.authority_calls, probe.projection_calls) == (0, 0), v["id"]  # the unsupported representation never reached authority evaluation
+            assert exp["authority_evaluation_reached"] is False and exp["projection_reached"] is False and exp["binding_created"] is False
+            assert exp["yields_overlay_not_applied"] is False and exp["yields_accept"] is False
+            refused += 1
+        else:
+            assert ingest_snapshot_version(v["representation"], v["text"], probe) == int(v["text"]) and (probe.authority_calls, probe.projection_calls) == (1, 1), v["id"]
+            accepted += 1
+    assert accepted == 3 and refused == 8
+    # the strict JSON loader agrees on the textual forms that parse as something other than a strict integer (no coercion: none becomes an int)
+    for text, kind in (("7.0", "float"), ("7e0", "float"), ('"7"', "string"), ("true", "bool"), ("null", "null")):
+        try:
+            parsed = load(text)
+        except Refuse:
+            continue
+        assert not (isinstance(parsed, int) and not isinstance(parsed, bool)), (text, kind)
+    # the projection stage stays a second line of defence for a non-conforming ingest (the bound is the same), and the order is fixed in the spec
+    assert project_snapshot_version(2**53 - 1) == 2**53 - 1
+    with pytest.raises(Refuse):
+        project_snapshot_version(2**53)
+    spec = (ROOT / V["spec"]).read_text(encoding="utf-8")
+    assert "RULED (Architect final ruling, N-10(c))" in spec and "never reaches authority evaluation" in spec
 
 
 def test_policy_identity_members_and_the_conformance_kit_agree_on_overlapping_cases_ruling_4_3():
@@ -2431,9 +2529,12 @@ def test_spec_records_the_batch6_rulings_and_keeps_open_items_open():
     for item in ("N-10", "N-11", "N-12", "N-13", "Ruling 4.3"):
         assert item in closed and "RULED" in closed[closed.index(item):closed.index(item) + 400], item
     remaining = spec[spec.index("### Remaining (genuine)"):spec.index("### Recorded notes")]
-    assert "N-10(c)" in remaining and "N-13(b)" in remaining  # the genuinely open parts stay open
-    for item in ("N-7", "N-8", "N-9"):
-        assert item in remaining, item
+    for item in ("N-10(c)", "N-12(c)", "N-13(b)"):  # the former open parts are RULED (Architect final rulings) and no longer listed as open
+        assert item not in remaining, item
+        assert item in closed and "RULED" in closed[closed.index(item):closed.index(item) + 300], item
+    for item in ("N-7", "N-8", "N-9"):  # no canonical source in the repository rules on these: explicitly UNRESOLVED, never silently resolved
+        assert item in remaining and "UNRESOLVED" in remaining[remaining.index(item):remaining.index(item) + 400], item
+    assert not any(w in remaining[remaining.index("N-7"):] for w in ("RULED", "CLOSED", "resolved by"))
     for retired in ("- **N-11 `trust_snapshot_missing` dual meaning (new", "- **N-12 Optional scopes under an unknown store, and a refused projection read as never activated (new"):
         assert retired not in spec, retired  # the open-question entries are replaced by the ruled entries
     assert "Whether a refused projection may count as `never_activated` is not decided" not in spec

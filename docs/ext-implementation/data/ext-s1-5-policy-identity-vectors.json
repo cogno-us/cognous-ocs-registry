@@ -1,7 +1,7 @@
 {
  "schema": "ocs-ext-s1-5-policy-identity-vectors/1",
  "status": "BUILDER_TESTED",
- "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5, Batch-4 rulings N-1, N-3, N-4, N-5, N-6 and the Batch 6 rulings N-10, N-11, N-12, N-13 and 4.3 (2026-10-25; the open parts N-10(c), N-12(c) and N-13(b) stay open). Revised after the PR #30 AI technical reviews, two rounds (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
+ "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5, Batch-4 rulings N-1, N-3, N-4, N-5, N-6 and the Batch 6 rulings N-10, N-11, N-12, N-13 and 4.3 (2026-10-25), and the Architect final rulings N-10(c), N-12(c) and N-13 (Unicode 15.1.0 frozen); N-7, N-8 and N-9 stay UNRESOLVED (no canonical source in this repository rules on them). Revised after the PR #30 AI technical reviews, two rounds (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
  "spec": "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md",
  "pins": {
   "contract_file": "docs/r08-v2-contract.md",
@@ -63,14 +63,39 @@
   "readme_sha256_informational": "ffa04af23daf9baa4369261627932da16321c9f9ab1e2fd970444b336aae175f",
   "token_unicode_table": {
    "file": "docs/ext-implementation/data/ext-s1-5-token-unicode-15.1-excluded-ranges.json",
-   "sha256": "b6dd5fcaeb77cf0b2c54ff4e4af14c2ce039bda87eb57f702b8a55fa67fb24d9",
+   "sha256": "8c85813d25f6ed53371e27f0e4895a89de44a619824486dcff8d48ff8b607474",
    "unicode_version": "15.1.0",
-   "status": "PROPOSED for owner confirmation (Architect Batch 6 rulings, N-13): 15.1.0 is the version the reference already used",
+   "status": "FROZEN (Architect final ruling N-13): Unicode 15.1.0 is the frozen token-property version for the bounded V1 profile; a later Unicode version is a new contract version with its own table and vectors",
    "full_scan": {
     "range": "U+0000..U+10FFFF",
     "encoding": "one ASCII character per code point, '1' = excluded, '0' = permitted",
     "bitmap_sha256": "1978dfa22dcdd956939b670185e1bd519c59bc8599ce4d053b91b1ffbe390ed5",
     "excluded_count": 964488
+   },
+   "independent_verification": {
+    "status": "VERIFIED_AGAINST_THREE_UNICODE_15_1_0_SOURCES_UNICODE_ORG_NOT_REACHABLE",
+    "note": "The table (713 ranges, 964488 excluded code points) was regenerated from three sources that carry Unicode 15.1.0 and compared range for range; all three equal the committed table. unicode.org (UCD 15.1.0 UnicodeData.txt and DerivedGeneralCategory.txt) could not be fetched from the build environment (outbound proxy refused the host with HTTP 403), so the table is NOT compared with the UCD text files themselves; the three sources below are packaged builds of those files.",
+    "sources": [
+     {
+      "name": "CPython unicodedata",
+      "version": "3.13.17, unicodedata.unidata_version 15.1.0",
+      "method": "category(chr(cp))[0] in C or Z, merged into inclusive ranges"
+     },
+     {
+      "name": "PyPI unicodedata2",
+      "version": "15.1.0",
+      "artifact_sha256": "cb30f189ad66482f8529a45da71b2a8841e9bd2bb376cc2933003a4a55a07648",
+      "method": "same procedure, an independent C build of the 15.1.0 tables (not CPython's database)"
+     },
+     {
+      "name": "npm @unicode/unicode-15.1.0",
+      "version": "2.1.0",
+      "artifact_sha256": "841a96a343bfee1c7a0e12d24616038f5ad5485c76273ee6cd0bfc43ea8cea37",
+      "integrity": "sha512-g9mFpv6R921GiY4vxMMXO3SIoWcx5jnbbUwHV6jE2zzIT++WB97HCgWihasCqDzTjW4jlW2NzWLJJ9rG8WsE8Q==",
+      "method": "union of General_Category/Other (Cc, Cf, Cs, Co, Cn) and General_Category/Separator (Zs, Zl, Zp) range files read by Node.js, independent of Node's own ICU database (Unicode 17.0)"
+     }
+    ],
+    "node_runtime_unicode": "17.0 (ICU 78.3, Node 22.23.4): not consulted for any decision; see divergence_measured"
    }
   }
  },
@@ -205,7 +230,8 @@
      "approval_max_age_seconds",
      "class_status_max_age_seconds",
      "policy_generation"
-    ]
+    ],
+    "ingest_bound": "RULED (Architect final ruling N-10(c)): the bound [1, 2^53 - 1] and the strict-integer representation are applied to a delivered TrustSnapshot.version BEFORE the snapshot is used in authorization or projection; an unsupported representation is refused (trust_snapshot_invalid, stage ingest) and never reaches authority evaluation. The shipped verifier at the pinned head applies only version >= 1: that is a source gap, not a contract position."
    },
    "status_max_age_seconds": {
     "domain": "effective-policy",
@@ -6419,7 +6445,7 @@
   },
   {
    "id": "MP-field_invalid-projection",
-   "defect": "a verified input that cannot be projected into the binding (a statement scope token outside the ASCII grammar, a trust snapshot version above 2^53 - 1, or a refused derivation of effective_policy_digest): any projection-stage refusal",
+   "defect": "a verified input that cannot be projected into the binding (a statement scope token outside the ASCII grammar, a trust snapshot version above 2^53 - 1 (defence in depth only: the N-10(c) ingest bound refuses it earlier, see MP-trust_snapshot_invalid), or a refused derivation of effective_policy_digest): any projection-stage refusal",
    "verdict_class": "REFUSE",
    "registry_code": "field_invalid",
    "decision_kind": "required_policy_unavailable",
@@ -6553,7 +6579,7 @@
   },
   {
    "id": "MP-trust_snapshot_invalid",
-   "defect": "a trust snapshot DELIVERED for the fingerprint or verification is malformed: a duplicate issuer key_id, revoked_selections pair, min_epochs selection id or revoked_key_ids entry (TI-001 to TI-004)",
+   "defect": "a trust snapshot DELIVERED for the fingerprint or verification is malformed: a duplicate issuer key_id, revoked_selections pair, min_epochs selection id or revoked_key_ids entry (TI-001 to TI-004); or a delivered snapshot whose version is not a strict integer in [1, 2^53 - 1] (N-10(c): the representation bound is applied at ingest, before the snapshot is used in authorization or projection; vectors SIB-001 to SIB-011)",
    "verdict_class": "REFUSE",
    "registry_code": "trust_snapshot_invalid",
    "decision_kind": "required_policy_unavailable",
@@ -6566,7 +6592,8 @@
     "stage",
     "trust_snapshot_version"
    ],
-   "source": "contract 5; registry_successor/verify.py:245; PROPOSED verdict class (this PR): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped"
+   "source": "contract 5; registry_successor/verify.py:245; PROPOSED verdict class (this PR): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped",
+   "ingest_bound": "N-10(c) RULED: stage `ingest`, member `trust_snapshot_version`; the refusal precedes every authority evaluation and every projection. The code reuses the existing trust_snapshot_invalid (the N-11 invalid-input refusal); the exact stage vocabulary and code are flagged for Architect confirmation"
   },
   {
    "id": "MP-selection_withdrawn",
@@ -6653,7 +6680,7 @@
     "selection_epoch"
    ],
    "source": "contract 7.4 line 5; kit REFUSE",
-   "optional_rule": "NOT a permitted fallback under N-12 (expiry matches none of the permitted fallback bases); owner decision needed (spec section 11 item 17, section 12 N-12(c)); refuses for optional participation, HOLD when state is indeterminate"
+   "optional_rule": "RULED (Architect final ruling N-12(c)): not a fallback basis for any participation. Definitive expiry refuses the expired selection (REFUSE); authoritative state unavailable is UNKNOWN_FAIL_CLOSED; only an independently authenticated never-required or valid withdrawn state permits an otherwise-permitted optional fallback, and then on that state, not on the expiry"
   },
   {
    "id": "MP-selection_not_yet_effective",
@@ -7655,7 +7682,7 @@
    }
   }
  ],
- "projection_stage_refusals_rule": "Any refusal at the projection stage (a scope token, a snapshot version, or any later verified-input-to-binding refusal) creates no binding for any participation and has exactly the participation effects of scope_projection_effects: required refuses (HOLD only if state is indeterminate), optional never falls back by the refusal itself, only through the authenticated optional-state determination; never overlay_not_applied or ACCEPT by itself. The effect function takes no member argument by construction.",
+ "projection_stage_refusals_rule": "Any refusal at the projection stage (a scope token, a snapshot version, or any later verified-input-to-binding refusal) creates no binding for any participation and has exactly the participation effects of scope_projection_effects: required refuses (HOLD only if state is indeterminate), optional never falls back by the refusal itself, only through the authenticated optional-state determination; never overlay_not_applied or ACCEPT by itself. The effect function takes no member argument by construction. Under the Architect final ruling N-10(c) the snapshot-version kind is defence in depth: the representation bound is applied at ingest (snapshot_version_ingest_bound), so an out-of-range verified version never reaches projection in a conforming implementation.",
  "projection_effect_matrix": [
   {
    "id": "PEM-11",
@@ -8739,7 +8766,7 @@
   "kit_code_changed": false
  },
  "optional_fallback_determination": {
-  "rule": "Architect Batch 6 rulings, N-12. An optional fallback is allowed ONLY on authenticated consumer-owned state that independently establishes that the scope never required governed policy (basis never_required_governed_policy), or on a valid explicit withdrawal or fallback transition that does not revive previous authority (basis valid_withdrawal_fallback_transition). A refused projection does not establish 'never activated' and never justifies a fallback. An unknown store is UNKNOWN_FAIL_CLOSED and never overlay_not_applied. REQUIRED participation fails closed. family_unsupported and contract_unsupported are REFUSE unless a separate authenticated non-participation determination exists (basis authenticated_non_participation).",
+  "rule": "Architect Batch 6 rulings, N-12. An optional fallback is allowed ONLY on authenticated consumer-owned state that independently establishes that the scope never required governed policy (basis never_required_governed_policy), or on a valid explicit withdrawal or fallback transition that does not revive previous authority (basis valid_withdrawal_fallback_transition). A refused projection does not establish 'never activated' and never justifies a fallback. An unknown store is UNKNOWN_FAIL_CLOSED and never overlay_not_applied. REQUIRED participation fails closed. family_unsupported and contract_unsupported are REFUSE unless a separate authenticated non-participation determination exists (basis authenticated_non_participation). N-12(c) (Architect final ruling): selection_expired does NOT establish eligibility for optional fallback. A definitive expiry refuses the expired selection (REFUSE) for every participation. If the applicable authoritative state is unavailable the verdict is UNKNOWN_FAIL_CLOSED. Only an independently authenticated never-required state or a valid withdrawn state is a fallback basis; expiry is never one, and a withdrawn row that is also past its valid_until is decided on the withdrawal (code selection_withdrawn), never on the expiry.",
   "bases": [
    "never_required_governed_policy",
    "valid_withdrawal_fallback_transition",
@@ -8972,7 +8999,7 @@
    },
    {
     "id": "OFD-015",
-    "description": "optional row past its verified valid_until, authenticated determination: expiry is not a permitted basis under N-12 (owner decision needed), so it refuses",
+    "description": "optional row past its verified valid_until, authenticated determination: expiry is not a fallback basis (N-12(c)), so the expired selection is refused",
     "refusal_kind": "selection_expired",
     "participation": "optional",
     "store": "known",
@@ -8988,7 +9015,7 @@
    },
    {
     "id": "OFD-016",
-    "description": "optional row past valid_until under an unknown store: HOLD",
+    "description": "optional row past valid_until under an unknown store: UNKNOWN_FAIL_CLOSED (HOLD), never a fallback (N-12(c))",
     "refusal_kind": "selection_expired",
     "participation": "optional",
     "store": "unknown",
@@ -9001,9 +9028,89 @@
      "fallback_permitted": false,
      "yields_overlay_not_applied_by_itself": false
     }
+   },
+   {
+    "id": "OFD-017",
+    "description": "optional, expired selection with an authenticated never-required claim: the expiry still refuses the expired selection (a row that expired was activated, so the claim cannot be independent evidence for it)",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "never_required_governed_policy",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-018",
+    "description": "optional, expired selection with a valid withdrawal transition: the expired selection is refused; any fallback is decided on the selection_withdrawn state, not on the expiry",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "valid_withdrawal_fallback_transition",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-019",
+    "description": "required, definitive expiry, known state: REFUSE",
+    "refusal_kind": "selection_expired",
+    "participation": "required",
+    "store": "known",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-020",
+    "description": "required, expiry under an unknown store: UNKNOWN_FAIL_CLOSED (HOLD)",
+    "refusal_kind": "selection_expired",
+    "participation": "required",
+    "store": "unknown",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-021",
+    "description": "optional, expiry with no determination at all: REFUSE",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": null,
+    "authenticated": false,
+    "independent_of_refusal": false,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
    }
   ],
-  "open_interpretation": "expiry (selection_expired) is not a permitted fallback basis under N-12; owner decision needed (spec 12, N-12(c))"
+  "expiry_rule": "RULED (Architect final ruling N-12(c)): expiry (selection_expired) is never a fallback basis. It refuses the expired selection; with unavailable authoritative state it is UNKNOWN_FAIL_CLOSED; no determination basis converts a selection_expired outcome into a fallback."
  },
  "n10_input_contract": {
   "rule": "Architect Batch 6 rulings, N-10 (syntax-first parsing accepted). The canonical v2 identity boundary does not reuse load_document where it differs from this contract.",
@@ -9071,5 +9178,192 @@
     "TSV-NULL"
    ]
   }
+ },
+ "snapshot_version_ingest_bound": {
+  "rule": "Architect final ruling N-10(c): the snapshot-version representation bound (a strict integer in [1, 9007199254740991], exact canonical JSON integer text) is applied to a delivered TrustSnapshot.version BEFORE the snapshot is used in authorization or projection. An unsupported representation is refused at ingest and never reaches authority evaluation, the fingerprint, the floor comparison or the projection. The bound is a representation bound, not an operational freshness bound.",
+  "stage": "ingest",
+  "code": "trust_snapshot_invalid",
+  "member": "trust_snapshot_version",
+  "min": 1,
+  "max": 9007199254740991,
+  "code_status": "The ruling fixes the ordering, not the code name. This maps the refusal onto the existing trust_snapshot_invalid (N-11: definitive malformed input uses the invalid-input refusal, never missing). PROPOSED mapping; Architect to confirm. A source that still refuses at the projection stage with field_invalid (defence in depth) is not conforming to the ordering.",
+  "representations": [
+   "int",
+   "float",
+   "string",
+   "bool",
+   "null"
+  ],
+  "vectors": [
+   {
+    "id": "SIB-001",
+    "description": "minimum version",
+    "representation": "int",
+    "text": "1",
+    "expected": {
+     "result": "accepted_for_authority_evaluation",
+     "authority_evaluation_reached": true,
+     "projection_reached": true
+    }
+   },
+   {
+    "id": "SIB-002",
+    "description": "above int32, valid (the verifier accepted it and the representation carries it)",
+    "representation": "int",
+    "text": "2147483648",
+    "expected": {
+     "result": "accepted_for_authority_evaluation",
+     "authority_evaluation_reached": true,
+     "projection_reached": true
+    }
+   },
+   {
+    "id": "SIB-003",
+    "description": "maximum, 2^53 - 1",
+    "representation": "int",
+    "text": "9007199254740991",
+    "expected": {
+     "result": "accepted_for_authority_evaluation",
+     "authority_evaluation_reached": true,
+     "projection_reached": true
+    }
+   },
+   {
+    "id": "SIB-004",
+    "description": "zero",
+    "representation": "int",
+    "text": "0",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-005",
+    "description": "negative",
+    "representation": "int",
+    "text": "-1",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-006",
+    "description": "2^53: not exact in every JSON implementation",
+    "representation": "int",
+    "text": "9007199254740992",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-007",
+    "description": "a 41-digit integer",
+    "representation": "int",
+    "text": "1000000000000000000000000000000000000000",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-008",
+    "description": "a float literal, even with an integral value",
+    "representation": "float",
+    "text": "7.0",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-009",
+    "description": "a string that reads as an integer",
+    "representation": "string",
+    "text": "7",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-010",
+    "description": "boolean true (a bool is never an integer)",
+    "representation": "bool",
+    "text": "true",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-011",
+    "description": "null",
+    "representation": "null",
+    "text": "null",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   }
+  ]
  }
 }
