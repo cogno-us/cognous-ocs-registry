@@ -1,0 +1,252 @@
+{
+ "catalogue_paths_by_basename_in_s02_sources": [
+  "src/agent_control_plane/manifest_validation.py"
+ ],
+ "code_name_string_overlap_by_s02_class": {
+  "MANDATORY-INVARIANT": 64,
+  "REFUSAL-OR-REASON-VOCABULARY": 6,
+  "SERIALIZATION-OR-EVIDENCE": 1
+ },
+ "code_name_string_overlap_distinct": 69,
+ "decode_problems": 0,
+ "duplicate_statement_groups": {
+  "cross_repo_groups": 164,
+  "entries": 716,
+  "groups": 199
+ },
+ "layer_counts": {
+  "coverage": 6030,
+  "crosswalk": 51837,
+  "evidence": 19860,
+  "fixtures": 2011,
+  "lineage_sets": 2,
+  "rules": 3190,
+  "scenarios": 2840,
+  "tests": 6648
+ },
+ "layer_counts_match_manifest": true,
+ "lexical_leads_not_matches": {
+  "F1": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 9,
+    "unknown": 1,
+    "validator_rule": 1
+   },
+   "entries": 11,
+   "pattern": "allowed_units|allowed_adapters|allowed_actions|allowed_institutions|authority_domains|max_amount|max_effects|allowed_target_prefixes|LocalExecutionPolicy"
+  },
+  "F10": {
+   "by_normative_type": {
+    "decision": 1,
+    "unknown": 4
+   },
+   "entries": 5,
+   "pattern": "rule_revision|trend"
+  },
+  "F11": {
+   "by_normative_type": {
+    "advisory": 1,
+    "mandatory": 1,
+    "reason_code_or_refusal_vocabulary": 1,
+    "requirement_row": 1,
+    "unknown": 3,
+    "validator_rule": 7
+   },
+   "entries": 14,
+   "pattern": "redact"
+  },
+  "F2": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "target_match|legacy-prefix"
+  },
+  "F3": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 29,
+    "requirement_row": 1,
+    "unknown": 8,
+    "validator_rule": 1
+   },
+   "entries": 39,
+   "pattern": "max_text|MAX_|max_nodes|timeout"
+  },
+  "F4": {
+   "by_normative_type": {
+    "decision": 1,
+    "mandatory": 1,
+    "principle": 1,
+    "reason_code_or_refusal_vocabulary": 85,
+    "requirement_row": 5,
+    "unknown": 104,
+    "validator_rule": 2
+   },
+   "entries": 199,
+   "pattern": "max_age|stale|status age|observation window|ObservationPolicy|freshness"
+  },
+  "F5": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 13,
+    "unknown": 4
+   },
+   "entries": 17,
+   "pattern": "on_unreadable|revocation assurance|holder inventory|runtime_authority"
+  },
+  "F6": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "permissions\\.json|agent permission"
+  },
+  "F7": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 11,
+    "unknown": 7
+   },
+   "entries": 18,
+   "pattern": "dedupe"
+  },
+  "F8": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "demo_policies|demo polic"
+  },
+  "F9": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "tenant.{0,20}length"
+  }
+ },
+ "manifest_digest": "sha256:22f49fd1341cfaa6e46727db9b6153c2073b82a3125fd725173494f3ebb37650",
+ "native_ids_in_more_than_one_repo": 68,
+ "non_rule_layers": {
+  "coverage_rows": 6030,
+  "evidence_kind": {
+   "run_result": 18697,
+   "unknown": 1153,
+   "validation_claim": 10
+  },
+  "evidence_records": 19860,
+  "fixtures": 2011,
+  "parametrized_instances": 8177,
+  "scenario_class": {
+   "adversarial_or_unexecuted_spec": 945,
+   "demo_step": 7,
+   "fixture_defined_case": 1459,
+   "logical": 309,
+   "other": 78,
+   "suite_level_acceptance": 42
+  },
+  "scenario_release_scope": {
+   "post_v0_1": 38,
+   "v0_1": 2802
+  },
+  "scenarios": 2840,
+  "tests": 6648
+ },
+ "reason_code_distinct_names": 1783,
+ "reason_code_entries": 1819,
+ "rules_by_adoption": {
+  "adopted": 35,
+  "proposed_not_adopted": 229,
+  "unknown": 2926
+ },
+ "rules_by_category": {
+  "C1 governance policy rules (as stated)": 247,
+  "C2 mandatory / enforcement candidates (source-stated; enforcement NOT established)": 240,
+  "C3 configurable policy parameters": 0,
+  "C4 reason codes / refusal vocabulary": 1819,
+  "C7 historical proposals / decisions": 244,
+  "C8 unresolved / unattributed (normative strength not stated)": 640
+ },
+ "rules_by_mvp_applicability": {
+  "mvp_fixed": 7,
+  "requires_unavailable_component": 205,
+  "unresolved": 2978
+ },
+ "rules_by_normative_type": {
+  "advisory": 10,
+  "constitutional_floor": 35,
+  "decision": 15,
+  "mandatory": 39,
+  "principle": 68,
+  "reason_code_or_refusal_vocabulary": 1819,
+  "requirement_row": 134,
+  "unknown": 869,
+  "validator_rule": 201
+ },
+ "rules_by_release_scope": {
+  "v0_1": 3190
+ },
+ "rules_by_repo": {
+  "cognous-action-manifest": 35,
+  "cognous-control-plane": 349,
+  "cognous-execution-runtime": 20,
+  "cognous-governance-evidence-pack": 42,
+  "cognous-governed-exchange": 204,
+  "cognous-institutional-governance": 778,
+  "cognous-open-control-stack": 347,
+  "cognous-open-control-stack-ergonomics": 163,
+  "cognous-open-control-stack-verifier": 363,
+  "cognous-replay-bundle": 77,
+  "cognous-stack-qualification": 171,
+  "open-decision-evidence-standard": 641
+ },
+ "rules_with_alias_candidates": 874,
+ "rules_with_aliases": 132,
+ "rules_with_program_v0_2_source_path": 0,
+ "runtime_authority_reasons": {
+  "0.1_entries": 121,
+  "0.2_entries": 164
+ },
+ "s02_by_class": {
+  "CONFIGURABLE-CANDIDATE": 43,
+  "INCIDENTAL-CONDITIONAL": 51,
+  "MANDATORY-INVARIANT": 354,
+  "REFUSAL-OR-REASON-VOCABULARY": 50,
+  "SERIALIZATION-OR-EVIDENCE": 90,
+  "UNRESOLVED": 32
+ },
+ "s02_rows": 620,
+ "s02_unresolved_ids": [
+  "W1-029",
+  "W1-056",
+  "W1-058",
+  "W1-073",
+  "W2-025",
+  "W2-036",
+  "W2-038",
+  "W2-067",
+  "W2-077",
+  "W2-082",
+  "W3-024",
+  "W3-063",
+  "W4-004",
+  "W4-014",
+  "W4-015",
+  "W4-018",
+  "W4-022",
+  "W4-023",
+  "W4-033",
+  "W5-011",
+  "W5-012",
+  "W5-023",
+  "W5-028",
+  "W5-044",
+  "W6-004",
+  "W6-005",
+  "W6-042",
+  "W8-014",
+  "W8-091",
+  "W9-007",
+  "W9-017",
+  "W9-027"
+ ],
+ "s02_unresolved_rows_with_overlap": [],
+ "unresolved_accounting": {
+  "crosswalk_unresolved_rows": 9,
+  "entries_with_unrecorded_source_revision": 45,
+  "entries_with_unresolved_mvp_applicability": 14176,
+  "evidence_unrecorded_source_revisions": 17704,
+  "unresolved_reference_placeholders": 15384,
+  "unresolved_relationships": 15384
+ }
+}
