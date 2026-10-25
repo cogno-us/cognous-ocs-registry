@@ -1558,6 +1558,9 @@ def _generate(gen):
         return base + b" " * (gen["total_bytes"] - len(base))
     if gen["kind"] == "multibyte_string":
         return ('{"x":"' + "\u00e9" * gen["count"] + '"}').encode("utf-8")
+    if gen["kind"] == "invalid_utf8_padded":  # an invalid UTF-8 byte at the start, then space padding up to total_bytes (over the size limit)
+        head = b'{"a":"\xff"}'
+        return head + b" " * (gen["total_bytes"] - len(head))
     if gen["kind"] == "deep_array":  # depth levels of '[' around `inner`; `closed` False leaves them unclosed; `tail` follows the document
         return ("[" * gen["depth"] + gen["inner"] + ("]" * gen["depth"] if gen["closed"] else "") + gen["tail"]).encode("utf-8")
     if gen["kind"] == "int_literal":  # BV-001 with selection_epoch replaced by an integer literal of `digits` nines
@@ -1615,6 +1618,70 @@ def test_input_boundary_vectors_pin_size_text_and_depth_edges():
         with pytest.raises(Refuse) as info:
             load(not_text)
         assert info.value.code == "input_not_text"
+
+
+def test_scanner_grammar_edges_are_each_pinned_by_a_vector_so_a_second_parser_cannot_drift():
+    """Spec 5.5.1 step 2 (review SF-A): the syntax step decides json_malformed against a later-step code, so every grammar edge of a hand-written
+    or lenient scanner needs its own vector. Each document is also checked against a stock strict parser, so the expectation is the RFC, not the reference."""
+    vecs = {v["id"]: v for v in V["invalid"] if v["category"] == "scanner grammar"}
+    assert set(vecs) == {"BI-GRAMMAR-ARRAY-TRAILING-COMMA", "BI-GRAMMAR-NEG-INFINITY", "BI-GRAMMAR-FLOAT-TRAILING-DOT", "BI-GRAMMAR-EXPONENT-NO-DIGITS",
+                         "BI-GRAMMAR-UNKNOWN-ESCAPE", "BI-GRAMMAR-UNICODE-ESCAPE-PLUS-SIGN", "BI-GRAMMAR-UNICODE-ESCAPE-UNDERSCORE",
+                         "BI-GRAMMAR-UNICODE-ESCAPE-SPACE", "BI-GRAMMAR-UNICODE-ESCAPE-NON-HEX", "BI-GRAMMAR-RAW-TAB-IN-STRING",
+                         "BI-GRAMMAR-RAW-NEWLINE-IN-STRING", "BI-GRAMMAR-FORM-FEED-WHITESPACE"}
+    for vid, vec in vecs.items():
+        text = vec["input_json"]
+        with pytest.raises(Refuse) as info:
+            load(text)
+        assert info.value.code == vec["expected"]["code"], vid
+        if vec["expected"]["code"] == "json_malformed":
+            with pytest.raises(ValueError):  # a strict RFC 8259 parser refuses the same document
+                json.loads(text)
+        else:
+            assert vid == "BI-GRAMMAR-NEG-INFINITY" and vec["expected"]["code"] == "json_number_unsupported"
+            assert json.loads(text) == {"a": float("-inf")}  # a stock parser ACCEPTS the token: only a hand scan can map it to the spec's code
+    # the three \u hazards are exactly what a naive int(h, 16) hex check lets through
+    for h in ("+123", "1_23", " 123"):
+        assert int(h, 16) == int(h.replace("_", "").replace("+", "").strip(), 16)
+    # the grammar edges are decided at the syntax step: a lenient scanner would have reached a later step, so the same document padded with a
+    # float would report json_number_unsupported if the syntax defect were missed
+    for text in ('{"a":[1,],"b":2.5}', '{"a":1.,"b":NaN}', '{"a":"\\x","b":Infinity}'):
+        with pytest.raises(Refuse) as info:
+            load(text)
+        assert info.value.code == "json_malformed", text
+
+
+def test_unknown_members_are_reported_in_code_point_order_not_utf16_order():
+    """Spec 5.3 and 5.5: the sorted path order of the member-set phase is by code point. U+E000 sorts before U+10000 by code point and after it by UTF-16."""
+    a, b = "\ue000", "\U00010000"
+    assert sorted([a, b]) == [a, b] and sorted([a, b], key=lambda x: x.encode("utf-16-be")) == [b, a]
+    for vid in ("BI-ORDER-UNKNOWN-MEMBERS-CODE-POINT-ORDER-TOP", "BI-ORDER-UNKNOWN-MEMBERS-CODE-POINT-ORDER-SCOPE"):
+        vec = next(v for v in V["invalid"] if v["id"] == vid)
+        assert vec["expected"]["code"] == "field_unknown"
+        with pytest.raises(Refuse) as info:
+            validate_binding(load(vec["input_json"]))
+        assert (info.value.code, info.value.member) == ("field_unknown", vec["expected"]["member"]), vid
+        # the UTF-16 answer is a different member, so a UTF-16 sorter fails the vector
+        unknown = [m for m in ((a, b) if vid.endswith("TOP") else ("scope." + a, "scope." + b))]
+        assert sorted(unknown, key=lambda x: x.encode("utf-16-be"))[0] != vec["expected"]["member"]
+    vec = next(v for v in V["effective_payloads_invalid"] if v["id"] == "EI-ORDER-UNKNOWN-MEMBERS-CODE-POINT-ORDER")
+    with pytest.raises(Refuse) as info:
+        validate_effective_payload(vec["family"], load(vec["payload_json"]), vec["role"])
+    assert (info.value.code, info.value.member) == ("field_unknown", a)
+    assert sorted([a, b], key=lambda x: x.encode("utf-16-be"))[0] != vec["expected"]["member"]
+
+
+def test_input_not_text_is_reported_before_input_too_large():
+    """Spec 5.5.1 step 1: strict decoding comes first, so an over-size document that is also invalid UTF-8 is input_not_text."""
+    vec = next(v for v in V["input_boundary"] if v["id"] == "IBND-NOT-TEXT-BEFORE-TOO-LARGE")
+    raw = _generate(vec["generate"])
+    assert len(raw) > MAX_DOCUMENT_BYTES
+    with pytest.raises(Refuse) as info:
+        load(raw)
+    assert info.value.code == "input_not_text"
+    over_valid = next(v for v in V["input_boundary"] if v["id"] == "IBND-OVER-LIMIT")
+    with pytest.raises(Refuse) as info:
+        load(_generate(over_valid["generate"]))
+    assert info.value.code == "input_too_large"  # the same size with valid UTF-8 is the size refusal
 
 
 def test_parse_order_is_syntax_then_numbers_then_duplicates_then_depth_and_huge_integers_are_syntactically_valid():

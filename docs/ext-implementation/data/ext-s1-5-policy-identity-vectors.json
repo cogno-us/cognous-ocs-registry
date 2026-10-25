@@ -2007,6 +2007,174 @@
     "layer": "shape",
     "member": "activation_ref"
    }
+  },
+  {
+   "id": "BI-GRAMMAR-ARRAY-TRAILING-COMMA",
+   "category": "scanner grammar",
+   "description": "array trailing comma: RFC 8259 forbids it, syntax step first, json_malformed (only the object trailing comma was pinned before; the spec's own example is `[1.5, ]`)",
+   "input_json": "{\"a\":[1,]}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-NEG-INFINITY",
+   "category": "scanner grammar",
+   "description": "-Infinity is one of the three tokens recognized only to be refused as a number literal (5.5.1 step 3): json_number_unsupported, not json_malformed; a strict RFC parser cannot follow this without hand scanning",
+   "input_json": "{\"a\":-Infinity}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_number_unsupported",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-FLOAT-TRAILING-DOT",
+   "category": "scanner grammar",
+   "description": "'1.' is not a number in RFC 8259 (a fraction needs a digit): json_malformed at the syntax step, never json_number_unsupported",
+   "input_json": "{\"a\":1.}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-EXPONENT-NO-DIGITS",
+   "category": "scanner grammar",
+   "description": "'1e' is not a number (an exponent needs a digit): json_malformed at the syntax step, never json_number_unsupported",
+   "input_json": "{\"a\":1e}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-UNKNOWN-ESCAPE",
+   "category": "scanner grammar",
+   "description": "an unknown string escape (backslash x) is a syntax error",
+   "input_json": "{\"a\":\"\\x\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-UNICODE-ESCAPE-PLUS-SIGN",
+   "category": "scanner grammar",
+   "description": "\\u needs exactly four hex digits: '+123' is accepted by a naive int(h, 16) and must be json_malformed",
+   "input_json": "{\"a\":\"\\u+123\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-UNICODE-ESCAPE-UNDERSCORE",
+   "category": "scanner grammar",
+   "description": "\\u needs exactly four hex digits: '1_23' is accepted by a naive int(h, 16) and must be json_malformed",
+   "input_json": "{\"a\":\"\\u1_23\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-UNICODE-ESCAPE-SPACE",
+   "category": "scanner grammar",
+   "description": "\\u needs exactly four hex digits: ' 123' (a leading space) is accepted by a naive int(h, 16) and must be json_malformed",
+   "input_json": "{\"a\":\"\\u 123\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-UNICODE-ESCAPE-NON-HEX",
+   "category": "scanner grammar",
+   "description": "\\u needs exactly four hex digits: 'ZZZZ' is not hex",
+   "input_json": "{\"a\":\"\\uZZZZ\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-RAW-TAB-IN-STRING",
+   "category": "scanner grammar",
+   "description": "a raw U+0009 inside a string literal is a syntax error (it must be escaped); the existing control vectors are escaped",
+   "input_json": "{\"a\":\"\t\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-RAW-NEWLINE-IN-STRING",
+   "category": "scanner grammar",
+   "description": "a raw U+000A inside a string literal is a syntax error (it must be escaped)",
+   "input_json": "{\"a\":\"\n\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-GRAMMAR-FORM-FEED-WHITESPACE",
+   "category": "scanner grammar",
+   "description": "form feed (U+000C) is not JSON whitespace (only space, tab, newline and carriage return are): json_malformed",
+   "input_json": "{\"a\":1,\f\"b\":2}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-ORDER-UNKNOWN-MEMBERS-CODE-POINT-ORDER-TOP",
+   "category": "order",
+   "description": "two unknown top-level members U+E000 and U+10000: the first in sorted path order is by code point (U+E000 before U+10000, the reverse of UTF-16 code unit order), so the reported member is U+E000",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\", \"\ue000\": \"x\", \"\ud800\udc00\": \"y\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "layer": "shape",
+    "member": "\ue000"
+   }
+  },
+  {
+   "id": "BI-ORDER-UNKNOWN-MEMBERS-CODE-POINT-ORDER-SCOPE",
+   "category": "order",
+   "description": "two unknown scope members U+E000 and U+10000: the reported path is scope.U+E000 (code point order; a UTF-16 sort reports scope.U+10000)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\", \"\ue000\": \"x\", \"\ud800\udc00\": \"y\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "layer": "shape",
+    "member": "scope.\ue000"
+   }
   }
  ],
  "identifier_matrix": {
@@ -3707,6 +3875,19 @@
     "result": "refuse",
     "code": "field_invalid",
     "member": "class_status_max_age_seconds"
+   }
+  },
+  {
+   "id": "EI-ORDER-UNKNOWN-MEMBERS-CODE-POINT-ORDER",
+   "category": "order",
+   "description": "two unknown payload members U+E000 and U+10000: the reported member is U+E000 (code point order; a UTF-16 sort reports U+10000)",
+   "family": "f1ab-local-execution-allowlist",
+   "payload_json": "{\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"], \"\ue000\": [], \"\ud800\udc00\": []}",
+   "role": "effective",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "member": "\ue000"
    }
   }
  ],
@@ -7161,6 +7342,20 @@
     "code": "field_invalid",
     "layer": "shape",
     "member": "selection_epoch"
+   }
+  },
+  {
+   "id": "IBND-NOT-TEXT-BEFORE-TOO-LARGE",
+   "description": "65537 bytes that are also invalid UTF-8 (a stray 0xff in the first bytes, then padding): input_not_text is reported before input_too_large (5.5.1 step 1 order), so a size check run before the strict decode gives the wrong code",
+   "generate": {
+    "kind": "invalid_utf8_padded",
+    "total_bytes": 65537
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "input_not_text",
+    "layer": "parse",
+    "member": null
    }
   }
  ],
