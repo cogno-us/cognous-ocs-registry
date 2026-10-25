@@ -39,7 +39,7 @@ Gaps and judgement calls (all fail closed):
 - **Exact `str` everywhere.** Family, operator and every key must be exact `str` objects; a `str` subclass is refused. Class ids are opaque exact strings with no Unicode normalization: NFC `"\u00e9"` and NFD `"e\u0301"` are two distinct valid class ids (pinned by a test).
 - **Bounded caller read.** A caller mapping is snapshotted once, at most `limit + 1` entries; a huge Mapping is refused without a full copy.
 - **`record.ok` must be exactly `True`.** A truthy non-`True` value refuses (stricter than v1, which accepts truthy values).
-- **`AGE_MAX` authority and merge conditions.** The number rests on the Architect's Batch 3 ruling (text not stored in this repository); no Control Plane mirror exists and the in-repo pin test guards drift only. Merge conditions are in DR-CP-AGE-1 ("Authority and merge conditions").
+- **`AGE_MAX` status: PROPOSED, pending merge conditions.** The number rests on the Architect's Batch 3 ruling (text not stored in this repository); no Control Plane mirror exists and the in-repo pin test guards drift only. Merge conditions are in DR-CP-AGE-1 ("Authority and merge conditions").
 - The evaluator pin of an F4/F5 record is the existing `(EVALUATOR_ID, EVALUATOR_BINDING)` pair: the contract defines no Control Plane evaluator identity. EXT-S4 should define one if it wants a distinct pin.
 - ADR D-27 and contract 2.1 still say `AGE_MAX` is pending; DR-CP-AGE-1 records the Architect's ruling that supersedes that wording (a separate docs-only amendment will record the versioned clarification). The merged ADR and contract are not edited.
 
@@ -50,3 +50,4 @@ The full statement, the measured table and the obligations live in one place, [D
 ## Not done here
 
 No optional fallback (consumer-owned, EXT-S4-2); no host factory, no outage-extension composition or approval binding (EXT-S3-3/S3-4); no v2 record or selection entry point; no amount slot (reserved or inactive); no `identity_max_age_seconds`, `mandate_max_age_seconds`, `clock_tolerance_seconds` or evidence-obligation age (they refuse `field_unknown`); no Control Plane, Runtime or v1 behaviour change.
+- **Read-once scope and ordering.** "Read once" holds inside the composer only; the dispatcher in `families.py` reads `record.ok` and the record body before calling it. Key checks run type first, then unknown, then missing.

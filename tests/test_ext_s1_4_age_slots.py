@@ -30,7 +30,7 @@ MAX = 2147483647
 PINS = {
     "docs/r08-v2-contract.md": "64e2d6eb3af7b6024bf0ed7778fcea5ee61fd1cbad247d0199e1b15310ddff01",
     "docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md": "b9ad06be559bfb99c5e669ca7217d2ee28b62cda7738206c31fd8e6866233b67",
-    "docs/decisions/2026-10-25-dr-cp-age-1.md": "072120e3d69dc6cbdbb344a4fc3e749e76e142d73b2069ed7d06feb26213145a",
+    "docs/decisions/2026-10-25-dr-cp-age-1.md": "f73e43490d90dac04f40c4adf2241259951290fcdb314679eebd87ce6ede7b38",
 }
 CONTRACT_TEXT = [
     "| `f4-control-plane-age-bounds` (v2) | `status_max_age_seconds`, `approval_max_age_seconds` | strict integer seconds, `min(caller, registry)` per scalar | Control Plane |",
@@ -148,6 +148,38 @@ class _BigMapping:
 
 from collections.abc import Mapping as _Mp  # noqa: E402
 _Mp.register(_BigMapping)
+
+
+class _CollidingMapping:
+    """Yields a legitimate exact-str key and then a hash/eq-colliding str subclass for the same text, so a naive dict copy collapses
+    the two into one legitimate-looking key carrying the hostile value."""
+    def __init__(self, key, good, hostile):
+        self._pairs = [(key, good), (_EqStr(key), hostile)]
+
+    def __getitem__(self, k):
+        return dict(self._pairs)[k]
+
+    def __iter__(self):
+        return iter(k for k, _ in self._pairs)
+
+    def __len__(self):
+        return len(self._pairs)
+
+    def items(self):
+        return iter(self._pairs)
+
+
+_Mp.register(_CollidingMapping)
+
+
+def _snapshot_key_collision_refuses(mod):
+    """Review nit 1: the colliding key is refused per item before the copy is built (class map and top level), never collapsed."""
+    cls = _CollidingMapping("class-a", 60, 99)
+    top = _CollidingMapping(F5K, {"class-a": 60}, {"class-a": 99})
+    f4 = _CollidingMapping("status_max_age_seconds", 5, 99)
+    return (mod.compose_f5({F5K: cls}, rec(p5({"class-a": 1}), F5)).code == "composition_caller_invalid"
+            and mod.compose_f5(top, rec(p5({"class-a": 1}), F5)).code == "composition_caller_invalid"
+            and mod.compose_f4(f4, rec(p4(), F4)).code == "composition_caller_invalid")
 
 
 def _bounded_snapshot_refuses(mod):
@@ -707,6 +739,7 @@ def _battery(mod):
         and mod.compose_f5({_EqStr(F5K): {"class-a": 5}}, rec(p5({"class-a": 1}), F5)).code == "composition_caller_invalid"
         and mod.compose_f5({F5K: {_EqStr("class-a"): 5}}, rec(p5({"class-a": 1}), F5)).code == "composition_caller_invalid")
     chk("bounded_snapshot", lambda: _bounded_snapshot_refuses(mod))
+    chk("snapshot_key_collision", lambda: _snapshot_key_collision_refuses(mod))
     return bad
 
 
@@ -743,10 +776,11 @@ MUTATIONS = {  # name -> (old, new, expected violated property)
                                            "if operator != \"intersection\":\n            return _refuse(\"composition_operator_unsupported\")\n        payload, code = _record_payload(record, FAMILY_F4", "exact_str_operator"),
     "payload keys without exact str": ("    if not all(type(k) is str for k in payload):  # exact str keys: no str subclass with a custom __eq__/__hash__\n        return \"field_type_invalid\"\n", "", "exact_str_payload_key"),
     "class keys without exact str": ("if not all(type(k) is str for k in m) or not all(type(v) is int for v in m.values()):", "if not all(type(v) is int for v in m.values()):", "exact_str_payload_key"),
-    "caller f4 keys without exact str": ("    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F4_FIELDS):", "    if snap is None or set(snap) != set(F4_FIELDS):", "exact_str_caller_key"),
-    "caller f5 keys without exact str": ("    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F5_FIELDS):", "    if snap is None or set(snap) != set(F5_FIELDS):", "exact_str_caller_key"),
+    "caller f4 keys without exact str (both layers)": (("    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F4_FIELDS):", '        if any(type(k) is not str for k, _ in items):\n            return None\n'), ("    if snap is None or set(snap) != set(F4_FIELDS):", ""), "exact_str_caller_key"),
+    "caller f5 keys without exact str (both layers)": (("    if snap is None or not all(type(k) is str for k in snap) or set(snap) != set(F5_FIELDS):", '        if any(type(k) is not str for k, _ in items):\n            return None\n'), ("    if snap is None or set(snap) != set(F5_FIELDS):", ""), "exact_str_caller_key"),
     "ok truthy instead of True": ("if getattr(record, \"ok\", False) is not True:", "if not getattr(record, \"ok\", False):", "ok_exactly_true"),
     "unbounded snapshot": ("items = list(itertools.islice(m.items(), limit + 1))", "items = list(m.items())", "bounded_snapshot"),
+    "snapshot without per-item key type": ("        if any(type(k) is not str for k, _ in items):\n            return None\n", "", "snapshot_key_collision"),
     "snapshot bound off by one": ("        if len(items) > limit:\n            return None\n", "        if len(items) > limit + 1:\n            return None\n", "bounded_snapshot"),
     "caller empty map accepted": ("    if m is None or not m:", "    if m is None:", "caller_empty_map"),
     "caller output unsorted": ("return {F5_FIELD: {k: m[k] for k in sorted(m)}}", "return {F5_FIELD: dict(m)}", "caller_output_sorted"),
@@ -935,3 +969,9 @@ def test_nfc_and_nfd_class_keys_are_distinct_exact_strings():
     res = a.compose_f5({F5K: {nfc: 60}}, rec({F5K: {nfc: 5}}, F5))
     assert res.ok and res.effective == {F5K: {nfc: 5}}
     refused(a.compose_f5({F5K: {nfc: 60}}, rec({F5K: {nfd: 5}}, F5)), "composition_record_invalid")  # NFD registry class unknown to an NFC caller
+
+
+def test_snapshot_refuses_a_colliding_key_subclass_before_copying():
+    """Review nit 1: {'class-a': 60} + a colliding str subclass carrying 99 must not collapse into {'class-a': 99}."""
+    assert a._snapshot(_CollidingMapping("class-a", 60, 99), 256) is None
+    assert _snapshot_key_collision_refuses(a)

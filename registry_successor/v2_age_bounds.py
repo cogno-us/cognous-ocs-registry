@@ -12,10 +12,13 @@ AGE_MIN <= v <= AGE_MAX. Family names, the operator and every payload or caller 
 `dict` objects. Nothing is ever clamped, coerced or defaulted. No cross-bound among ages (an individually valid
 inverted pair is accepted) and no five-second floor (1 is accepted). There is no amount slot, reserved or inactive.
 
-Bounds. AGE_MIN = 1 (ADR D-27). AGE_MAX = 2147483647 is the V1 TECHNICAL REPRESENTATION CEILING recorded by the Architect
-ruling of 2026-10-25 and DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md); it is not an operational setting. The
-constants below are a copy of that record's table; a test fails if the record and these constants differ. Caller domain is
-0..AGE_MAX (the Control Plane models admit 0); registry domain is 1..AGE_MAX.
+Bounds. AGE_MIN = 1 (ADR D-27). AGE_MAX = 2147483647 is the V1 TECHNICAL REPRESENTATION CEILING PROPOSED in DR-CP-AGE-1
+(docs/decisions/2026-10-25-dr-cp-age-1.md) on the strength of the Architect's Batch 3 ruling; it is not an operational setting and
+the record is pending its merge conditions (Amendment 1 and a Control Plane mirror or an Architect acceptance of a registry-hosted
+table), so it cannot supersede the source-pinned contract. The constants below are a copy of that record's table; a test fails if
+the record and these constants differ (in-repo drift only). Caller domain is 0..AGE_MAX: only the class base is validated to
+admit 0 (runtime_authority.py:87, ge=0); the F4 scalars are unvalidated constructor arguments (bounded.py:1271, :1274).
+Registry domain is 1..AGE_MAX.
 
 F5 class keys follow the opaque-token rule of contract section 2 (`common.valid_token`: plain `str`, 1..128, no control or
 separator character, no `*`; exact string, no case folding). The Control Plane itself constrains a class id only to a non-empty
@@ -27,7 +30,7 @@ scalar and per class. A registry value above the caller yields the caller value 
 `registry_value_not_narrowing:<names>`); the result never exceeds the caller. A registry class the caller does not define is
 unknown and refuses `composition_record_invalid`; a caller class absent from the registry keeps the caller value. An invalid
 caller (wrong key set, any value that is not an int in 0..AGE_MAX, empty class map) refuses `composition_caller_invalid` and is
-never replaced. Every refusal carries no effective policy, so no refusal can return a default or the caller value. A caller Mapping is read once and at most `limit + 1`
+never replaced. Every refusal carries no effective policy, so no refusal can return a default or the caller value. Inside the composer a caller Mapping is read once and at most `limit + 1`
 entries (2 for F4, 1 for F5, 256 for a class map), so an oversized Mapping is refused without a full copy. Optional
 fallback is NOT implemented here (consumer-owned, EXT-S4-2). `deny_all` is never set: a caller value of 0 stays 0.
 
@@ -113,12 +116,14 @@ def _snapshot(m: Any, limit: int) -> Optional[dict]:
     """One read of at most `limit` keys and values of a caller mapping into a plain dict, or None (not a Mapping, unreadable, or
     more than `limit` entries). The read stops at `limit + 1` entries, so a huge or endless Mapping is refused without unbounded
     copying. Validation and composition then use only the copy, so a Mapping that changes between reads cannot pass validation
-    with one value and compose with another. A duplicate key from a hostile Mapping collapses in the copy (the last read wins)."""
+    with one value and compose with another. Every key must be an exact `str` before the copy is built, so a hash/eq-colliding `str` subclass cannot collapse into a legitimate key. A duplicate exact-`str` key from a hostile Mapping collapses in the copy (the last read wins)."""
     if not isinstance(m, Mapping):
         return None
     try:
         items = list(itertools.islice(m.items(), limit + 1))
         if len(items) > limit:
+            return None
+        if any(type(k) is not str for k, _ in items):
             return None
         return {k: v for k, v in items}
     except Exception:
