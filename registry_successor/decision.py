@@ -12,10 +12,10 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from registry_successor import common as c
+from registry_successor import families
 from registry_successor import record as record_mod
 from registry_successor import selection as selection_mod
 from registry_successor import verify as verify_mod
-from registry_successor.compose import compose_f1a, normalize_caller
 
 
 @dataclass(frozen=True)
@@ -33,7 +33,7 @@ class PolicyDecision:
 def _refusal(participation: Any, caller: Any, code: str, detail: str = "") -> PolicyDecision:
     assert code in c.CODES, code
     if participation == "optional":
-        normalized = normalize_caller(caller)
+        normalized = families.lookup(families.V1_DEFAULT_FAMILY).caller_normalizer(caller)
         return PolicyDecision("overlay_not_applied", normalized if normalized is not None else caller, False, (), code,
                               detail or "optional overlay not applied; caller policy unchanged (not denial)", True)
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
@@ -71,7 +71,7 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) 
         if getattr(report, "bound_record_digest", None) != recomputed:
             return _refusal(participation, caller, "record_digest_mismatch",
                             "the record is not the one the verified selection pinned")
-        result = compose_f1a(caller, record)
+        result = families.compose(caller, record)
         if not result.ok:
             return _refusal(participation, caller, result.code, result.detail)
         kind = "applied_deny_all" if result.deny_all else "applied"
