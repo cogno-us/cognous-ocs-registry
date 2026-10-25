@@ -1,0 +1,340 @@
+# R08 successor contract `r08-v2` (interface specification; documentation only)
+
+Status: **PROPOSED, for Architect adoption through `EXT-S1-1`** (decisions in [`docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md`](decisions/2026-10-25-adr-ext-s1-1-v1-contract.md), cited as `D-nn`). Nothing here is implemented, activated, approved, qualified or released. It authorizes no EXT PR after `EXT-S1-1`. RELEASE, PUBLICATION and PRODUCTION: HOLD.
+
+Relation to `r08-v1` ([`r08-s01-contract.md`](r08-s01-contract.md)): `r08-v2` is a strict additive successor. Every `r08-v1` module, code, signing input, golden output and test stays byte-identical (D-09). This page states only what `r08-v2` adds or fixes. Anything not stated here is the `r08-v1` rule.
+
+Scope (D-11, D-12): five Runtime allowlists and three Control Plane freshness bounds, atomic Route B only. No `max_amount` slot (reserved or inactive), no ninth field. The registry stores and distributes verified, narrowing, non-authorizing data. It never activates, never issues a grant, never authorizes an effect (D-22).
+
+## 1. Versioning, dispatch and module layout (D-09, D-10)
+
+- `contract_version` = `r08-v2` on every v2 record and selection envelope. A v2 document presented to a v1 entry point refuses `contract_unsupported`; a v1 document presented to a v2 entry point refuses the same way. Signing input is `b"ocs-reg/r08-v2/selection\n" + canonical_bytes(statement)`, so a v1 signature never verifies a v2 statement and the reverse.
+- **Family dispatch table** (small, data only): `family -> (payload_validator, composer, evaluator_binding, caller_normalizer, enforcing_component)`. A family absent from the table, or spelled with a different case or whitespace, refuses `family_unsupported` (parse) or `composition_family_unsupported` (compose). The table is the only place a family is registered. `EXT-S1-2` registers `f1a-local-execution-allowlist` alone and proves the refactor is behaviour-preserving before any v2 family is added.
+- **Reuse before addition.** v2 reuses the public interfaces of `common.py` (`load_document`, `canonical_bytes`, `digest`, validators), `record.py`, `compose.py`, `selection.py`, `verify.py` and `decision.py`. v2-specific code lives in new `v2_*.py` modules only where reuse would alter v1 behaviour (the v2 statement shape with `disposition`, the extra verification layer, the identity object, `CODES_V2`). No second copy of the strict loader, digest, verification layers or decision function is permitted.
+- `registry_contract/`, `registry_consumer/`, `baseline/` stay frozen. `registry_successor/` core files change only by `EXT-S1-2` to `S1-6` and `S4-1`, one owner at a time, each change proved byte-preserving for v1 by goldens captured from the unrefactored head.
+
+## 2. Families (D-10, D-11)
+
+| Family id | Payload (exact keys, no others) | Composition with the caller | Enforcing component |
+|---|---|---|---|
+| `f1a-local-execution-allowlist` (v1, unchanged) | `allowed_actions`, `allowed_adapters`, `allowed_units` | intersection | Runtime |
+| `f1ab-local-execution-allowlist` (v2) | `allowed_actions`, `allowed_adapters`, `allowed_units`, `allowed_institutions`, `allowed_authority_domains` | intersection per key | Runtime |
+| `f4-control-plane-age-bounds` (v2) | `status_max_age_seconds`, `approval_max_age_seconds` | strict integer seconds, `min(caller, registry)` per scalar | Control Plane |
+| `f5-action-class-age-bounds` (v2) | `class_status_max_age_seconds`: object of `action_class -> int seconds` | per-class `min(caller, registry)` | Control Plane |
+
+Rules common to every v2 payload:
+
+- Absent key: `field_missing`. Extra key (including any amount key): `field_unknown`. An empty F1ab list is a valid explicit deny-all for that dimension; an absent list is never an implicit allow or deny.
+- F1ab lists: sorted, duplicate-free, at most 256 entries, each 1..128 characters, no control, separator or `*` characters, exact-string membership (no case folding, no wildcard).
+- F4/F5 **registry** values: Python `int` (not `bool`, not float, not string), at least 1 (`AGE_MIN`, adopted) and at most the Control Plane bound (section 2.1; no maximum is adopted yet). The floor validates the registry value; it never clamps the effective output. No universal five-second floor. No cross-bound among the distinct ages: an individually valid inverted pair is accepted. An unknown action class, a third F4 key or an empty class map refuses.
+- A registry value above the caller value never widens: the effective value is the caller value and the outcome is reported `registry_value_not_narrowing`. An invalid caller value refuses and is never clamped or replaced. A required operation that cannot compose never returns the caller value.
+- Deny-all is decided by the enforcing gate before any policy object is built (D-20). The family composers never construct a Runtime policy.
+
+### 2.1 Safety bounds belong to the Control Plane (D-27)
+
+The registry F4/F5 validator carries no private constant. Bounds are read from a table in the Control Plane contract that records, per field, the lower bound, the upper bound, the evidence for it and the source head. The registry validator copies the table with a citation and a test that fails if the two differ. `AGE_MIN = 1` is adopted for registry input (evidence-supported). `AGE_MAX = 2678400` is a proposal only and is **not** adopted: the evidence (largest fixture value 3600 s, synthetic; no operational data; no existing maximum in either repository) supports no specific maximum. Until the Control Plane contract records an adopted maximum with its evidence, `EXT-S1-4` cannot merge and the registry validator has no maximum to enforce. A caller value is valid only as a strict integer within the same technical range (the freshness path overflows near 2.5e11 s); an invalid caller refuses and is never replaced.
+
+## 3. Selection statement and disposition (D-01, D-02)
+
+A v2 statement has the `r08-v1` fields plus `disposition` in `{select, withdraw}`. `participation` stays the only required/optional source. `epoch` stays the selection epoch (the field name is unchanged; the record succession counter of `ocs-registry-record/0` is a different concept, D-30).
+
+| Rule | `select` | `withdraw` |
+|---|---|---|
+| `record`, `evaluator` | present and pinned as in v1 | both `null` (a withdrawal pins no record) |
+| `supersedes` | `null` only for the first selection in a scope; otherwise exact `{selection_id, epoch, statement_digest, decision_ref}` of a strictly lower epoch of the same `selection_id` | required, same shape, strictly lower epoch |
+| `participation`, `family`, scope, `operation`, `effective`, `revocation_ref`, `selector_ref`, `issued_at` | as v1 | as v1 (the withdrawal has its own validity window) |
+
+A malformed `supersedes`, a `withdraw` with a record pin, a `withdraw` without `supersedes`, or a `withdraw` at a lower or equal epoch refuses `selection_supersession_invalid` (same code and asymmetry as v1 section 3a). A higher epoch alone never supersedes: the newer statement must name the older exactly.
+
+### 3.1 Verification layers
+
+`LAYERS_V2` = the ten `r08-v1` layers plus a final `disposition` layer. `record_binding` is `not_evaluated` for a withdrawal and does not count against `ok` for that disposition only. All ten v1 layers must pass before `disposition` is reached, so an unsigned, expired, revoked, stale, out-of-scope or untrusted withdrawal refuses with its own specific code and **never** with `selection_withdrawn`: an invalid selection cannot masquerade as an intentional withdrawal (D-17). An authenticated, in-window, unrevoked, in-scope withdrawal fails the `disposition` layer with `selection_withdrawn`. `operationally_authorized` is always `False`.
+
+### 3.2 Decision kinds
+
+Unchanged: `applied`, `applied_deny_all`, `overlay_not_applied` (optional only), `required_policy_unavailable` (required only). `selection_withdrawn` is an ordinary refusal: optional returns the unchanged caller policy as `overlay_not_applied` with `registry_code = selection_withdrawn` and `applied=false`; required returns no policy, never the caller policy, never success.
+
+### 3.3 Closed codes (D-02)
+
+`CODES_V2` = the 46 `r08-v1` `CODES` entries (unchanged, same layers and meanings) plus exactly two additions:
+
+| Code | Layer | Meaning |
+|---|---|---|
+| `trust_snapshot_version_stale` | `trust` | snapshot version is below the supplied floor, or equals it with a different fingerprint |
+| `selection_withdrawn` | `disposition` | an authenticated withdrawal is the head statement for this scope |
+
+`CODES` (46) is not modified; `CODES_V2` is a separate mapping declared by `EXT-S1-2`. The completeness test iterates every `CODES_V2` entry (48) and fails on any unmapped code. A v1 consumer never sees a v2-only code.
+
+## 4. Canonical policy binding (D-14, D-15)
+
+One typed object, **owned by `EXT-S1-5`** (`EffectivePolicyIdentity`, produced from verified inputs), consumed and specialized for the effect boundary by `EXT-S4-0`. No other member list exists. Members, fixed here:
+
+| Member | Source | Existing registry field? |
+|---|---|---|
+| `binding_profile` = `ocs-policy-binding/1` | constant | new constant |
+| `record_id`, `record_version`, `record_digest` | verified record (selection `record` pin) | yes (`record` pin; `record_digest` also covers the evaluator pin) |
+| `selection_id`, `selection_epoch`, `selection_digest` | verified statement (`selection_id`, `epoch`, `statement_digest`) | yes (`selection_epoch` is the statement `epoch`) |
+| `family`, `consumer_id`, `scope` (`tenant`, `institution`, `authority_domain`), `operation` | verified statement | yes |
+| `effective_policy_digest` | `digest` of the canonical composed effective payload | new, derived |
+| `activation_ref` | entry hash of the enforcing component's `activate` log entry that made this selection active | new; **not registry-derived** (section 4.2) |
+| `trust_snapshot_version`, `trust_snapshot_fingerprint` | verified `TrustSnapshot.version`; digest of the normalized snapshot (section 5) | version yes; fingerprint new |
+
+Deliberately **not** members: `snapshot_id` (covered by the fingerprint), evaluator blob and hash (covered by `record_digest`), `participation` (covered by `selection_digest`; the scope ratchet is consumer state), the caller policy digest (evidence only; `effective_policy_digest` already changes if the caller policy changes), `valid_from`/`valid_until` (covered by `selection_digest`; the guard reads the row and the lock-time clock), and any state or presentation value.
+
+### 4.1 Serialization and digest
+
+`binding_digest` = `"sha256:" + hex(sha256(b"ocs-reg/r08-v2/policy-binding\n" + canonical_bytes(binding)))`, with `canonical_bytes` exactly as `registry_successor/common.py` (sorted keys, separators `,` `:`, `ensure_ascii=True`, UTF-8). The Control Plane `commitment` serializer uses `ensure_ascii=False` (source reading at Control Plane `7a4bcd40`, `bounded.py` `_canonical_bytes`), so the two serializations differ for any non-ASCII string. To make both agree byte for byte, **every string member of the binding is ASCII**: `r08-v2` statements refuse non-ASCII scope tokens with `field_invalid` (identifiers are already ASCII by their regex). A non-ASCII token cannot reach a binding. `EXT-S1-5` carries a vector that proves equality of the two serializers on a v2 binding and a vector that proves refusal of a non-ASCII scope token. No Runtime or Control Plane code imports registry code: each side implements the same published profile and both are tested against shared vectors.
+
+### 4.2 Two states of the object
+
+The registry produces the object with `activation_ref = null` (the registry cannot know it: it never activates). The enforcing gate fills `activation_ref` from its own log and passes the completed object to claim issuance. The claim-carried form requires a non-null `activation_ref`; a null one is refused by the guard. The digest is always computed over the completed form.
+
+### 4.3 Claim carriage (D-13)
+
+The completed object travels inside the Control Plane authorization claim as a **declared optional claim field**, omitted when absent, under a successor claim profile; the claim commitment covers it. (A bare extra dictionary key is dropped on the model path, which breaks `verify_local_execution_claim`; see D-28.) A keyword-argument carrier (B-lite) is rejected. A claim with no binding stays byte-identical to today and is valid only where no registry policy governs the operation. Source-verified carrier functions are in the ADR (D-28). The destination guard (`EXT-S4-2`) compares the claim-carried members with the trusted state row under the destination lock and the lock-time clock; it recomputes `binding_digest` from the members and never trusts a digest string alone.
+
+## 5. Trust snapshot floor and fingerprint (D-25)
+
+- `TrustSnapshot` is unchanged. New optional input `min_trust_snapshot_version` to the v2 verification path (default off so `r08-v1` and unset-v2 corpora reproduce exactly). Non-int, bool, 0 or negative floor refuses `trust_snapshot_invalid`. Order: expiry is reported before version.
+- Version below the floor: `trust_snapshot_version_stale`. Equal to the floor: accepted only as idempotent redelivery of the previously accepted fingerprint; equal with a different fingerprint refuses `trust_snapshot_version_stale`.
+- `trust_snapshot_fingerprint` = `digest` of the normalized snapshot: `{snapshot_id, version, valid_until, issuers (sorted by key_id; each key_id, issuer_id, alg, public_key as lowercase hex, authority sorted), revoked_key_ids (sorted), revoked_selections (sorted [selection_id, epoch] pairs), min_epochs (sorted [selection_id, floor] pairs)}`.
+- Revocation rides the operator-delivered snapshot (`revoked_selections`, `revoked_key_ids`). `revocation_ref` stays validated and unconsumed. A snapshot that omits an entry present in an earlier accepted snapshot is refused by the consumer (revoked set is grow-only, section 7). The snapshot builder takes a required `max_lifetime_seconds` argument and refuses a longer lifetime and unsorted, duplicate or oversize input; **no default lifetime is adopted here** (it follows the operator-set sync cadence, B-08).
+- The durable floor and the revoked set belong to the enforcing component, never to the registry.
+
+## 6. Failure carriage and outcome map (D-18 to D-21)
+
+The outcome map is `docs/p1-extraction-plan/data/ld02-outcome-map.json` (merged, unchanged). `EXT-S1-5` implements it with the changes recorded in the ADR. Contract points:
+
+- Every registry refusal travels as **structured negative evidence** (`ocs-registry-failure-detail/1`, carrying at least `registry_code`, `layer`, `participation`, `decision_kind`, `stage`) beside the component refusal category. Distinct registry codes keep distinct cause fields even when they share a component category.
+- No authorization, policy-state or retry decision is derived from message text (including `PermissionError` text). Typed reason codes or a typed boundary adapter only; historical text is diagnostic.
+- Preconstruction registry deny-all (`registry_deny_all`) is distinct from a denial produced by `LocalExecutionPolicy.check`. Reason and check-order equivalence is asserted only for representable non-empty effective policies.
+- A stale or rolled-back epoch is a REFUSE with a specific stale-epoch cause. HOLD is reserved for authority state that is genuinely unavailable or indeterminate with effect execution prohibited. Neither is ever a retryable success.
+
+## 7. Enforcing-component state (consumer-owned; D-03 to D-08, D-24)
+
+The registry holds none of this. The contract fixes the logical schema so `EXT-S4-0` can freeze physical names (indicative names from the P1 plan are kept) and so `EXT-S1-8` vectors have something to test.
+
+**Scope key**: `(selection_id, consumer_id, tenant, institution, authority_domain, operation, family)`. At most one selection chain per `(consumer_id, scope, operation, family)`; a second `selection_id` for the same scope is `selection_conflict` and is never activated.
+
+| Logical store | Content | Mutability |
+|---|---|---|
+| State | one row per scope key: `activation_state` in `{active, withdrawn, revoked}`, `epoch`, `selection_digest`, `activation_ref`, `high_water_epoch` | current value only; written by the trusted writer |
+| Transition history | append-only, hash-chained log; `entry_type` in `{activate, withdraw, revoke, sync}`; each entry holds scope key, epoch, selection digest, issuer key id, previous entry hash, prior and new `activation_state`, timestamp | append only; never edited or deleted |
+| Revoked set | `(selection_id, epoch)` pairs | grow only |
+| Scope ratchet | `scope_required` per scope key | one-way (section 7.3) |
+| Snapshot high-water | highest accepted `trust_snapshot_version` and its fingerprint | monotone |
+
+State is distinct from history: a row says what is true now; the log says how it became true. No row exists means not activated. `activation_state` is never accepted as input and has no writer other than the transitions below.
+
+### 7.1 Transitions
+
+| Event | Precondition (all required) | Effect |
+|---|---|---|
+| `activate` | verified `select`; epoch strictly greater than `high_water_epoch`; `supersedes` null only if the scope has no history, else exactly the current row's `(selection_id, epoch, statement_digest)`; `(selection_id, epoch)` not in the revoked set; participation not weaker than the ratchet | state `active`, new high-water, log entry |
+| `withdraw` | verified `withdraw`; epoch strictly greater than high-water; `supersedes` exactly the current row; participation not weaker than the ratchet | state `withdrawn`, new high-water, log entry; history kept |
+| `revoke` | a verified snapshot at or above the floor lists `(selection_id, epoch)` | pair added to the revoked set; state `revoked` if it is the row's epoch; terminal for that pair |
+| `sync` | a verified snapshot at or above the floor and the previous fingerprint rule | updates snapshot high-water; may append `revoke` entries; **never** activates, withdraws, clears a revoked pair, changes a revoked state, or supplies authorization |
+
+Any transition whose precondition fails is refused with the registry code that names the cause and is logged as a refusal only if the log schema reserves it (`EXT-S4-0`). A gap in the supersession chain leaves the state unchanged and fails closed until the missing link is delivered. A revoked epoch is never resurrected by reactivation, lineage or restore; reversal is only a new, strictly higher epoch statement that names its predecessor.
+
+### 7.2 Derived read model (A3, D-05)
+
+`policy_state` is computed on read, never stored, never input, never authoritative: `not_selected`, `selected_not_activated`, `active`, `withdrawn`, `revoked`, `expired`, `not_yet_valid`, `superseded`, `unknown`; precedence `unknown`, `revoked`, `withdrawn`, `superseded`, `expired`/`not_yet_valid`, `active`. ENABLED = `active`; DISABLED = `withdrawn` or `not_selected`; every other value shows its own reason. For a required scope that is withdrawn, revoked, expired or unavailable the display is **`REQUIRED — UNAVAILABLE`**, never "disabled". There is no authorizing boolean: a toggle is only a request that becomes a signed select or withdraw statement.
+
+### 7.3 Required-scope ratchet (A4, D-06)
+
+`scope_required` is set one-way by the trusted writer when a `required` selection is activated for the scope (or by explicit authenticated provisioning of the ratchet). Once set: an optional presentation (per call, per selection, per withdrawal, per replayed older statement) refuses `participation_mismatch`; withdrawal or revocation of the selection makes the scope `REQUIRED — UNAVAILABLE` and operations refuse; restoring an older store cannot clear it (the restore fence of section 8 fails closed instead). The ratchet is part of the hash-chained evidence and of restore custody.
+
+**Defined, not authorized.** The only way to clear the ratchet is the administrative transition `relax_scope_required`: an authenticated statement from an authority holding a separate relax grant, naming the scope key and the current ratchet record digest, carrying a strictly higher ratchet generation and an operator-approved `decision_ref`, and logged as its own entry. **No relaxation is authorized in V1.** The closed `entry_type` vocabulary is not extended, no writer exists and no code path is built; adding the entry type needs an ADR amendment and operator authorization.
+
+## 8. Restore, rollback and custody requirements (D-24)
+
+1. One trusted writer per store; never seeded from a claim, a selection or a caller-supplied value; the `provision_claim` seeding pattern is not reused.
+2. Every state change and its log entry commit in one transaction; a half-completed activation rolls back.
+3. The external floor (`min_epochs`, `min_trust_snapshot_version`) and a log-head anchor are held outside the store they protect. A restored store whose high-water, log head or ratchet disagrees with the anchor, or that is older than the last acknowledged log head, is **unknown**: every required scope refuses, optional scopes report `overlay_not_applied` with the cause, until re-baselined by an explicit, logged operation. Lost state is unknown, never zero.
+4. Revoked set and high-water roll back together on database restore; this is a disclosed limit (B14, D07, GAP-G1-02), never claimed as restore safety.
+5. Unacknowledged publication reads `UNKNOWN`, not `ACTIVE` (DT-04). Restart before the first successful sync refuses required scopes.
+6. No registry call, socket or network I/O inside a destination transaction.
+7. Custody of keys, snapshot channel and trust root is operator-gated (no operational trust root in V1); `EXT-S1-8` vectors define the pure transition function only and are not an authoritative store.
+
+## 9. Wire shapes (illustrative; digests computed with the profiles above; signatures are placeholders and do not verify)
+
+**Selection envelope, `select` (envelope shape; the `statement_digest` is `digest(statement)`)**
+
+```json
+{
+  "contract_version": "r08-v2",
+  "kind": "selection-envelope",
+  "statement": {
+    "kind": "selection",
+    "disposition": "select",
+    "selection_id": "sel-example-f1ab",
+    "epoch": 3,
+    "consumer_id": "runtime-emulator",
+    "scope": {
+      "tenant": "tenant-a",
+      "institution": "inst-a",
+      "authority_domain": "domain-a"
+    },
+    "operation": "op-transfer",
+    "participation": "required",
+    "family": "f1ab-local-execution-allowlist",
+    "record": {
+      "record_id": "rec-example-f1ab",
+      "record_version": 2,
+      "record_digest": "sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8"
+    },
+    "evaluator": {
+      "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+      "binding": "registered-code-reference",
+      "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+      "source_sha256": "sha256:507e39d39cabbf8167794aa03f5fde6266ffab62841cd35d081a83953703254a"
+    },
+    "effective": {
+      "valid_from": "2026-11-01T00:00:00Z",
+      "valid_until": "2026-12-01T00:00:00Z"
+    },
+    "supersedes": {
+      "selection_id": "sel-example-f1ab",
+      "epoch": 2,
+      "statement_digest": "sha256:c54ad42cb1dcd67a09ab3ae5aaf7aba837e2e72d059e2fc76925836e3bde55a7",
+      "decision_ref": "dec-example-0007"
+    },
+    "revocation_ref": "rev-example-f1ab",
+    "selector_ref": "selector-example",
+    "issued_at": "2026-10-31T12:00:00Z"
+  },
+  "statement_digest": "sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3",
+  "signatures": [
+    {
+      "alg": "ed25519",
+      "key_id": "key-example-1",
+      "signature": "AAAA"
+    }
+  ]
+}
+```
+
+**Statement, `withdraw` (names the `select` above exactly; no record pin; envelope omitted)**
+
+```json
+{
+  "kind": "selection",
+  "disposition": "withdraw",
+  "selection_id": "sel-example-f1ab",
+  "epoch": 4,
+  "consumer_id": "runtime-emulator",
+  "scope": {
+    "tenant": "tenant-a",
+    "institution": "inst-a",
+    "authority_domain": "domain-a"
+  },
+  "operation": "op-transfer",
+  "participation": "required",
+  "family": "f1ab-local-execution-allowlist",
+  "record": null,
+  "evaluator": null,
+  "effective": {
+    "valid_from": "2026-11-10T00:00:00Z",
+    "valid_until": "2026-12-01T00:00:00Z"
+  },
+  "supersedes": {
+    "selection_id": "sel-example-f1ab",
+    "epoch": 3,
+    "statement_digest": "sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3",
+    "decision_ref": "dec-example-0008"
+  },
+  "revocation_ref": "rev-example-f1ab",
+  "selector_ref": "selector-example",
+  "issued_at": "2026-11-09T12:00:00Z"
+}
+```
+
+**F1ab payload (the `allowed_units` list is an explicit deny-all) and the composed effective policy against a caller that allows `action-a` only**
+
+```json
+{
+  "payload": {
+    "allowed_actions": [
+      "action-a",
+      "action-b"
+    ],
+    "allowed_adapters": [
+      "adapter-a"
+    ],
+    "allowed_institutions": [
+      "inst-a"
+    ],
+    "allowed_authority_domains": [
+      "domain-a"
+    ],
+    "allowed_units": []
+  },
+  "effective": {
+    "allowed_actions": [
+      "action-a"
+    ],
+    "allowed_adapters": [
+      "adapter-a"
+    ],
+    "allowed_institutions": [
+      "inst-a"
+    ],
+    "allowed_authority_domains": [
+      "domain-a"
+    ],
+    "allowed_units": []
+  }
+}
+```
+
+**F4 and F5 payloads**
+
+```json
+{
+  "f4": {
+    "approval_max_age_seconds": 30,
+    "status_max_age_seconds": 45
+  },
+  "f5": {
+    "class_status_max_age_seconds": {
+      "class-a": 20,
+      "class-b": 90
+    }
+  }
+}
+```
+
+**Completed policy binding and its digest (`binding_digest` per section 4.1)**
+
+```json
+{
+  "binding": {
+    "binding_profile": "ocs-policy-binding/1",
+    "record_id": "rec-example-f1ab",
+    "record_version": 2,
+    "record_digest": "sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8",
+    "selection_id": "sel-example-f1ab",
+    "selection_epoch": 3,
+    "selection_digest": "sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3",
+    "family": "f1ab-local-execution-allowlist",
+    "consumer_id": "runtime-emulator",
+    "scope": {
+      "tenant": "tenant-a",
+      "institution": "inst-a",
+      "authority_domain": "domain-a"
+    },
+    "operation": "op-transfer",
+    "effective_policy_digest": "sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b",
+    "activation_ref": "sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a",
+    "trust_snapshot_version": 7,
+    "trust_snapshot_fingerprint": "sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe"
+  },
+  "binding_digest": "sha256:e1619450a5f57341b735b78293bfa8fdaca4d5414816c16e5eb62f8114c79bfd"
+}
+```
+
+
+## 10. What this contract does not decide
+
+Physical table names, the claim successor profile name and field position (`EXT-S4-0`), the Runtime reason-code names for stale-epoch and withdrawn causes (`EXT-S1-5`/`EXT-S4-0`, subject to D-21), the trust-snapshot lifetime, quorum or multi-signer policy, `max_amount`, any family beyond the four above, Route A, and every operator-gated item (trust root, key ceremony, production host, release).
