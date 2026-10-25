@@ -9,6 +9,7 @@ It is NOT a shared module and must not be imported by source code. It qualifies 
 The serializer is deliberately NOT json.dumps: it writes the canonical text by hand, and a second check compares it with
 json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=True), which is what registry_successor/common.py does.
 """
+import bisect
 import hashlib
 import json
 import os
@@ -486,6 +487,33 @@ def statement_valid_token(value):
     return all(unicodedata.category(ch)[0] not in ("C", "Z") for ch in value)
 
 
+# Frozen token membership (Architect Batch 6 rulings, N-13). The token rule of the effective payload (list entries, F5 class names) is decided by
+# this committed, hash-pinned table of EXCLUDED code point ranges (Unicode 15.1.0 general categories C* and Z*, unassigned included), never by the
+# interpreter's own Unicode database. The statement_valid_token replica above stays runtime-dependent on purpose: it replicates the shipped
+# validator, which is exactly the dependence this ruling removes from the new contract.
+TOKEN_TABLE_FILE = ROOT / "docs" / "ext-implementation" / "data" / "ext-s1-5-token-unicode-15.1-excluded-ranges.json"
+TOKEN_TABLE_SHA256 = "b6dd5fcaeb77cf0b2c54ff4e4af14c2ce039bda87eb57f702b8a55fa67fb24d9"  # literal pin, also recorded in the vectors (pins.token_unicode_table)
+_TOKEN_TABLE_BYTES = TOKEN_TABLE_FILE.read_bytes()
+_TOKEN_RANGES = [(int(a, 16), int(b, 16)) for a, b in json.loads(_TOKEN_TABLE_BYTES.decode("ascii"))["excluded_ranges"]]
+_TOKEN_STARTS = [a for a, _ in _TOKEN_RANGES]
+MAX_TOKEN_CHARS = 128
+
+
+def frozen_cp_excluded(cp):
+    """True when the code point lies in an excluded range of the pinned table. A code point the table does not list as permitted is excluded:
+    the table lists exclusions over the whole range U+0000..U+10FFFF, so a code point assigned after Unicode 15.1.0 (unassigned there) is refused."""
+    i = bisect.bisect_right(_TOKEN_STARTS, cp) - 1
+    return i >= 0 and _TOKEN_RANGES[i][0] <= cp <= _TOKEN_RANGES[i][1]
+
+
+def frozen_token_valid(value):
+    """The token rule with frozen membership: a str of 1..128 code points, no '*', no code point in the pinned excluded ranges. No normalization
+    is applied. Consults no runtime Unicode database (unicodedata is not used)."""
+    if not isinstance(value, str) or not 1 <= len(value) <= MAX_TOKEN_CHARS or "*" in value:
+        return False
+    return not any(frozen_cp_excluded(ord(ch)) for ch in value)
+
+
 def project_scope(statement_scope):
     """IDENTITY projection only: each of the three scope tokens is passed through byte for byte when it already matches the ASCII
     identifier grammar, otherwise binding creation is refused field_invalid at member scope.<name> (first in sorted path order).
@@ -635,13 +663,13 @@ def validate_effective_payload(family, payload, role="effective"):
     for path in sorted(flat):  # values
         v = flat[path]
         if fam["kind"] == "lists":
-            if len(v) > 256 or not all(statement_valid_token(x) for x in v) or v != sorted(set(v)):
+            if len(v) > 256 or not all(frozen_token_valid(x) for x in v) or v != sorted(set(v)):
                 raise Refuse("field_invalid", path)
         elif not lo <= v <= hi:
             raise Refuse("field_invalid", path)
     if fam["kind"] == "classmap":
         m = payload["class_status_max_age_seconds"]
-        if not m or not all(statement_valid_token(c) for c in m):
+        if not m or not all(frozen_token_valid(c) for c in m):
             raise Refuse("field_invalid", "class_status_max_age_seconds")
     return payload
 
@@ -1538,7 +1566,7 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
     assert "applied_deny_all" in kinds and any(r.get("non_registry_outcome") == "evaluator_denied" for r in V["defect_mapping"])
     # review SF-4: one code, one class in every context; the two contexts of trust_snapshot_missing are told apart by the evidence field `stage`
     miss = [r for r in V["defect_mapping"] if r["registry_code"] == "trust_snapshot_missing"]
-    assert {r["id"]: r["stage_value"] for r in miss} == {"MP-trust_snapshot_missing-verify": "verify", "MP-trust_snapshot_missing-guard": "guard"}
+    assert {r["id"]: r["stage_value"] for r in miss} == {"MP-trust_snapshot_missing-input": "INPUT", "MP-trust_snapshot_missing-durable-state": "DURABLE_STATE"}  # ruling N-11
     assert all(r["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and r["retry"] == "after_authoritative_state_available" and "definitive" not in r["defect"].lower() for r in miss)
     assert not any("definitive input fact" in json.dumps(r) for r in V["defect_mapping"])
     # review SF-6: an optional fallback exists only through the authenticated optional-state determination, for exactly the two registry codes whose
@@ -1790,8 +1818,8 @@ def test_sorted_means_unicode_code_point_order_and_utf16_order_is_refused():
     a, b = "\uff21", "\U00010400"  # code point order a < b; UTF-16 code unit order b < a
     assert sorted([a, b]) == [a, b] and sorted([a, b], key=lambda x: x.encode("utf-16-be")) == [b, a]
     assert sorted([a, b], key=lambda x: x.encode("utf-8")) == [a, b]
-    assert statement_valid_token(a) and statement_valid_token(b)
-    assert not statement_valid_token("\uffff")  # U+FFFF is a noncharacter (Cn): a different example is needed to separate the orders
+    assert frozen_token_valid(a) and frozen_token_valid(b)
+    assert not frozen_token_valid("\uffff")  # U+FFFF is a noncharacter (Cn): a different example is needed to separate the orders
     ep = next(e for e in V["effective_payloads"] if e["id"] == "EP-015")
     assert ep["payload"]["allowed_actions"] == [a, b]
     assert effective_policy_digest(ep["family"], ep["payload"]) == ep["expected"]["effective_policy_digest"]
@@ -1830,7 +1858,7 @@ def test_object_keys_and_snapshot_arrays_sort_by_code_point_and_snapshot_arrays_
     assert effective_digest_of_preimage(pre) == ep["expected"]["effective_policy_digest"]
     wrong = "sha256:" + sha_hex(EFFECTIVE_PREFIX + _ser_utf16(pre).encode("ascii"))
     assert wrong != ep["expected"]["effective_policy_digest"], "a UTF-16 key sort is a different digest"
-    assert statement_valid_token(a) and statement_valid_token(b)
+    assert frozen_token_valid(a) and frozen_token_valid(b)
     tf = next(t for t in V["trust_snapshots"] if t["id"] == "TF-005")
     check_snapshot_duplicates(tf["input"])  # unsorted input is NOT refused (it is normalized)
     assert tf["input"]["revoked_key_ids"][0] == "key-" + b, "the input lists the non-BMP id first (UTF-16 order)"
@@ -1962,7 +1990,7 @@ def test_projection_effect_matrix_joins_refusal_kind_participation_and_state():
             "try:\n    m.projection_effect('OPTIONAL', 'permits_optional', 'authenticated')\n    print('NOT_REFUSED')\nexcept m.Refuse as e:\n    print(e.code)\n") % str(Path(__file__))
     out = subprocess.run([sys.executable, "-O", "-c", code], capture_output=True, text=True, timeout=60, check=True).stdout.strip()
     assert out == "field_invalid"
-    assert "residual" in V["projection_effect_matrix_rule"].lower() and "never-activated" in V["projection_effect_matrix_rule"]
+    assert "RULED" in V["projection_effect_matrix_rule"] and "does not establish 'never activated'" in V["projection_effect_matrix_rule"]  # N-12 ruled (was a residual)
 
 
 _JS = r"""
@@ -2044,6 +2072,20 @@ for (const x of V.projection_stage_refusals) { const v = BigInt(x.trust_snapshot
 const sortedLists = p => Object.values(p).every(l => !Array.isArray(l) || l.every((v, i) => i === 0 || cmp(l[i - 1], v) < 0));
 for (const x of V.effective_payloads) out[x.id + ':sorted'] = sortedLists(x.payload);
 for (const x of V.effective_payloads_invalid) if (x.id === 'EI-016') out[x.id + ':sorted'] = sortedLists(JSON.parse(x.payload_json));
+// N-13: the token rule consults the committed, hash-pinned table, never the runtime database
+const T = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+out['token:table_sha256'] = sha(fs.readFileSync(process.argv[3]));
+const RS = T.excluded_ranges.map(r => [parseInt(r[0], 16), parseInt(r[1], 16)]);
+const excl = cp => { let lo = 0, hi = RS.length - 1; while (lo <= hi) { const m = (lo + hi) >> 1; if (cp < RS[m][0]) hi = m - 1; else if (cp > RS[m][1]) lo = m + 1; else return true; } return false; };
+const tokenValid = cps => cps.length >= 1 && cps.length <= 128 && !cps.includes(0x2a) && !cps.some(excl);
+for (const x of V.token_unicode.vectors) {
+  let cps = x.code_points.map(h => parseInt(h, 16)); if (x.repeat) cps = Array(x.repeat).fill(cps[0]);
+  out['token:' + x.id] = tokenValid(cps);
+  if (x.kind === 'divergent') out['live:' + x.id] = /^[^\p{C}\p{Z}]+$/u.test(String.fromCodePoint(...cps));  // the runtime database, informational only
+}
+let bm = ''; for (let cp = 0; cp <= 0x10ffff; cp++) bm += excl(cp) ? '1' : '0';
+out['token:full_scan'] = [sha(Buffer.from(bm, 'ascii')), (bm.match(/1/g) || []).length];
+out['token:node_unicode'] = process.versions.unicode;
 console.log(JSON.stringify(out));
 """
 
@@ -2065,7 +2107,7 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     p.write_text(json.dumps(data), encoding="ascii")
     js = tmp_path / "ref.js"
     js.write_text(_JS, encoding="utf-8")
-    res = subprocess.run(["node", str(js), str(p)], capture_output=True, text=True, timeout=60, check=True)
+    res = subprocess.run(["node", str(js), str(p), str(TOKEN_TABLE_FILE)], capture_output=True, text=True, timeout=60, check=True)
     got = json.loads(res.stdout)
     by_ep = {e["id"]: e for e in V["effective_payloads"]}
     n = 0
@@ -2129,4 +2171,267 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     for ep in V["effective_payloads"]:
         assert got[ep["id"] + ":sorted"] is True, ep["id"]
     assert got["EI-016:sorted"] is False  # UTF-16 order is not code point order
+    # N-13: Node consults the same pinned table and decides every token vector identically, including the known divergent code points
+    assert got["token:table_sha256"] == TOKEN_TABLE_SHA256 == V["pins"]["token_unicode_table"]["sha256"]
+    for vec in V["token_unicode"]["vectors"]:
+        assert got["token:" + vec["id"]] is vec["expected"]["valid"], vec["id"]
+        n += 1
+    pin = V["pins"]["token_unicode_table"]["full_scan"]
+    assert got["token:full_scan"] == [pin["bitmap_sha256"], pin["excluded_count"]]  # all 1114112 code points agree between the two runtimes
+    # informational: where the Node runtime database is newer than 15.1 it ACCEPTS the divergent code points the frozen table refuses (that is
+    # the dependence N-13 removes); where it is not newer there is nothing to show, and the frozen decision above is the only claim made
+    if tuple(int(x) for x in got["token:node_unicode"].split(".")[:2]) > (15, 1):
+        assert all(got["live:" + v["id"]] is True for v in V["token_unicode"]["vectors"] if v["kind"] == "divergent")
     assert n >= 80
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Architect Batch 6 rulings: N-13 (frozen Unicode token table), N-10, N-11, N-12 and ruling 4.3
+# ----------------------------------------------------------------------------------------------------------------------
+def _vector_token(vec):
+    cps = [int(h, 16) for h in vec["code_points"]]
+    if "repeat" in vec:
+        cps = cps * vec["repeat"]
+    return "".join(chr(c) for c in cps)
+
+
+def test_frozen_token_table_is_hash_pinned_and_covers_the_whole_code_point_range():
+    """N-13: the table is a committed file whose sha256 is pinned in the test AND in the vectors; ranges are ascending, non-adjacent and inside U+0000..U+10FFFF."""
+    pin = V["pins"]["token_unicode_table"]
+    assert sha_hex(_TOKEN_TABLE_BYTES) == TOKEN_TABLE_SHA256 == pin["sha256"], "token table changed: re-review N-13 and re-pin"
+    assert pin["file"] == "docs/ext-implementation/data/ext-s1-5-token-unicode-15.1-excluded-ranges.json" and pin["unicode_version"] == "15.1.0"
+    assert "PROPOSED" in pin["status"]  # the version is a proposal for the owner to confirm
+    doc = json.loads(_TOKEN_TABLE_BYTES.decode("ascii"))
+    assert doc["schema"] == "ocs-token-unicode-table/1" and doc["unicode_version"] == "15.1.0"
+    prev_end = -2
+    for a, b in _TOKEN_RANGES:
+        assert 0 <= a <= b <= 0x10FFFF and a > prev_end + 1, (a, b)
+        prev_end = b
+    assert V["profile"]["token"]["platform_database_consulted"] is False and V["profile"]["token"]["not_replaced_by_ascii_grammar"] is True
+    # the full-scan pin: one character per code point, computed from the table alone
+    bitmap = "".join("1" if frozen_cp_excluded(c) else "0" for c in range(0x110000))
+    assert sha_hex(bitmap.encode("ascii")) == pin["full_scan"]["bitmap_sha256"] and bitmap.count("1") == pin["full_scan"]["excluded_count"]
+
+
+def test_frozen_token_table_is_reproducible_where_the_runtime_is_unicode_15_1():
+    """N-13: the documented generation procedure (spec 6.1) reproduces the committed table byte for byte on a runtime whose database is exactly 15.1.0.
+    On any other runtime the committed table is still authoritative and nothing about authorization changes; only this regeneration check is skipped."""
+    if unicodedata.unidata_version != "15.1.0":
+        pytest.skip("runtime Unicode %s is not the pinned 15.1.0; the committed table is authoritative" % unicodedata.unidata_version)
+    ranges, start = [], None
+    for cp in range(0x110000):
+        ex = unicodedata.category(chr(cp))[0] in ("C", "Z")
+        if ex and start is None:
+            start = cp
+        elif not ex and start is not None:
+            ranges.append([start, cp - 1])
+            start = None
+    if start is not None:
+        ranges.append([start, 0x10FFFF])
+    assert [(a, b) for a, b in ranges] == _TOKEN_RANGES
+
+
+def test_token_rule_does_not_consult_the_runtime_unicode_database(monkeypatch):
+    """N-13: the decision is a function of the pinned table alone. Poisoning unicodedata must change nothing."""
+    expected = [(v["id"], v["expected"]["valid"]) for v in V["token_unicode"]["vectors"]]
+
+    def boom(*a, **k):
+        raise AssertionError("runtime Unicode database consulted")
+    with monkeypatch.context() as m:  # scoped, so pytest's own reporting is not affected
+        for name in ("category", "normalize", "name", "east_asian_width", "bidirectional", "decomposition", "numeric"):
+            m.setattr(unicodedata, name, boom)
+        got = [(v["id"], frozen_token_valid(_vector_token(v))) for v in V["token_unicode"]["vectors"]]
+    assert got == expected
+
+
+def test_token_unicode_vectors_and_known_divergent_code_points():
+    vecs = V["token_unicode"]["vectors"]
+    ids = [v["id"] for v in vecs]
+    assert len(ids) == len(set(ids))
+    for v in vecs:
+        assert frozen_token_valid(_vector_token(v)) is v["expected"]["valid"], v["id"]
+    div = [v for v in vecs if v["kind"] == "divergent"]
+    assert len(div) >= 17 and "TU-D01" in ids and next(v for v in div if v["id"] == "TU-D01")["code_points"] == ["088F"]
+    assert all(v["expected"]["valid"] is False and v["frozen_class"] == "Cn@15.1.0" for v in div)
+    meas = V["token_unicode"]["divergence_measured"]
+    assert meas["count"] == 5690 and meas["first"] == "U+088F" and meas["last"] == "U+2CEAD"
+    # a code point assigned after 15.1.0 (unassigned in the table) is refused, and also refused inside an otherwise valid token
+    assert not frozen_token_valid("\u088f") and not frozen_token_valid("a\u088fb") and frozen_token_valid("ab")
+    # Unicode entries that were permitted stay permitted: the rule is not silently replaced by the ASCII binding identifier grammar
+    for ok in ("\u0416", "\U00010400", "\u4e2d", "a/b", "%", "_x", "caf\u00e9"):
+        assert frozen_token_valid(ok), ok  # includes entries outside the ASCII binding identifier grammar ("a/b", "%", "_x", non-ASCII text)
+    assert frozen_token_valid("\u0416") and frozen_token_valid("caf\u00e9") and frozen_token_valid("a/b")
+    # no normalization is applied: NFC and NFD forms are two different permitted texts, never merged
+    assert frozen_token_valid("e\u0301") and frozen_token_valid("\u00e9") and e_not_equal()
+    # the effective payload refuses a divergent entry and a divergent F5 class name with field_invalid, whatever the runtime
+    for fam, payload, member in (
+            ("f1ab-local-execution-allowlist", {"allowed_actions": ["a\u088f"], "allowed_adapters": ["x"], "allowed_units": ["x"], "allowed_institutions": ["x"], "allowed_authority_domains": ["x"]}, "allowed_actions"),
+            ("f5-action-class-age-bounds", {"class_status_max_age_seconds": {"c\u088f": 5}}, "class_status_max_age_seconds")):
+        with pytest.raises(Refuse) as info:
+            validate_effective_payload(fam, payload, "registry")
+        assert (info.value.code, info.value.member) == ("field_invalid", member), fam
+
+
+def e_not_equal():
+    return "e\u0301" != "\u00e9"
+
+
+def test_mutation_guard_a_runtime_database_token_rule_would_disagree_with_the_frozen_table():
+    """N-13 negative control: a token rule built from a newer Unicode database (here, a rule that treats the divergent code points as assigned)
+    accepts what the frozen table refuses; the vectors detect it. Simulated, because a second database may not be installed."""
+    def newer_database_rule(value):
+        divergent = {int(h, 16) for v in V["token_unicode"]["vectors"] if v["kind"] == "divergent" for h in v["code_points"]}
+        return isinstance(value, str) and 1 <= len(value) <= 128 and "*" not in value and not any(
+            frozen_cp_excluded(ord(c)) and ord(c) not in divergent for c in value)
+    wrong = [v["id"] for v in V["token_unicode"]["vectors"] if newer_database_rule(_vector_token(v)) is not v["expected"]["valid"]]
+    assert wrong and all(i.startswith("TU-D") for i in wrong)  # the divergent vectors, and only they, catch it
+
+
+def test_defect_mapping_stage_is_typed_and_versioned_n11():
+    miss = [r for r in V["defect_mapping"] if r["registry_code"] == "trust_snapshot_missing"]
+    assert {r["id"] for r in miss} == {"MP-trust_snapshot_missing-input", "MP-trust_snapshot_missing-durable-state"}
+    assert "stage_version" in V["evidence_field_vocabulary"]
+    for r in miss:
+        assert {"stage", "stage_version"} <= set(r["evidence_fields"]) and r["stage_version"] == "ocs-evidence-stage/1", r["id"]
+        assert r["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and "NOT equivalent causes" in r["note"] + r.get("note", "") or "not an equivalent underlying cause" in r["note"], r["id"]
+    inp, dur = (next(r for r in miss if r["stage_value"] == s) for s in ("INPUT", "DURABLE_STATE"))
+    assert inp["defect"] != dur["defect"] and "none was supplied" in inp["defect"] and "durable state" in dur["defect"]
+    assert "trust_snapshot_invalid" in inp["note"] and "never `trust_snapshot_missing`" in inp["note"]  # definitive malformed input is not 'missing'
+    assert all(r["registry_code"] != "trust_snapshot_missing" or r["verdict_class"] == "UNKNOWN_FAIL_CLOSED" for r in V["defect_mapping"])
+
+
+def optional_fallback(refusal_kind, participation, store, basis, authenticated, independent, revives):
+    """N-12 reference rule. An unknown store is HOLD for every participation; required fails closed; a refused projection never establishes
+    'never activated' (the determination must be independent of it); family and contract unsupported need a separate non-participation determination."""
+    if participation not in ("required", "optional"):
+        raise Refuse("field_invalid", "participation")  # a raise, so the rule survives python -O
+    if store != "known":
+        return {"effect_outcome": "UNKNOWN_FAIL_CLOSED", "fallback_permitted": False}
+    if participation == "required":
+        return {"effect_outcome": "REFUSE", "fallback_permitted": False}
+    if not authenticated or not independent or revives:
+        return {"effect_outcome": "REFUSE", "fallback_permitted": False}
+    if refusal_kind in ("effective_family_unsupported", "effective_contract_unsupported"):
+        ok = basis == "authenticated_non_participation"
+    else:
+        ok = basis in ("never_required_governed_policy", "valid_withdrawal_fallback_transition")
+    return {"effect_outcome": "optional_fallback_via_determination" if ok else "REFUSE", "fallback_permitted": ok}
+
+
+def test_optional_fallback_rules_n12():
+    sec = V["optional_fallback_determination"]
+    assert "Architect Batch 6 rulings, N-12" in sec["rule"] and set(sec["bases"]) == {"never_required_governed_policy", "valid_withdrawal_fallback_transition", "authenticated_non_participation"}
+    ids = [v["id"] for v in sec["vectors"]]
+    assert len(ids) == len(set(ids)) >= 14
+    for v in sec["vectors"]:
+        got = optional_fallback(v["refusal_kind"], v["participation"], v["store"], v["determination_basis"], v["authenticated"], v["independent_of_refusal"], v["revives_previous_authority"])
+        assert got == {k: v["expected"][k] for k in got}, v["id"]
+        assert v["expected"]["yields_overlay_not_applied_by_itself"] is False and "overlay_not_applied" not in v["expected"]["effect_outcome"], v["id"]
+        if v["store"] != "known":
+            assert v["expected"]["effect_outcome"] == "UNKNOWN_FAIL_CLOSED", v["id"]  # unknown store: HOLD, never a fallback
+        if v["participation"] == "required":
+            assert v["expected"]["fallback_permitted"] is False, v["id"]
+    by_id = {v["id"]: v for v in sec["vectors"]}
+    assert by_id["OFD-004"]["independent_of_refusal"] is False and by_id["OFD-004"]["expected"]["fallback_permitted"] is False  # refused projection is not 'never activated'
+    assert by_id["OFD-003"]["revives_previous_authority"] is True and by_id["OFD-003"]["expected"]["fallback_permitted"] is False
+    for i in ("OFD-010", "OFD-011"):
+        assert by_id[i]["expected"]["effect_outcome"] == "REFUSE"  # family/contract unsupported without a separate non-participation determination
+    # exhaustive: over every input combination, a fallback needs optional + known store + authenticated + independent + no revival + a matching basis
+    kinds = ("scope_token", "trust_snapshot_version", "effective_family_unsupported", "effective_contract_unsupported", "effective_payload_field_invalid")
+    for kind in kinds:
+        for part in ("required", "optional"):
+            for store in ("known", "unknown"):
+                for basis in sec["bases"] + [None]:
+                    for auth in (True, False):
+                        for indep in (True, False):
+                            for rev in (True, False):
+                                out = optional_fallback(kind, part, store, basis, auth, indep, rev)
+                                assert out["effect_outcome"] != "ACCEPT"
+                                if out["fallback_permitted"]:
+                                    assert (part, store, auth, indep, rev) == ("optional", "known", True, True, False)
+                                if store == "unknown":
+                                    assert out["effect_outcome"] == "UNKNOWN_FAIL_CLOSED"
+    with pytest.raises(Refuse):
+        optional_fallback("scope_token", "OPTIONAL", "known", "never_required_governed_policy", True, True, False)
+    # the mapping rows carry the same rules
+    for i in ("MP-family_unsupported", "MP-contract_unsupported"):
+        r = next(x for x in V["defect_mapping"] if x["id"] == i)
+        assert r["verdict_class"] == "REFUSE" and "non-participation determination" in r["optional_rule"] and "optional_branch" not in r
+    su = next(x for x in V["defect_mapping"] if x["id"] == "MP-store_unknown")
+    assert su["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and "never overlay_not_applied" in su["optional_rule"] and "optional_branch" not in su
+    assert "RULED" in V["projection_effect_matrix_rule"] and "never justifies a fallback" in V["projection_effect_matrix_rule"]
+
+
+def test_policy_identity_members_and_the_conformance_kit_agree_on_overlapping_cases_ruling_4_3():
+    sec = V["policy_identity_members"]
+    members = {m["member"]: m for m in sec["members"]}
+    assert set(members) == {"scope_key", "selection_id", "selection_epoch", "selection_digest", "record", "activation_ref"}
+    row = next(r for r in V["defect_mapping"] if r["id"] == "MP-policy_identity_mismatch")
+    assert row["member_set"] == ["scope_key", "selection_id", "selection_epoch", "selection_digest", "record", "activation_ref"]
+    assert row["stale_epoch_routes_to"] == "selection_epoch_stale" and {"selection_epoch", "high_water_epoch"} <= set(row["evidence_fields"])
+    assert set(row["member_values"]) >= {"record_id", "record_version", "record_digest"}
+    # every record member and the epoch are binding members of the declared profile; nothing is manufactured
+    declared = set(V["profile"]["members"])
+    for m in sec["members"]:
+        assert set(m["binding_members"]) <= declared, m["member"]
+    assert sec["binding_profile"] == PROFILE and sec["kit_code_changed"] is False
+    assert (V["defect_mapping"][[r["id"] for r in V["defect_mapping"]].index("MP-selection_epoch_stale")]["verdict_class"]) == "REFUSE_STALE"
+    # the kit's guard (read as SOURCE TEXT, never imported) has the same stale-before-mismatch order and compares exactly the kit-level members
+    src = (ROOT / "registry_conformance" / "highwater.py").read_text(encoding="utf-8")
+    stale = src.index('if b["selection_epoch"] < row["epoch"]:')
+    stale_ret = src.index('"selection_epoch_stale"', stale)
+    mismatch = src.index('"policy_identity_mismatch"', stale_ret)
+    assert stale < stale_ret < mismatch
+    block = src[stale:mismatch]
+    for needle in ('b["selection_epoch"] != row["epoch"]', 'b["selection_digest"] != row["selection_digest"]', 'b["record"] != row["record"]', 'b["activation_ref"] != row["activation_ref"]'):
+        assert needle in block, needle
+    assert "REFUSE_STALE" in src[stale:stale_ret + 60] and 'REFUSE, "policy_identity_mismatch"' in src[stale_ret:mismatch + 60]
+    # the kit selects the row by its scope key (selection_id included); a miss is not_activated, a same-chain other selection_id is selection_conflict
+    assert 'row = st["rows"].get(key)' in src and '_verdict(REFUSE, "not_activated")' in src and '_verdict(REFUSE, "selection_conflict")' in src
+    # kit vector GD-02 pins the overlapping cases: stale -> REFUSE_STALE; higher epoch, wrong digest, reused activation_ref -> identity mismatch
+    gd = json.loads((ROOT / "registry_conformance" / "vectors" / "08_guard_and_optional_fallback.json").read_text(encoding="utf-8"))
+    gd02 = json.dumps(next(v for v in gd["vectors"] if v["id"].startswith("GD-02")))
+    assert "selection_epoch_stale" in gd02 and "policy_identity_mismatch" in gd02 and "REFUSE_STALE" in gd02
+
+
+def test_n10_input_contract_requirements_are_each_backed_by_existing_vectors():
+    sec = V["n10_input_contract"]
+    assert "Architect Batch 6 rulings, N-10" in sec["rule"]
+    assert set(sec["requirements"]) == {"deterministic_byte_level_parsing", "duplicate_member_rejection", "ambiguous_key_rejection", "strict_numeric_parsing",
+                                        "bounded_input_size", "canonical_serialization", "no_coercion_of_malformed_values"}
+    known = {x["id"] for sec_name in ("valid", "invalid", "input_boundary") for x in V[sec_name]}
+    for name, vids in sec["requirements"].items():
+        assert vids and set(vids) <= known, (name, sorted(set(vids) - known))
+    sv = sec["snapshot_version"]
+    assert (sv["min"], sv["max"]) == RANGES["trust_snapshot_version"] == (1, 2**53 - 1) and sv["not_an_operational_freshness_bound"] is True
+    by_id = {x["id"]: x for x in V["invalid"]}
+    assert set(sv["vectors"]) <= set(by_id) and len(sv["vectors"]) >= 9
+    for vid in sv["vectors"]:
+        exp = by_id[vid]["expected"]
+        with pytest.raises(Refuse) as info:
+            validate_binding(load(by_id[vid]["input_json"]))
+        assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vid
+    # the boundary values themselves are valid and canonical (the strict range is inclusive on both ends)
+    assert any(v["id"].startswith("BV-") for v in V["valid"])
+
+
+def test_spec_records_the_batch6_rulings_and_keeps_open_items_open():
+    spec = (ROOT / V["spec"]).read_text(encoding="utf-8")
+    assert "Architect Batch 6 rulings" in spec and TOKEN_TABLE_SHA256 in spec and "ocs-evidence-stage/1" in spec
+    closed = spec[spec.index("### Closed by Batch-6 ruling"):spec.index("### Routed")]
+    for item in ("N-10", "N-11", "N-12", "N-13", "Ruling 4.3"):
+        assert item in closed and "RULED" in closed[closed.index(item):closed.index(item) + 400], item
+    remaining = spec[spec.index("### Remaining (genuine)"):spec.index("### Recorded notes")]
+    assert "N-10(c)" in remaining and "N-13(b)" in remaining  # the genuinely open parts stay open
+    for item in ("N-7", "N-8", "N-9"):
+        assert item in remaining, item
+    for retired in ("- **N-11 `trust_snapshot_missing` dual meaning (new", "- **N-12 Optional scopes under an unknown store, and a refused projection read as never activated (new"):
+        assert retired not in spec, retired  # the open-question entries are replaced by the ruled entries
+    assert "Whether a refused projection may count as `never_activated` is not decided" not in spec
+    # the table counts the spec states are the data counts
+    assert "| `token_unicode` | %d |" % len(V["token_unicode"]["vectors"]) in spec
+    assert "| `optional_fallback_determination` | %d |" % len(V["optional_fallback_determination"]["vectors"]) in spec
+    assert "| `invalid` | %d |" % len(V["invalid"]) in spec
+    assert "713 ascending" in spec and len(_TOKEN_RANGES) == 713
+    # the kit and every frozen pin are untouched by this change: the verdict section pin is still enforced elsewhere in this file
+    assert "readme:## Verdicts (ruling R1)" in V["pins"]["enforced_section_hashes"]
