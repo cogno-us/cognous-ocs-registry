@@ -394,6 +394,21 @@ def test_a_48_code_consumer_fails_closed_on_each_revision_2_code():
             assert d.code == "selection_missing" and d.operationally_authorized is False and d.kind != "applied"
 
 
+def test_s1_order_row_key_then_epoch_then_remaining_members():
+    """S-1 order pins: selection_id is reported before scope_key when both differ (whatever the epoch); a same-row stale epoch wins over every later member;
+    a same-row claim epoch AHEAD of the row is a selection_epoch mismatch, reported before selection_digest."""
+    b = _binding()
+    both = _row(b, selection_epoch=b["selection_epoch"] + 5, selection_id="sel-other", scope_key=DIGEST_A)
+    e = _refusal(m.compare_binding_identity, b, both)
+    assert (e.code, e.member) == ("policy_identity_mismatch", "selection_id")
+    behind = _row(b, selection_epoch=b["selection_epoch"] + 1, selection_digest=DIGEST_A, record_digest=DIGEST_B, activation_ref=DIGEST_B)
+    e = _refusal(m.compare_binding_identity, b, behind)
+    assert e.code == "selection_epoch_stale" and dict(e.evidence) == {"selection_epoch": b["selection_epoch"], "high_water_epoch": b["selection_epoch"] + 1}
+    ahead = _row(b, selection_epoch=b["selection_epoch"] - 1, selection_digest=DIGEST_A)
+    e = _refusal(m.compare_binding_identity, b, ahead)
+    assert (e.code, e.member) == ("policy_identity_mismatch", "selection_epoch")
+
+
 def _bad_rows():
     b = _binding()
     good = _row(b)
