@@ -169,3 +169,25 @@ def test_adr_amendment_provenance_pins():
                    "d2c472e4a09543228bad62235e07a0dedfd7f48b"):
         assert needle in text
     assert "d2c472e4a09543228bad62235e07a0dedfd7f48b" in ADR.read_text(encoding="utf-8")
+
+
+def test_revision_designation_is_not_a_contract_version_and_no_second_registry():
+    from registry_successor import families
+
+    for bogus in ("r08-v2.1", "r08-v2-reasons/2", "r08-v2-reasons/1", "r08-v2.0"):
+        sel = families.table_for_contract_version(bogus)
+        assert not sel.ok and sel.code == "contract_unsupported", bogus
+    assert families.table_for_contract_version("r08-v2").ok and families.table_for_contract_version("r08-v1").ok
+    for path in (AMEND, AMEND_ADR):
+        text = path.read_text(encoding="utf-8")
+        for line in text.splitlines():
+            if "r08-v2.1" in line or "CODES_V2_1" in line:
+                assert "withdrawn" in line, f"withdrawn draft label used as live: {line[:80]}"
+        assert "r08-v2-reasons/2" in text and "CODES_V2_REV2" in text
+    amend = AMEND.read_text(encoding="utf-8")
+    assert "### 6.7 Compatibility and migration" in amend and "One registry rule." in amend
+    # the three codes are not in any parallel registry file of this checkout, and the existing sets are untouched
+    import registry_successor.v2_codes as v2c
+
+    assert not any(hasattr(v2c, n) for n in ("CODES_V2_REV2", "CODES_V2_1"))
+    assert len(v2c.CODES_V2) == 48
