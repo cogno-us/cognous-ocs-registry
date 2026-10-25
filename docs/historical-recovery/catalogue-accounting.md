@@ -15,7 +15,7 @@ Counts of different things are never summed into one headline. The catalogue its
 | L5 evidence records | 19,860 | historical execution records, `current_qualification_effect: none` |
 | L6 coverage rows | 6,030 | derived projection, not a primary record |
 | crosswalk rows | 51,837 | one per raw record (bookkeeping) |
-| lineage sets | 2 | `L-nc4-03-history`, `L-prereg-amendments` (both `post_v0_1`) |
+| lineage sets | 2 | `L-nc4-03-history` (`post_v0_1`, annotation `POST_V0.1`), `L-prereg-amendments` (`release_scope: unknown`, annotation `scope: V0.1`); both source revisions `unrecorded` |
 
 Raw-to-canonical absorption [R, integrity report]: rules 3,328 raw to 3,190; scenarios 6,955 to 2,840; tests 15,943 to 6,648; fixtures 3,301 to 2,011.
 

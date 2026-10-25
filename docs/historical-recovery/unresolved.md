@@ -5,9 +5,9 @@ Adverse findings are preserved here, not smoothed. Labels: **[V]** verified here
 ## U1. V0.2 provenance is not established
 
 - All 3,190 rule entries have `release_scope: v0_1`; 2,802 scenarios and 6,612 tests are `v0_1`, and 38 scenarios and 36 tests are `post_v0_1`. Fixtures: 1,981 `v0_1`, 30 `unknown`. No layer has a V0.2 value. [V]
-- `manifest.registry_version` is `0.1.0`; every source revision is the review tag `review-v0.1-g8-r10-20261022` ("Cognous Open Control Stack v0.1, candidate g8-r10"; the entries describe it as a review marker, not a release) or `unrecorded`. [V]
+- `manifest.registry_version` is `0.1.0`; every source revision is the review tag `review-v0.1-g8-r10-20261022` ("Cognous Open Control Stack v0.1, candidate g8-r10"; the entries describe it as a review marker, not a release) or `unrecorded`; Partition D (Qualification) also cites two further revisions (`main` `4298247e…` and branch `origin/mvp-final-expectations-v6` `c106b869…`) that were not checked. [V]
 - No rule entry cites a path under `docs/program-v0.2/`. [V] The only content labelled "0.2" is the `runtime-authority-reasons/0.2` registry (164 entries), which is a registry version and a superset of 0.1 (43 additional codes), not a statement that the entries belong to a V0.2 release. [V]
-- The 38 `post_v0_1` scenarios and the lineage sets (`L-nc4-03-history`, `L-prereg-amendments`, both `POST_V0.1`) are later than the review tag but are not labelled V0.2. [V]
+- The 38 `post_v0_1` scenarios and the lineage set `L-nc4-03-history` (`release_scope: post_v0_1`, annotation `POST_V0.1`, source revision `unrecorded`) are later than the review tag but are not labelled V0.2. The other lineage set, `L-prereg-amendments`, has `release_scope: unknown`, annotation `scope: V0.1` and source revision `unrecorded`; its chronology is unresolved and is not presented as post-tag. [V]
 - Consequence: the "V0.2 historical rule inventory" named in the assignment cannot be isolated from this catalogue. What is recovered here is the V0.1 review-tag inventory, with the 0.2 reason registry identified as the one explicitly 0.2-labelled population. Which of these the operator means by V0.2 needs an architect or operator ruling.
 
 ## U2. Missing and weak provenance (catalogue-recorded) [V counts]

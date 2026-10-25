@@ -38,7 +38,7 @@ For each family: what S02 records, whether a catalogue counterpart is establishe
 
 | Family | S02 | Catalogue counterpart established? | Lexical leads (entries) | Note |
 |---|---|---|---|---|
-| F1 Local execution policy values | Recommended first family, narrowed to allowed units, adapters, actions | No | 11 (9 reason codes, 1 validator rule, 1 unknown) | Leads are limit-related codes such as `authority_limit_malformed`, `effect_limit_malformed`, `missing_amount_limit`. No catalogue entry names `LocalExecutionPolicy` or its allow-lists |
+| F1 Local execution policy values | Recommended first family, narrowed to allowed units, adapters, actions | No | 11 (9 reason codes, 1 validator rule, 1 unknown) | Leads are limit-related codes such as `authority_limit_malformed`, `effect_limit_malformed`, `missing_amount_limit`. No catalogue entry names `LocalExecutionPolicy` or its allow-lists; the strings `max_amount` or `max_effects` occur in four entries (`R-AM:VAL:E023` and the three codes above plus `authority_limit_malformed`), as lexical leads only |
 | F2 Target-match vocabulary | Tier 1 subject; keep in code; W1-029 unresolved | No | 0 | |
 | F3 Size, depth, timeout budgets | Mixed tier; mostly literals | No | 39 | Mostly reason codes; relevance unreviewed |
 | F4 Freshness and observation bounds | Tier 1; includes the unresolved 60-versus-300 relationship | No | 199 (85 reason codes, 104 `unknown`-strength rows, 10 other) | The `unknown` rows are largely ODES `contracts/freshness-clocks/README.md` rows (74), which read as error-code tables. No entry carries the `ObservationPolicy(300, 5)` literal, the 86,400 s recovery age or the 60 s schema default |
