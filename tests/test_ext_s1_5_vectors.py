@@ -132,15 +132,181 @@ class _Obj(list):
     """An object whose (key, value) pairs are preserved in document order, so duplicate keys can be examined AFTER the syntax phase."""
 
 
-BIG_INT_SENTINEL = 10 ** 40  # any integer literal longer than 4000 digits is syntactically valid; the reference maps it to a value
+BIG_INT_SENTINEL = 10 ** 40  # an integer literal of more than MAX_EXACT_DIGITS digits is syntactically valid; the reference maps it to a value
 #                              strictly outside every field range (it never reaches canonical bytes: it is refused by the range rule)
+MAX_EXACT_DIGITS = 20  # every per-field range (largest 2**53 - 1, 16 digits) is far below 20 digits; longer literals are classified by LENGTH, never converted
 
 
 def _parse_int(text):
+    """Classify by literal syntax (spec 5.5.1): up to 20 digits the exact value, beyond that a value outside every range. int() is never called on
+    an unbounded literal, so the result cannot depend on sys.set_int_max_str_digits or PYTHONINTMAXSTRDIGITS (any setting from 640 up, or 0)."""
     digits = text.lstrip("-")
-    if len(digits) <= 4000:
-        return int(text)  # below the CPython 4300-digit conversion limit, so the result never depends on sys.set_int_max_str_digits
+    if len(digits) <= MAX_EXACT_DIGITS:
+        return int(text)
     return -BIG_INT_SENTINEL if text.startswith("-") else BIG_INT_SENTINEL
+
+
+_WS = " \t\n\r"
+_NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?")
+_STRING_CHUNK = re.compile(r'[^"\\\x00-\x1f]*')
+_ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
+_HEX = frozenset("0123456789abcdefABCDEF")
+
+
+def _scan_string(text, i):
+    """RFC 8259 string starting at text[i] == '"': raw control characters are syntax errors, \\uXXXX escapes are decoded and a high surrogate
+    escape followed by a low surrogate escape is one code point (so a key written with a pair equals the same key written raw). A lone
+    surrogate escape stays one distinct code unit."""
+    n = len(text)
+    i += 1
+    out = []
+    while True:
+        m = _STRING_CHUNK.match(text, i)
+        out.append(m.group())
+        i = m.end()
+        if i >= n:
+            raise ValueError("unterminated string")
+        c = text[i]
+        if c == '"':
+            return "".join(out), i + 1
+        if c != "\\":
+            raise ValueError("control character in string")
+        i += 1
+        if i >= n:
+            raise ValueError("unterminated escape")
+        e = text[i]
+        if e == "u":
+            h = text[i + 1:i + 5]
+            if len(h) != 4 or not _HEX.issuperset(h):
+                raise ValueError("bad unicode escape")
+            cp = int(h, 16)
+            i += 5
+            if 0xD800 <= cp <= 0xDBFF and text[i:i + 2] == "\\u":
+                h2 = text[i + 2:i + 6]
+                if len(h2) == 4 and _HEX.issuperset(h2) and 0xDC00 <= int(h2, 16) <= 0xDFFF:
+                    cp = 0x10000 + ((cp - 0xD800) << 10) + (int(h2, 16) - 0xDC00)
+                    i += 6
+            out.append(chr(cp))
+        elif e in _ESCAPES:
+            out.append(_ESCAPES[e])
+            i += 1
+        else:
+            raise ValueError("bad escape")
+
+
+def _scan(text):
+    """ITERATIVE JSON scanner (spec 5.5.1): an explicit stack, no recursion, so the syntax, number-literal and duplicate-key steps are not
+    limited by the interpreter's recursion depth and every implementation can follow the same order on a document nested thousands of
+    levels deep (the 65536-byte size limit bounds the work). Returns (tree, saw_number_literal); raises ValueError for any syntax error.
+    Grammar: RFC 8259 plus the tokens NaN, Infinity and -Infinity (recognized only so they can be refused as number literals)."""
+    n = len(text)
+    i = 0
+    stack = []  # open containers: _Obj (pairs in document order) or list
+    key_of = []  # the pending key of each open _Obj (None for an array frame)
+    root = None
+    done = False
+    saw_number = False
+    expecting = "value"  # value | value_or_end (after '[') | key_or_end (after '{') | key (after ',' in an object) | after (a value just ended)
+
+    def attach(v):
+        nonlocal root, done
+        if not stack:
+            root, done = v, True
+        elif isinstance(stack[-1], _Obj):
+            stack[-1].append((key_of[-1], v))
+        else:
+            stack[-1].append(v)
+
+    def close():
+        top = stack.pop()
+        key_of.pop()
+        attach(top)
+
+    while True:
+        while i < n and text[i] in _WS:
+            i += 1
+        if done:
+            if i != n:
+                raise ValueError("extra data")
+            return root, saw_number
+        if i >= n:
+            raise ValueError("unexpected end")
+        c = text[i]
+        if expecting == "after":
+            top = stack[-1]
+            if c == ",":
+                i += 1
+                expecting = "key" if isinstance(top, _Obj) else "value"
+            elif c == ("}" if isinstance(top, _Obj) else "]"):
+                i += 1
+                close()
+            else:
+                raise ValueError("expected , or close")
+            continue
+        if expecting in ("key", "key_or_end"):
+            if c == "}" and expecting == "key_or_end":
+                i += 1
+                close()
+                expecting = "after"
+                continue
+            if c != '"':
+                raise ValueError("expected a key")
+            k, i = _scan_string(text, i)
+            while i < n and text[i] in _WS:
+                i += 1
+            if i >= n or text[i] != ":":
+                raise ValueError("expected :")
+            i += 1
+            key_of[-1] = k
+            expecting = "value"
+            continue
+        if expecting == "value_or_end" and c == "]":
+            i += 1
+            close()
+            expecting = "after"
+            continue
+        if c == "{":
+            stack.append(_Obj())
+            key_of.append(None)
+            i += 1
+            expecting = "key_or_end"
+        elif c == "[":
+            stack.append([])
+            key_of.append(None)
+            i += 1
+            expecting = "value_or_end"
+        elif c == '"':
+            s, i = _scan_string(text, i)
+            attach(s)
+            expecting = "after"
+        elif text.startswith("true", i):
+            attach(True)
+            i += 4
+            expecting = "after"
+        elif text.startswith("false", i):
+            attach(False)
+            i += 5
+            expecting = "after"
+        elif text.startswith("null", i):
+            attach(None)
+            i += 4
+            expecting = "after"
+        elif text.startswith("NaN", i) or text.startswith("Infinity", i) or text.startswith("-Infinity", i):
+            saw_number = True
+            i += 3 if text.startswith("NaN", i) else (8 if text.startswith("Infinity", i) else 9)
+            attach(0)
+            expecting = "after"
+        else:
+            m = _NUMBER.match(text, i)
+            if m is None:
+                raise ValueError("unexpected character")
+            if m.group(1) is not None or m.group(2) is not None:
+                saw_number = True
+                attach(0)
+            else:
+                attach(_parse_int(m.group()))
+            i = m.end()
+            expecting = "after"
 
 
 def _walk(node):
@@ -178,8 +344,8 @@ def _materialize(node):
 def load(raw):
     """Normative parse order (spec 5.5.1), identical for every implementation regardless of its parser's streaming order:
     1 input boundary: strict UTF-8 or text (input_not_text), then size of the UTF-8 bytes (input_too_large);
-    2 SYNTAX on the whole text: JSON grammar extended only by the tokens NaN, Infinity, -Infinity (json_malformed); a byte order mark is
-      not stripped, an integer literal of any length is valid syntax;
+    2 SYNTAX on the whole text, by an ITERATIVE scan that is not limited by recursion depth: JSON grammar extended only by the tokens NaN,
+      Infinity, -Infinity (json_malformed); a byte order mark is not stripped, an integer literal of any length is valid syntax;
     3 number literals: any float, exponent or NaN/Infinity token anywhere (json_number_unsupported);
     4 duplicate object keys at any depth, after unescaping (json_duplicate_key);
     5 nesting deeper than 8 (json_nesting_too_deep)."""
@@ -199,19 +365,11 @@ def load(raw):
         raise Refuse("input_not_text")
     if len(data) > MAX_DOCUMENT_BYTES:  # bytes, not characters
         raise Refuse("input_too_large")
-    seen_number = []
-
-    def _flag(_x):
-        seen_number.append(_x)
-        return 0
-
     try:
-        value = json.loads(text, object_pairs_hook=_Obj, parse_float=_flag, parse_constant=_flag, parse_int=_parse_int)
-    except RecursionError:  # reference-parser limit only (about 900 levels); no vector exceeds depth 12
-        raise Refuse("json_nesting_too_deep")
+        value, saw_number = _scan(text)
     except ValueError:
         raise Refuse("json_malformed")
-    if seen_number:
+    if saw_number:
         raise Refuse("json_number_unsupported")
     for obj in _walk(value):
         keys = [k for k, _ in obj]
@@ -338,18 +496,30 @@ def project_scope(statement_scope):
 
 
 def projection_effect(participation, activation_state, determination):
-    """Ruling N-5 reference rules for a scope whose projection was refused (binding creation is refused for EVERY participation).
-    The projection refusal is never an authorization: no branch yields overlay_not_applied or an ACCEPT by itself."""
+    """Ruling N-5 reference rules for a refusal at the projection stage (binding creation is refused for EVERY participation, whatever the
+    refusal kind: the function takes no refusal kind and no member). The refusal is never an authorization: no branch yields
+    overlay_not_applied or an ACCEPT by itself. `participation` is exactly "required" or "optional"; anything else is refused, never read
+    as optional (a raise, not an assert, so the rule survives python -O)."""
     if participation == "required":
         out = "UNKNOWN_FAIL_CLOSED" if activation_state == "indeterminate" else "REFUSE"
         return {"effect_outcome": out, "decision_kind": "required_policy_unavailable", "fallback_permitted": False, "fallback_evidence": None}
-    assert participation == "optional"
+    if participation != "optional":
+        raise Refuse("field_invalid", "participation")
     if activation_state == "indeterminate":
         return {"effect_outcome": "UNKNOWN_FAIL_CLOSED", "decision_kind": None, "fallback_permitted": False, "fallback_evidence": None}
     if determination == "authenticated" and activation_state == "permits_optional":
         return {"effect_outcome": "optional_fallback_via_determination", "decision_kind": None, "fallback_permitted": True,
                 "fallback_evidence": {"kind": "absence_or_withdrawal", "projection_refusal_code": "field_invalid"}}
     return {"effect_outcome": "REFUSE", "decision_kind": None, "fallback_permitted": False, "fallback_evidence": None}
+
+
+def projection_effect_for(refusal_code, participation, activation_state, determination):
+    """The join of a refusal's own registry code with the one effect function: the only thing a refusal kind contributes is the code the
+    fallback evidence record carries. The outcome never depends on the refusal."""
+    out = projection_effect(participation, activation_state, determination)
+    if out["fallback_evidence"] is not None:
+        out = {**out, "fallback_evidence": {**out["fallback_evidence"], "projection_refusal_code": refusal_code}}
+    return out
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1356,6 +1526,19 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
         assert c in by_code
     kinds = {r["decision_kind"] for r in V["defect_mapping"]}
     assert "applied_deny_all" in kinds and any(r.get("non_registry_outcome") == "evaluator_denied" for r in V["defect_mapping"])
+    # review SF-4: one code, one class in every context; the two contexts of trust_snapshot_missing are told apart by the evidence field `stage`
+    miss = [r for r in V["defect_mapping"] if r["registry_code"] == "trust_snapshot_missing"]
+    assert {r["id"]: r["stage_value"] for r in miss} == {"MP-trust_snapshot_missing-verify": "verify", "MP-trust_snapshot_missing-guard": "guard"}
+    assert all(r["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and r["retry"] == "after_authoritative_state_available" and "definitive" not in r["defect"].lower() for r in miss)
+    assert not any("definitive input fact" in json.dumps(r) for r in V["defect_mapping"])
+    # review SF-6: an optional fallback exists only through the authenticated optional-state determination, for exactly the two registry codes whose
+    # contract reason is withdrawn or expired (contract 7.4 line 8(c)); never_activated has no registry code
+    branches = {r["registry_code"]: r["optional_branch"] for r in V["defect_mapping"] if "optional_branch" in r}
+    assert set(branches) == {"selection_withdrawn", "selection_expired"}
+    for code, br in branches.items():
+        assert br["decision_kind"] == "overlay_not_applied" and br["registry_code"] == code and br["applied"] is False, code
+        assert "authenticated optional-state determination" in br["only_through"], code
+    assert len(V["defect_mapping"]) == 34
     # every code used by an identity validator in this file appears in the mapping
     mapped = set(by_code)
     for c in V["outcome_map"]["codes_used_by_this_file"]:
@@ -1375,6 +1558,12 @@ def _generate(gen):
         return base + b" " * (gen["total_bytes"] - len(base))
     if gen["kind"] == "multibyte_string":
         return ('{"x":"' + "\u00e9" * gen["count"] + '"}').encode("utf-8")
+    if gen["kind"] == "deep_array":  # depth levels of '[' around `inner`; `closed` False leaves them unclosed; `tail` follows the document
+        return ("[" * gen["depth"] + gen["inner"] + ("]" * gen["depth"] if gen["closed"] else "") + gen["tail"]).encode("utf-8")
+    if gen["kind"] == "int_literal":  # BV-001 with selection_epoch replaced by an integer literal of `digits` nines
+        text = next(v for v in V["valid"] if v["id"] == "BV-001")["input_json"]
+        assert '"selection_epoch": 3' in text
+        return text.replace('"selection_epoch": 3', '"selection_epoch": %s%s' % (gen["sign"], "9" * gen["digits"])).encode("utf-8")
     assert gen["kind"] == "nested"
     o, c = ('{"a":', "}") if gen["container"] == "object" else ("[", "]")
     containers = gen["depth"] - 1  # "depth" is the depth of the deepest value; the scalar leaf counts as a level (root = 1)
@@ -1458,16 +1647,65 @@ def test_parse_order_is_syntax_then_numbers_then_duplicates_then_depth_and_huge_
             validate_binding(doc)
         assert (info.value.code, info.value.member) == ("field_invalid", member)
     import sys
+    int_vecs = [v for v in V["input_boundary"] if "generate" in v and v["generate"]["kind"] == "int_literal"]
+    assert {v["generate"]["digits"] for v in int_vecs} >= {20, 21, 700, 3999, 4001}  # lengths below, at and above every old threshold (4000, 4300)
+    big_vec = next(v for v in V["invalid"] if v["id"] == "BI-INT-5000-DIGITS")
     saved = sys.get_int_max_str_digits()
     try:
-        for limit in (0, 4300, 640):
-            sys.set_int_max_str_digits(limit if limit == 0 or limit >= 640 else 640)
-            vec = next(v for v in V["invalid"] if v["id"] == "BI-INT-5000-DIGITS")
-            with pytest.raises(Refuse) as info:
-                run_binding(vec)
-            assert info.value.code == "field_invalid", limit  # independent of the interpreter's int conversion limit
+        for limit in (0, 640, 700, 4000, 4300):
+            sys.set_int_max_str_digits(limit)
+            for vec in int_vecs + [big_vec]:
+                raw = _generate(vec["generate"]) if "generate" in vec else bytes.fromhex(vec["input_hex"]) if "input_hex" in vec else vec["input_json"]
+                with pytest.raises(Refuse) as info:
+                    validate_binding(load(raw))
+                assert (info.value.code, info.value.member) == ("field_invalid", "selection_epoch"), (limit, vec["id"])  # independent of the interpreter digit limit
     finally:
         sys.set_int_max_str_digits(saved)
+    # a 20-digit literal is the exact value, a 21-digit one is classified by length (both outside every range)
+    assert load('{"x":%s}' % ("9" * 20))["x"] == int("9" * 20) and load('{"x":%s}' % ("9" * 21))["x"] == BIG_INT_SENTINEL
+    assert load('{"x":-%s}' % ("9" * 700))["x"] == -BIG_INT_SENTINEL
+
+
+def test_deep_documents_follow_the_parse_order_whatever_the_recursion_limit():
+    """Spec 5.5.1 (review SF-1): the syntax, number-literal and duplicate-key steps are not limited by recursion depth, so a document nested far
+    beyond any recursive parser's cap gets the answer of the order, not a depth refusal first. Run with the recursion limit lowered to just
+    above the current stack depth to prove the reference scan is iterative."""
+    import inspect
+    import sys
+    deep = [v for v in V["input_boundary"] if "generate" in v and v["generate"]["kind"] == "deep_array"]
+    assert {v["expected"]["code"] for v in deep} == {"json_malformed", "json_nesting_too_deep", "json_number_unsupported", "json_duplicate_key", "input_too_large"}
+    assert max(v["generate"]["depth"] for v in deep) >= 32768 and min(v["generate"]["depth"] for v in deep) >= 9000
+    saved = sys.getrecursionlimit()
+    try:
+        sys.setrecursionlimit(len(inspect.stack(0)) + 60)  # far below the 9000 to 32769 levels the vectors nest
+        for vec in deep:
+            raw = _generate(vec["generate"])
+            with pytest.raises(Refuse) as info:
+                validate_binding(load(raw))
+            assert (info.value.code, info.value.member) == (vec["expected"]["code"], vec["expected"]["member"]), vec["id"]
+    finally:
+        sys.setrecursionlimit(saved)
+    # the stdlib parser is NOT such a scan: it gives up with a recursion error (this is why the spec states the requirement)
+    sys.setrecursionlimit(saved)
+    with pytest.raises(RecursionError):
+        json.loads("[" * 200000 + "]" * 200000)
+    # the unclosed document is malformed, the balanced one with a float is a number-literal refusal, at every depth
+    for depth in (9, 100, 5000):
+        with pytest.raises(Refuse) as a:
+            load("[" * depth)
+        assert a.value.code == "json_malformed"
+        with pytest.raises(Refuse) as b:
+            load("[" * depth + "1.5" + "]" * depth)
+        assert b.value.code == "json_number_unsupported"
+    # duplicate keys inside nested containers and the pair-versus-raw key comparison
+    for vid, code in (("BI-DUP-NESTED-IN-ARRAY", "json_duplicate_key"), ("BI-DUP-ESCAPED-PAIR-VS-RAW", "json_duplicate_key"), ("BI-LONE-SURROGATE-KEYS-DISTINCT", "field_missing")):
+        vec = next(v for v in V["invalid"] if v["id"] == vid)
+        assert vec["expected"]["code"] == code
+        with pytest.raises(Refuse) as info:
+            validate_binding(load(vec["input_json"]))
+        assert (info.value.code, info.value.member) == (code, vec["expected"]["member"]), vid
+    assert load('{"\\ud83d\\ude00":1}') == {"\U0001F600": 1}  # a high plus a low surrogate escape is one code point
+    assert list(load('{"\\ud800":1,"\\ud801":2}')) == ["\ud800", "\ud801"]  # lone surrogate escapes stay distinct code units
 
 
 def test_sorted_means_unicode_code_point_order_and_utf16_order_is_refused():
@@ -1491,6 +1729,51 @@ def test_sorted_means_unicode_code_point_order_and_utf16_order_is_refused():
     with pytest.raises(Refuse) as info:
         validate_effective_payload(inv["family"], load(inv["payload_json"]), inv["role"])
     assert (info.value.code, info.value.member) == ("field_invalid", "allowed_actions")
+
+
+def _ser_utf16(value):
+    """The wrong serializer a review mutant uses: object keys sorted by UTF-16 code unit."""
+    if isinstance(value, dict):
+        return "{" + ",".join(ser_string(k) + ":" + _ser_utf16(value[k]) for k in sorted(value, key=lambda x: x.encode("utf-16-be"))) + "}"
+    if isinstance(value, list):
+        return "[" + ",".join(_ser_utf16(x) for x in value) + "]"
+    return ser(value)
+
+
+def test_object_keys_and_snapshot_arrays_sort_by_code_point_and_snapshot_arrays_are_normalized_not_refused():
+    """Spec 5.3 (review SF-3): which orderings are refused (effective payload lists, field_invalid) and which are normalized (snapshot arrays and
+    every object's keys, never refused for order; a duplicate refuses trust_snapshot_invalid)."""
+    a, b = "\uff21", "\U00010400"
+    ep = next(e for e in V["effective_payloads"] if e["id"] == "EP-016")
+    classes = ep["payload"]["class_status_max_age_seconds"]
+    assert list(classes) == [b, a], "the input lists the class names in UTF-16 order; input order is irrelevant"
+    pre = effective_preimage(ep["family"], ep["payload"])
+    ascii_ = canon(pre).decode("ascii")
+    assert ascii_.index("\\uff21") < ascii_.index("\\ud801\\udc00"), "canonical bytes list U+FF21 before U+10400 (code point order)"
+    assert effective_digest_of_preimage(pre) == ep["expected"]["effective_policy_digest"]
+    wrong = "sha256:" + sha_hex(EFFECTIVE_PREFIX + _ser_utf16(pre).encode("ascii"))
+    assert wrong != ep["expected"]["effective_policy_digest"], "a UTF-16 key sort is a different digest"
+    assert statement_valid_token(a) and statement_valid_token(b)
+    tf = next(t for t in V["trust_snapshots"] if t["id"] == "TF-005")
+    check_snapshot_duplicates(tf["input"])  # unsorted input is NOT refused (it is normalized)
+    assert tf["input"]["revoked_key_ids"][0] == "key-" + b, "the input lists the non-BMP id first (UTF-16 order)"
+    n = normalize_snapshot(tf["input"])
+    assert n["revoked_key_ids"] == ["key-old-1", "key-" + a, "key-" + b]
+    tenants = [x[1] for x in n["issuers"][0]["authority"] if x[1] in ("tenant-" + a, "tenant-" + b)]
+    assert tenants == ["tenant-" + a, "tenant-" + b]
+    utf16 = json.loads(json.dumps(n))
+    utf16["revoked_key_ids"] = sorted(utf16["revoked_key_ids"], key=lambda x: x.encode("utf-16-be"))
+    utf16["issuers"][0]["authority"] = sorted(utf16["issuers"][0]["authority"], key=lambda r: [x.encode("utf-16-be") for x in r])
+    assert utf16["revoked_key_ids"] != n["revoked_key_ids"] and utf16["issuers"][0]["authority"] != n["issuers"][0]["authority"]
+    assert plain_digest(utf16) != tf["expected"]["trust_snapshot_fingerprint"], "a UTF-16 normalizer gives another fingerprint"
+    # a duplicate is the one refusal for snapshot arrays, and it is trust_snapshot_invalid (not field_invalid)
+    dup = json.loads(json.dumps(tf["input"]))
+    dup["revoked_key_ids"].append("key-" + a)
+    with pytest.raises(Refuse) as info:
+        check_snapshot_duplicates(dup)
+    assert info.value.code == "trust_snapshot_invalid"
+    spec = (ROOT / "docs" / "ext-implementation" / "ext-s1-5-effective-policy-identity-spec.md").read_text(encoding="utf-8")
+    assert "normalized" in spec and "`trust_snapshot_invalid`" in spec
 
 
 def test_contract_version_keying_one_code_on_both_paths_and_identity_exists_for_r08_v2_only():
@@ -1528,6 +1811,7 @@ def test_every_projection_stage_refusal_has_the_same_participation_effects_and_n
     """Spec 5.6 (generalized, review S-5): a scope token and a snapshot version above 2^53-1 are both projection-stage refusals with one effect rule."""
     assert "exactly the participation effects of scope_projection_effects" in V["projection_stage_refusals_rule"]
     import inspect
+    # a documentation check of THIS reference only (it proves nothing about an implementation); the normative join is the data of projection_effect_matrix
     assert list(inspect.signature(projection_effect).parameters) == ["participation", "activation_state", "determination"]  # no member argument
     refused = projected = 0
     for vec in V["projection_stage_refusals"]:
@@ -1558,6 +1842,50 @@ def test_every_projection_stage_refusal_has_the_same_participation_effects_and_n
                 assert out["fallback_permitted"] is ((part, st, det) == ("optional", "permits_optional", "authenticated"))
     row = next(r for r in V["defect_mapping"] if r["id"] == "MP-field_invalid-projection")
     assert "trust snapshot version" in row["defect"] and "any projection-stage refusal" in row["defect"]
+
+
+def test_projection_effect_matrix_joins_refusal_kind_participation_and_state():
+    """Spec 5.6 (review SF-6 and SF-7): the effect is joined to each refusal kind in DATA (refusal kind x participation x state x determination
+    -> outcome), so the claim 'every projection-stage refusal has the same effect' is not only prose or a signature inspection."""
+    rows = V["projection_effect_matrix"]
+    kinds = V["profile"]["projection_stage"]["kinds"]
+    assert set(kinds) == {"scope_token", "trust_snapshot_version", "effective_family_unsupported", "effective_contract_unsupported", "effective_payload_field_invalid"}
+    assert {r["refusal_kind"] for r in rows} == set(kinds) and len(rows) == len(kinds) * 6
+    by_case = {}
+    for r in rows:
+        exp = r["expected"]
+        want = projection_effect_for(r["registry_code"], r["participation"], r["activation_state"], r["optional_determination"])
+        assert (exp["effect_outcome"], exp["fallback_permitted"]) == (want["effect_outcome"], want["fallback_permitted"]), r["id"]
+        evidence_code = want["fallback_evidence"]["projection_refusal_code"] if want["fallback_evidence"] else None
+        assert exp["fallback_evidence_code"] == evidence_code == (r["registry_code"] if exp["fallback_permitted"] else None), r["id"]
+        assert exp["binding_created"] is False and exp["yields_overlay_not_applied"] is False and exp["yields_accept"] is False, r["id"]
+        assert exp["effect_outcome"] in ("REFUSE", "UNKNOWN_FAIL_CLOSED", "optional_fallback_via_determination"), r["id"]
+        by_case.setdefault((r["participation"], r["activation_state"], r["optional_determination"]), set()).add(exp["effect_outcome"])
+    assert len(by_case) == 6 and all(len(v) == 1 for v in by_case.values()), "one outcome per case: the effect never depends on the refusal kind"
+    assert sum(1 for r in rows if r["expected"]["fallback_permitted"]) == len(kinds)  # exactly one case per kind can fall back
+    assert {r["registry_code"] for r in rows} <= set(_outcome_codes())
+    # the derivation refusals are real refusals of the reference identity code, with the codes the rows carry
+    refusals = {
+        "family_unsupported": lambda: effective_policy_digest("f9-unknown-family", {}),
+        "contract_unsupported": lambda: effective_policy_digest("f4-control-plane-age-bounds", {"status_max_age_seconds": 1, "approval_max_age_seconds": 1}, "r08-v1"),
+        "field_invalid": lambda: effective_policy_digest("f4-control-plane-age-bounds", {"status_max_age_seconds": 2147483648, "approval_max_age_seconds": 1}),
+    }
+    for kind, code in (("effective_family_unsupported", "family_unsupported"), ("effective_contract_unsupported", "contract_unsupported"), ("effective_payload_field_invalid", "field_invalid")):
+        assert {r["registry_code"] for r in rows if r["refusal_kind"] == kind} == {code}
+        with pytest.raises(Refuse) as info:
+            refusals[code]()
+        assert info.value.code == code
+    # an unknown participation is refused, never read as optional; the rule survives python -O (a raise, not an assert)
+    for vec in V["projection_effect_invalid"]:
+        with pytest.raises(Refuse) as info:
+            projection_effect(vec["participation"], vec["activation_state"], vec["optional_determination"])
+        assert (info.value.code, info.value.member) == (vec["expected"]["code"], vec["expected"]["member"]), vec["id"]
+    import sys
+    code = ("import importlib.util\ns = importlib.util.spec_from_file_location('t', %r)\nm = importlib.util.module_from_spec(s)\ns.loader.exec_module(m)\n"
+            "try:\n    m.projection_effect('OPTIONAL', 'permits_optional', 'authenticated')\n    print('NOT_REFUSED')\nexcept m.Refuse as e:\n    print(e.code)\n") % str(Path(__file__))
+    out = subprocess.run([sys.executable, "-O", "-c", code], capture_output=True, text=True, timeout=60, check=True).stdout.strip()
+    assert out == "field_invalid"
+    assert "residual" in V["projection_effect_matrix_rule"].lower() and "never-activated" in V["projection_effect_matrix_rule"]
 
 
 _JS = r"""
@@ -1617,8 +1945,11 @@ function effInput(doc) {
 }
 for (const x of V.effective_inputs) out[x.id] = effInput(JSON.parse(x.input_json));
 const PE = (part, st, det) => part === 'required' ? (st === 'indeterminate' ? 'UNKNOWN_FAIL_CLOSED' : 'REFUSE')
+  : part !== 'optional' ? 'INVALID_PARTICIPATION'
   : st === 'indeterminate' ? 'UNKNOWN_FAIL_CLOSED' : (det === 'authenticated' && st === 'permits_optional') ? 'optional_fallback_via_determination' : 'REFUSE';
 for (const x of V.scope_projection_effects) out[x.id] = PE(x.participation, x.activation_state, x.optional_determination);
+for (const x of V.projection_effect_matrix) out[x.id] = PE(x.participation, x.activation_state, x.optional_determination);
+for (const x of V.projection_effect_invalid) out[x.id] = PE(x.participation, x.activation_state, x.optional_determination);
 for (const x of V.effective_policy_controls) { const c = Buffer.from(ser(JSON.parse(x.preimage_canonical_ascii)), 'ascii'); out[x.id] = [c.toString('hex'), 'sha256:' + sha(Buffer.concat([preEff, c]))]; }
 for (const x of V.trust_snapshots) { const c = Buffer.from(ser(x.expected_normalized || JSON.parse(x.normalized_json)), 'ascii'); out[x.id] = [c.toString('hex'), 'sha256:' + sha(c)]; }
 const skOut = o => { const c = Buffer.from(ser(o), 'ascii'); return [c.toString('hex'), 'sha256:' + sha(Buffer.concat([preSk, c]))]; };
@@ -1705,6 +2036,12 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
         n += 1
     for se in V["scope_projection_effects"]:
         assert got[se["id"]] == se["expected"]["effect_outcome"], se["id"]
+        n += 1
+    for row in V["projection_effect_matrix"]:
+        assert got[row["id"]] == row["expected"]["effect_outcome"], row["id"]  # the joined refusal-kind matrix, recomputed in a second language
+        n += 1
+    for row in V["projection_effect_invalid"]:
+        assert got[row["id"]] == "INVALID_PARTICIPATION", row["id"]
         n += 1
     for i, entry in enumerate(V["identifier_matrix"]["bad_values"]):
         assert got["IM:%d" % i] is False, entry  # every bad identifier fails the grammar in the second language too

@@ -1,7 +1,7 @@
 {
  "schema": "ocs-ext-s1-5-policy-identity-vectors/1",
  "status": "BUILDER_TESTED",
- "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5 and Batch-4 rulings N-1, N-3, N-4, N-5, N-6 (2026-10-25). Revised after the PR #30 AI technical review (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
+ "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5 and Batch-4 rulings N-1, N-3, N-4, N-5, N-6 (2026-10-25). Revised after the PR #30 AI technical reviews, two rounds (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
  "spec": "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md",
  "pins": {
   "contract_file": "docs/r08-v2-contract.md",
@@ -384,20 +384,34 @@
   ],
   "parse_order": [
    "input boundary: input_not_text, then input_too_large (UTF-8 bytes)",
-   "syntax of the whole text (RFC 8259 plus NaN/Infinity/-Infinity tokens): json_malformed; integer literals of any length are valid syntax",
+   "syntax of the whole text by an ITERATIVE scan that is not limited by recursion depth (RFC 8259 plus NaN/Infinity/-Infinity tokens): json_malformed; integer literals of any length are valid syntax and are classified by literal length, never converted",
    "number literals anywhere: json_number_unsupported",
    "duplicate object keys at any depth: json_duplicate_key",
    "value deeper than 8 (root = 1, scalar leaves count): json_nesting_too_deep"
   ],
   "input_boundary": {
-   "text": "strict UTF-8 bytes or str; lone surrogate or other type: input_not_text",
+   "text": "strict UTF-8 bytes (the byte vectors express text as UTF-8) or str; a lone surrogate in a str, invalid UTF-8, or any other type: input_not_text; bytes is accepted only as the harness expression of text",
    "max_bytes": 65536,
    "bom": "not stripped: json_malformed",
    "max_depth": 8
   },
-  "sort_order": "Unicode code point order (equal to UTF-8 byte order), never UTF-16 code unit order, for every sorted list; unsorted or duplicate refuses field_invalid",
+  "sort_order": "Unicode code point order (equal to UTF-8 byte order), never UTF-16 code unit order. Effective payload lists: unsorted or duplicate refuses field_invalid. Object keys (including F5 class names) are sorted by the serializer whatever the input order. Trust snapshot arrays are normalized by the serializer in code point order (never refused for order); a duplicate refuses trust_snapshot_invalid.",
   "contract_version_keying": "effective-policy identity exists for contract_version r08-v2 only, for every family; r08-v1 (even f1a) is contract_unsupported on the input and presented-preimage paths",
-  "decision_kinds": "closed contract 3.2 set: applied, applied_deny_all, overlay_not_applied, required_policy_unavailable"
+  "decision_kinds": "closed contract 3.2 set: applied, applied_deny_all, overlay_not_applied, required_policy_unavailable",
+  "projection_stage": {
+   "kinds": [
+    "scope_token",
+    "trust_snapshot_version",
+    "effective_family_unsupported",
+    "effective_contract_unsupported",
+    "effective_payload_field_invalid"
+   ],
+   "participation_values": [
+    "required",
+    "optional"
+   ],
+   "unknown_participation": "refused field_invalid at member participation, never read as optional"
+  }
  },
  "outcome_map": {
   "file": "docs/p1-extraction-plan/data/ld02-outcome-map.json",
@@ -1957,6 +1971,42 @@
     "layer": "shape",
     "member": "selection_epoch"
    }
+  },
+  {
+   "id": "BI-DUP-NESTED-IN-ARRAY",
+   "category": "duplicate key",
+   "description": "a duplicate key inside an object nested in an array (any depth means containers of every kind)",
+   "input_json": "{\"a\":[{\"b\":1,\"b\":2}]}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_duplicate_key",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-DUP-ESCAPED-PAIR-VS-RAW",
+   "category": "duplicate key",
+   "description": "a key written as an escaped surrogate pair equals the same key written as the raw character (compared after unescaping): duplicate",
+   "input_json": "{\"\\ud83d\\ude00\":1,\"\ud83d\ude00\":2}",
+   "expected": {
+    "result": "refuse",
+    "code": "json_duplicate_key",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "BI-LONE-SURROGATE-KEYS-DISTINCT",
+   "category": "duplicate key",
+   "description": "two different lone surrogate escapes as keys are two distinct keys (not a duplicate, as a parser that replaces invalid surrogates would see): the document is an object with no binding members, so the first missing member is refused",
+   "input_json": "{\"\\ud800\":1,\"\\ud801\":2}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_missing",
+    "layer": "shape",
+    "member": "activation_ref"
+   }
   }
  ],
  "identifier_matrix": {
@@ -2790,6 +2840,38 @@
     "digest_without_prefix_control": "sha256:cd259530275fbaf2de53546d024ac3b115933e9184dfb5d7b26f51c9064774ec",
     "legacy_payload_only_digest_control": "sha256:b163513a863d3ccb32caa28f9bd5575b5711e6c3d5563d99e40baf9ea6365522"
    }
+  },
+  {
+   "id": "EP-016",
+   "family": "f5-action-class-age-bounds",
+   "description": "object keys (here F5 class names) sort by Unicode code point: U+FF21 before U+10400 in the canonical bytes whatever order the input lists them (the input here lists U+10400 first); UTF-16 code unit order, or JavaScript Object.keys().sort() without a code point comparator, gives different bytes and a different digest",
+   "inputs": {
+    "registry": {
+     "class_status_max_age_seconds": {
+      "\ud801\udc00": 600,
+      "\uff21": 900
+     }
+    },
+    "caller": {
+     "class_status_max_age_seconds": {
+      "\ud801\udc00": 300,
+      "\uff21": 1200
+     }
+    }
+   },
+   "payload": {
+    "class_status_max_age_seconds": {
+     "\ud801\udc00": 300,
+     "\uff21": 900
+    }
+   },
+   "expected": {
+    "preimage_canonical_bytes_hex": "7b22636f6e74726163745f76657273696f6e223a227230382d7632222c2264656e795f616c6c223a5b5d2c22656666656374697665223a7b22636c6173735f7374617475735f6d61785f6167655f7365636f6e6473223a7b225c7566663231223a3930302c225c75643830315c7564633030223a3330307d7d2c226566666563746976655f706f6c6963795f70726f66696c65223a226f63732d6566666563746976652d706f6c6963792f31222c2266616d696c79223a2266352d616374696f6e2d636c6173732d6167652d626f756e6473222c2266616d696c795f76657273696f6e223a227632227d",
+    "preimage_canonical_ascii": "{\"contract_version\":\"r08-v2\",\"deny_all\":[],\"effective\":{\"class_status_max_age_seconds\":{\"\\uff21\":900,\"\\ud801\\udc00\":300}},\"effective_policy_profile\":\"ocs-effective-policy/1\",\"family\":\"f5-action-class-age-bounds\",\"family_version\":\"v2\"}",
+    "effective_policy_digest": "sha256:3895ddad274c481a14b91a98c4c02f67384d57b00c16d304e02d6d2fa5655e3a",
+    "digest_without_prefix_control": "sha256:ba7fc5614ad31d47be1fb77d57da8d2f49bb8d09b5fb47eebded29a628e9634e",
+    "legacy_payload_only_digest_control": "sha256:3c29980975d8bb241285c53a2249c17631e17a8e3b080abe651dd89d236b5674"
+   }
   }
  ],
  "trust_snapshots": [
@@ -3007,6 +3089,75 @@
     "canonical_bytes_hex": "7b2269737375657273223a5b5d2c226d696e5f65706f636873223a5b5d2c227265766f6b65645f6b65795f696473223a5b5d2c227265766f6b65645f73656c656374696f6e73223a5b5d2c22736e617073686f745f6964223a22736e61702d6578616d706c652d37222c2276616c69645f756e74696c223a22323032362d31322d30315430303a30303a30305a222c2276657273696f6e223a377d",
     "canonical_ascii": "{\"issuers\":[],\"min_epochs\":[],\"revoked_key_ids\":[],\"revoked_selections\":[],\"snapshot_id\":\"snap-example-7\",\"valid_until\":\"2026-12-01T00:00:00Z\",\"version\":7}",
     "trust_snapshot_fingerprint": "sha256:865828444f36e98a3dbccd878a6ddb6f9a2ef77a5617aed3cb6b3af4e7eafe52"
+   }
+  },
+  {
+   "id": "TF-005",
+   "description": "snapshot arrays are NORMALIZED (never refused for order) in Unicode code point order: revoked_key_ids and the authority arrays hold a BMP-high character (U+FF21) and a non-BMP one (U+10400) listed in UTF-16 order in the input; a normalizer that sorts by UTF-16 code unit gives a different fingerprint",
+   "input": {
+    "snapshot_id": "snap-example-7",
+    "version": 7,
+    "valid_until": "2026-12-01T00:00:00Z",
+    "issuers": [
+     {
+      "key_id": "key-example-1",
+      "issuer_id": "issuer-a",
+      "alg": "ed25519",
+      "public_key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "authority": [
+       [
+        "runtime-emulator",
+        "tenant-a",
+        "inst-a",
+        "domain-a",
+        "op-audit"
+       ],
+       [
+        "runtime-emulator",
+        "tenant-a",
+        "inst-a",
+        "domain-a",
+        "op-transfer"
+       ],
+       [
+        "runtime-emulator",
+        "tenant-\ud801\udc00",
+        "inst-a",
+        "domain-a",
+        "op-audit"
+       ],
+       [
+        "runtime-emulator",
+        "tenant-\uff21",
+        "inst-a",
+        "domain-a",
+        "op-audit"
+       ]
+      ]
+     }
+    ],
+    "revoked_key_ids": [
+     "key-\ud801\udc00",
+     "key-\uff21",
+     "key-old-1"
+    ],
+    "revoked_selections": [
+     [
+      "sel-old-1",
+      2
+     ]
+    ],
+    "min_epochs": [
+     [
+      "sel-example-f1ab",
+      3
+     ]
+    ]
+   },
+   "expected": {
+    "canonical_bytes_hex": "7b2269737375657273223a5b7b22616c67223a2265643235353139222c22617574686f72697479223a5b5b2272756e74696d652d656d756c61746f72222c2274656e616e742d61222c22696e73742d61222c22646f6d61696e2d61222c226f702d6175646974225d2c5b2272756e74696d652d656d756c61746f72222c2274656e616e742d61222c22696e73742d61222c22646f6d61696e2d61222c226f702d7472616e73666572225d2c5b2272756e74696d652d656d756c61746f72222c2274656e616e742d5c7566663231222c22696e73742d61222c22646f6d61696e2d61222c226f702d6175646974225d2c5b2272756e74696d652d656d756c61746f72222c2274656e616e742d5c75643830315c7564633030222c22696e73742d61222c22646f6d61696e2d61222c226f702d6175646974225d5d2c226973737565725f6964223a226973737565722d61222c226b65795f6964223a226b65792d6578616d706c652d31222c227075626c69635f6b6579223a2230303031303230333034303530363037303830393061306230633064306530663130313131323133313431353136313731383139316131623163316431653166227d5d2c226d696e5f65706f636873223a5b5b2273656c2d6578616d706c652d66316162222c335d5d2c227265766f6b65645f6b65795f696473223a5b226b65792d6f6c642d31222c226b65792d5c7566663231222c226b65792d5c75643830315c7564633030225d2c227265766f6b65645f73656c656374696f6e73223a5b5b2273656c2d6f6c642d31222c325d5d2c22736e617073686f745f6964223a22736e61702d6578616d706c652d37222c2276616c69645f756e74696c223a22323032362d31322d30315430303a30303a30305a222c2276657273696f6e223a377d",
+    "canonical_ascii": "{\"issuers\":[{\"alg\":\"ed25519\",\"authority\":[[\"runtime-emulator\",\"tenant-a\",\"inst-a\",\"domain-a\",\"op-audit\"],[\"runtime-emulator\",\"tenant-a\",\"inst-a\",\"domain-a\",\"op-transfer\"],[\"runtime-emulator\",\"tenant-\\uff21\",\"inst-a\",\"domain-a\",\"op-audit\"],[\"runtime-emulator\",\"tenant-\\ud801\\udc00\",\"inst-a\",\"domain-a\",\"op-audit\"]],\"issuer_id\":\"issuer-a\",\"key_id\":\"key-example-1\",\"public_key\":\"000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f\"}],\"min_epochs\":[[\"sel-example-f1ab\",3]],\"revoked_key_ids\":[\"key-old-1\",\"key-\\uff21\",\"key-\\ud801\\udc00\"],\"revoked_selections\":[[\"sel-old-1\",2]],\"snapshot_id\":\"snap-example-7\",\"valid_until\":\"2026-12-01T00:00:00Z\",\"version\":7}",
+    "trust_snapshot_fingerprint": "sha256:7f70e958838f6fe7ee6c1e47b150e4fef333c69e4cd3acea3e97b7d0c5049eb7"
    }
   }
  ],
@@ -3530,6 +3681,32 @@
     "result": "refuse",
     "code": "field_invalid",
     "member": "allowed_actions"
+   }
+  },
+  {
+   "id": "EI-017",
+   "category": "entry token",
+   "description": "a list entry containing U+0020 (Unicode category Z): entry tokens exclude every C and Z category character, so a space is refused",
+   "family": "f1ab-local-execution-allowlist",
+   "payload_json": "{\"allowed_actions\": [\"a b\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"dom-a\"]}",
+   "role": "effective",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "member": "allowed_actions"
+   }
+  },
+  {
+   "id": "EI-018",
+   "category": "entry token",
+   "description": "an F5 class name containing U+0020: class names are validated as contract section 2 tokens (review N-5)",
+   "family": "f5-action-class-age-bounds",
+   "payload_json": "{\"class_status_max_age_seconds\": {\"bad class\": 30}}",
+   "role": "effective",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "member": "class_status_max_age_seconds"
    }
   }
  ],
@@ -5853,7 +6030,7 @@
   },
   {
    "id": "MP-field_invalid-projection",
-   "defect": "a verified input that cannot be projected into the binding (a statement scope token outside the ASCII grammar, or a trust snapshot version above 2^53 - 1): any projection-stage refusal",
+   "defect": "a verified input that cannot be projected into the binding (a statement scope token outside the ASCII grammar, a trust snapshot version above 2^53 - 1, or a refused derivation of effective_policy_digest): any projection-stage refusal",
    "verdict_class": "REFUSE",
    "registry_code": "field_invalid",
    "decision_kind": "required_policy_unavailable",
@@ -5869,7 +6046,7 @@
     "projection_refusal_code"
    ],
    "source": "spec 5.6",
-   "note": "stage is `projection`; the verified inputs stay verified; no binding is created for any participation. Required: REFUSE (UNKNOWN_FAIL_CLOSED only if consumer state is indeterminate), never the caller policy. Optional: no fallback by itself; any fallback is the consumer authenticated optional-state determination (contract 4.3, 7.4; EXT-S4-2) permitted by the durable activation state, recorded as an absence or withdrawal evidence record carrying projection_refusal_code=field_invalid. Never overlay_not_applied or ACCEPT by itself. member is scope.<name> or trust_snapshot_version."
+   "note": "stage is `projection`; the verified inputs stay verified; no binding is created for any participation. Required: REFUSE (UNKNOWN_FAIL_CLOSED only if consumer state is indeterminate), never the caller policy. Optional: no fallback by itself; any fallback is the consumer authenticated optional-state determination (contract 4.3, 7.4; EXT-S4-2) permitted by the durable activation state, recorded as an absence or withdrawal evidence record carrying projection_refusal_code=field_invalid. Never overlay_not_applied or ACCEPT by itself. member is scope.<name>, trust_snapshot_version or the failing derivation input (family, contract_version, an effective payload member); for a derivation refusal the registry code is that of the failure (family_unsupported, contract_unsupported, field_invalid) and the effects are identical."
   },
   {
    "id": "MP-digest_mismatch",
@@ -6067,7 +6244,13 @@
     "selection_id",
     "selection_epoch"
    ],
-   "source": "contract 7.4 line 5; kit REFUSE"
+   "source": "contract 7.4 line 5; kit REFUSE",
+   "optional_branch": {
+    "decision_kind": "overlay_not_applied",
+    "registry_code": "selection_expired",
+    "applied": false,
+    "only_through": "the authenticated optional-state determination (contract 7.4 line 8(c): an optional row past its verified valid_until); the fallback reason `expired` is preserved in evidence"
+   }
   },
   {
    "id": "MP-selection_not_yet_effective",
@@ -6127,8 +6310,27 @@
    "source": "contract 7.1; kit REFUSE"
   },
   {
+   "id": "MP-trust_snapshot_missing-verify",
+   "defect": "no trust snapshot was supplied to a verification call (the contract 3.3 meaning of the code)",
+   "verdict_class": "UNKNOWN_FAIL_CLOSED",
+   "registry_code": "trust_snapshot_missing",
+   "decision_kind": "required_policy_unavailable",
+   "retry": "after_authoritative_state_available",
+   "evidence_fields": [
+    "registry_code",
+    "layer",
+    "participation",
+    "decision_kind",
+    "stage",
+    "trust_snapshot_version"
+   ],
+   "source": "contract 3.3; conformance README lists the code under UNKNOWN_FAIL_CLOSED only",
+   "note": "one code, one class in every context: UNKNOWN_FAIL_CLOSED (HOLD), never an optional fallback by itself. The verification context (no snapshot supplied to this call) and the guard context (no accepted snapshot in durable state) are told apart by the mandatory evidence field `stage` (`verify` versus `guard`), not by a second code or a second class. Whether contract 3.3 intends one meaning for both contexts is an open owner question (spec section 12, N-11); either answer keeps UNKNOWN_FAIL_CLOSED.",
+   "stage_value": "verify"
+  },
+  {
    "id": "MP-trust_snapshot_missing-guard",
-   "defect": "no accepted snapshot in durable state (support indeterminate)",
+   "defect": "no accepted trust snapshot in durable state (support indeterminate): the guard context of the same code",
    "verdict_class": "UNKNOWN_FAIL_CLOSED",
    "registry_code": "trust_snapshot_missing",
    "decision_kind": "required_policy_unavailable",
@@ -6143,7 +6345,8 @@
     "trust_snapshot_version"
    ],
    "source": "kit UNKNOWN_FAIL_CLOSED (HOLD)",
-   "note": "guard form only: no accepted snapshot in durable state. The verification-layer meaning of the code (no snapshot supplied to a call) is a definitive input fact outside this mapping; it is not a second verdict class of the kit (README lists the code under UNKNOWN_FAIL_CLOSED only)."
+   "note": "guard context only; the verification context has its own row (MP-trust_snapshot_missing-verify). Same code, same class UNKNOWN_FAIL_CLOSED in both; the contexts differ in the evidence field `stage`. Owner question N-11 (spec section 12).",
+   "stage_value": "guard"
   },
   {
    "id": "MP-trust_snapshot_expired-delivered",
@@ -6750,6 +6953,215 @@
     "layer": "shape",
     "member": "selection_id"
    }
+  },
+  {
+   "id": "IBND-DEEP-UNCLOSED-9000",
+   "description": "9000 unclosed '[': syntax first (json_malformed), never json_nesting_too_deep, whatever a parser's recursion limit",
+   "generate": {
+    "kind": "deep_array",
+    "depth": 9000,
+    "inner": "",
+    "closed": false,
+    "tail": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "IBND-DEEP-10000",
+   "description": "a balanced array nested 10000 deep (20 KB, under the size limit): well formed, no number literal, no duplicate: json_nesting_too_deep",
+   "generate": {
+    "kind": "deep_array",
+    "depth": 10000,
+    "inner": "1",
+    "closed": true,
+    "tail": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "json_nesting_too_deep",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "IBND-DEEP-10000-FLOAT",
+   "description": "10000 levels with a float literal inside: number literals precede nesting, so json_number_unsupported at any depth",
+   "generate": {
+    "kind": "deep_array",
+    "depth": 10000,
+    "inner": "1.5",
+    "closed": true,
+    "tail": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "json_number_unsupported",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "IBND-DEEP-10000-TRAILING",
+   "description": "10000 levels balanced, then trailing text: syntax first, json_malformed",
+   "generate": {
+    "kind": "deep_array",
+    "depth": 10000,
+    "inner": "1",
+    "closed": true,
+    "tail": " x"
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "json_malformed",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "IBND-DEEP-10000-DUP",
+   "description": "a duplicate key inside an object 10000 arrays deep: duplicates precede nesting, so json_duplicate_key at any depth",
+   "generate": {
+    "kind": "deep_array",
+    "depth": 10000,
+    "inner": "{\"a\":1,\"a\":2}",
+    "closed": true,
+    "tail": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "json_duplicate_key",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "IBND-DEEP-AT-SIZE-LIMIT",
+   "description": "32768 '[' and 32768 ']' (exactly 65536 bytes): at the size limit, so the nesting refusal, not input_too_large",
+   "generate": {
+    "kind": "deep_array",
+    "depth": 32768,
+    "inner": "",
+    "closed": true,
+    "tail": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "json_nesting_too_deep",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "IBND-DEEP-OVER-SIZE-LIMIT",
+   "description": "32769 pairs (65538 bytes): the size limit precedes everything",
+   "generate": {
+    "kind": "deep_array",
+    "depth": 32769,
+    "inner": "",
+    "closed": true,
+    "tail": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "input_too_large",
+    "layer": "parse",
+    "member": null
+   }
+  },
+  {
+   "id": "IBND-INT-20-DIGITS",
+   "description": "selection_epoch is a 20-digit integer literal: syntactically valid, refused by the per-field range as field_invalid, never json_malformed; exact value path (20 digits is still below the classification length)",
+   "generate": {
+    "kind": "int_literal",
+    "digits": 20,
+    "sign": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "selection_epoch"
+   }
+  },
+  {
+   "id": "IBND-INT-21-DIGITS",
+   "description": "selection_epoch is a 21-digit integer literal: syntactically valid, refused by the per-field range as field_invalid, never json_malformed; classified by literal length, never converted: independent of the interpreter digit limit (PYTHONINTMAXSTRDIGITS 640 or any setting)",
+   "generate": {
+    "kind": "int_literal",
+    "digits": 21,
+    "sign": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "selection_epoch"
+   }
+  },
+  {
+   "id": "IBND-INT-700-DIGITS",
+   "description": "selection_epoch is a 700-digit integer literal: syntactically valid, refused by the per-field range as field_invalid, never json_malformed; classified by literal length, never converted: independent of the interpreter digit limit (PYTHONINTMAXSTRDIGITS 640 or any setting)",
+   "generate": {
+    "kind": "int_literal",
+    "digits": 700,
+    "sign": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "selection_epoch"
+   }
+  },
+  {
+   "id": "IBND-INT-700-DIGITS-NEGATIVE",
+   "description": "selection_epoch is a negative 700-digit integer literal: syntactically valid, refused by the per-field range as field_invalid, never json_malformed; classified by literal length, never converted: independent of the interpreter digit limit (PYTHONINTMAXSTRDIGITS 640 or any setting)",
+   "generate": {
+    "kind": "int_literal",
+    "digits": 700,
+    "sign": "-"
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "selection_epoch"
+   }
+  },
+  {
+   "id": "IBND-INT-3999-DIGITS",
+   "description": "selection_epoch is a 3999-digit integer literal: syntactically valid, refused by the per-field range as field_invalid, never json_malformed; classified by literal length, never converted: independent of the interpreter digit limit (PYTHONINTMAXSTRDIGITS 640 or any setting)",
+   "generate": {
+    "kind": "int_literal",
+    "digits": 3999,
+    "sign": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "selection_epoch"
+   }
+  },
+  {
+   "id": "IBND-INT-4001-DIGITS",
+   "description": "selection_epoch is a 4001-digit integer literal: syntactically valid, refused by the per-field range as field_invalid, never json_malformed; classified by literal length, never converted: independent of the interpreter digit limit (PYTHONINTMAXSTRDIGITS 640 or any setting)",
+   "generate": {
+    "kind": "int_literal",
+    "digits": 4001,
+    "sign": ""
+   },
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "layer": "shape",
+    "member": "selection_epoch"
+   }
   }
  ],
  "projection_stage_refusals": [
@@ -6798,5 +7210,526 @@
    }
   }
  ],
- "projection_stage_refusals_rule": "Any refusal at the projection stage (a scope token, a snapshot version, or any later verified-input-to-binding refusal) creates no binding for any participation and has exactly the participation effects of scope_projection_effects: required refuses (HOLD only if state is indeterminate), optional never falls back by the refusal itself, only through the authenticated optional-state determination; never overlay_not_applied or ACCEPT by itself. The effect function takes no member argument by construction."
+ "projection_stage_refusals_rule": "Any refusal at the projection stage (a scope token, a snapshot version, or any later verified-input-to-binding refusal) creates no binding for any participation and has exactly the participation effects of scope_projection_effects: required refuses (HOLD only if state is indeterminate), optional never falls back by the refusal itself, only through the authenticated optional-state determination; never overlay_not_applied or ACCEPT by itself. The effect function takes no member argument by construction.",
+ "projection_effect_matrix": [
+  {
+   "id": "PEM-11",
+   "refusal_kind": "scope_token",
+   "registry_code": "field_invalid",
+   "participation": "required",
+   "activation_state": "known",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-12",
+   "refusal_kind": "scope_token",
+   "registry_code": "field_invalid",
+   "participation": "required",
+   "activation_state": "indeterminate",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-13",
+   "refusal_kind": "scope_token",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "optional_fallback_via_determination",
+    "fallback_permitted": true,
+    "fallback_evidence_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-14",
+   "refusal_kind": "scope_token",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "forbids_fallback",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-15",
+   "refusal_kind": "scope_token",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "not_authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-16",
+   "refusal_kind": "scope_token",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "indeterminate",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-21",
+   "refusal_kind": "trust_snapshot_version",
+   "registry_code": "field_invalid",
+   "participation": "required",
+   "activation_state": "known",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-22",
+   "refusal_kind": "trust_snapshot_version",
+   "registry_code": "field_invalid",
+   "participation": "required",
+   "activation_state": "indeterminate",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-23",
+   "refusal_kind": "trust_snapshot_version",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "optional_fallback_via_determination",
+    "fallback_permitted": true,
+    "fallback_evidence_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-24",
+   "refusal_kind": "trust_snapshot_version",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "forbids_fallback",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-25",
+   "refusal_kind": "trust_snapshot_version",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "not_authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-26",
+   "refusal_kind": "trust_snapshot_version",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "indeterminate",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-31",
+   "refusal_kind": "effective_family_unsupported",
+   "registry_code": "family_unsupported",
+   "participation": "required",
+   "activation_state": "known",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-32",
+   "refusal_kind": "effective_family_unsupported",
+   "registry_code": "family_unsupported",
+   "participation": "required",
+   "activation_state": "indeterminate",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-33",
+   "refusal_kind": "effective_family_unsupported",
+   "registry_code": "family_unsupported",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "optional_fallback_via_determination",
+    "fallback_permitted": true,
+    "fallback_evidence_code": "family_unsupported",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-34",
+   "refusal_kind": "effective_family_unsupported",
+   "registry_code": "family_unsupported",
+   "participation": "optional",
+   "activation_state": "forbids_fallback",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-35",
+   "refusal_kind": "effective_family_unsupported",
+   "registry_code": "family_unsupported",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "not_authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-36",
+   "refusal_kind": "effective_family_unsupported",
+   "registry_code": "family_unsupported",
+   "participation": "optional",
+   "activation_state": "indeterminate",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-41",
+   "refusal_kind": "effective_contract_unsupported",
+   "registry_code": "contract_unsupported",
+   "participation": "required",
+   "activation_state": "known",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-42",
+   "refusal_kind": "effective_contract_unsupported",
+   "registry_code": "contract_unsupported",
+   "participation": "required",
+   "activation_state": "indeterminate",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-43",
+   "refusal_kind": "effective_contract_unsupported",
+   "registry_code": "contract_unsupported",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "optional_fallback_via_determination",
+    "fallback_permitted": true,
+    "fallback_evidence_code": "contract_unsupported",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-44",
+   "refusal_kind": "effective_contract_unsupported",
+   "registry_code": "contract_unsupported",
+   "participation": "optional",
+   "activation_state": "forbids_fallback",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-45",
+   "refusal_kind": "effective_contract_unsupported",
+   "registry_code": "contract_unsupported",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "not_authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-46",
+   "refusal_kind": "effective_contract_unsupported",
+   "registry_code": "contract_unsupported",
+   "participation": "optional",
+   "activation_state": "indeterminate",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-51",
+   "refusal_kind": "effective_payload_field_invalid",
+   "registry_code": "field_invalid",
+   "participation": "required",
+   "activation_state": "known",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-52",
+   "refusal_kind": "effective_payload_field_invalid",
+   "registry_code": "field_invalid",
+   "participation": "required",
+   "activation_state": "indeterminate",
+   "optional_determination": "n/a",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-53",
+   "refusal_kind": "effective_payload_field_invalid",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "optional_fallback_via_determination",
+    "fallback_permitted": true,
+    "fallback_evidence_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-54",
+   "refusal_kind": "effective_payload_field_invalid",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "forbids_fallback",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-55",
+   "refusal_kind": "effective_payload_field_invalid",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "not_authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "REFUSE",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  },
+  {
+   "id": "PEM-56",
+   "refusal_kind": "effective_payload_field_invalid",
+   "registry_code": "field_invalid",
+   "participation": "optional",
+   "activation_state": "indeterminate",
+   "optional_determination": "authenticated",
+   "expected": {
+    "binding_created": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "fallback_permitted": false,
+    "fallback_evidence_code": null,
+    "yields_overlay_not_applied": false,
+    "yields_accept": false
+   }
+  }
+ ],
+ "projection_effect_invalid": [
+  {
+   "id": "PEI-001",
+   "participation": "OPTIONAL",
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "description": "participation must be exactly `required` or `optional` (case-sensitive); any other value is refused, never read as optional",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "member": "participation"
+   }
+  },
+  {
+   "id": "PEI-002",
+   "participation": null,
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "description": "a missing participation is refused, never read as optional",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "member": "participation"
+   }
+  },
+  {
+   "id": "PEI-003",
+   "participation": "",
+   "activation_state": "known",
+   "optional_determination": "n/a",
+   "description": "an empty participation is refused",
+   "expected": {
+    "result": "refuse",
+    "code": "field_invalid",
+    "member": "participation"
+   }
+  }
+ ],
+ "projection_effect_matrix_rule": "Every projection-stage refusal kind (scope token, snapshot version, and each refused derivation of effective_policy_digest) has one and the same effect for a given participation, activation state and optional-state determination; the effect function takes no refusal kind and no member. Residuals recorded for the Architect, not decided here: (1) a refused projection leaves the scope reading never-activated, the state that permits the optional fallback; (2) a verified snapshot version above 2^53 - 1 affects every scope at once."
 }
