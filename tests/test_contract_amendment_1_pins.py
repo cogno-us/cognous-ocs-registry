@@ -188,6 +188,16 @@ def test_revision_designation_is_not_a_contract_version_and_no_second_registry()
     assert "### 6.7 Compatibility and migration" in amend and "One registry rule." in amend
     # the three codes are not in any parallel registry file of this checkout, and the existing sets are untouched
     import registry_successor.v2_codes as v2c
+    from registry_successor import common as c
 
-    assert not any(hasattr(v2c, n) for n in ("CODES_V2_REV2", "CODES_V2_1"))
-    assert len(v2c.CODES_V2) == 48
+    # the withdrawn draft symbol must never exist; the revision-2 symbol may be absent (this PR) or, once the EXT-S1-5
+    # implementation PR declares it, must be exactly CODES_V2 plus the three documented codes with the documented layers
+    assert not hasattr(v2c, "CODES_V2_1")
+    assert len(v2c.CODES_V2) == 48 and list(v2c.CODES_V2)[:46] == list(c.CODES)
+    rev2 = getattr(v2c, "CODES_V2_REV2", None)
+    if rev2 is not None:
+        assert len(rev2) == 51
+        assert list(rev2)[:48] == list(v2c.CODES_V2), "revision 2 must begin with revision 1, in order"
+        assert all(rev2[k] == v2c.CODES_V2[k] for k in v2c.CODES_V2), "revision 1 entries must be unchanged"
+        assert tuple(list(rev2)[48:]) == NEW_CODES
+        assert [rev2[k][0] for k in NEW_CODES] == ["selection", "identity", "trust"]
