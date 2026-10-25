@@ -63,8 +63,8 @@ string that does not match; the verdict and retry class are the same, the loader
 
 Rulings N-10 to N-12 are RULED and implemented (syntax-first parse, strict ints, typed INPUT / DURABLE_STATE stage, unknown store HOLD, a refused projection is never
 never-activated). N-13 is RULED but its frozen Unicode table (PR #35, not merged) is not adopted here: the token rule still follows the platform Unicode database
-through `common.valid_token` and an ambiguous token is not yet refused by table. N-10(c) (whether the VERIFIER also enforces the 2^53 - 1 ceiling before projection)
-stays OPEN; the ceiling is enforced here by the snapshot shape guard and the projection stage.
+through `common.valid_token` and an ambiguous token is not yet refused by table. N-10(c) is RULED (Architect final ruling): the 2^53 - 1 representation bound is applied at INGEST in `trust_snapshot_from_verified`
+(`trust_snapshot_invalid`, stage `ingest`, member `trust_snapshot_version`; the code and stage names are PROPOSED pending Architect confirmation, PR #35 spec 5.5.2); the snapshot shape guard and the projection stage remain second lines of defence.
 
 Pure: no files, no clock, no state. Digests give integrity, never authentication.
 """
@@ -100,7 +100,7 @@ _INT_BOUND = 10 ** _MAX_EXACT_DIGITS  # the serializer refuses an integer of 20 
 INTEGER_RANGES = MappingProxyType({
     "record_version": (1, 2147483647),
     "selection_epoch": (1, 2147483647),
-    "trust_snapshot_version": (1, 9007199254740991),  # N-1: component-owner-derived (no source ceiling); N-10(c) verifier ceiling still OPEN
+    "trust_snapshot_version": (1, 9007199254740991),  # N-1: component-owner-derived (no source ceiling); N-10(c) RULED: the bound is also applied at ingest, `trust_snapshot_from_verified`
 })
 AGE_RANGES = MappingProxyType({
     "registry": (1, 2147483647),
@@ -692,7 +692,12 @@ _ROW_DIGEST_PATHS = frozenset(("scope_key", "selection_digest", "record_digest",
 def _authoritative_row_ok(row: Any) -> bool:
     """The consumer-owned durable row as the comparison needs it: exactly the eight values, each in its binding grammar. Anything else means the
     authoritative state is not usable (the caller maps that to `store_unknown`, never to a fallback)."""
-    if type(row) is not dict or set(row) != set(POLICY_IDENTITY_MEMBER_VALUES):
+    if type(row) is not dict:
+        return False
+    for k in row:  # every key is an exact str BEFORE any set comparison: a str subclass with a raising `__eq__` must refuse here, not leak from the comparison
+        if type(k) is not str:
+            return False
+    if set(row) != set(POLICY_IDENTITY_MEMBER_VALUES):
         return False
     for k, v in row.items():
         if type(k) is not str:
@@ -749,11 +754,12 @@ def verify_carried_binding_digest(binding: dict, carried: Any, authoritative: An
     no identity and no context, and a caller that needs the identity guarantee MUST pass the row (the guard, EXT-S4-2, is the consumer).
     WARNING: `authoritative=None` is NOT an identity verification. A matching digest proves only that the binding is internally consistent; it never shows that the
     binding names the activated policy, scope or epoch. Do not use the None form as a guard."""
-    recomputed = checked_binding_digest(binding)
+    b = validate_binding(binding)  # ONE private validated copy: the digest and the identity below are both of THIS copy (no mutation of the caller's object between them)
+    recomputed = binding_digest(b)
     if not (type(carried) is str and _ascii_match(_DIGEST, carried)):
         _refuse("field_invalid", evidence={"observed_value_class": _value_class(carried)})
     if authoritative is not None:
-        compare_binding_identity(binding, authoritative)
+        compare_binding_identity(b, authoritative)
     if carried != recomputed:
         _refuse("digest_mismatch", evidence={"carried_digest": carried, "recomputed_digest": recomputed})
     return recomputed
@@ -899,8 +905,21 @@ def trust_snapshot_from_verified(trust: Any) -> dict:
     grant inside one issuer), so a snapshot that passes the verifier can still be refused here, never the reverse."""
     if trust is None:
         _refuse("trust_snapshot_missing", None, "verify")
+    if type(trust) is _verify.TrustSnapshot:
+        # N-10(c) ingest bound (PROPOSED mapping, PR #35 spec 5.5.2): the representation bound is applied to the delivered version BEFORE the snapshot is used in
+        # authority evaluation (`_normalize_trust`), the fingerprint or any projection; `bool`, floats, strings, None and out-of-range ints never get further.
+        version = trust.version
+        if not _snapshot_version_ok(version):
+            _refuse("trust_snapshot_invalid", "trust_snapshot_version", "ingest",
+                    evidence={"expected_range": INTEGER_RANGES["trust_snapshot_version"], "observed_value_class": _value_class(version)})
     try:
-        if type(trust) is not _verify.TrustSnapshot or _verify._normalize_trust(trust) is None:
+        if type(trust) is not _verify.TrustSnapshot:
+            raise TypeError
+        # `min_epochs` is read more than once below and `_normalize_trust` iterates it: a one-shot iterator would be consumed and then fingerprint as an empty
+        # floor list. Only a re-iterable container is admitted (an exact dict or mapping proxy, a tuple or a list); anything else is refused before normalization.
+        if type(trust.min_epochs) not in (dict, MappingProxyType, tuple, list):
+            raise TypeError
+        if _verify._normalize_trust(trust) is None:
             raise TypeError
         if not (type(trust.issuers) in _SEQUENCE_TYPES and type(trust.revoked_key_ids) in _SET_TYPES and type(trust.revoked_selections) in _SET_TYPES):
             raise TypeError
@@ -965,7 +984,7 @@ def project_scope(statement_scope: Any) -> dict:
 
 def project_snapshot_version(version: Any) -> int:
     """A verified snapshot version the binding cannot carry (above 2^53 - 1, or not a strict int in range) refuses `field_invalid` at
-    `trust_snapshot_version` at the PROJECTION stage. Whether the verifier should also cap it is OPEN (N-10(c)); this is the projection-stage rule."""
+    `trust_snapshot_version` at the PROJECTION stage. The ingest-stage bound (N-10(c)) is applied earlier, in `trust_snapshot_from_verified`; this is the second line of defence."""
     lo, hi = INTEGER_RANGES["trust_snapshot_version"]
     if not _in_range(version, lo, hi):
         _projection_refusal("trust_snapshot_version", expected_range=(lo, hi))
@@ -977,6 +996,9 @@ def project_snapshot_version(version: Any) -> int:
 #   effective_family_unsupported / effective_contract_unsupported / effective_payload_field_invalid -> project_effective_policy_digest.
 PROJECTION_REFUSAL_KINDS = ("scope_token", "trust_snapshot_version", "effective_family_unsupported", "effective_contract_unsupported",
                             "effective_payload_field_invalid")
+
+
+PROJECTION_REFUSAL_CODES = frozenset(("field_invalid", "family_unsupported", "contract_unsupported"))  # the codes of the five kinds above
 
 
 def _text_or_none(v: Any) -> Any:
@@ -1008,9 +1030,10 @@ def projection_effect(participation: Any, activation_state: Any, determination: 
 
 def projection_effect_for(refusal_code: str, participation: Any, activation_state: Any, determination: Any) -> dict:
     """Join a refusal's own code with the single effect function: the code is the only thing a refusal contributes (to the fallback evidence). The code
-    is a programmer argument: anything but a `CODES_V2_REV2` string is a ValueError, never a typed refusal."""
-    if type(refusal_code) is not str or refusal_code not in CODES_V2_REV2:
-        raise ValueError("refusal code outside CODES_V2_REV2 (got a %s)" % type(refusal_code).__name__)
+    is a programmer argument: anything but one of the three codes the five projection-refusal kinds use (`PROJECTION_REFUSAL_CODES`) is a ValueError, never a
+    typed refusal, so a durable-state code (`store_unknown`, `policy_identity_mismatch`, `not_activated`, ...) can never be turned into a fallback."""
+    if type(refusal_code) is not str or refusal_code not in PROJECTION_REFUSAL_CODES:
+        raise ValueError("refusal code is not a projection-refusal code (got a %s)" % type(refusal_code).__name__)
     out = projection_effect(participation, activation_state, determination)
     if out["fallback_evidence"] is not None:
         out = {**out, "fallback_evidence": {**out["fallback_evidence"], "projection_refusal_code": refusal_code}}

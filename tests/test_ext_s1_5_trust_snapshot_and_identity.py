@@ -409,6 +409,78 @@ def test_s1_order_row_key_then_epoch_then_remaining_members():
     assert (e.code, e.member) == ("policy_identity_mismatch", "selection_epoch")
 
 
+def test_one_validated_copy_serves_the_digest_and_the_identity_check():
+    """Review (Copilot) 1: a binding mutated by another thread between the digest check and the identity check cannot make the digest of A pass with the
+    identity of B. The binding is validated ONCE; both checks read that private copy, so the caller's later mutation changes nothing."""
+    b = _binding()
+    digest, row = m.checked_binding_digest(b), _row(b)
+
+    real = m.binding_digest
+    seen = []
+
+    def spy(doc):
+        seen.append(doc)
+        b["selection_id"] = "sel-mutated"  # the caller's object changes right after the first (and only) validation
+        return real(doc)
+
+    m.binding_digest = spy
+    try:
+        assert m.verify_carried_binding_digest(b, digest, row) == digest
+    finally:
+        m.binding_digest = real
+    assert seen and all(d["selection_id"] != "sel-mutated" for d in seen)
+
+
+def test_one_shot_min_epochs_is_refused_not_fingerprinted_as_empty():
+    for floors in (iter([("sel-a", 3)]), (x for x in [("sel-a", 3)]), {("sel-a", 3)}, frozenset({("sel-a", 3)}), "ab", None, 5):
+        e = _refusal(m.trust_snapshot_from_verified, _snap(min_epochs=floors))
+        assert e.code == "trust_snapshot_invalid", floors
+        assert _refusal(m.trust_snapshot_fingerprint_from_verified, _snap(min_epochs=floors)).code == "trust_snapshot_invalid"
+    for floors in ({"sel-a": 3}, (("sel-a", 3),), [("sel-a", 3)]):
+        assert m.trust_snapshot_from_verified(_snap(min_epochs=floors))["min_epochs"] == [["sel-a", 3]]
+
+
+@pytest.mark.parametrize("code", ("store_unknown", "policy_identity_mismatch", "not_activated", "selection_missing", "trust_snapshot_invalid", "selection_expired"))
+def test_projection_effect_for_accepts_only_the_three_projection_codes(code):
+    for participation, state, det in (("optional", "permits_optional", "authenticated"), ("optional", "known", "authenticated"), ("required", "known", "n/a")):
+        with pytest.raises(ValueError):
+            m.projection_effect_for(code, participation, state, det)
+    for ok in ("field_invalid", "family_unsupported", "contract_unsupported"):
+        assert m.projection_effect_for(ok, "optional", "permits_optional", "unauthenticated")["fallback_permitted"] is False
+
+
+def test_row_key_with_a_raising_eq_refuses_as_store_unknown_not_an_exception():
+    class Evil(str):
+        def __eq__(self, other):
+            raise RuntimeError("hostile __eq__")
+
+        __hash__ = str.__hash__
+
+    b = _binding()
+    row = _row(b)
+    row[Evil("selection_id")] = row.pop("selection_id")
+    assert _refusal(m.compare_binding_identity, b, row).code == "store_unknown"
+    assert _refusal(m.verify_carried_binding_digest, b, m.checked_binding_digest(b), row).code == "store_unknown"
+
+
+@pytest.mark.parametrize("text,ok", (("1", 1), ("2147483648", 2147483648), ("9007199254740991", 9007199254740991)))
+def test_ingest_bound_accepts_the_representation_range(text, ok):
+    assert m.trust_snapshot_from_verified(_snap(version=ok))["version"] == ok
+
+
+@pytest.mark.parametrize("version", (0, -1, 2 ** 53, 10 ** 40, 10 ** 700, 7.0, "7", True, False, None, [7]))
+def test_ingest_bound_refuses_before_authority_evaluation(version, monkeypatch):
+    """N-10(c) (PR #35 SIB-004..013): refused at ingest as trust_snapshot_invalid, stage ingest, member trust_snapshot_version, before `_normalize_trust`."""
+    from registry_successor import verify as vm
+    calls = []
+    monkeypatch.setattr(vm, "_normalize_trust", lambda t: calls.append(t))
+    e = _refusal(m.trust_snapshot_from_verified, _snap(version=version))
+    assert (e.code, e.stage, e.member) == ("trust_snapshot_invalid", "ingest", "trust_snapshot_version")
+    assert calls == []  # authority evaluation never reached
+    assert m.mapping_row_for(e).verdict_class == "REFUSE"
+    assert _refusal(m.trust_snapshot_fingerprint_from_verified, _snap(version=version)).stage == "ingest"
+
+
 def _bad_rows():
     b = _binding()
     good = _row(b)
