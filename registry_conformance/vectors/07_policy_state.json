@@ -1,0 +1,1344 @@
+{
+ "schema": "ocs-conformance-vectors/1",
+ "label": "SYNTHETIC-TEST-ONLY",
+ "status": "IMPLEMENTED / DEVELOPER-TESTED; not independently qualified",
+ "scope_base": {
+  "consumer_id": "runtime-emulator",
+  "tenant": "tenant-a",
+  "institution": "inst-a",
+  "authority_domain": "domain-a",
+  "operation": "op-transfer",
+  "family": "f1ab-local-execution-allowlist"
+ },
+ "defaults": {
+  "select": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "valid_from": 100,
+   "valid_until": 1000,
+   "issuer_key_id": "key-1",
+   "supersedes": null,
+   "record": {
+    "record_id": "rec-1",
+    "record_version": 1,
+    "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+   },
+   "issuer_id": "issuer-1"
+  },
+  "withdraw": {
+   "now": 200,
+   "verified": true,
+   "participation": "optional",
+   "issuer_key_id": "key-1",
+   "issuer_id": "issuer-1"
+  },
+  "sync": {
+   "now": 200
+  },
+  "external_floor": {
+   "now": 200
+  },
+  "read": {
+   "now": 200
+  },
+  "guard": {
+   "now": 300
+  },
+  "restore": {
+   "now": 200
+  },
+  "lose_state": {
+   "now": 200
+  },
+  "rebaseline": {
+   "now": 200
+  },
+  "relax_scope_required": {
+   "now": 200
+  }
+ },
+ "vectors": [
+  {
+   "id": "PS-01-not-selected-and-selected-not-activated",
+   "title": "No row: not_selected; a known but unactivated selection: selected_not_activated",
+   "cites": [
+    "contract 7.2",
+    "ADR D-05"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "not_selected",
+      "display": "DISABLED"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "selected_not_activated",
+      "display": "selected_not_activated"
+     },
+     "known_selection": {
+      "selection_id": "sel-a",
+      "epoch": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-02-active-and-enabled",
+   "title": "An active in-window row is ENABLED; ENABLED is presentation only",
+   "cites": [
+    "contract 7.2",
+    "ADR D-05"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-03-optional-displays",
+   "title": "Optional scope: withdrawn and not_selected are DISABLED; revoked and expired show their own reason; a higher unactivated epoch does not supersede",
+   "cites": [
+    "ADR D-05",
+    "ruling R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 5000,
+     "expect": {
+      "policy_state": "expired",
+      "display": "expired"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     },
+     "known_selection": {
+      "selection_id": "sel-a",
+      "epoch": 2
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "withdrawn",
+      "display": "DISABLED"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         2
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked",
+      "display": "revoked"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-04-required-never-success-or-disabled",
+   "title": "A required scope that is withdrawn, revoked, expired, superseded by the floor, unavailable or not activated reads REQUIRED - UNAVAILABLE",
+   "cites": [
+    "ADR D-05",
+    "contract 7.2",
+    "ruling R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 5000,
+     "expect": {
+      "policy_state": "expired",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     },
+     "known_selection": {
+      "selection_id": "sel-a",
+      "epoch": 2
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         2
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "superseded",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "withdrawn",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         2
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         2
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    },
+    {
+     "op": "tear",
+     "kind": "log_entry_corrupted"
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "unknown",
+      "display": "REQUIRED \u2014 UNAVAILABLE"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-05-precedence-revoked-over-withdrawn",
+   "title": "Precedence: a withdrawn row whose epoch is revoked reads revoked",
+   "cites": [
+    "contract 7.2 precedence"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "withdrawn"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         2
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-06-precedence-withdrawn-over-superseded",
+   "title": "Precedence: withdrawn beats superseded (min_epochs floor above the row epoch)",
+   "cites": [
+    "contract 7.2 precedence",
+    "ruling R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:224859502b036929eed2d74ab2ec5b04a110ec7947d532fb3d2ba13425e30515",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "withdrawn"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         3
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "withdrawn"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-07-precedence-superseded-over-expired",
+   "title": "Precedence: superseded (min_epochs floor) beats expired; expired beats active",
+   "cites": [
+    "contract 7.2 precedence",
+    "ruling R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 5000,
+     "expect": {
+      "policy_state": "expired"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         2
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 5000,
+     "expect": {
+      "policy_state": "superseded"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-08-precedence-unknown-over-revoked",
+   "title": "Precedence: unknown beats revoked",
+   "cites": [
+    "contract 7.2 precedence"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [
+        [
+         "sel-a",
+         1
+        ]
+       ],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "revoked"
+     }
+    },
+    {
+     "op": "tear",
+     "kind": "state_ahead_of_log",
+     "scope": "A"
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "unknown"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-09-not-yet-valid-and-expired-edges",
+   "title": "not_yet_valid before valid_from, expired at valid_until, exact edges",
+   "cites": [
+    "contract 7.2",
+    "clock-skew edge"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 99,
+     "expect": {
+      "policy_state": "not_yet_valid"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 100,
+     "expect": {
+      "policy_state": "active"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 999,
+     "expect": {
+      "policy_state": "active"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 1000,
+     "expect": {
+      "policy_state": "expired"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-10-lost-store-is-unknown",
+   "title": "A lost or restored-unknown store derives unknown, never not_selected",
+   "cites": [
+    "ADR D-24"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "lose_state"
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_lost"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "unknown"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-11-higher-unactivated-epoch-does-not-supersede",
+   "title": "A higher UNACTIVATED epoch observed (known, unverified, gap-skipping) does not make the active row superseded and activates nothing",
+   "cites": [
+    "contract 7.1",
+    "contract 7.2",
+    "ruling R3",
+    "ADR D-05"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 2,
+      "high_water": {
+       "A": 1
+      },
+      "row": {
+       "A": {
+        "activation_state": "active",
+        "epoch": 1
+       }
+      }
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     },
+     "known_selection": {
+      "selection_id": "sel-a",
+      "epoch": 2
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     },
+     "known_selection": {
+      "selection_id": "sel-a",
+      "epoch": 99
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      },
+      "verified": false
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "statement_not_verified"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:2b4f6d09056a6dff68c83c007c5657fa3deac4042e6edf0413c8536fcd5f6b85",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_supersession_invalid"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "selection_supersession_invalid"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 2,
+      "evidence_count": 3,
+      "high_water": {
+       "A": 1
+      },
+      "row": {
+       "A": {
+        "activation_state": "active",
+        "epoch": 1
+       }
+      }
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     },
+     "known_selection": {
+      "selection_id": "sel-a",
+      "epoch": 3
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "claim": {
+       "scope": "A",
+       "binding": {
+        "selection_epoch": 1,
+        "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+        "record": {
+         "record_id": "rec-1",
+         "record_version": 1,
+         "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+        },
+        "activation_ref": {
+         "$row": {
+          "scope": "A",
+          "field": "activation_ref"
+         }
+        },
+        "trust_snapshot_version": 1,
+        "trust_snapshot_fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80"
+       }
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "guard_pass",
+      "applied": true
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "claim": {
+       "scope": "A",
+       "binding": {
+        "selection_epoch": 2,
+        "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+        "record": {
+         "record_id": "rec-1",
+         "record_version": 1,
+         "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+        },
+        "activation_ref": {
+         "$row": {
+          "scope": "A",
+          "field": "activation_ref"
+         }
+        },
+        "trust_snapshot_version": 1,
+        "trust_snapshot_fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80"
+       }
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "policy_identity_mismatch"
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-12-supersession-needs-an-activated-newer-selection",
+   "title": "superseded for an earlier identity is derived only once a newer selection is ACTIVATED (selection and activation stay distinct)",
+   "cites": [
+    "contract 7.1",
+    "contract 7.2",
+    "ruling R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "selected_not_activated"
+     },
+     "epoch": 2
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     },
+     "epoch": 1
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "superseded"
+     },
+     "epoch": 1
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     },
+     "epoch": 2
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "selected_not_activated"
+     },
+     "epoch": 3
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 2,
+      "high_water": {
+       "A": 2
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "PS-13-floor-advances-knowledge-without-activation",
+   "title": "A verified min_epochs floor advances anti-rollback knowledge (row superseded, guard stale) but activates and withdraws nothing",
+   "cites": [
+    "contract 7.1",
+    "contract 7.4 line 3",
+    "ruling R3"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "claim": {
+       "scope": "A",
+       "binding": {
+        "selection_epoch": 1,
+        "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+        "record": {
+         "record_id": "rec-1",
+         "record_version": 1,
+         "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+        },
+        "activation_ref": {
+         "$row": {
+          "scope": "A",
+          "field": "activation_ref"
+         }
+        },
+        "trust_snapshot_version": 1,
+        "trust_snapshot_fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80"
+       }
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "guard_pass",
+      "applied": true
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": [
+        [
+         "sel-a",
+         2
+        ]
+       ]
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 3,
+      "high_water": {
+       "A": 1
+      },
+      "row": {
+       "A": {
+        "activation_state": "active",
+        "epoch": 1
+       }
+      }
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "superseded",
+      "display": "superseded"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "claim": {
+       "scope": "A",
+       "binding": {
+        "selection_epoch": 1,
+        "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+        "record": {
+         "record_id": "rec-1",
+         "record_version": 1,
+         "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+        },
+        "activation_ref": {
+         "$row": {
+          "scope": "A",
+          "field": "activation_ref"
+         }
+        },
+        "trust_snapshot_version": 2,
+        "trust_snapshot_fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211"
+       }
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "selection_epoch_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     }
+    }
+   ]
+  }
+ ]
+}
