@@ -2,7 +2,7 @@
 
 - Status: **AMENDMENT 1 to [ADR EXT-S1-1](2026-10-25-adr-ext-s1-1-v1-contract.md), effective on merge.** Documentation only. Authorizes no implementation, no source edit, no activation, no qualification. RELEASE: HOLD. PUBLICATION: HOLD. PRODUCTION: HOLD.
 - Companion normative text: [`docs/r08-v2-contract-amendment-1.md`](../r08-v2-contract-amendment-1.md) (the contract amendment; this record states the decisions and their provenance, the contract amendment states the rules, the worked examples and the code definitions).
-- Authorization: the Architect authorized "one small documentation amendment covering: D-27 AGE_MAX decision; Effective-policy digest preimage; Canonical worked example; Versioned identifier rules; Source and decision provenance", with "Do not rewrite previously frozen historical records. Add a versioned clarification." The Architect's N-4 ruling: the three proposed codes `not_activated`, `policy_identity_mismatch` and `store_unknown` carry required semantic distinctions and "may enter the versioned v2 reason registry through an explicit additive amendment. Do not change the closed v1 vocabulary. Do not overload an existing code if doing so would erase an authority-relevant distinction."
+- Authorization: the Architect authorized "one small documentation amendment covering: D-27 AGE_MAX decision; Effective-policy digest preimage; Canonical worked example; Versioned identifier rules; Source and decision provenance", with "Do not rewrite previously frozen historical records. Add a versioned clarification." The Architect's **Batch 6 rulings** (4.3, 4.7, N-10 to N-13) are recorded in decision A1-07 below. The Architect's N-4 ruling: the three proposed codes `not_activated`, `policy_identity_mismatch` and `store_unknown` carry required semantic distinctions and "may enter the versioned v2 reason registry through an explicit additive amendment. Do not change the closed v1 vocabulary. Do not overload an existing code if doing so would erase an authority-relevant distinction."
 - Evidence rule: as in the frozen ADR, statements about component behaviour are source readings and builder tests, not qualified results.
 
 ## 1. Frozen records are not rewritten
@@ -29,6 +29,9 @@ Rule set `ocs-identifier-rules/1`: binding identifiers match `\A[A-Za-z0-9][A-Za
 **A1-06 Family-version identity (clarifies contract 4 policy context; ruling N-3).**
 The `family_version` comes from the registered, authenticated family contract (the section 2 table tag) and cannot be selected by the caller independently of the family. Contract amendment section 7.
 
+**A1-07 Batch 6 rulings (clarifies D-02, contract 3.3 and the unknown-store rule of contract 8; rulings 4.3, 4.7, N-10 to N-13).**
+RULED: `r08-v2-reasons/2` and `CODES_V2_REV2` are confirmed (48 + 3 = 51). `policy_identity_mismatch` accounts for all applicable authoritative identity members of the complete declared canonical binding version (`scope_key`, `selection_id`, `selection_epoch`, `selection_digest`, selected record identity, `activation_ref`); a definitively stale epoch is `REFUSE_STALE`, not an identity mismatch; no member absent from a historical contract version is manufactured. An unknown store is `HOLD` / `UNKNOWN_FAIL_CLOSED`, never `overlay_not_applied` merely because state is unknown; a refused projection does not establish never-activated; optional fallback needs authenticated consumer-owned state; `family_unsupported` and `contract_unsupported` are definitive `REFUSE`. `trust_snapshot_missing` stays one code with a typed, versioned evidence stage (INPUT, DURABLE_STATE) and malformed input is never called missing. N-10 (syntax-first v2 identity parsing; `snapshot_version` in `[1, 2^53-1]`) and N-13 (frozen Unicode token definition; ambiguous tokens refuse) are recorded in the contract amendment section 10. The kit and the PR #30 mapping differ from ruling 4.3 on overlapping cases; the alignment is owned by the PR #30 alignment PR, and this amendment edits neither. Contract amendment sections 5.3, 6.1, 6.4, 7 and 10; supersession row S-13.
+
 ## 3. Provenance of every ruling and source used
 
 Architect rulings are cited by topic and date. Project documents named below are **recorded in the OCS Project, not in this repository**, and are not copied here. Where this ADR relies on a ruling that is only recorded in the Project, the repository-side reader should treat the contract amendment's rule text as the repository record.
@@ -43,13 +46,14 @@ Architect rulings are cited by topic and date. Project documents named below are
 | N-3 family-version identity | Architect ruling (relayed in the brief for this PR), recorded as a clarification only | OCS Project (not in this repository) | A1-06 |
 | N-4 additive reason codes | Architect Batch 4 ruling (PR #30 section 12 N-4) | OCS Project docs as above; PR #30 spec section 8.2 (pending) | A1-05 |
 | Track C authorization of one small documentation amendment | Architect | OCS Project (Track C authorization, relayed in the brief for this PR) | The whole amendment |
+| Batch 6 rulings 4.3, 4.7, N-10, N-11, N-12, N-13 | Architect Batch 6 rulings | OCS Project (not in this repository) | A1-07 |
 | Four-verdict vocabulary (`ACCEPT`, `REFUSE`, `REFUSE_STALE`, `UNKNOWN_FAIL_CLOSED`), ruling R1 | Architect | This repository: `docs/conformance/README.md` (registry PR #28, merged) | A1-05 verdict classes |
 
 Pull requests and heads referenced:
 
 | Reference | Head or merge | State when this amendment was written | Cited as |
 |---|---|---|---|
-| Registry PR #30 `docs(ext-s1-5): effective-policy identity spec and golden vectors` | `ad95f27201e46b2c838741915aee17d7cc2e5c28` | open, not merged | **pending/proposed** provenance only |
+| Registry PR #30 `docs(ext-s1-5): effective-policy identity spec and golden vectors` | `ad95f27201e46b2c838741915aee17d7cc2e5c28` (at drafting); since **merged** as `ab622503633e896bf9a12e518152298268bc50c9` (head `6f17a58e06b0a09501cc3d6e4cac5a491c5c7bb2`) | open at drafting, now merged | provenance; the quoted head is historical |
 | Registry PR #31 `EXT-S1-4: F4/F5 integer-second age families` (draft; `DR-CP-AGE-1`) | `17d50c3443ccd96ab95d5c1a0a925845ff1c6f7b` | open draft, not merged | **pending/proposed** provenance only |
 | Registry PR #29 `EXT-S1-3` | merge `f618cdf` (`origin/main`) | merged | Repository baseline of this amendment |
 | Registry PR #22 (P1 extraction plan) | merge `d2c472e4a09543228bad62235e07a0dedfd7f48b` | merged | Plan baseline (as cited by the frozen ADR) |

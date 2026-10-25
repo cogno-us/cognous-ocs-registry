@@ -69,6 +69,7 @@ ANCHORS = {
     "S-10": ("contract", "### 4.1 Serialization and digest", "v1 scope tokens may carry Unicode, which `r08-v2` refuses"),
     "S-11": ("contract", "### 3.3 Closed codes (D-02)", "`CODES_V2` = the 46 `r08-v1` `CODES` entries (unchanged, same layers and meanings) plus exactly two additions"),
     "S-12": ("map", "", '"code_count": 48'),
+    "S-13": ("contract", "## 8", "optional scopes report `overlay_not_applied` with the cause"),
 }
 
 
