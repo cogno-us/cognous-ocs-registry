@@ -40,5 +40,8 @@ APPROVED: S02 is pre-authorized, subject to successful S01 closure. Effective on
 ## Architect Q&A confirmations relevant to the record (2026-10-24, corrected disposition; guidance, not operator decisions)
 Tier 1 is critical, Tier 3 routine (Constitution table); the earlier inverted mapping was withdrawn. D3 ownership: the Architect advised that operator status alone does not establish copyright ownership; see `LICENSING.md`. Formal Constitution adoption is not required for S01 and none is claimed.
 
+## Effect on `docs/BUILDER_HANDOFF.md`
+The handoff's "Current authorization" section (written before D1–D5) calls the g8-r10 tuple a proposed candidate and says to stop after S01 and ask for S01 disposition / S02 authorization. Per the plan's custody rules the handoff is not edited in place; for current authorization the dated decisions above and `docs/sprint-status.md` control. D1 selects g8-r10; D4 sets the S01 closure conditions; D5 conditionally pre-authorizes S02 on the stated conditions, so no separate S02 authorization request is needed once they hold. All other handoff requirements (exact references in every PR, delegation and report; scope control) remain in force.
+
 ## Standing instructions recorded
 Static plan not rewritten; the v1.1 custody-path wording is an editorial defect that does not block S01 and gets no new revision. After merge, update operational references to canonical main-branch paths. `docs/sprint-status.md` is the sole live status document. Release, publication and production remain HOLD.

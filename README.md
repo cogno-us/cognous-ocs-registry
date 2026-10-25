@@ -22,7 +22,7 @@ D1–D5 of 2026-10-24: [docs/decisions/2026-10-24-operator-decisions-D1-D5.md](d
 
 ## Currently authorized sprint
 
-**S01 only**: propose and reproduce a bounded historical OCS v0.1 behavioural baseline candidate (minimality not established) for registry migration. After S01 the next authorized action is none until the operator authorizes one. The live state is in [docs/sprint-status.md](docs/sprint-status.md), the only live status document.
+**S01 only** until it is closed: reproduce the operator-selected (D1) bounded historical OCS v0.1 behavioural baseline for registry migration (minimality not established). S02 (hardcoded-rule inventory) is conditionally pre-authorized by operator decision D5 and becomes effective only after S01 satisfies D4, PR #1 is merged, the accepted baseline and merge SHA are recorded, `docs/sprint-status.md` records S01 PASS, and the S02 assignment is checked against the unchanged S02 section of the plan. No S03 without a new operator decision. The live state is in [docs/sprint-status.md](docs/sprint-status.md), the only live status document.
 
 ## What this repository does NOT do
 
