@@ -11,8 +11,8 @@ The brief names `COG-REG-SHARED-ADD-01`. Its text was not provided to this analy
 | Concept | What it is | Who controls it | Where it lives |
 |---|---|---|---|
 | RECORD | Versioned, typed, digest-bearing statement of a family's data | Author (unauthenticated provenance) | Registry repository |
-| SELECTION | A manifest that names which record versions a consumer may consider, approved by an independent authority | Operator or delegate, separately attributable (T3) | Registry repository (the bytes); approval and pin held outside |
-| ACTIVATION | The host's decision to use a selection: pin custody, optional or mandatory profile, trusted clock, trusted source | Host trusted configuration (`TrustConfig` today) | Outside the registry |
+| SELECTION | A manifest that names which record versions a consumer may consider, selected under a separately attributable decision | Operator or delegate, separately attributable (T3); delegates are named only in host or operator custody, never by a record or manifest | Registry repository (the bytes); approval and pin held outside |
+| ACTIVATION | The host's decision to use a selection: pin custody, optional or mandatory profile, trusted clock, trusted source | Host trusted configuration (`TrustConfig` today holds the pin, trusted runtime source and verifier settings; a trusted clock and an evaluator registry would be new inputs) | Outside the registry |
 
 Rules:
 
@@ -32,13 +32,13 @@ Rules:
 | `non_authorizing` | yes | constant `true` | same |
 | `source` | yes | repository, commit, path, blob id, sha256, line ranges of the governing source | `source` |
 | `provenance` | yes | decision reference, authored time, author; informational, unauthenticated | `provenance` |
-| `canonicalization` | yes | identifier of the canonical form used for digests (for example `json-sorted-compact-ascii/1`) | implicit |
+| `canonicalization` | yes | exact-match label of the canonical form used for digests (for example `json-sorted-compact-ascii/1`). The supported set is fixed by the host; a record cannot introduce a form | implicit |
 | `data` and `data_digest` | yes | family payload and sha256 of its canonical form | same |
 | `record_digest` | yes | sha256 over the canonical envelope excluding itself | same |
-| `applicability` | yes | `target_consumer` (system namespace plus consumer id), exact component source blob id(s), optional profile id | `runtime_source_blob_id` |
+| `applicability` | yes | `target_consumer` (consumer id; a system-namespace part is conditional on the ISS Architect's answer to 08 Q4), exact component source blob id(s), optional `consumer_profile_id` (narrows applicability only; it can never select the host's optional or mandatory ACTIVATION profile) | `runtime_source_blob_id` |
 | `evaluator` | yes | registered code reference: id, exact source blob id, and `supplies` | `evaluator` (no revision today) |
 | `governing_refs` | optional | references to decisions or constitutional clauses; informational | `decision_ref` |
-| `effective_conditions` | optional | declarative `not_before`/`not_after` evaluated by the consumer's trusted clock; absent means no time limit | none |
+| (no time window) | n/a | Time windows live in the selection (`valid_from`, `valid_until`), not in the record, so a record cannot state its own activity period | none |
 | `supersedes` | yes | null, or id, version, digest of the immediately preceding version | same |
 
 Deliberately absent: signatures or key identifiers (an authentication scheme is a separate decision, 08 D2); an `approved`, `active` or `mandatory` flag; any expression, predicate or script field (no general-purpose policy interpretation); any grant-bearing field; any reference to an ISS authority.
@@ -51,20 +51,20 @@ Open point: S03 includes `status` (`proposed`, `active`, `superseded`, `withdraw
 |---|---|
 | `selection_id`, `selection_version` | identity |
 | `target_consumer` | must equal the consumer's own namespace and id, else refused |
-| `entries[]` | each: family, record id, record version, `record_digest`, file path; no ranges |
-| `runtime_source` | exact blob id of the trusted evaluator source (as `s04-v1` does) |
+| `entries[]` | each: family, record id, record version, `record_digest`, `file_sha256` of the record bytes and path (as `s04-v1`, so re-serialized bytes and path changes are caught); exactly one entry per record id; no ranges |
+| `runtime_source` | exact blob id, compared with the host's trusted value and never read as the source (in `s04-v1` the manifest value must equal `TrustConfig`) |
 | `selected_by` | reference to the separately attributable decision; informational |
-| `valid_until` | optional; evaluated by the trusted clock |
+| `valid_from`, `valid_until` | optional; UTC `YYYY-MM-DDTHH:MM:SSZ` (the S03 `authored_at` pattern), `valid_from` not after `valid_until`, evaluated by the host's trusted clock. Absent means no time limit, so such a selection is perpetual; that default is flagged for review (08). Expiry under the optional profile reverts to the caller's possibly broader policy (T7 by time) |
 
 The manifest digest is compared to a pin supplied by trusted invocation, never read from the repository (T4). The committed candidate manifest digest `sha256:948ab4f4…` is not an approved pin (T8) and is unaffected by this proposal.
 
 ## 4. ACTIVATION (not stored in the registry)
 
-Host configuration: the pin, a trusted clock, the trusted evaluator source, and a **per-consumer profile** that is either *optional overlay* (a refusal means the overlay is not applied and the caller policy stands, T7) or *mandatory* (a refusal makes the consumer deny). Mandatory is a different, unauthorized profile today. The profile is chosen by the host, not by a record.
+Host configuration: the pin, a trusted clock (new), the trusted evaluator source and evaluator registry (the registry is new; records and selections never register evaluators), and a **per-consumer profile** that is either *optional overlay* (a refusal means the overlay is not applied and the caller policy stands, T7) or *mandatory* (a refusal makes the consumer deny). Mandatory is a different, unauthorized profile today. The profile is chosen by the host, not by a record.
 
 ## 5. ISS and OCS
 
-- Each system keeps its own authority boundary, selection custody and pin custody. There is no shared registry service and no shared authority ledger.
+- [I, pending the ISS Architect, 08 ISS Q3 and Q5] Each system keeps its own authority boundary, selection custody and pin custody. There is no shared registry service and no shared authority ledger.
 - The envelope is a layout, not a shared service. It does not require common family payloads: an ISS family, if one exists, is defined only by the ISS Architect.
 - `applicability.target_consumer` includes a system namespace. A consumer refuses records and selections whose namespace is not its own.
 - No ISS architecture source was available to this analysis; no ISS family or ISS semantics are asserted (08, section for the ISS Architect).

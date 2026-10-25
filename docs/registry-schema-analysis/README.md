@@ -25,7 +25,7 @@ This directory answers one question: *which parts of the historical rule invento
 | [04-schema-fitness-matrix.md](04-schema-fitness-matrix.md) | S03 fit codes A to E per family; composition semantics; where non-widening composition is not definable |
 | [05-common-envelope-proposal.md](05-common-envelope-proposal.md) | Proposed minimal envelope; RECORD, SELECTION, ACTIVATION |
 | [06-family-schema-proposals.md](06-family-schema-proposals.md) | Successor proposal and illustrative examples |
-| [07-schema-qualification-plan.md](07-schema-qualification-plan.md) | Validation scenarios with expected results; designed, not executed |
+| [07-schema-qualification-plan.md](07-schema-qualification-plan.md) | Schema validation plan (file name per the brief): scenarios with expected results; designed, not executed |
 | [08-open-architectural-decisions.md](08-open-architectural-decisions.md) | Decisions needed from the OCS Architect and issues for ISS Architect review |
 | [09-implementation-roadmap.md](09-implementation-roadmap.md) | Possible future engineering order; not authorized |
 

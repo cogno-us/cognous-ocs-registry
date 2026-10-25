@@ -1,6 +1,6 @@
 # 08 Open architectural decisions
 
-Non-authorizing. Each item is a decision someone other than this analysis must make. Nothing proceeds on an assumed answer.
+Non-authorizing. Each item is a decision someone other than this analysis must make. Nothing proceeds on an assumed answer. Architect rulings are classification and design input only: they authorize no build, selection, activation or pin, each of which needs a separate operator decision (T3). The ISS Architect's role and the existence of the ISS questions below are not verified by any source available here.
 
 ## For the OCS Architect
 
@@ -29,6 +29,8 @@ No ISS architecture source was available to this analysis. The following are que
 3. Which component holds ISS selection and pin custody, and is it disjoint from OCS custody?
 4. Is the envelope's `target_consumer` namespace acceptable as the only cross-system field?
 5. Confirm there is no shared service, authority ledger or common family payload requirement.
+
+Additional items: (a) whether a selection with no `valid_until` (perpetual) is acceptable; (b) whether `effective_conditions`-style windows may ever live in a record (this proposal says no).
 
 ## Constraints that stand regardless
 

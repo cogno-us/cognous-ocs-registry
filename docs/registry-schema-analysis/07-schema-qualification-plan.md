@@ -1,62 +1,103 @@
 # 07 Schema validation plan
 
-**Designed, not executed. No test was run for this plan, no result is claimed, and nothing here is qualification evidence.** Expected results are what a conforming successor validator and consumer should produce; they are targets for future work. Refusal class names are the proposed classes in 06 §3 or existing S03/S04 codes where noted. "Optional" and "mandatory" are the ACTIVATION profiles in 05 §4.
+(File name kept as listed in the brief's deliverables; this is a validation plan, not a qualification plan.)
 
-## 1. Scenarios
+**Designed, not executed. No test was run for this plan, no result is claimed, and nothing here is qualification evidence.** Expected results are targets for a conforming successor validator and consumer. Each scenario assumes a single fault and has exactly one expected class; check order is in 06 §3. Rows marked **[cond D4]** depend on unresolved rulings (08 D1, D4, W3-063) and are not expectations until those are made. "Optional" and "mandatory" are the host's ACTIVATION profiles (05 §4). Classes are the existing S03/S04 codes or the proposed classes in 06 §3.
 
-| # | Scenario | Input | Expected result |
+## 1. Record-level scenarios
+
+| # | Scenario | Input | Expected |
 |---|---|---|---|
-| V1 | Valid record, each proposed family | Well-formed envelope and payload, correct digests, matching applicability | Accept (validation only; not activation) |
-| V2 | `s03-v1` records under the existing validator | (a) the checked-in example (`status: proposed`); (b) the active test fixture (status changed in memory and re-digested, as `tests/test_s03_contract.py` does) | (a) REFUSE `status_not_active`; (b) ACCEPT. Outcomes identical to current tests; no existing assertion changes |
-| M1 | Malformed JSON | Trailing data, NaN, invalid UTF-8, non-object | `record_malformed` |
-| M2 | Missing required field; unknown field; wrong JSON type (bool for integer) | | `record_malformed` |
-| U1 | Unsupported envelope version | `envelope_version` unknown | `envelope_unsupported` |
-| U2 | Unsupported family or family contract version | | `family_unsupported` |
-| U3 | Unsupported canonicalization id | | `canonicalization_unsupported` |
-| U4 | `envelope_version` or family `contract_version` newer than the consumer supports | | refused; never read best-effort. (`record_version` is a data revision selected by the manifest; a correctly selected v2 record on a supported envelope and contract is not refused for being v2.) |
+| V1 | Valid successor record, each family | Well-formed, correct digests, matching applicability | Accept (validation only; not activation) |
+| V2a | `s03-v1` checked-in example | status `proposed` | REFUSE `status_not_active` (unchanged) |
+| V2b | `s03-v1` active test fixture | status set to `active` in memory and re-digested, as `tests/test_s03_contract.py` does | ACCEPT (unchanged) |
+| V3 | `s03-v1` record with status `superseded` or `withdrawn` offered via a selection | pinned selection names it | REFUSE `status_not_active`; selection cannot override the frozen gate |
+| V4 | `record_missing`, `context_missing`, null record | | existing codes |
+| M1 | Not strict JSON (trailing data, NaN, invalid UTF-8, lone surrogate), non-object | | `record_malformed` |
+| M2 | Missing required field, unknown field, wrong JSON type (bool for integer) | | `record_malformed` |
+| M3 | Payload field referencing an ISS authority, an expression or a script | | `record_malformed` |
+| M4 | Record claims `approved`, `active` or `mandatory` | | `record_malformed` (unknown field) |
 | K1 | Duplicate keys at any depth | | `record_malformed` |
+| I1 | `non_authorizing` false | | `record_invalid` |
+| I2 | Digest not `sha256:` plus 64 lowercase hex | | `record_invalid` |
 | D1 | `data_digest` wrong | | `digest_mismatch` |
 | D2 | `record_digest` wrong | | `digest_mismatch` |
-| D3 | Data changed and both digests recomputed | record bytes only; selection bytes and pin unchanged | Accept at record level (integrity only, limitation L1); at selection level `record_not_in_selection`, because the recomputed `record_digest` differs from the selection entry. The selection bytes and pin are unchanged, so this is not `selection_unauthenticated` |
-| S1 | Selection bytes changed (or wrong pin supplied), so the selection digest does not match the pin | | `selection_unauthenticated` (optional: not applied; mandatory: deny) |
-| S2 | Selection and record merged in one PR with no separate pin | | No pin exists, so not applied; merging is not authorization (T3) |
-| S3 | Record absent from selection, or digest differs | | `record_not_in_selection` |
-| A1 | Incorrect consumer namespace (for example a record targeted at another system) | | `consumer_namespace_mismatch` |
-| A2 | Component source blob differs from the trusted source | | `not_applicable` / `source_mismatch` (existing) |
-| E1 | Unknown evaluator revision | | `evaluator_revision_unknown` |
-| E2 | Evaluator source on disk differs from registered blob | | refused (existing `runtime_source_unverified` class); in-process code replacement remains undetected (T5) |
-| X1 | Expired selection or record | trusted clock past `valid_until` / `not_after` | `record_expired` |
-| X2 | Not yet effective | clock before `not_before` | `record_not_yet_effective` |
-| X3 | Superseded record selected | selection names a version that a later selected version supersedes | `version_not_latest` / `supersession_invalid` (existing) |
-| X4 | Broken supersession chain | digest of predecessor wrong | `supersession_invalid` |
-| C1 | Conflicting requirements | two selected records constrain one field with no ruled composition | `requirement_conflict` or `composition_unsupported`; never a silent pick |
-| C2 | F7 triple violates ordering | `provider_horizon > escalation_deadline`, or `escalation_deadline >= dedupe_ttl` | `record_invalid` |
-| C3 | F7 destination lacks `dedupe-ttl/0.1` or TTL below profile | | `dependency_missing` |
-| C4 | Unsupported composition | family with no ruled direction (for example F4 `clock_tolerance_seconds`) | `composition_unsupported` |
-| W1 | Registry value is a superset of the caller's (for example a broader allow-list) | | Successful non-widening case: effective value equals the caller's by intersection; no refusal (cf. `tests/test_s04_overlay.py`) |
-| W1b | Defect injection: a composition implementation returns a value broader than the caller's | test double | post-composition assertion fails: `widening_attempt` (detection of a defect, not a data case) |
-| W2 | Payload attempts to relax a toggle (`allow_synthetic_resolver`) or add an action class | | `record_malformed` (unknown field) or `requirement_conflict` |
-| W2b | F5 payload tightens only `irreversible` to true for a class whose host `reversibility` is `reversible_at_cost` | | `requirement_conflict` (the host class would raise `irreversible_flag_mismatch`); no partial application |
-| W3 | Record claims `approved`, `active` or `mandatory` | | `record_malformed` (unknown field); has no effect |
-| W4 | Record carries an expression or script field | | `record_malformed` |
-| H1 | Changed conditions: caller policy tightened after the record was authored | | effective value is the tighter of the two |
-| H2 | Changed conditions: caller policy loosened | | effective value follows the record's narrower value; never above the caller's |
-| O1 | Registry failure under optional profile | any refusal above | Caller policy unchanged; result says "overlay not applied", not "denied" |
-| O2 | Registry failure under mandatory profile | any refusal above | Consumer denies; this profile is not authorized today |
-| O3 | Empty effective set | intersection empty | Deny-all for that field; cannot be authored as a record (non-empty lists), so reached only by intersection |
-| T1 | S03/S04 compatibility | existing S03 cases (P, N, M, X, O, L, I, W) and S04 cases | Same results as on `main`; no existing test changes |
-| T2 | S05 harness | existing oracle and expectations | Unchanged; not reused as evidence for a successor |
-| I1 | ISS/OCS isolation: ISS-namespaced record or selection offered to the OCS consumer | | `consumer_namespace_mismatch` |
-| I2 | No shared state | OCS consumer attempts to read an ISS selection store or pin | No such path exists; test asserts the consumer API has no cross-system input |
-| I3 | Reason-vocabulary record offered as policy | | refused; vocabulary records carry no behavior |
+| D3 | Known canonicalization id, but digest computed with another form | | `digest_mismatch` |
+| U1 | Unknown `envelope_version` | | `envelope_unsupported` |
+| U2 | Unknown `family` or family `contract_version` | | `family_unsupported` |
+| U3 | Unknown canonicalization id | | `canonicalization_unsupported` |
+| U4 | `family` inconsistent with `evaluator.supplies` | | `evaluator_unsupported` (existing S03 code, preserved) |
+| E1 | Evaluator id/binding/supplies mismatch (S04 case N13) | | `evaluator_unsupported` |
+| E2 | Evaluator revision not in the host-trusted registry | | `evaluator_revision_unknown` |
+| E3 | Evaluator source on disk differs from the trusted source | | `runtime_source_unverified` (existing); in-process replacement stays undetected (T5) |
+| A1 | Wrong `target_consumer` | | `consumer_namespace_mismatch` |
+| A2 | Component blob id differs | | `not_applicable` |
+| A3 | Blob id matches, source sha256 differs | | `source_mismatch` |
+| A4 | `consumer_profile_id` mismatch | | `not_applicable` (successor extension of the existing class) |
+| A5 | Record's `consumer_profile_id` names a profile other than the host's active profile; record tries to choose optional or mandatory | | no effect on the host profile; mismatch is `not_applicable` |
+| X4 | Supersession broken: version 1 with non-null `supersedes`, or version n>1 not naming the same id and version n-1 | | `supersession_invalid` (the predecessor's digest is not compared by S03; 06 §2.7) |
+| P1 | F1c numeric payload: bool, NaN, zero, negative, over cap, binary64 edge | | `record_invalid` (or `record_malformed` for bool/NaN by type) **[cond D6]** |
+| P2 | F7 record triple internally disordered (`provider_horizon > escalation_deadline`, or `escalation_deadline >= dedupe_ttl`) | | `record_invalid` **[cond D4]** |
 
-## 2. Evidence required before any claim
+## 2. Selection-level scenarios
 
-- A differential oracle written by someone other than the validator author, for any family beyond F1a, following the S05 method (finite value universe, frozen expectations, no imports from code under test).
-- Negative controls for every refusal class.
-- For F4, F5 and F7: evidence from the real Control Plane evaluators, which the S05 harness does not cover (T11).
+| # | Scenario | Input | Expected |
+|---|---|---|---|
+| S1 | Selection bytes changed (or wrong pin) so digest differs from pin | | `selection_pin_mismatch` (successor name; the existing S04 `manifest_pin_mismatch` is not aliased or edited) |
+| S2 | No pin supplied by trusted invocation | merging selection and record in one PR supplies none | `trust_config_invalid` (existing); merging is not authorization (T3) |
+| S3 | Selection malformed: malformed JSON, duplicate keys, unknown field, unsupported selection version, oversize | | `manifest_invalid` family (existing) |
+| S4 | Selection with two entries for one record id | | `manifest_invalid` |
+| S5 | Selection entry path traversal, or path not matching the record id | | `manifest_invalid` |
+| S6 | Selection `target_consumer` mismatch | | `consumer_namespace_mismatch` |
+| S7 | Record absent from selection or `record_digest` differs from entry | | `record_not_in_selection` |
+| S8 | Record bytes differ from entry `file_sha256` | | `record_file_mismatch` (existing) |
+| S9 | Data changed and both digests recomputed in the record only | selection and pin unchanged | record validates (integrity only, L1); selection level: `record_not_in_selection` |
+| S10 | `valid_from` later than `valid_until`, or malformed timestamp | | `manifest_invalid` |
+| S11 | Selection expired | trusted clock past `valid_until` | `selection_expired` (optional: caller policy stands; mandatory: deny) |
+| S12 | Selection not yet effective | clock before `valid_from` | `selection_not_yet_effective` |
+| S13 | Runtime source blob changed after the selection was authored | | `manifest_runtime_mismatch` (existing) |
+
+Rollback to an older pinned selection is undetectable under pin-only trust. It is recorded as a **limitation** next to L1 and T5, not as a scenario. Likewise the S04 consumer takes `latest_known_version` from the selection entry, so it cannot detect that a newer record version exists; supersession is enforced at selection-authoring time by review, not by the consumer.
+
+## 3. Composition and dependency scenarios
+
+| # | Scenario | Input | Expected |
+|---|---|---|---|
+| C1 | Two selected records constrain one field with no ruled composition | | `requirement_conflict` |
+| C1b | Two families both claim `max_status_age_seconds` (F4 and F5) | | `requirement_conflict`; single field owner is F5 (04) |
+| C2 | Effective F7 triple (after composing with the caller's) violates the ordering | | `effective_value_invalid` **[cond D4]** |
+| C3 | F7 destination lacks `dedupe-ttl/0.1` or its TTL is below the effective TTL; evidence must come from the host's destination binding, not from the record, the selection or a destination self-assertion | | `dependency_missing` **[cond D4]** |
+| C3b | Composition raises the effective TTL above the destination's declared TTL | | `dependency_missing` (re-check after composition) **[cond D4]** |
+| C4 | Family with no ruled direction (for example F4 tolerance field) | | `composition_unsupported` **[cond D4]** |
+| W1 | Registry value is a superset of the caller's | | successful clamp; effective equals the caller's by intersection; no refusal (cf. `tests/test_s04_overlay.py`) |
+| W1b | Defect injection: a composition implementation returns a broader value | test double | `widening_attempt` (successor mapping; S04 surfaces the same defect as `consumer_error`) |
+| W2 | Payload tries to relax a toggle (`allow_synthetic_resolver`) or add an undeclared action class | | `relaxation_unsupported` (or `record_malformed` for an unknown field) |
+| W2b | F5 payload changes `irreversible` alone for a class with `reversibility`, or `reads_protected_data` true, or `counterparty_observable` false | | `relaxation_unsupported` (the host class would raise `irreversible_flag_mismatch`) **[cond D4]** |
+| H1 | Caller policy tightened after authoring | | effective is the caller's tighter value (intersection/min families only; F7 requires C2) |
+| H2 | Caller policy loosened | | effective follows the record's narrower value, never above the caller's |
+| H3 | Destination capability changed after selection | | `dependency_missing` **[cond D4]** |
+
+## 4. Activation and isolation scenarios
+
+| # | Scenario | Input | Expected |
+|---|---|---|---|
+| O1 | Any refusal under the optional profile | | caller policy unchanged; "overlay not applied", not "denied" |
+| O2 | Any refusal under the mandatory profile | | consumer denies; this profile is not authorized today |
+| O3 | Empty effective set | intersection empty | deny-all for that field; cannot be authored as a record (non-empty lists) |
+| O4 | Expiry under the optional profile | | reverts to the caller's possibly broader policy (T7 by time); documented limit |
+| T1 | S03/S04 compatibility | existing S03 and S04 cases | same results as on `main`; no existing test changes |
+| T2 | S05 harness | existing oracle and expectations | unchanged; not evidence for a successor |
+| N1 | Namespace isolation **[cond ISS Q4]** | record or selection from another system namespace | `consumer_namespace_mismatch` |
+| N2 | No cross-system input **[cond ISS Q3]** | consumer API | no parameter or path reads another system's selection store or pin |
+| N3 | Reason-vocabulary record offered as policy | | refused; vocabulary records carry no behavior |
+
+## 5. Evidence required before any claim
+
+- A differential oracle written by someone other than the validator author for every family beyond F1a, following the S05 method (finite value universe, frozen expectations, no imports from code under test).
+- Negative controls for every class above.
+- For F4, F5 and F7, evidence from the real Control Plane evaluators, which the S05 harness does not cover (T11).
 - Independent review proportionate to Tier 1 (CA14, CA18). Copilot review is technical review only (T10).
 
-## 3. What this plan does not do
+## 6. What this plan does not do
 
-It does not execute tests, produce a result table, select a pin, activate a record, define a Runtime integration or claim qualification.
+It does not execute tests, produce results, select a pin, activate a record, define a Runtime integration or claim qualification.
