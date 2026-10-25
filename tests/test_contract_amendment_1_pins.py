@@ -70,6 +70,9 @@ ANCHORS = {
     "S-11": ("contract", "### 3.3 Closed codes (D-02)", "`CODES_V2` = the 46 `r08-v1` `CODES` entries (unchanged, same layers and meanings) plus exactly two additions"),
     "S-12": ("map", "", '"code_count": 48'),
     "S-13": ("contract", "## 8", "optional scopes report `overlay_not_applied` with the cause"),
+    "S-14": ("contract", "**Closing a supersession gap.**", "an optional scope reports `overlay_not_applied`; neither is success"),
+    "S-15": ("contract", "### 7.4 Guard comparison at the effect boundary", "or an optional row is past its verified `valid_until`"),
+    "S-16": ("map", "", '"decision_kind_note": "refused (required) / overlay_not_applied (optional)"'),
 }
 
 
