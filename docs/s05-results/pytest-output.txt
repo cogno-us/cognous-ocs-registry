@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.17, pytest-8.3.5, pluggy-1.7.0 -- /tmp/claude-0/venv/bin/python
+rootdir: /home/claude/cognous-ocs-registry
+configfile: pytest.ini
+collecting ... collected 16 items
+
+tests/test_s05_equivalence.py::test_G1_exhaustive_equivalence_nonwidening_and_ordering PASSED [  6%]
+tests/test_s05_equivalence.py::test_G1_grid_actually_exercises_each_outcome_class PASSED [ 12%]
+tests/test_s05_equivalence.py::test_G2_per_field_exhaustive PASSED       [ 18%]
+tests/test_s05_equivalence.py::test_C_refusal_cases_match_frozen_expectations_and_leave_caller_policy_in_force PASSED [ 25%]
+tests/test_s05_equivalence.py::test_C_refusal_reason_coverage_is_broad PASSED [ 31%]
+tests/test_s05_equivalence.py::test_E_unsupported_classes_are_refused_by_s03_and_consumer_and_behave_as_historical_under_refusal PASSED [ 37%]
+tests/test_s05_equivalence.py::test_E_classification_is_reported_per_class PASSED [ 43%]
+tests/test_s05_equivalence.py::test_E_representable_boundaries_are_accepted_and_equivalent PASSED [ 50%]
+tests/test_s05_equivalence.py::test_X_end_to_end_results_equal_frozen_expectations_and_each_other PASSED [ 56%]
+tests/test_s05_equivalence.py::test_PIN_frozen_pin_literal_accepts_altered_pin_refuses_and_api_has_no_derivation_path PASSED [ 62%]
+tests/test_s05_equivalence.py::test_PIN_frozen_candidate_digest_matches_committed_fixture_bytes PASSED [ 68%]
+tests/test_s05_equivalence.py::test_LIM_documented_trust_limitations_reproduce_as_stated PASSED [ 75%]
+tests/test_s05_equivalence.py::test_Z1_frozen_expectation_files_are_unchanged PASSED [ 81%]
+tests/test_s05_equivalence.py::test_Z2_subject_files_match_their_frozen_identities PASSED [ 87%]
+tests/test_s05_equivalence.py::test_Z3_oracle_imports_nothing_from_the_code_under_test PASSED [ 93%]
+tests/test_s05_equivalence.py::test_Z4_totals_are_recorded PASSED        [100%]
+
+============================== 16 passed ==============================
