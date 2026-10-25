@@ -1,0 +1,1189 @@
+{
+  "spec_version": "s05-v1",
+  "frozen": {
+    "plan_blob": "6ece90f6697320fd305d8eb8c1e3a7f2f1f428a2",
+    "constitution": "1c2e920f4e58e07a52e8e2408a506cf7dbc1292b",
+    "main_at_start": "4839747f409000651bf1a684e112b5552912fee1",
+    "baseline_safe_executor_blob": "2fc880dae37eac76e5074533435740ce0684209d",
+    "baseline_safe_executor_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68",
+    "s03_validator_blob": "afee88b37197ca4aa3842b228fbc348f585b937a",
+    "s03_package_init_blob": "5d8e9e69697fae3bc027666541a36379ce299d9f",
+    "s04_consumer_blob": "bf382d00cb275fa056d60713bf8fc119e9bee7da",
+    "s04_candidate_manifest_digest": "sha256:948ab4f40bb0acf211124db42df2eb5908627e95d84b0019fade2f0b726c2791"
+  },
+  "check_order": [
+    "allowed_adapters",
+    "allowed_actions",
+    "allowed_units"
+  ],
+  "reasons": {
+    "allowed_adapters": "local adapter restriction",
+    "allowed_actions": "local action restriction",
+    "allowed_units": "local unit restriction"
+  },
+  "grids": {
+    "G1": {
+      "description": "exhaustive: 2 universe values per field, caller subsets incl. empty (64), registry non-empty subsets (27), operations over universe+outside values (27)",
+      "caller_policies": 64,
+      "registry_records": 27,
+      "operations": 27,
+      "pairs": 1728,
+      "comparisons": 46656
+    },
+    "G2": {
+      "description": "per-field exhaustive: 3 universe values, caller subsets (8) x registry non-empty subsets (7), 4 operations, other fields fully allowing; run for each of the three fields",
+      "pairs_per_field": 56,
+      "operations_per_field": 4,
+      "fields": 3,
+      "comparisons": 672
+    }
+  },
+  "rules": {
+    "A_equivalence": "for every grid pair and operation, registry-backed outcome == direct historical policy built with the oracle's effective sets == oracle outcome",
+    "B_non_widening": "for every grid pair and operation, if the caller-constructed historical policy refuses, the registry-backed policy refuses; admitted(registry-backed) is a subset of admitted(caller)",
+    "C_refusal": "every refusal case yields the expected disposition and reason, result.policy is the caller's object, overlay_applied is false, the caller's fields are unchanged, and the policy's behavior over all G1 operations equals the oracle for the caller's own sets",
+    "D_boundary": "empty intersections deny; first failing check in fixed order decides the reason",
+    "E_representation": "each unsupported class is refused by S03 with record_invalid and by the consumer as record_refused; under refusal the caller policy governs (behavior equals historical); where the caller lists an unsupported value and a representable record is applied, the removed value is designed narrowing, not inequivalence"
+  },
+  "refusal_cases": [
+    {
+      "id": "R01",
+      "description": "record file absent",
+      "recipe": "record_file_absent",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_missing",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R02",
+      "description": "manifest file absent",
+      "recipe": "manifest_file_absent",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "manifest_missing",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R03",
+      "description": "record JSON has a duplicate key (bytes approved by the manifest)",
+      "recipe": "record_duplicate_key_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_malformed"
+      }
+    },
+    {
+      "id": "R04",
+      "description": "record JSON has trailing garbage (approved)",
+      "recipe": "record_trailing_garbage_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_malformed"
+      }
+    },
+    {
+      "id": "R05",
+      "description": "record contract_version is unsupported (approved)",
+      "recipe": "record_contract_version_unsupported_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "contract_unsupported"
+      }
+    },
+    {
+      "id": "R06",
+      "description": "record_type is unsupported (approved)",
+      "recipe": "record_type_unsupported_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "contract_unsupported"
+      }
+    },
+    {
+      "id": "R07",
+      "description": "record widened to extra values and re-digested, manifest unchanged (tampered)",
+      "recipe": "record_widened_and_redigested_not_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_file_mismatch",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R08",
+      "description": "one byte appended to the record file (tampered)",
+      "recipe": "record_single_byte_appended",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_file_mismatch",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R09",
+      "description": "manifest replaced by an attacker's self-consistent manifest while the trusted pin is unchanged (unauthenticated)",
+      "recipe": "manifest_replaced_by_self_consistent_attacker_manifest",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "manifest_pin_mismatch",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R10",
+      "description": "record data altered without re-digest (approved bytes)",
+      "recipe": "record_data_altered_without_redigest_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "digest_mismatch"
+      }
+    },
+    {
+      "id": "R11",
+      "description": "manifest selects version 2 but the record is version 1 (stale/incorrect version)",
+      "recipe": "manifest_selects_v2_record_is_v1",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "version_not_latest"
+      }
+    },
+    {
+      "id": "R12",
+      "description": "record is version 2 (superseding v1) but the manifest selects version 1 (stale selection)",
+      "recipe": "record_v2_manifest_selects_v1",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "version_not_latest"
+      }
+    },
+    {
+      "id": "R13",
+      "description": "record applicability names a different Runtime source blob (inapplicable, approved)",
+      "recipe": "record_applicability_other_runtime_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "not_applicable"
+      }
+    },
+    {
+      "id": "R14",
+      "description": "manifest runtime identity differs from the trusted configuration (inapplicable)",
+      "recipe": "manifest_runtime_identity_differs_from_trusted",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "manifest_runtime_mismatch",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R15",
+      "description": "record source sha256 differs from the trusted Runtime source sha256 (source mismatch, approved)",
+      "recipe": "record_source_sha256_differs_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "source_mismatch"
+      }
+    },
+    {
+      "id": "R16",
+      "description": "installed evaluator source file modified (copy with an appended line)",
+      "recipe": "installed_evaluator_source_modified",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "runtime_source_unverified",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R17",
+      "description": "record status withdrawn (approved)",
+      "recipe": "record_status_withdrawn_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "status_not_active"
+      }
+    },
+    {
+      "id": "R18",
+      "description": "record status proposed (approved)",
+      "recipe": "record_status_proposed_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "status_not_active"
+      }
+    },
+    {
+      "id": "R19",
+      "description": "record evaluator binding is not the registered one (approved)",
+      "recipe": "record_evaluator_binding_wrong_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "evaluator_unsupported"
+      }
+    },
+    {
+      "id": "R20",
+      "description": "record supplies list is widened to include max_amount (approved)",
+      "recipe": "record_supplies_widened_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "evaluator_unsupported"
+      }
+    },
+    {
+      "id": "R21",
+      "description": "record non_authorizing is false (approved)",
+      "recipe": "record_non_authorizing_false_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      }
+    },
+    {
+      "id": "R22",
+      "description": "manifest record_id differs from the record's (invalid record selection)",
+      "recipe": "manifest_record_id_differs",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_identity_mismatch",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R23",
+      "description": "manifest record_digest differs from the record's (invalid record selection)",
+      "recipe": "manifest_record_digest_differs",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_identity_mismatch",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R24",
+      "description": "manifest has an unknown field (pinned bytes)",
+      "recipe": "manifest_unknown_field",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "manifest_invalid",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R25",
+      "description": "trusted pin is malformed",
+      "recipe": "trust_pin_malformed",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "trust_config_invalid",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R26",
+      "description": "caller policy is a subclass with a replaced check method",
+      "recipe": "caller_policy_subclass_with_replaced_check",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "caller_policy_invalid",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R27",
+      "description": "record file larger than the 1 MiB bound but otherwise valid (approved)",
+      "recipe": "record_oversized_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_file_mismatch",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R28",
+      "description": "record path is a FIFO",
+      "recipe": "record_path_is_fifo",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_missing",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R29",
+      "description": "record has an extra top-level field (approved)",
+      "recipe": "record_extra_field_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_malformed"
+      }
+    },
+    {
+      "id": "R30",
+      "description": "record is missing a required field (approved)",
+      "recipe": "record_required_field_missing_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_malformed"
+      }
+    },
+    {
+      "id": "R31",
+      "description": "manifest larger than the 1 MiB bound but otherwise valid (pinned)",
+      "recipe": "manifest_oversized_pinned",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "manifest_invalid",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R32",
+      "description": "no trusted configuration supplied (trust is None)",
+      "recipe": "trust_absent",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "trust_config_invalid",
+        "validator_reason": null
+      }
+    },
+    {
+      "id": "R33",
+      "description": "record v2 whose supersedes block names the wrong record (approved, manifest selects v2)",
+      "recipe": "record_v2_bad_supersedes_approved",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "supersession_invalid"
+      }
+    },
+    {
+      "id": "R34",
+      "description": "installed evaluator source path is unreadable",
+      "recipe": "installed_evaluator_source_unreadable",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "runtime_source_unverified",
+        "validator_reason": null
+      }
+    }
+  ],
+  "representation_classes": [
+    {
+      "id": "E01",
+      "description": "empty registry allow-list",
+      "historical_constructor_accepts": true,
+      "list": [],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E02",
+      "description": "zero-width space U+200B inside an entry (category Cf)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\u200bb"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E03",
+      "description": "line separator U+2028 inside an entry (category Zl)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\u2028b"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E04",
+      "description": "NUL inside an entry (category Cc)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\u0000b"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E05",
+      "description": "lone surrogate U+D800 inside an entry (category Cs)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\ud800b"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E06",
+      "description": "unassigned code point U+0378 inside an entry (category Cn)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\u0378b"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E07",
+      "description": "private-use U+E000 inside an entry (category Co)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\ue000b"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E08",
+      "description": "space inside an entry",
+      "historical_constructor_accepts": true,
+      "values": [
+        "has space"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E09",
+      "description": "leading space",
+      "historical_constructor_accepts": true,
+      "values": [
+        " lead"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E10",
+      "description": "trailing space",
+      "historical_constructor_accepts": true,
+      "values": [
+        "trail "
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E11",
+      "description": "tab",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\tb"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E12",
+      "description": "newline",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\nb"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E13",
+      "description": "no-break space U+00A0 (category Zs)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\u00a0b"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E14",
+      "description": "DEL U+007F (category Cc)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\u007fb"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E15",
+      "description": "unit separator U+001F (category Cc)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a\u001fb"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E16",
+      "description": "wildcard entry '*'",
+      "historical_constructor_accepts": true,
+      "values": [
+        "*"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E17",
+      "description": "wildcard inside an entry 'a*b'",
+      "historical_constructor_accepts": true,
+      "values": [
+        "a*b"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E18",
+      "description": "entry of 129 characters (over the 128 bound)",
+      "historical_constructor_accepts": true,
+      "values": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E19",
+      "description": "list of 257 entries (over the 256 bound)",
+      "historical_constructor_accepts": true,
+      "list_length": 257,
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "unsupported_representation"
+    },
+    {
+      "id": "E20",
+      "description": "empty-string entry (the historical constructor also rejects it)",
+      "historical_constructor_accepts": false,
+      "values": [
+        ""
+      ],
+      "expected_s03_reason": "record_invalid",
+      "expected_consumer": {
+        "disposition": "REFUSE",
+        "reason": "record_refused",
+        "validator_reason": "record_invalid"
+      },
+      "classification": "historically_invalid_also_refused"
+    }
+  ],
+  "representable_boundaries": [
+    {
+      "id": "B01",
+      "description": "entry of exactly 128 characters",
+      "values": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ]
+    },
+    {
+      "id": "B02",
+      "description": "list of exactly 256 entries",
+      "list_length": 256
+    },
+    {
+      "id": "B03",
+      "description": "URN-style identifiers with punctuation",
+      "values": [
+        "urn:cognous:adapter:synthetic-refund"
+      ]
+    },
+    {
+      "id": "B04",
+      "description": "non-ASCII letters",
+      "values": [
+        "\u00e9",
+        "\u65e5\u672c\u8a9e"
+      ]
+    },
+    {
+      "id": "B05",
+      "description": "emoji (category So)",
+      "values": [
+        "\ud83d\ude00"
+      ]
+    }
+  ],
+  "e2e_cases": [
+    {
+      "id": "E2E-01",
+      "description": "registry equals caller; admitted operation executes",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": true,
+        "error": null,
+        "effect_count": 1
+      }
+    },
+    {
+      "id": "E2E-02",
+      "description": "registry narrows units; the removed unit is refused",
+      "caller": {
+        "allowed_units": [
+          "USD",
+          "EUR"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "EUR"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local unit restriction",
+        "effect_count": 0
+      }
+    },
+    {
+      "id": "E2E-03",
+      "description": "registry narrows adapters",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1",
+          "urn:s05:adapter-2"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-2"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local adapter restriction",
+        "effect_count": 0
+      }
+    },
+    {
+      "id": "E2E-04",
+      "description": "registry narrows actions",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one",
+          "act.s05.two"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.two"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local action restriction",
+        "effect_count": 0
+      }
+    },
+    {
+      "id": "E2E-05",
+      "description": "disjoint units give an empty intersection and deny",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "EUR"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local unit restriction",
+        "effect_count": 0
+      }
+    },
+    {
+      "id": "E2E-06",
+      "description": "registry superset cannot widen: a value only the registry lists is still refused",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "EUR",
+          "GBP",
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "EUR",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local unit restriction",
+        "effect_count": 0
+      }
+    },
+    {
+      "id": "E2E-07",
+      "description": "registry refused (tampered record); the caller policy governs and admits",
+      "refusal_recipe": "record_single_byte_appended",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": true,
+        "error": null,
+        "effect_count": 1
+      }
+    },
+    {
+      "id": "E2E-08",
+      "description": "registry refused; the caller policy refuses the operation and nothing is added",
+      "refusal_recipe": "record_single_byte_appended",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD",
+          "EUR"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "EUR",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local unit restriction",
+        "effect_count": 0
+      }
+    },
+    {
+      "id": "E2E-09",
+      "description": "adapter and unit both disallowed: the adapter reason is first",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1",
+          "urn:s05:adapter-2"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-2"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "EUR",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local adapter restriction",
+        "effect_count": 0
+      }
+    },
+    {
+      "id": "E2E-10",
+      "description": "registry narrows but still contains the operation's unit; admitted",
+      "caller": {
+        "allowed_units": [
+          "USD",
+          "EUR"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": true,
+        "error": null,
+        "effect_count": 1
+      }
+    },
+    {
+      "id": "E2E-11",
+      "description": "action only the caller lists is removed by a disjoint registry action",
+      "caller": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.one"
+        ]
+      },
+      "registry": {
+        "allowed_units": [
+          "USD"
+        ],
+        "allowed_adapters": [
+          "urn:s05:adapter-1"
+        ],
+        "allowed_actions": [
+          "act.s05.two"
+        ]
+      },
+      "op": {
+        "unit": "USD",
+        "adapter": "urn:s05:adapter-1",
+        "action": "act.s05.one"
+      },
+      "expected": {
+        "admitted": false,
+        "error": "local action restriction",
+        "effect_count": 0
+      }
+    }
+  ],
+  "pin_cases": [
+    {
+      "id": "PIN-1",
+      "description": "committed synthetic fixtures with the frozen candidate pin literal from this file",
+      "expected": {
+        "disposition": "ACCEPT",
+        "reason": null
+      }
+    },
+    {
+      "id": "PIN-2",
+      "description": "same fixtures with the frozen pin altered in its last hex digit",
+      "expected": {
+        "disposition": "REFUSE",
+        "reason": "manifest_pin_mismatch"
+      }
+    },
+    {
+      "id": "PIN-3",
+      "description": "the consumer exposes no way to derive the pin from the files it checks: its signature takes the pin only inside TrustConfig",
+      "expected": {
+        "parameters": [
+          "caller_policy",
+          "trust",
+          "manifest_path",
+          "record_path"
+        ]
+      }
+    }
+  ],
+  "limitation_cases": [
+    {
+      "id": "LIM-1",
+      "description": "Loaded-code tampering is not detected: after the consumer verified the on-disk source, the loaded LocalExecutionPolicy.check is replaced by a permissive function in-process, and the overlay still reports ACCEPT. Documented trust limitation (compromised interpreter or process), not a defect and not a protected case.",
+      "expected": {
+        "disposition": "ACCEPT"
+      },
+      "classification": "documented_limitation"
+    },
+    {
+      "id": "LIM-2",
+      "description": "S03 alone does not authenticate: a widened, re-digested record is accepted by the S03 validator; only the S04 pin and file hash refuse it.",
+      "expected": {
+        "s03_outcome": "ACCEPT",
+        "consumer_reason": "record_file_mismatch"
+      },
+      "classification": "documented_limitation"
+    },
+    {
+      "id": "LIM-3",
+      "description": "record_source in the manifest is unverified provenance: a manifest whose record_source.commit is any 40-hex value still ACCEPTs when everything else verifies.",
+      "expected": {
+        "disposition": "ACCEPT"
+      },
+      "classification": "documented_limitation"
+    }
+  ]
+}
