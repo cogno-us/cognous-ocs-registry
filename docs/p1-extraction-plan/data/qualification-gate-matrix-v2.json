@@ -1,0 +1,1238 @@
+{
+ "meta": {
+  "status": "PLANNING DATA. No gate is met; nothing is qualified. PREPARE-only until an independent lead is designated.",
+  "supersedes": "data/qualification-gate-matrix.json (14 gates, pre-ruling)",
+  "gates": 16,
+  "route": "Route B only",
+  "qg02": "DEFERRED (max_amount outside V1, R7)"
+ },
+ "gates": [
+  {
+   "gate_id": "QG-01",
+   "name": "Differential old/new evaluator, five DIRECT fields (Route B)",
+   "statement": "Registry-backed LocalExecutionPolicy yields identical first-failing-check disposition and reason text to the historical policy built from the effective sets, per field, on Route B. Route A is not covered (LIM-A1).",
+   "existing_test_ids": [
+    "suites/v1-scenarios/test_scn_c11.py (parametrized [action][adapter][unit][institution][authority_domain][max_amount])",
+    "suites/v1-probes/test_runtime_probes.py::test_probe_policy_bypass_out_of_scope_operation_denied_with_no_effect[...]",
+    "suites/cognous-open-control-stack/tests/test_paired_request_enforcement.py::test_actor_principal_institution_domain_substitution",
+    "suites/cognous-execution-runtime/tests/test_openshell_environment.py::test_local_restriction_prevents_sandbox_dispatch",
+    "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_G1_exhaustive_equivalence_nonwidening_and_ordering",
+    "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_G2_per_field_exhaustive",
+    "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_X_end_to_end_results_equal_frozen_expectations_and_each_other",
+    "/home/claude/cognous-ocs-registry/tests/test_s01_baseline_local_policy.py"
+   ],
+   "scenario_ids": [
+    "C11",
+    "C02",
+    "D02",
+    "C18",
+    "TC-L06-009",
+    "TC-L06-011",
+    "TC-L06-013"
+   ],
+   "evidence_status_today": "C11 KNOWN_LIMIT_ASSERTED; C02, D02, C18 PASS_RECORDED named cases historical (g8-r10), rows INCONCLUSIVE; Wiki TC-L06-* NOT_RUN; builder S05 BUILDER_TESTED for 3 F1a fields only (builder oracle); F1b no registry-side evidence; no run at CP 7a4bcd40/RT c5e97e87; not qualified",
+   "new_tests_needed": [
+    "per field x route caller-by-registry grid (empty, subset, superset, disjoint, equal) with in/out/deployed-value operations",
+    "omitted deployed value in registry set refuses all (fail-closed)",
+    "empty registry and empty caller set deny-all",
+    "exact-string membership (wildcard, case, whitespace, unicode, substring, bare str)",
+    "check order and reason texts old vs new with multi-violation pairs",
+    "F1b: independent _check_trusted_context still refuses substituted institution/domain",
+    "caller policy object not mutated",
+    "independent successor-contract oracle written without reading tests/s05_oracle.py",
+    "each field's effective set equals the set in the claim-carried effective-policy identity that the Runtime validates under lock (R11)",
+    "mutation leg per field: widen one set; the field case must fail"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; oracle author must not have authored/reviewed registry_successor, s05_oracle.py or R08 tests, nor read them before freeze",
+   "sprint": "S5-2",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/v1-scenarios/test_scn_c11.py (parametrized [action][adapter][unit][institution][authority_domain][max_amount])",
+      "suites/v1-probes/test_runtime_probes.py::test_probe_policy_bypass_out_of_scope_operation_denied_with_no_effect[...]",
+      "suites/cognous-open-control-stack/tests/test_paired_request_enforcement.py::test_actor_principal_institution_domain_substitution",
+      "suites/cognous-execution-runtime/tests/test_openshell_environment.py::test_local_restriction_prevents_sandbox_dispatch",
+      "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_G1_exhaustive_equivalence_nonwidening_and_ordering",
+      "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_G2_per_field_exhaustive",
+      "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_X_end_to_end_results_equal_frozen_expectations_and_each_other",
+      "/home/claude/cognous-ocs-registry/tests/test_s01_baseline_local_policy.py"
+     ],
+     "new_tests_needed_unchanged": [
+      "per field x route caller-by-registry grid (empty, subset, superset, disjoint, equal) with in/out/deployed-value operations",
+      "omitted deployed value in registry set refuses all (fail-closed)",
+      "empty registry and empty caller set deny-all",
+      "exact-string membership (wildcard, case, whitespace, unicode, substring, bare str)",
+      "check order and reason texts old vs new with multi-violation pairs",
+      "F1b: independent _check_trusted_context still refuses substituted institution/domain",
+      "caller policy object not mutated",
+      "independent successor-contract oracle written without reading tests/s05_oracle.py"
+     ]
+    },
+    "new_primary": [],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Route A and B -> Route B only. Name and statement amended. Existing tests and cases retained. Route A characterization moves to limit entry LIM-A1 (QG-09).",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-02",
+   "name": "DEFERRED-EXTENSION (not a V1 gate): max_amount differential",
+   "statement": "DEFERRED, not a V1 gate. Preserved analysis: Effective ceiling = min(caller, registry) under code cap; registry never raises it; exactly-one-effect and finite-number validators unchanged.",
+   "existing_test_ids": [
+    "suites/v1-scenarios/test_scn_c11.py [max_amount]",
+    "suites/v1-scenarios/test_scn_c16.py",
+    "suites/v1-scenarios/test_scn_c18.py",
+    "suites/v1-probes/test_runtime_probes.py::...[amount-1000.01]",
+    "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_competing_effects_share_atomic_budget_across_processes"
+   ],
+   "scenario_ids": [
+    "C11",
+    "C16",
+    "C18",
+    "TC-L06-014",
+    "TC-L06-016",
+    "TC-L06-024"
+   ],
+   "evidence_status_today": "C11 KNOWN_LIMIT_ASSERTED; C16/C18 PASS_RECORDED named cases historical; Wiki NOT_RUN; builder none (pass-through only); nothing qualifying; not qualified",
+   "new_tests_needed": [
+    "equality (strict >), 0, 2**53 ok, 2**53+1, NaN, inf, bool, negative, int vs float, subclass",
+    "min semantics predeclared from D6 ruling",
+    "registry above caller and above code cap refused",
+    "encoding round-trip without floats (integer unit or decimal string)",
+    "multi-unit interaction with allowed_units",
+    "exactly-one-effect refusal unchanged",
+    "Route A and B"
+   ],
+   "independence_requirement": "DEFERRED. Preserved text: Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; expectations cannot be authored until D6 and encoding are ruled; BLOCKED until then",
+   "sprint": "none (was S5-3; deferred)",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/v1-scenarios/test_scn_c11.py [max_amount]",
+      "suites/v1-scenarios/test_scn_c16.py",
+      "suites/v1-scenarios/test_scn_c18.py",
+      "suites/v1-probes/test_runtime_probes.py::...[amount-1000.01]",
+      "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_competing_effects_share_atomic_budget_across_processes"
+     ],
+     "new_tests_needed_unchanged": [
+      "equality (strict >), 0, 2**53 ok, 2**53+1, NaN, inf, bool, negative, int vs float, subclass",
+      "min semantics predeclared from D6 ruling",
+      "registry above caller and above code cap refused",
+      "encoding round-trip without floats (integer unit or decimal string)",
+      "multi-unit interaction with allowed_units",
+      "exactly-one-effect refusal unchanged",
+      "Route A and B"
+     ]
+    },
+    "new_primary": [],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "DEFERRED",
+    "summary": "DEFERRED, not a V1 gate (R7: max_amount is outside the 8-field V1). Not renumbered. Predeclared battery text kept below as preserved analysis; nothing here is executed, scheduled or reportable. Reopening needs a new operator ruling plus the D6/encoding decision.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-03",
+   "name": "F4 status_max_age_seconds and approval_max_age_seconds differential (V1)",
+   "statement": "Effective age = min(caller, registry), strict integer seconds, no cross-bound between the two ages, no universal 5 s floor (each field has a code-owned bound recorded at freeze from source, not assumed). Stale/future/missing refused or held; tolerance never extends the window; an outage extension cannot widen a narrowed ceiling (R6).",
+   "existing_test_ids": [
+    "suites/v1-scenarios/test_add_molt_verify.py::test_add_molt_verify_e3_grant_status_freshness_is_not_per_item",
+    "suites/v1-probes/test_control_plane_probes.py::test_probe_clock_uncertainty_*",
+    "suites/v1-scenarios/test_scn_c01.py",
+    "suites/wiki-derived/test_wp_a_grant_lifecycle.py (TC-D09-009/016)",
+    "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_grant_expiry_first_prevents_effect"
+   ],
+   "scenario_ids": [
+    "C01",
+    "C17",
+    "C06",
+    "D03",
+    "H01",
+    "TC-L06-015",
+    "TC-D09-009",
+    "TC-D09-016"
+   ],
+   "evidence_status_today": "C01/C17/C06 PASS_RECORDED named cases historical; D03 INCONCLUSIVE; H01 NOT_RUN; Wiki NOT_RUN; builder none; not qualified",
+   "new_tests_needed": [
+    "per field age = bound-1, bound, bound+1",
+    "future observation at 0, tolerance, tolerance+1",
+    "registry <, =, > caller (effective = caller)",
+    "registry 0, negative, bool, float, huge refused (code floor)",
+    "stable refusal codes grant/conflict/policy/approval_status_stale_or_future",
+    "old vs new at real bounded.py _fresh at CP 7a4bcd40",
+    "lock-time clock domain",
+    "mandatory profile: unavailable registry does not fall back to caller",
+    "clock_tolerance_seconds not weakened",
+    "60-vs-300 relationship neither assumed nor resolved",
+    "R1: registry < caller yields registry, equal yields either, greater yields caller (clarifies the original 'effective = caller' wording)",
+    "R2: bool, float, str, None, negative, 0, huge refused, never clamped, never coerced",
+    "R3: no cross-bound: changing status age cannot move approval age and conversely; no 5 s floor asserted; per-field code-owned bounds taken from source at the freeze pin",
+    "clock sub-battery CLK-F4 (lock-time clock, tolerance not weakened) validated separately from field bounds",
+    "NX-11 (R6) controls"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; blocked until D4 direction ruling",
+   "sprint": "S5-3",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/v1-scenarios/test_add_molt_verify.py::test_add_molt_verify_e3_grant_status_freshness_is_not_per_item",
+      "suites/v1-probes/test_control_plane_probes.py::test_probe_clock_uncertainty_*",
+      "suites/v1-scenarios/test_scn_c01.py",
+      "suites/wiki-derived/test_wp_a_grant_lifecycle.py (TC-D09-009/016)",
+      "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_grant_expiry_first_prevents_effect"
+     ],
+     "new_tests_needed_unchanged": [
+      "per field age = bound-1, bound, bound+1",
+      "future observation at 0, tolerance, tolerance+1",
+      "registry <, =, > caller (effective = caller)",
+      "registry 0, negative, bool, float, huge refused (code floor)",
+      "stable refusal codes grant/conflict/policy/approval_status_stale_or_future",
+      "old vs new at real bounded.py _fresh at CP 7a4bcd40",
+      "lock-time clock domain",
+      "mandatory profile: unavailable registry does not fall back to caller",
+      "clock_tolerance_seconds not weakened",
+      "60-vs-300 relationship neither assumed nor resolved"
+     ]
+    },
+    "new_primary": [
+     {
+      "id": "NX-11",
+      "title": "Outage extension widening a narrowed ceiling (R6)",
+      "attacked": [
+       "Validly signed outage extension whose extended age exceeds the registry-narrowed value",
+       "Extension base taken from the caller value instead of the effective (narrowed) value",
+       "Extension beyond the field's code-owned bound",
+       "Unsigned, forged, expired, replayed or other-scope extension",
+       "Extension applied to a different field than the one named"
+      ],
+      "expected_disposition": "Effective ceiling stays min(caller, registry); the extension may only act within the narrowed ceiling; otherwise REFUSE_NO_EFFECT with age_extension_invalid-class typed cause",
+      "gate": "QG-03",
+      "also_gates": [
+       "QG-04"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Compute extension on the caller value; the case must fail",
+      "existing_coverage": "Control Plane extension-base case is named in plan EXT-S3-4; existing extension tests were not inspected in this lane",
+      "true_status_today": "Registry-narrowed variant: NO_TEST (new control)",
+      "rulings": [
+       "R6",
+       "R1",
+       "R3"
+      ]
+     }
+    ],
+    "new_secondary_refs": [
+     "NX-12"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "conditional -> V1 gate (F4 in the 8-field V1). Statement amended for R1/R2/R3. BLOCKED-on-D4 text superseded by the rulings. Clock interactions split into a separate sub-battery. NX-11 (R6) primary.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-04",
+   "name": "F5 ActionClass.max_status_age_seconds differential (V1)",
+   "statement": "Per-class effective age = min(caller, registry), strict integer seconds, no cross-bound, no universal 5 s floor; profile commitment reflects the effective narrowed profile; prior approvals under the un-narrowed profile are invalid (R5).",
+   "existing_test_ids": [
+    "suites/v1-scenarios/test_add_molt_verify.py::test_add_molt_verify_e3_grant_status_freshness_is_not_per_item",
+    "suites/v1-scenarios/test_scn_c01.py"
+   ],
+   "scenario_ids": [
+    "C01",
+    "TC-L05-012",
+    "TC-L05-013"
+   ],
+   "evidence_status_today": "C01 PASS_RECORDED named cases historical; TC-L05-012/013 NOT_RUN; TC-L05-013 cannot detect bounded_tolerance toggle (GAP-G4-05); builder none; not qualified",
+   "new_tests_needed": [
+    "min-only per class",
+    "action_class_unknown refused",
+    "zero semantics preserved",
+    "irreversible class never raised by extension",
+    "effective profile == profile hashed into approval_commitment (CP-F5-12)",
+    "relaxing toggles (on_unreadable, allow_synthetic_resolver) unreachable from registry",
+    "class bounds 5 and 120 old vs new",
+    "R2 strict-int grid per class",
+    "R3 per-class code-owned bounds from source; no cross-bound to F4",
+    "NX-12 (R5) controls",
+    "NX-11 (R6) per-class extension control"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; blocked on W8-014 and D4",
+   "sprint": "S5-3",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/v1-scenarios/test_add_molt_verify.py::test_add_molt_verify_e3_grant_status_freshness_is_not_per_item",
+      "suites/v1-scenarios/test_scn_c01.py"
+     ],
+     "new_tests_needed_unchanged": [
+      "min-only per class",
+      "action_class_unknown refused",
+      "zero semantics preserved",
+      "irreversible class never raised by extension",
+      "effective profile == profile hashed into approval_commitment (CP-F5-12)",
+      "relaxing toggles (on_unreadable, allow_synthetic_resolver) unreachable from registry",
+      "class bounds 5 and 120 old vs new"
+     ]
+    },
+    "new_primary": [
+     {
+      "id": "NX-12",
+      "title": "Prior approval under the un-narrowed profile (R5)",
+      "attacked": [
+       "Approval issued under profile P0, registry narrows to P1, approval presented at effect",
+       "Approval issued under P1 then the registry widens or withdraws the narrowing: approval does not revive P0",
+       "Approval hashing the caller profile where the effective profile differs",
+       "Positive control: approval issued under P1 passes"
+      ],
+      "expected_disposition": "Incompatible prior approval invalid: REFUSE_NO_EFFECT with approval-binding mismatch cause; only the effective-profile approval passes",
+      "gate": "QG-04",
+      "also_gates": [
+       "QG-03",
+       "QG-10"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Hash the caller profile into the commitment; the case must fail",
+      "existing_coverage": "CP-F5-12 commitment and approval-binding tests exist at the pin (not re-run); C01 historical",
+      "true_status_today": "No narrowed-profile variant: NO_TEST (new control)",
+      "rulings": [
+       "R5"
+      ]
+     }
+    ],
+    "new_secondary_refs": [
+     "NX-06",
+     "NX-11"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "conditional -> V1 gate (F5 in the 8-field V1). W8-014 now answered by R5: approvals bind to the effective narrowed profile. NX-12 (R5) primary; NX-11 secondary.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-05",
+   "name": "Configuration change tests (selection, supersession, rollback, epoch)",
+   "statement": "A configuration change takes effect only through an authenticated, explicitly superseding selection and never by higher epoch alone or rollback.",
+   "existing_test_ids": [
+    "/home/claude/cognous-ocs-registry/tests/test_r08_selection.py::ResolveTests",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QC01..QC06",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QV09_stale_epoch_floor",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_rollback_attempts_refused",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_conflicting_effective_selections",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_unauthorized_higher_epoch_does_not_supersede",
+    "/home/claude/cognous-ocs-registry/tests/test_s04_overlay.py::test_N5..N7_N16"
+   ],
+   "scenario_ids": [
+    "C20 (NO_TEST)",
+    "C21 (NO_TEST)",
+    "C19 (NO_TEST)"
+   ],
+   "evidence_status_today": "BUILDER_TESTED only; FakeVerifier is not cryptography; no activation, no approved pin, no runtime wiring; QS13 expectation amended after seeing behaviour (developer evidence only); C20/C21/C19 NO_TEST; not qualified",
+   "new_tests_needed": [
+    "v1 to v2 supersession effective for next operation only",
+    "higher epoch without supersession is conflict",
+    "rollback refused",
+    "two selections in one scope conflict",
+    "change between operations changes effective set once",
+    "selection altered after activation",
+    "real Ed25519 verifier behaviour after R09",
+    "QS13 re-adjudicated and frozen by the independent lead",
+    "participation-mismatch case (no case exists)",
+    "NX-05 stale activation epoch controls",
+    "Ed25519 verifier: synthetic keys only; forged, altered, wrong-key, key-revoked cases (R9)",
+    "r08-v2 selection resolves identically to r08-v1 for v1 records (see QG-15)"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; lead (not builder) owns real-key trust snapshot fixtures",
+   "sprint": "S5-4a",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "/home/claude/cognous-ocs-registry/tests/test_r08_selection.py::ResolveTests",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QC01..QC06",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QV09_stale_epoch_floor",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_rollback_attempts_refused",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_conflicting_effective_selections",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_unauthorized_higher_epoch_does_not_supersede",
+      "/home/claude/cognous-ocs-registry/tests/test_s04_overlay.py::test_N5..N7_N16"
+     ],
+     "new_tests_needed_unchanged": [
+      "v1 to v2 supersession effective for next operation only",
+      "higher epoch without supersession is conflict",
+      "rollback refused",
+      "two selections in one scope conflict",
+      "change between operations changes effective set once",
+      "selection altered after activation",
+      "real Ed25519 verifier behaviour after R09",
+      "QS13 re-adjudicated and frozen by the independent lead",
+      "participation-mismatch case (no case exists)"
+     ]
+    },
+    "new_primary": [
+     {
+      "id": "NX-05",
+      "title": "Stale activation epochs",
+      "attacked": [
+       "Activation with equal or older epoch for the scope key",
+       "Higher epoch without an explicit superseding selection (conflict)",
+       "Epoch swapped between check and commit",
+       "Claim-carried epoch lower than Runtime high-water",
+       "Snapshot version at or below min_trust_snapshot_version"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial) (conflict and stale-epoch are distinct typed causes)",
+      "gate": "QG-05",
+      "also_gates": [
+       "QG-09"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Change strict-greater to >=; remove the supersession requirement; each must fail",
+      "existing_coverage": "builder test_QV09_stale_epoch_floor, test_a2_unauthorized_higher_epoch_does_not_supersede, test_a2_conflicting_effective_selections, test_N5..N7 (BUILDER_TESTED, FakeVerifier)",
+      "true_status_today": "BUILDER_TESTED at registry level; Runtime-held epoch state: NO_TEST (state does not exist)",
+      "rulings": [
+       "R11",
+       "R9",
+       "R8"
+      ]
+     }
+    ],
+    "new_secondary_refs": [
+     "NX-04",
+     "NX-07",
+     "NX-09",
+     "NX-10"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Adds NX-05, real Ed25519 verifier with synthetic keys (R9), r08-v2 additive behaviour (R8), selection identity as claim-carried input.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-06",
+   "name": "Required-policy refusal",
+   "statement": "A required registry policy that is unavailable, invalid, stale, revoked, expired, untrusted or unverifiable never authorizes and never falls back to a broader caller policy; optional mode is overlay_not_applied. Every code of the registry (46 today) maps to REFUSE/DENY/HOLD/RETRY without losing a distinct negative cause.",
+   "existing_test_ids": [
+    "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_required_refusal_never_returns_caller_policy",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_missing_required_selection_never_falls_back_to_broader_caller",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_five_way_distinction_has_distinct_observable_outcomes",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_invalid_participation_value_fails_closed_as_required",
+    "suites/wiki-derived/test_wp_g4_tool_call_and_approval_controls.py::test_wiki_l05_013_*"
+   ],
+   "scenario_ids": [
+    "TC-L05-013"
+   ],
+   "evidence_status_today": "TC-L05-013 NOT_RUN and cannot detect opt-in toggle; builder tests at decision-function level only (BUILDER_TESTED), none at an effect boundary; not qualified",
+   "new_tests_needed": [
+    "Runtime/Control-Plane-level required-profile tests: unavailable, invalid, stale, revoked, expired, no trust root, no verifier, malformed caller each yield typed refusal and zero effects",
+    "optional mode caller unchanged and not a denial",
+    "detector for bounded_tolerance toggle (GAP-G4-05)",
+    "R10 completeness: every CODE mapped; a test fails if a code is added without a map entry; distinct causes remain distinguishable in the typed refusal",
+    "NX-10 controls with mutation leg per failure class"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
+   "sprint": "S5-4a",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_required_refusal_never_returns_caller_policy",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_missing_required_selection_never_falls_back_to_broader_caller",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_five_way_distinction_has_distinct_observable_outcomes",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_invalid_participation_value_fails_closed_as_required",
+      "suites/wiki-derived/test_wp_g4_tool_call_and_approval_controls.py::test_wiki_l05_013_*"
+     ],
+     "new_tests_needed_unchanged": [
+      "Runtime/Control-Plane-level required-profile tests: unavailable, invalid, stale, revoked, expired, no trust root, no verifier, malformed caller each yield typed refusal and zero effects",
+      "optional mode caller unchanged and not a denial",
+      "detector for bounded_tolerance toggle (GAP-G4-05)"
+     ]
+    },
+    "new_primary": [
+     {
+      "id": "NX-10",
+      "title": "Required-policy failure",
+      "attacked": [
+       "Required profile with registry unavailable, invalid, stale, revoked, expired, no trust root, no verifier, malformed caller",
+       "Optional profile: caller unchanged, outcome overlay_not_applied (not a denial, not an authorization by the registry)",
+       "Each of the 46 codes mapped to REFUSE/DENY/HOLD/RETRY with no loss of distinct negative cause",
+       "Verifier/Ed25519 failure never authorizes"
+      ],
+      "expected_disposition": "Required-policy failure never authorizes and never falls back to the caller policy; typed cause preserved; zero effects",
+      "gate": "QG-06",
+      "also_gates": [
+       "QG-05",
+       "QG-09"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Fall back to the caller policy on one failure class at a time; each class must fail its case. Completeness mutation: delete a code from the map",
+      "existing_coverage": "builder test_required_refusal_never_returns_caller_policy, test_missing_required_selection_never_falls_back_to_broader_caller, five-way distinction tests; TC-L05-013 NOT_RUN and cannot detect the bounded_tolerance toggle (GAP-G4-05)",
+      "true_status_today": "BUILDER_TESTED decision level; effect-boundary: NO_TEST; TC-L05-013 NOT_RUN",
+      "rulings": [
+       "R10",
+       "R9"
+      ]
+     }
+    ],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Statement broadened to the effect boundary on Route B and to all 47 r08-v2 codes (the 46 r08-v1 codes plus trust_snapshot_version_stale) (R10). NX-10 primary.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-07",
+   "name": "Scope narrowing, never widening",
+   "statement": "Effective = caller intersect registry for every field; registry superset, wrong tenant/consumer/scope never widens.",
+   "existing_test_ids": [
+    "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_G1_exhaustive_equivalence_nonwidening_and_ordering",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_exhaustive_small_universe_matches_set_intersection_and_never_widens",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QD04_never_widens_over_a_full_grid",
+    "/home/claude/cognous-ocs-registry/tests/test_s04_overlay.py::test_P2_registry_values_exceeding_caller_permissions_never_widen"
+   ],
+   "scenario_ids": [
+    "C11",
+    "D02"
+   ],
+   "evidence_status_today": "BUILDER_TESTED, 2 to 3 values per field (trust-limitations T11); consumer path has no caller (apply_registry_overlay); not qualified",
+   "new_tests_needed": [
+    "independent property tests over larger universes for F1a/F1b",
+    "written containment relation per field",
+    "tenant/consumer/scope mismatch refusals",
+    "consumer-level test in real Runtime/Control Plane path",
+    "F1d only if mode-ordering oracle exists (never toward legacy-prefix)",
+    "numeric containment for F4/F5: effective <= caller for every caller/registry pair; property test over a grid"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
+   "sprint": "S5-2",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py::test_G1_exhaustive_equivalence_nonwidening_and_ordering",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_compose_decision.py::test_exhaustive_small_universe_matches_set_intersection_and_never_widens",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QD04_never_widens_over_a_full_grid",
+      "/home/claude/cognous-ocs-registry/tests/test_s04_overlay.py::test_P2_registry_values_exceeding_caller_permissions_never_widen"
+     ],
+     "new_tests_needed_unchanged": [
+      "independent property tests over larger universes for F1a/F1b",
+      "written containment relation per field",
+      "tenant/consumer/scope mismatch refusals",
+      "consumer-level test in real Runtime/Control Plane path",
+      "F1d only if mode-ordering oracle exists (never toward legacy-prefix)"
+     ]
+    },
+    "new_primary": [],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Route B only; containment extended from F1a/F1b to the F4/F5 numeric fields (effective <= caller).",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-08",
+   "name": "Revocation and expiry",
+   "statement": "A revoked or expired registry selection cannot govern an effect, in either order against commit; revoked is terminal.",
+   "existing_test_ids": [
+    "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_invalidation_transaction_first_prevents_effect",
+    "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_effect_transaction_first_preserves_effect_then_invalidation",
+    "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_grant_expiry_first_prevents_effect",
+    "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_evidence_expiry_first_prevents_effect",
+    "process/mvp-chain/expectations.proposed.v7.json rows NC1-01..05, NC7-02, NC7-03 (builder proposal)",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QV08_exact_boundary_instants",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QV10_revoked_selection",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_revoked_selection_not_rescued_by_lineage_and_resolver_ignores_revocation"
+   ],
+   "scenario_ids": [
+    "D03",
+    "C07",
+    "C17"
+   ],
+   "evidence_status_today": "D03 PASS_RECORDED named matched-refund cases, row INCONCLUSIVE; C07 KNOWN_LIMIT_ASSERTED (residual race declared); worker21 historical; registry-selection revocation/expiry at commit: no test exists; builder QV tests BUILDER_TESTED; not qualified",
+   "new_tests_needed": [
+    "selection revoked/expired after check and before commit refused in both orders",
+    "claim expiry clamped to selection interval (if Option C)",
+    "interval boundaries at commit with lock-time clock",
+    "reactivation or lineage cannot resurrect",
+    "queued job and retry after revocation",
+    "stale cache",
+    "NX-03, NX-04, NX-08 controls",
+    "policy expiry, withdrawal and revocation are validated from Runtime-held state under lock with no registry call; stale sync disposition per the S4-0 ADR, BLOCKED if the ADR is silent"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
+   "sprint": "S5-4b",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_invalidation_transaction_first_prevents_effect",
+      "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_effect_transaction_first_preserves_effect_then_invalidation",
+      "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_grant_expiry_first_prevents_effect",
+      "suites/cognous-open-control-stack/tests/test_worker21_atomic_authority_effect.py::test_evidence_expiry_first_prevents_effect",
+      "process/mvp-chain/expectations.proposed.v7.json rows NC1-01..05, NC7-02, NC7-03 (builder proposal)",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QV08_exact_boundary_instants",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_spec_conformance.py::test_QV10_revoked_selection",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_regressions.py::test_a2_revoked_selection_not_rescued_by_lineage_and_resolver_ignores_revocation"
+     ],
+     "new_tests_needed_unchanged": [
+      "selection revoked/expired after check and before commit refused in both orders",
+      "claim expiry clamped to selection interval (if Option C)",
+      "interval boundaries at commit with lock-time clock",
+      "reactivation or lineage cannot resurrect",
+      "queued job and retry after revocation",
+      "stale cache"
+     ]
+    },
+    "new_primary": [
+     {
+      "id": "NX-03",
+      "title": "Expired selections",
+      "attacked": [
+       "Selection (policy) expiry before check",
+       "Expiry between check and commit, both lock orders",
+       "Exact boundary instant using the lock-time clock (expiry <= now refuses; one tick earlier admits)",
+       "Claim expiry not clamped to the selection interval where the ADR requires the clamp",
+       "Queued job or retry after expiry",
+       "Stale Runtime selection-state cache past expiry"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial); the boundary case is the only admit",
+      "gate": "QG-08",
+      "also_gates": [
+       "QG-09"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Replace lock-time clock with check-time clock; drop the expiry comparison; both must fail the boundary and between-orders cases",
+      "existing_coverage": "builder test_QV08_exact_boundary_instants (FakeVerifier); worker21 test_grant_expiry_first_prevents_effect and test_evidence_expiry_first_prevents_effect (grant/evidence expiry, not selection); NC7-02 (claim expiry, proposal)",
+      "true_status_today": "BUILDER_TESTED at the registry decision level only; selection expiry at the effect boundary: NO_TEST",
+      "rulings": [
+       "R11",
+       "R2"
+      ]
+     },
+     {
+      "id": "NX-04",
+      "title": "Revoked selections",
+      "attacked": [
+       "Revoked before check",
+       "Revoked after claim issuance and before commit",
+       "Revoked in the Runtime state while the claim-carried binding still verifies",
+       "Reactivation, lineage or a higher epoch cannot resurrect a revoked selection (terminal)",
+       "Revocation arriving in a snapshot with a lower version than the floor"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial)",
+      "gate": "QG-08",
+      "also_gates": [
+       "QG-05",
+       "QG-09"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Make revocation non-terminal; ignore revocation table under lock; each must fail its case",
+      "existing_coverage": "builder QV10 and test_a2_revoked_selection_not_rescued_by_lineage_and_resolver_ignores_revocation (BUILDER_TESTED); NC1-01..05 and worker21 test_invalidation_transaction_first_prevents_effect (grant/approval revocation, not selection)",
+      "true_status_today": "BUILDER_TESTED (registry level); selection revocation at commit: NO_TEST; NC1 rows PROPOSED",
+      "rulings": [
+       "R11",
+       "R9"
+      ]
+     },
+     {
+      "id": "NX-08",
+      "title": "Revocation before effect commit",
+      "attacked": [
+       "Revocation committed before the lock (refused)",
+       "Revocation after lock acquired and effect committed (effect preserved, invalidation recorded after)",
+       "Revocation of grant, approval and selection each separately",
+       "Lost acknowledgement then revocation (outcome unknown, never retry-eligible)",
+       "Residual race between check and lock: asserted as a declared limit only where the ADR keeps one"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial) for before-lock; HOLD_UNKNOWN for lost-ack, never executed on retry",
+      "gate": "QG-08",
+      "also_gates": [
+       "QG-09",
+       "QG-16"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Skip the under-lock revocation read; both orders must expose the failing leg; repeated runs with raw logs",
+      "existing_coverage": "worker21 test_invalidation_transaction_first_prevents_effect and test_effect_transaction_first_preserves_effect_then_invalidation; NC1-01..05, NC2-01..05 (proposal); C07 KNOWN_LIMIT_ASSERTED",
+      "true_status_today": "Grant/approval: relocated tests exist, authority boundary only, no recorded run at current heads; selection revocation: NO_TEST; C07 is a limit, not protection",
+      "rulings": [
+       "R11",
+       "R13"
+      ]
+     }
+    ],
+    "new_secondary_refs": [
+     "NX-07",
+     "NX-09"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Re-based on claim-carried binding validated under lock (R11); NX-03, NX-04, NX-08 primary; NX-07, NX-09 secondary.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-09",
+   "name": "Atomic effect-boundary tests (Route B) and Route A documented limit",
+   "statement": "On Route B the policy enforced at effect commit is validated under the transaction lock from the claim-carried binding (authorized claim identity, effective policy identity, selected record and selection identity, applicable activation epoch, policy expiry, withdrawal and revocation, applicable grant and approval validity); an executor-supplied string alone is not authority; no registry network call inside the transaction; effect, claim and budget commit together. LIM-A1 (limit, not a gate result): Route A is excluded from the registry-mediated effect-time guarantee.",
+   "existing_test_ids": [
+    "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_expiry_is_evaluated_after_waiting_for_transaction_lock",
+    "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_same_claim_concurrent_processes_commit_at_most_once",
+    "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_process_termination_transaction_boundaries",
+    "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_competing_effects_share_atomic_budget_across_processes"
+   ],
+   "scenario_ids": [
+    "C07",
+    "D07",
+    "D03"
+   ],
+   "evidence_status_today": "existing tests establish the authority boundary, not registry policy at the boundary; historical; C07/D07 KNOWN_LIMIT_ASSERTED; R10 not implemented (GAP-G3-01/02 open); not qualified",
+   "new_tests_needed": [
+    "policy changed between check and commit refused or re-evaluated",
+    "selection identity bound and revalidated under lock",
+    "lost-ack reconcile preserves original policy identity",
+    "crash at each transaction stage",
+    "repeated runs with raw logs for race tests",
+    "NX-01, NX-02, NX-07 controls",
+    "network-sentinel: no socket opened inside the transaction; outcome unchanged with registry unreachable",
+    "LIM-A1: documentation tests that record Route A's existing behaviour and residual risk (policy decided at observe/execute_snapshot time, not under the Route B lock) as KNOWN_LIMIT_ASSERTED; no Route A test may be named or reported as protection or PASS; the report states Route A is not covered"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; single runs do not qualify a race; lead retains repeated raw output",
+   "sprint": "S5-4b",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_expiry_is_evaluated_after_waiting_for_transaction_lock",
+      "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_same_claim_concurrent_processes_commit_at_most_once",
+      "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_process_termination_transaction_boundaries",
+      "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_competing_effects_share_atomic_budget_across_processes"
+     ],
+     "new_tests_needed_unchanged": [
+      "policy changed between check and commit refused or re-evaluated",
+      "selection identity bound and revalidated under lock",
+      "lost-ack reconcile preserves original policy identity",
+      "crash at each transaction stage",
+      "repeated runs with raw logs for race tests"
+     ]
+    },
+    "new_primary": [
+     {
+      "id": "NX-01",
+      "title": "Forged claim/policy bindings",
+      "attacked": [
+       "(a) executor-supplied policy-identity string with no claim-carried binding",
+       "(b) binding naming a claim id never issued",
+       "(c) binding whose claim identity differs from the authorized claim",
+       "(d) binding whose effective-policy identity, selected record id/digest or selection id is altered (re-digested, or digest not recomputed)",
+       "(e) binding stripped or omitted from a claim whose profile requires it",
+       "(f) binding for another tenant/consumer/scope",
+       "(g) binding carrying an activation epoch the Runtime selection state does not hold as applicable",
+       "(h) sentinel: registry made unreachable or any socket opened inside the transaction (outcome must not depend on a registry call; the test fails if one occurs)"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial); (h) outcome identical with registry unreachable",
+      "gate": "QG-09",
+      "also_gates": [
+       "QG-10",
+       "QG-12"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Disable the Runtime under-lock comparison of each bound component in turn (claim id, policy identity, record/selection id, epoch); the matching sub-case must then produce an effect and fail the test",
+      "existing_coverage": "NC7-01 (never-issued claim id, executor level) is a builder-proposal row in expectations v7, unreviewed; nothing exercises a claim-carried registry binding; worker21 and test_local_authority_effect cover the authority boundary only",
+      "true_status_today": "NO_TEST for (a)-(h); NC7-01 is PROPOSED only; the binding code (EXT-S4-2/EXT-S4-4) does not exist, so nothing can be executed yet",
+      "rulings": [
+       "R11",
+       "R12",
+       "R14"
+      ]
+     },
+     {
+      "id": "NX-02",
+      "title": "Substituted policy identity",
+      "attacked": [
+       "Swap the effective-policy digest for a broader profile's digest while keeping the selection id",
+       "Swap trust-snapshot fingerprint",
+       "Swap the record digest or selection id after verification, before commit",
+       "Evidence/receipt names an identity different from the one that governed the effect"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial); evidence-side: Replay/Evidence Pack/Verifier refuse substituted or omitted identity (differential against an accepted control; a recomputed hash is not authentication)",
+      "gate": "QG-09",
+      "also_gates": [
+       "QG-11",
+       "QG-12"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Remove the identity-equality check at commit; remove the identity field from the evidence importer check; each leg must fail its case",
+      "existing_coverage": "NC5-01..05 (evidence substitution differentials, builder proposal v7); suites/cognous-replay-bundle test_evidence_substitution_or_loss_is_rejected (existing, no registry identity); QG-11 historical named C03/C04/C12/C13 PASS_RECORDED at g8-r10 pins, rows INCONCLUSIVE",
+      "true_status_today": "Registry-identity substitution: NO_TEST. Generic evidence substitution: PROPOSED rows and PASS_RECORDED named historical cases, not at current pins",
+      "rulings": [
+       "R11",
+       "R10"
+      ]
+     },
+     {
+      "id": "NX-07",
+      "title": "Changed policy after authorization",
+      "attacked": [
+       "Selection superseded after claim issuance",
+       "Selection withdrawn after claim issuance",
+       "Policy content changed (digest differs) with the same selection id",
+       "Narrowing applied between decision and effect"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial); if the effect transaction won the lock first, the effect stands with the original identity and the later change applies to the next operation only",
+      "gate": "QG-09",
+      "also_gates": [
+       "QG-05",
+       "QG-08"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Evaluate the policy at issuance only; the case must fail",
+      "existing_coverage": "D03 matched-refund policy-changed variant (PASS_RECORDED named, historical, row INCONCLUSIVE; builder tools/run_matched_refund.py)",
+      "true_status_today": "Registry-selection variant: NO_TEST",
+      "rulings": [
+       "R11",
+       "R5"
+      ]
+     }
+    ],
+    "new_secondary_refs": [
+     "NX-03",
+     "NX-04",
+     "NX-05",
+     "NX-06",
+     "NX-08",
+     "NX-10"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Route B only. Binding is claim-carried and independently validated by the Runtime under lock (R11); executor-supplied string alone is not authority. EXT-S4-4 mandatory. LIM-A1 added as a documented-limit entry (Route A). NX-01, NX-02, NX-07 primary.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-10",
+   "name": "Cross-component policy consistency",
+   "statement": "Control Plane decision inputs and Runtime effective policy agree at the effect commit for registry-supplied values; disagreement refuses.",
+   "existing_test_ids": [
+    "process/mvp-chain/expectations.proposed.v7.json rows CHAIN-01..06, VER-01..04 (builder proposal)",
+    "suites/cognous-open-control-stack/tests/test_paired_request_enforcement.py::test_permitted_positive_control",
+    "suites/cognous-execution-runtime/tests/test_safe_executor.py::test_pinned_control_plane_ordinary_execution"
+   ],
+   "scenario_ids": [
+    "D01"
+   ],
+   "evidence_status_today": "D01 INCONCLUSIVE (PASS_RECORDED named case historical); no test compares Runtime-effective to CP policy for registry values; MVP v7 awaits independent review (NC4-03 source-level only); not qualified",
+   "new_tests_needed": [
+    "CP-allowed vs RT-narrowed and the reverse",
+    "registry value consumed by one component only refuses",
+    "profile snapshot hash agrees both sides",
+    "broken trust root, altered record/evaluator, stale caches",
+    "NX-06 controls",
+    "verify_local_execution_claim successor accepts and refuses the same claim-carried binding as the Runtime",
+    "emulator host separation: the oracle runs against a registry-repo host it did not author; oracle code shares no module with it (R12)"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
+   "sprint": "S5-4b",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "process/mvp-chain/expectations.proposed.v7.json rows CHAIN-01..06, VER-01..04 (builder proposal)",
+      "suites/cognous-open-control-stack/tests/test_paired_request_enforcement.py::test_permitted_positive_control",
+      "suites/cognous-execution-runtime/tests/test_safe_executor.py::test_pinned_control_plane_ordinary_execution"
+     ],
+     "new_tests_needed_unchanged": [
+      "CP-allowed vs RT-narrowed and the reverse",
+      "registry value consumed by one component only refuses",
+      "profile snapshot hash agrees both sides",
+      "broken trust root, altered record/evaluator, stale caches"
+     ]
+    },
+    "new_primary": [
+     {
+      "id": "NX-06",
+      "title": "Mismatched grant and approval",
+      "attacked": [
+       "Grant valid, approval bound to a different effective profile",
+       "Approval from another grant lineage",
+       "Grant revoked or expired, approval valid, and the reverse",
+       "Approval commitment hashes profile P, claim-carried effective profile is Q",
+       "Effective profile in CP decision differs from the Runtime-narrowed profile"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT: typed refusal, zero effect rows, claim not consumed, budget unchanged, refusal cause preserved (no collapse to a generic denial); CP and Runtime disagreement always refuses, never takes the broader",
+      "gate": "QG-10",
+      "also_gates": [
+       "QG-04",
+       "QG-09"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Compare approval profile hash against caller profile instead of effective; the case must fail",
+      "existing_coverage": "CP-F5-12 profile commitment into approval_commitment and approval-binding tests (Control Plane repo, existing at the pin, not run here); C01 PASS_RECORDED named historical; MVP CHAIN rows (proposal)",
+      "true_status_today": "No registry-narrowed variant exists: NO_TEST; existing approval-binding behaviour not re-run in this lane",
+      "rulings": [
+       "R5",
+       "R11"
+      ]
+     }
+    ],
+    "new_secondary_refs": [
+     "NX-01",
+     "NX-12"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Control Plane successor profile (EXT-S4-4) mandatory; NX-06 primary; emulator host in registry repo separate from the independent oracle (R12).",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-11",
+   "name": "Evidence and replay verification",
+   "statement": "Evidence names the exact registry record/selection that governed the effect; Replay, Evidence Pack and Verifier refuse substituted or omitted policy identity.",
+   "existing_test_ids": [
+    "suites/cognous-replay-bundle/tests/test_refusal_evidence.py::test_evidence_substitution_or_loss_is_rejected",
+    "suites/v1-scenarios/test_scn_c03.py",
+    "suites/v1-scenarios/test_scn_c04.py",
+    "suites/v1-scenarios/test_scn_c12.py",
+    "suites/v1-scenarios/test_scn_c13.py",
+    "suites/v1-scenarios/test_scn_d08.py",
+    "process/mvp-chain rows NC5-01..05, NC6-01..04"
+   ],
+   "scenario_ids": [
+    "C03",
+    "C04",
+    "C12",
+    "C13",
+    "C14",
+    "D08"
+   ],
+   "evidence_status_today": "PASS_RECORDED named cases historical, rows INCONCLUSIVE; F-19 and ODES producer limits; enforcement lines for non-cloned repos UNVERIFIED; no registry-identity evidence test exists; not qualified",
+   "new_tests_needed": [
+    "evidence carries record id/version/digest, selection id/epoch",
+    "substituted/omitted policy identity refused (differential vs accepted control)",
+    "recomputed hash is not authentication",
+    "identity in evidence equals identity that governed the effect",
+    "evidence names the activation epoch and policy expiry that applied at commit"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; evidence review by a party other than author, builder and runner, else recorded not performed",
+   "sprint": "S5-5",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/cognous-replay-bundle/tests/test_refusal_evidence.py::test_evidence_substitution_or_loss_is_rejected",
+      "suites/v1-scenarios/test_scn_c03.py",
+      "suites/v1-scenarios/test_scn_c04.py",
+      "suites/v1-scenarios/test_scn_c12.py",
+      "suites/v1-scenarios/test_scn_c13.py",
+      "suites/v1-scenarios/test_scn_d08.py",
+      "process/mvp-chain rows NC5-01..05, NC6-01..04"
+     ],
+     "new_tests_needed_unchanged": [
+      "evidence carries record id/version/digest, selection id/epoch",
+      "substituted/omitted policy identity refused (differential vs accepted control)",
+      "recomputed hash is not authentication",
+      "identity in evidence equals identity that governed the effect"
+     ]
+    },
+    "new_primary": [],
+    "new_secondary_refs": [
+     "NX-02"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Evidence names claim-carried identity and activation epoch; NX-02 evidence-side leg.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-12",
+   "name": "Independent negative tests",
+   "statement": "Hostile and malformed inputs and substitutions are refused; each negative classified supported / unqualified / out of scope.",
+   "existing_test_ids": [
+    "/home/claude/cognous-ocs-registry/tests/test_s04_overlay.py::test_N1..N27",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_integrity.py",
+    "/home/claude/cognous-ocs-registry/tests/test_s06_integrity.py",
+    "process/adversarial (candidate, not crosswalk)",
+    "v1-probes and fix2-probes KNOWN_GAP rows (not protection)"
+   ],
+   "scenario_ids": [
+    "D02",
+    "C02",
+    "C03"
+   ],
+   "evidence_status_today": "builder negatives BUILDER_TESTED; probe known gaps are limits, not protection; no independent adversarial run; not qualified",
+   "new_tests_needed": [
+    "forged/replayed/expired/unselected/re-digested records",
+    "manifest and pin substitution",
+    "symlink/FIFO/oversize",
+    "confused deputy between families",
+    "dropped-field refusals",
+    "mutation leg per refusal family",
+    "loaded-code replacement (LIM-1) disclosed not claimed",
+    "forged claim-carried binding family (NX-01)",
+    "safe_executor.py unmodified (R14): blob compared at freeze"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
+   "sprint": "S5-5",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "/home/claude/cognous-ocs-registry/tests/test_s04_overlay.py::test_N1..N27",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_integrity.py",
+      "/home/claude/cognous-ocs-registry/tests/test_s06_integrity.py",
+      "process/adversarial (candidate, not crosswalk)",
+      "v1-probes and fix2-probes KNOWN_GAP rows (not protection)"
+     ],
+     "new_tests_needed_unchanged": [
+      "forged/replayed/expired/unselected/re-digested records",
+      "manifest and pin substitution",
+      "symlink/FIFO/oversize",
+      "confused deputy between families",
+      "dropped-field refusals",
+      "mutation leg per refusal family",
+      "loaded-code replacement (LIM-1) disclosed not claimed"
+     ]
+    },
+    "new_primary": [],
+    "new_secondary_refs": [
+     "NX-01",
+     "NX-02"
+    ]
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Adds forged-binding family and R14 check; every NX control needs its mutation leg here.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-13",
+   "name": "Regression and disclosure",
+   "statement": "Code-owned invariants unchanged; known limits listed separately, never counted as protection; failures, skips, XFAIL and NOT RUN preserved.",
+   "existing_test_ids": [
+    "suites/cognous-open-control-stack/tests/test_paired_request_enforcement.py::test_permitted_positive_control",
+    "suites/cognous-execution-runtime/tests/test_safe_executor.py::test_pinned_control_plane_ordinary_execution",
+    "suites/v1-scenarios/test_scn_c02.py",
+    "suites/v1-scenarios/test_scn_c12.py",
+    "suites/v1-scenarios/test_scn_c13.py",
+    "suites/v1-scenarios/test_scn_c14.py",
+    "suites/v1-scenarios/test_scn_d07.py",
+    "suites/v1-scenarios/test_scn_c07.py",
+    "suites/v1-scenarios/test_scn_c10.py",
+    "suites/v1-scenarios/test_scn_c11.py",
+    "/home/claude/cognous-ocs-registry/tests/test_s06_integrity.py"
+   ],
+   "scenario_ids": [
+    "D01",
+    "C02",
+    "C12",
+    "C13",
+    "C14",
+    "D07",
+    "C07",
+    "C10",
+    "C11"
+   ],
+   "evidence_status_today": "PASS_RECORDED named cases historical (D01, C02, C12-C14); KNOWN_LIMIT_ASSERTED (D07, C07, C10, C11); 11 Runtime known-limit tests undeclared (GAP-G4-07); no run at current heads; not qualified",
+   "new_tests_needed": [
+    "rerun at exact pins with preserved statuses",
+    "declare the 11 Runtime known-limit tests (owner action before the run)",
+    "MVP oracle row for a LocalExecutionPolicy denial (GAP-G4-09)",
+    "frozen-artifact blob checks rerun",
+    "R14: safe_executor.py blob equals the pin (recorded as 2fc880da in the plan, re-verified at freeze)",
+    "Route A existing behaviour (C07, D07, C10 limits) unchanged and still listed as limits"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
+   "sprint": "S6-2",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/cognous-open-control-stack/tests/test_paired_request_enforcement.py::test_permitted_positive_control",
+      "suites/cognous-execution-runtime/tests/test_safe_executor.py::test_pinned_control_plane_ordinary_execution",
+      "suites/v1-scenarios/test_scn_c02.py",
+      "suites/v1-scenarios/test_scn_c12.py",
+      "suites/v1-scenarios/test_scn_c13.py",
+      "suites/v1-scenarios/test_scn_c14.py",
+      "suites/v1-scenarios/test_scn_d07.py",
+      "suites/v1-scenarios/test_scn_c07.py",
+      "suites/v1-scenarios/test_scn_c10.py",
+      "suites/v1-scenarios/test_scn_c11.py",
+      "/home/claude/cognous-ocs-registry/tests/test_s06_integrity.py"
+     ],
+     "new_tests_needed_unchanged": [
+      "rerun at exact pins with preserved statuses",
+      "declare the 11 Runtime known-limit tests (owner action before the run)",
+      "MVP oracle row for a LocalExecutionPolicy denial (GAP-G4-09)",
+      "frozen-artifact blob checks rerun"
+     ]
+    },
+    "new_primary": [],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "Adds R14 and Route A regression listing; r08-v1 golden moved to QG-15.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-14",
+   "name": "Process: exact-head independent run by designated owner",
+   "statement": "Every gate above has a PASS at the exact candidate pins run by a designated independent qualifier.",
+   "existing_test_ids": [],
+   "scenario_ids": [
+    "all"
+   ],
+   "evidence_status_today": "none; no independent qualification owner designated (GAP-G4-13); no run at CP 7a4bcd40/RT c5e97e87; not qualified",
+   "new_tests_needed": [
+    "designation record naming the lead and independence statement",
+    "freeze commit with expectation digest and candidate SHA",
+    "execution record with raw logs and SHA256SUMS",
+    "evidence review by separate party or recorded not performed",
+    "PREPARE-mode label on every output while no lead is designated",
+    "independence statement also covers the author of the registry emulator host (R12)",
+    "operator confirmation of the 8-field V1 and the binding rulings recorded before freeze"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; verdict only by designated lead; builder-side inspection never counts toward independence; Copilot is code review only (comment-only, not approval)",
+   "sprint": "S5-1/S5-6/S6-4",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [],
+     "new_tests_needed_unchanged": [
+      "designation record naming the lead and independence statement",
+      "freeze commit with expectation digest and candidate SHA",
+      "execution record with raw logs and SHA256SUMS",
+      "evidence review by separate party or recorded not performed"
+     ]
+    },
+    "new_primary": [],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "MODIFIED",
+    "summary": "PREPARE-only rule restated; R12 separation; every output label fixed. Nothing is qualified.",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-15",
+   "name": "r08-v1 golden regression and r08-v2 additivity (R8, R14)",
+   "statement": "r08-v1 records, refusal codes, frozen registry_contract/registry_consumer/baseline artefacts and golden outputs are byte-identical after r08-v2 lands; r08-v2 is strictly additive; a v1 consumer refuses a v2-only record with a typed cause.",
+   "existing_test_ids": [
+    "/home/claude/cognous-ocs-registry/tests/test_r08_*.py (all existing, unchanged)",
+    "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py",
+    "/home/claude/cognous-ocs-registry/tests/test_s06_integrity.py",
+    "/home/claude/cognous-ocs-registry/tests/test_r08_integrity.py"
+   ],
+   "scenario_ids": [
+    "C20",
+    "C21"
+   ],
+   "evidence_status_today": "BUILDER_TESTED only (builder self-runs; not re-run here). QG-13 reruns test_s06_integrity but does not name r08-v1 golden behaviour, so this gate is new rather than folded in. Not qualified.",
+   "new_tests_needed": [
+    "golden refusal codes and reason texts identical (v1 inputs through the v2 dispatcher and the v1 path)",
+    "frozen artefact blobs unchanged",
+    "v2-only field in a v1 record refused; v1 record unknown to v2 dispatcher is not silently upgraded",
+    "all existing S05 expectations unedited",
+    "new codes (if any) additive and present in the R10 map"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; oracle author must not have authored/reviewed registry_successor, s05_oracle.py or R08 tests, nor read them before freeze",
+   "sprint": "S5-4a",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "/home/claude/cognous-ocs-registry/tests/test_r08_*.py (all existing, unchanged)",
+      "/home/claude/cognous-ocs-registry/tests/test_s05_equivalence.py",
+      "/home/claude/cognous-ocs-registry/tests/test_s06_integrity.py",
+      "/home/claude/cognous-ocs-registry/tests/test_r08_integrity.py"
+     ],
+     "new_tests_needed_unchanged": []
+    },
+    "new_primary": [],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "NEW",
+    "summary": "Added because QG-13 does not cover r08-v1 golden behaviour (R8).",
+    "nothing_qualified": true
+   }
+  },
+  {
+   "gate_id": "QG-16",
+   "name": "Durability, recovery, rollback and custody (R13)",
+   "statement": "After crash, restart, restore or rollback of Runtime selection state, registry snapshots or the destination store, no revoked, expired or superseded policy becomes admissible, and lost state fails closed; custody of synthetic keys, trust snapshots and state files is exercised.",
+   "existing_test_ids": [
+    "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_process_termination_transaction_boundaries",
+    "suites/mvp-chain/test_ruling4_lost_ack.py",
+    "process/mvp-chain rows NC2-01..05, NC6-01..04 (builder proposal v7)"
+   ],
+   "scenario_ids": [
+    "C07",
+    "D07"
+   ],
+   "evidence_status_today": "Authority-boundary crash tests exist and no registry state exists to restore: nothing at registry-selection level; NC rows are PROPOSED; not qualified.",
+   "new_tests_needed": [
+    "crash at each stage of activation and of effect transaction with selection tables present",
+    "restore older DB: restore fence refuses",
+    "lost high-water state fails closed",
+    "snapshot custody: unreadable, truncated, symlink, other-owner file",
+    "destination unavailable and authority store unreadable at effect (retained NC6-02/03)",
+    "repeated runs with raw logs"
+   ],
+   "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; oracle author must not have authored/reviewed registry_successor, s05_oracle.py or R08 tests, nor read them before freeze",
+   "sprint": "S5-4c",
+   "negative_controls": {
+    "retained": {
+     "existing_test_ids_unchanged": [
+      "suites/cognous-execution-runtime/tests/test_local_authority_effect.py::test_process_termination_transaction_boundaries",
+      "suites/mvp-chain/test_ruling4_lost_ack.py",
+      "process/mvp-chain rows NC2-01..05, NC6-01..04 (builder proposal v7)"
+     ],
+     "new_tests_needed_unchanged": []
+    },
+    "new_primary": [
+     {
+      "id": "NX-09",
+      "title": "Restore and rollback",
+      "attacked": [
+       "Restore Runtime selection-state DB from a backup older than a revocation or higher epoch",
+       "Restore registry snapshot to an older version",
+       "Restore with lost high-water state (must fail closed)",
+       "Rollback of an activation transaction half-way",
+       "Reactivating a restored record that was revoked"
+      ],
+      "expected_disposition": "REFUSE_NO_EFFECT or fail-closed hold until restore fence satisfied; revoked or newer state is never silently regained as admissible",
+      "gate": "QG-16",
+      "also_gates": [
+       "QG-05",
+       "QG-08"
+      ],
+      "route": "B only (Route A not covered, see LIM-A1)",
+      "mutation_leg": "Drop the restore fence; accept equal/older epoch after restore; each must fail",
+      "existing_coverage": "builder test_a2_rollback_attempts_refused (registry decision level, BUILDER_TESTED); NC6-02/03 custody (proposal)",
+      "true_status_today": "Runtime restore: NO_TEST; no durable state exists yet",
+      "rulings": [
+       "R13",
+       "R9"
+      ]
+     }
+    ],
+    "new_secondary_refs": []
+   },
+   "status_change": {
+    "change": "NEW",
+    "summary": "New for R13.",
+    "nothing_qualified": true
+   }
+  }
+ ]
+}
