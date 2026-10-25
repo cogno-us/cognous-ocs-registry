@@ -226,3 +226,69 @@ def test_exact_target_match_mode_allows_only_the_exact_target(tmp_path):
     destination2, executor2, snapshot2 = _run(tmp_path / "b", longer, ok)
     with pytest.raises(PermissionError, match="^local target restriction$"):
         executor2.execute_snapshot(snapshot2)
+
+
+# --- S01 independent-review-round additions: target well-formedness and boundary characterisation ---
+# These call the policy's target matcher directly (characterisation of current behaviour; the real-path
+# refusal for one malformed target is asserted separately below).
+
+PREFIX = "urn:cognous:synthetic-account:"
+MALFORMED = [
+    "",
+    PREFIX + "a\x00b",              # NUL (Cc)
+    PREFIX + "a\nb",                # control character (Cc)
+    PREFIX + "a​b",            # zero-width space (Cf)
+    PREFIX + "a b",            # line separator (Zl)
+    PREFIX + "a b",            # paragraph separator (Zp)
+    PREFIX + "a\ud800b",            # lone surrogate (Cs)
+    PREFIX + "..",                  # dot-segment
+    PREFIX + "a/../b",
+    PREFIX + "a/./b",
+    PREFIX + "a\\..\\b",            # backslash-separated dot-segment
+    PREFIX + "a:..:b",              # colon-separated dot-segment
+]
+
+
+@pytest.mark.parametrize("mode", ["segment", "legacy-prefix", "exact"])
+@pytest.mark.parametrize("target", MALFORMED)
+def test_malformed_targets_are_refused_in_every_match_mode(mode, target):
+    op = _operation()
+    entries = (PREFIX, target) if (mode == "exact" and target) else (PREFIX,)  # empty entries are invalid policy
+    policy = _policy(op, allowed_target_prefixes=entries, target_match=mode)
+    assert policy._target_allowed(target) is False
+
+
+def test_non_string_target_is_refused():
+    policy = _policy(_operation())
+    assert policy._target_allowed(None) is False
+    assert policy._target_allowed(123) is False
+
+
+@pytest.mark.parametrize(
+    "prefix,target,expected",
+    [
+        ("urn:a", "urn:a", True),            # equal to entry
+        ("urn:a", "urn:a:x", True),          # ":" boundary
+        ("urn:a", "urn:a/x", True),          # "/" boundary
+        ("urn:a", "urn:ax", False),          # spill, not on a boundary
+        ("urn:a/", "urn:a/x", True),         # entry ends in separator
+        ("urn:a:", "urn:a:x", True),
+        ("urn:a", "urn:b", False),
+    ],
+)
+def test_segment_boundary_rules(prefix, target, expected):
+    policy = _policy(_operation(), allowed_target_prefixes=(prefix,))
+    assert policy._target_allowed(target) is expected
+
+
+def test_any_allowed_entry_may_match():
+    policy = _policy(_operation(), allowed_target_prefixes=("urn:a", "urn:b"))
+    assert policy._target_allowed("urn:b:x") is True
+
+
+def test_dot_segment_target_is_refused_through_the_real_path(tmp_path):
+    op = dataclasses.replace(_operation(), target=PREFIX + "customer-1/../customer-2")
+    destination, executor, snapshot = _run(tmp_path, op, _policy(op))
+    with pytest.raises(PermissionError, match="^local target restriction$"):
+        executor.execute_snapshot(snapshot)
+    assert destination.effect_count(op.grant_id) == 0

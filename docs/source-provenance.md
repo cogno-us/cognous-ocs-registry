@@ -94,6 +94,10 @@ Recorded as historical GitHub facts only; authorization and independent-review s
 
 ## 7. Reproduction record
 
+Lock self-label: the selected hub `component-lock.json` itself carries `qualification_status: "accepted"` (with its own qualification evidence reference). This repository does not adopt or re-verify that label; per operator decision D1 the tuple is not described here as independently qualified.
+
+Independent-review status (D4 condition 5): a fresh-context reviewer session was briefed by the builder coordinator and found 0 blockers, 2 major and 6 minor findings (provenance, byte identity, lock hash and the `CONTROL_PLANE_COMMIT` mismatch independently confirmed; legacy-prefix wording corrected; well-formedness tests added; 63 tests now pass). That reviewer stated it is not independent of the PR author in the CA04/CA23 sense. It is recorded as coordinator-directed review, not independent qualification.
+
 Review-round verification at PR head `58e9bc46` (S01 completion session, 2026-10-24, not independent qualification): (a) a fresh `git clone` checked out at that head, hash-locked venv, CPython 3.13.17: 13 passed; (b) a separate clone of `cogno-us/cognous-execution-runtime` at `ec728da6`: `git hash-object` of all six imported files equals both the local copies and the blob ids in the test (so byte identity is checked against the upstream revision, not only against constants); (c) hub `component-lock.json` at `a2d9396c` hashes to `dcd3ab9e...` and the tag `review-v0.1-g8-r10-20261022` peels to `a2d9396c`. A read-only reviewer worker found boundary and ordering gaps; four tests were added (17 total). Scratch mutants `amount >= max`, `effective_max_effects >= max` and institution/domain order swap were each caught by the suite at that point; these mutation runs are supplementary scratch observations, not retained or reproducible evidence, and are not cited as qualification.
 
 
@@ -113,7 +117,7 @@ An earlier mutation (target check, 2026-10-24 first round) failed the refusal te
 
 ## 8. Unqualified, unsupported, not done
 
-- Known untested behaviour (to be inventoried before any later sprint relies on it for equivalence): malformed-target handling (`_target_is_well_formed`) and `legacy-prefix` mode.
+- Known untested behaviour (to be inventoried in S02 and tested in S05 before any family relies on it for equivalence): `LocalExecutionPolicy.__post_init__` fail-closed validation of malformed policies; `_strict_finite_number` / `_strict_positive_int` rejections (NaN, inf, bool, zero, negative); check order beyond the institution-before-domain pair; recording of the `policy_denial` failure row for each restriction other than target (only target and the `effects != 1` validation path assert it); the unreachable "exactly one effect" branch. Covered after the review round: malformed-target well-formedness (control, format, separator, surrogate characters, dot-segments, every match mode), `/` and `:` boundaries, `exact` mode, and `legacy-prefix` (tested for the non-boundary spill case; not combined with every malformed form).
 - Nothing is qualified. The fixture covers the Runtime local policy and SQLite destination only; the Control Plane is intended to call this module (hub documentation, not re-verified here).
 - Hub narrative documents were first read from a local clone whose head is not visible by REST. Re-read by REST: `mvp-definition.md` and the catalogue manifest at hub main `51c579a3`, the locks, profiles, freeze manifests and `candidate-manifest.json`. Other hub document citations (known-issues, release-status, bounded-v1, dependency-manifest, architect-rulings) are as read locally and not re-verified at a REST-reachable commit. Runtime and component files were read by REST at exact revisions.
 - g7 tuple not read; Control Plane contents of #83 and Replay contents of #78/#79 were checked only through REST titles, bodies and compare listings.
