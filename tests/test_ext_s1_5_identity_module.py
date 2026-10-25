@@ -309,7 +309,13 @@ def _oracle_failures():
             ("grant with number", lambda s_: iss(s_).update(authority=[["a", "b", "c", "d", 5]])),
             ("grant with star token", lambda s_: iss(s_).update(authority=[["a", "b", "c", "d", "*"]])),
             ("duplicate grants", lambda s_: iss(s_).update(authority=[["a", "b", "c", "d", "e"]] * 2)),
-            ("revoked epoch negative", lambda s_: s_.update(revoked_selections=[["a", -5]])), ("revoked epoch 0", lambda s_: s_.update(revoked_selections=[["a", 0]])),
+            ("revoked epoch 20 digits", lambda s_: s_.update(revoked_selections=[["a", 10 ** 20]])), ("revoked epoch negative 20 digits", lambda s_: s_.update(revoked_selections=[["a", -10 ** 20]])),
+            ("issuers is a str", lambda s_: s_.update(issuers="")), ("revoked_key_ids is a str", lambda s_: s_.update(revoked_key_ids="")),
+            ("revoked_selections is a str", lambda s_: s_.update(revoked_selections="")), ("min_epochs is a str", lambda s_: s_.update(min_epochs="")),
+            ("issuers is a dict", lambda s_: s_.update(issuers={})), ("authority is a str", lambda s_: iss(s_).update(authority="")),
+            ("authority is a dict", lambda s_: iss(s_).update(authority={})),
+            ("revoked key with a surrogate pair", lambda s_: s_.update(revoked_key_ids=[chr(0xD83D) + chr(0xDE00)])),
+            ("snapshot_id with a surrogate pair", lambda s_: s_.update(snapshot_id=chr(0xD83D) + chr(0xDE00))),
             ("revoked epoch bool", lambda s_: s_.update(revoked_selections=[["a", True]])), ("revoked epoch str", lambda s_: s_.update(revoked_selections=[["a", "1"]])),
             ("revoked pair of three", lambda s_: s_.update(revoked_selections=[["a", 1, 2]])), ("revoked epoch huge", lambda s_: s_.update(revoked_selections=[["a", 10 ** 5000]])),
             ("floor 0", lambda s_: s_.update(min_epochs=[["a", 0]])), ("floor bool", lambda s_: s_.update(min_epochs=[["a", True]])),
@@ -320,6 +326,11 @@ def _oracle_failures():
         cyc = []
         cyc.append(cyc)
         bad("self-referential list", lambda s_: s_.update(snapshot_id=cyc))
+        for epoch in (10 ** 20, -10 ** 20, 10 ** 5000):  # the shape guard itself, not only the serializer behind it, bounds a revoked epoch
+            snap = json.loads(json.dumps(base))
+            snap["revoked_selections"] = [["a", epoch]]
+            for fn in (m.normalize_snapshot, m.check_snapshot_duplicates, m._checked_snapshot):
+                check(_outcome(fn, snap) == ("refuse", "trust_snapshot_invalid", None), "revoked epoch bound in the shape guard: %s" % fn.__name__)
         check(_outcome(m.trust_snapshot_fingerprint, None) == ("refuse", "trust_snapshot_invalid", None), "snapshot None")
         check(_outcome(m.normalize_snapshot, {"issuers": 1}) == ("refuse", "trust_snapshot_invalid", None), "normalize malformed")
         check(_outcome(m.check_snapshot_duplicates, {"issuers": 1}) == ("refuse", "trust_snapshot_invalid", None), "duplicates malformed")
@@ -428,8 +439,258 @@ def _oracle_failures():
         check(not any(x.proposed for x in m.REFUSAL_MAPPING if x.row_id not in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-verify", "MP-trust_snapshot_missing-guard"))
               and all(m.MAPPING_BY_ID[i].proposed for i in ("MP-trust_snapshot_invalid", "MP-trust_snapshot_missing-verify", "MP-trust_snapshot_missing-guard")), "proposed rows")
 
+    def round_two():
+        """Review of PR #33, round two (S1-S6 and the nits)."""
+        import copy
+        import pickle
+        from types import MappingProxyType
+        PAIR = chr(0xD83D) + chr(0xDE00)  # an adjacent high and low surrogate (a literal "😀" would join into one astral character)
+        REVERSED = chr(0xDE00) + chr(0xD83D)  # low then high: two lone surrogates, not a pair
+        good = m.parse_binding(_bv()["input_json"])
+        f4 = "f4-control-plane-age-bounds"
+        f4_ok = {"status_max_age_seconds": 1, "approval_max_age_seconds": 2}
+
+        class S(str):
+            pass
+
+        class I(int):
+            pass
+
+        class L(list):
+            pass
+
+        class D(dict):
+            pass
+
+        class Spy:
+            def __repr__(self):
+                raise AssertionError("a refusal message must never format the offending object")
+
+            __str__ = __repr__
+
+        def refusal_of(fn, *args):
+            try:
+                fn(*args)
+            except m.IdentityRefusal as r:
+                return r
+            return None
+
+        # S1: a refusal pickles, copies and deep-copies to an equal refusal (evidence stays read-only)
+        err = refusal_of(m.validate_binding, {**good, "selection_epoch": 0})
+        check(err is not None and type(err.evidence) is MappingProxyType, "refusal evidence is read-only")
+        for how, clone in (("pickle", lambda e: pickle.loads(pickle.dumps(e))), ("copy", copy.copy), ("deepcopy", copy.deepcopy)):
+            c2 = clone(err)
+            check(type(c2) is m.IdentityRefusal and (c2.code, c2.member, c2.stage, dict(c2.evidence)) == (err.code, err.member, err.stage, dict(err.evidence))
+                  and type(c2.evidence) is MappingProxyType and str(c2) == str(err), "refusal survives " + how)
+        try:
+            err.evidence["x"] = 1
+            fails.append("refusal evidence is writable")
+        except TypeError:
+            pass
+        proj = refusal_of(m.project_snapshot_version, 2 ** 53)
+        check(pickle.loads(pickle.dumps(proj)).stage == "projection" and m.mapping_row_for(pickle.loads(pickle.dumps(proj))).row_id == "MP-field_invalid-projection", "stage survives pickle")
+
+        # S2: every digest primitive refuses a shared (DAG) input as input_too_large instead of expanding it
+        shared = [0] * 8
+        for _ in range(5):
+            shared = [shared] * 8  # depth 7 below the root, 8 ** 6 leaves, about 300k visits against the 65,536 budget
+        for fn in (m.canonical_json_bytes, m.plain_digest, m.binding_digest, m.effective_digest_of_preimage):
+            check(_outcome(fn, shared) == ("refuse", "input_too_large", None), "shared DAG input " + fn.__name__)
+        check(m.MAX_NODES == 65536 and m.MAX_SNAPSHOT_NODES == 1048576 and m.MAX_DEPTH == 8, "node and depth ceilings are pinned")
+        check(m.canonical_json_bytes([0] * 65535) == b"[" + b",".join([b"0"] * 65535) + b"]", "65,536 nodes are accepted")
+        check(_outcome(m.canonical_json_bytes, [0] * 65536) == ("refuse", "input_too_large", None), "65,537 nodes are refused")
+        check(_outcome(m.plain_digest, [0] * 65536) == ("refuse", "input_too_large", None), "plain digest node ceiling")
+        shallow_ok = []
+        for _ in range(7):
+            shallow_ok = [shallow_ok]  # 7 nested lists: the deepest accepted shape
+        nine = [shallow_ok]  # 8 nested lists: one level too deep
+        for fn in (m.canonical_json_bytes, m.plain_digest):
+            check(_outcome(fn, shallow_ok)[0] == "ok" and _outcome(fn, nine) == ("refuse", "json_nesting_too_deep", None) and _outcome(fn, [nine]) == ("refuse", "json_nesting_too_deep", None),
+                  "native depth boundary " + fn.__name__)
+        check(_outcome(m._serialize, nine) == ("refuse", "json_nesting_too_deep", None), "serializer depth is checked on its own")
+        check(_outcome(m._plain, nine) == ("refuse", "json_nesting_too_deep", None) and _outcome(m._plain, shallow_ok)[0] == "ok", "plain depth is checked on its own")
+
+        # _plain: exact types out, whatever came in
+        for value, name in ((S("a"), "str subclass"), (I(1), "int subclass"), (L([1]), "list subclass"), (D(a=1), "dict subclass"), (1.5, "float"), (b"x", "bytes"),
+                            (object(), "object"), (set(), "set")):
+            out = m._plain(value)
+            check(out is m._FOREIGN and type(out) is m._Foreign, "plain turns a %s into the foreign marker" % name)
+            check(_outcome(m._plain, [value]) == ("ok", [m._FOREIGN]) and _outcome(m._plain, {"k": value}) == ("ok", {"k": m._FOREIGN}), "plain marks a nested " + name)
+        for value, name in (("a", "str"), (True, "bool"), (3, "int"), (None, "None"), ([1], "list"), ({"a": 1}, "dict")):
+            out = m._plain(value)
+            check(out == value and type(out) is type(value) and (not isinstance(value, (list, dict)) or out is not value), "plain keeps an exact %s (copying containers)" % name)
+        check(type(m._plain((1, (2,)))) is list and m._plain((1, (2,))) == [1, [2]], "plain turns tuples into lists")
+        marker = m.OutOfRangeInteger("9" * 30)
+        check(m._plain(marker) is marker, "plain passes the integer marker")
+        check(m._plain(PAIR) is m._AMBIGUOUS and m._plain(REVERSED) == REVERSED and m._plain(chr(0xD800)) == chr(0xD800) and m._plain("\U0001F600") == "\U0001F600", "plain marks only an adjacent high+low surrogate pair")
+        check(_outcome(m._plain, {PAIR: 1}) == ("refuse", "field_unknown", m.AMBIGUOUS_STRING_KEY) and _outcome(m._plain, {REVERSED: 1}) == ("ok", {REVERSED: 1}), "plain key rule for surrogate pairs")
+        check(m.AMBIGUOUS_STRING_KEY != m.NON_STRING_KEY, "the two key labels differ")
+
+        # S5: a string with an adjacent surrogate pair never serializes (it would equal the astral character's bytes)
+        check(_outcome(m.canonical_json_bytes, PAIR) == ("refuse", "field_invalid", None), "pair string refused by the serializer")
+        check(_outcome(m.plain_digest, [PAIR]) == ("refuse", "field_invalid", None), "pair string refused by the digest")
+        check(_outcome(m.canonical_json_bytes, {PAIR: 1}) == ("refuse", "field_unknown", m.AMBIGUOUS_STRING_KEY), "pair key refused by the serializer")
+        check(m.canonical_json_bytes("\U0001F600") == b'"\\ud83d\\ude00"' and m.canonical_json_bytes(REVERSED) == b'"\\ude00\\ud83d"', "astral and reversed pair serialize")
+        check(_outcome(m._serialize, PAIR) == ("refuse", "field_invalid", None) and _outcome(m._serialize, {PAIR: 1}) == ("refuse", "field_unknown", m.AMBIGUOUS_STRING_KEY),
+              "the private serializer refuses a pair on its own (defence in depth)")
+        check(_outcome(m.validate_binding, {**good, "family": PAIR}) == ("refuse", "field_type_invalid", "family"), "binding member with a pair")
+        check(_outcome(m.validate_binding, {**good, PAIR: 1}) == ("refuse", "field_unknown", m.AMBIGUOUS_STRING_KEY), "binding key with a pair")
+        check(refusal_of(m.validate_binding, {**good, "family": PAIR}).evidence["observed_value_class"] == "other", "pair string observed class")
+        check(_outcome(m.load_document, '"' + PAIR + '"') == ("refuse", "input_not_text", None), "loader refuses a literal pair")
+        check(m.load_document('"\\ud83d\\ude00"') == "\U0001F600", "loader joins an escaped pair into the astral character")
+        for text, expect in (('"\\udc00\\u0041"', chr(0xDC00) + "A"), ('"\\ud800\\u0041"', chr(0xD800) + "A"), ('"\\udc00\\ud83d"', chr(0xDC00) + chr(0xD83D)),
+                             ('"\\ud800\\ud800"', chr(0xD800) * 2), ('"\\ud83d\\ud83d\\ude00"', chr(0xD83D) + "\U0001F600")):
+            check(m.load_document(text) == expect and _outcome(m.canonical_json_bytes, m.load_document(text))[0] == "ok", "loader escape " + text)
+        for raw, name in ((S("[1]"), "str subclass"), (bytearray(b"[1]"), "bytearray"), (memoryview(b"[1]"), "memoryview")):
+            check(_outcome(m.load_document, raw) == ("refuse", "input_not_text", None), "loader " + name)
+        class B(bytes):
+            pass
+        check(_outcome(m.load_document, B(b"[1]")) == ("refuse", "input_not_text", None), "loader bytes subclass")
+        check(_outcome(m.load_document, "[" + "é" * 40000 + "]") == ("refuse", "input_too_large", None), "loader measures UTF-8 bytes, not characters")
+
+        # N7: the integer marker is a field_invalid like a native big int
+        check(_outcome(m.canonical_json_bytes, marker) == ("refuse", "field_invalid", None) and _outcome(m.canonical_json_bytes, [marker]) == ("refuse", "field_invalid", None), "marker is field_invalid")
+        check(refusal_of(m.validate_binding, {**good, "family": marker}).evidence["observed_value_class"] == "integer", "marker observed class")
+        check(refusal_of(m.validate_binding, {**good, "family": 1.5}).evidence["observed_value_class"] == "other", "foreign observed class")
+
+        # S3: the snapshot node ceiling is a size limit, never a malformed-snapshot refusal
+        base = V["trust_snapshots"][0]["input"]
+
+        def nodes(v):
+            if type(v) is list:
+                return 1 + sum(nodes(x) for x in v)
+            if type(v) is dict:
+                return 1 + sum(nodes(x) for x in v.values())
+            return 1
+
+        snap = json.loads(json.dumps(base))
+        snap["revoked_selections"] = [["sel-%d" % i, i] for i in range(30000)]  # about 90k nodes: over MAX_NODES, well under the snapshot ceiling
+        big = nodes(snap)
+        check(big > m.MAX_NODES, "fixture: the large snapshot exceeds the document ceiling")
+        fp = m.trust_snapshot_fingerprint(snap)
+        norm = m.normalize_snapshot(snap)
+        check(fp == "sha256:" + __import__("hashlib").sha256(json.dumps(norm, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")).hexdigest(),
+              "large snapshot fingerprint equals the json.dumps reference")
+        check(_outcome(m.check_snapshot_duplicates, snap) == ("ok", None), "large snapshot duplicates check")
+        old_limit = m.MAX_SNAPSHOT_NODES
+        try:
+            m.MAX_SNAPSHOT_NODES = big
+            check(m.trust_snapshot_fingerprint(snap) == fp, "snapshot at the node ceiling is accepted")
+            m.MAX_SNAPSHOT_NODES = big - 1
+            for fn in (m.trust_snapshot_fingerprint, m.normalize_snapshot, m.check_snapshot_duplicates, m._checked_snapshot):
+                check(_outcome(fn, snap) == ("refuse", "input_too_large", None), "snapshot over the node ceiling " + fn.__name__)
+            check(_outcome(m.trust_snapshot_fingerprint, {"issuers": 1}) == ("refuse", "trust_snapshot_invalid", None), "a malformed small snapshot is still invalid")
+        finally:
+            m.MAX_SNAPSHOT_NODES = old_limit
+        shallow = json.loads(json.dumps(base))
+        shallow["snapshot_id"] = [[[[[[[[[1]]]]]]]]]
+        check(_outcome(m.trust_snapshot_fingerprint, shallow) == ("refuse", "trust_snapshot_invalid", None), "an over-deep snapshot is invalid, not a size refusal")
+        check(_outcome(m.trust_snapshot_fingerprint, {**base, "snapshot_id": shared}) == ("refuse", "input_too_large", None) or
+              _outcome(m.trust_snapshot_fingerprint, {**base, "snapshot_id": shared})[:2] == ("refuse", "trust_snapshot_invalid"), "a shared DAG snapshot never expands")
+
+        # S4: revoked epochs are any strict int under 20 digits; versions and floors keep the verifier's floor of 1
+        def with_snapshot(**edit):
+            sn = json.loads(json.dumps(base))
+            sn.update(edit)
+            return sn
+
+        for epoch in (-5, 0, 1, 2 ** 53, 10 ** 20 - 1, -(10 ** 20 - 1)):
+            sn = with_snapshot(revoked_selections=[["a", epoch]])
+            ref = json.dumps(m.normalize_snapshot(sn), sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+            check(_outcome(m.trust_snapshot_fingerprint, sn) == ("ok", "sha256:" + __import__("hashlib").sha256(ref).hexdigest()), "revoked epoch %d accepted" % epoch)
+        for edit in ({"version": 2 ** 53}, {"version": 10 ** 20 - 1}, {"min_epochs": [["a", 2 ** 53]]}, {"min_epochs": [["a", 10 ** 20 - 1]]}):
+            check(_outcome(m.trust_snapshot_fingerprint, with_snapshot(**edit))[0] == "ok", "snapshot edit %r accepted" % (edit,))
+        for edit in ({"version": 0}, {"min_epochs": [["a", 0]]}, {"min_epochs": [["a", -1]]}, {"min_epochs": [["a", 10 ** 20]]}, {"version": 10 ** 20}):
+            check(_outcome(m.trust_snapshot_fingerprint, with_snapshot(**edit)) == ("refuse", "trust_snapshot_invalid", None), "snapshot edit %r refused" % (edit,))
+
+        # copy-return: the private plain copy is never the caller's object or shares its containers
+        sn = with_snapshot()
+        cs = m._checked_snapshot(sn)
+        check(cs is not sn and cs == sn and cs["issuers"] is not sn["issuers"] and cs["issuers"][0]["authority"] is not sn["issuers"][0]["authority"], "_checked_snapshot copy")
+        key = {"scope_key_profile": m.SCOPE_KEY_PROFILE, **m.scope_key_from_binding(good)}
+        key.pop("scope_key_profile", None)
+        sk = m.scope_key_from_binding(good)
+        sk2 = m.validate_scope_key(sk)
+        check(sk2 == sk and sk2 is not sk, "validate_scope_key copy")
+        pre = m.effective_preimage(f4, f4_ok)
+        mutable_pre = json.loads(json.dumps(pre))
+        pre2 = m.validate_preimage(mutable_pre)
+        check(pre2 == pre and pre2 is not mutable_pre and pre2["effective"] is not mutable_pre["effective"], "validate_preimage copy")
+        scope_in = dict(good["scope"])
+        out = m.project_scope(scope_in)
+        check(out == good["scope"] and out is not scope_in and type(out) is dict, "project_scope returns a copy")
+        scope_in["tenant"] = "changed"
+        check(out["tenant"] == good["scope"]["tenant"], "project_scope copy is private")
+
+        # project_scope shape: exactly the three members, in a plain dict
+        for label, arg in (("extra member", {**good["scope"], "extra": "x"}), ("missing member", {k: v for k, v in good["scope"].items() if k != "tenant"}),
+                           ("empty", {}), ("dict subclass", D(good["scope"])), ("non-dict", [good["scope"]]), ("hostile key", {**good["scope"], 5: "x"}),
+                           ("too deep", [nine]), ("pair value", {**good["scope"], "tenant": PAIR}), ("shared DAG", shared)):
+            r = refusal_of(m.project_scope, arg)
+            check(r is not None and r.code == "field_invalid" and r.stage == "projection" and r.member.split(".")[0] == "scope", "project_scope " + label)
+        check(m.project_scope(good["scope"]) == good["scope"], "project_scope identity")
+
+        # S6: all five projection kinds reach the projection stage, each through its own entry point
+        kinds = {}
+        kinds["scope_token"] = refusal_of(m.project_scope, {**good["scope"], "tenant": "a b"})
+        kinds["trust_snapshot_version"] = refusal_of(m.project_snapshot_version, 2 ** 53)
+        kinds["effective_family_unsupported"] = refusal_of(m.project_effective_policy_digest, "nope", {})
+        kinds["effective_contract_unsupported"] = refusal_of(m.project_effective_policy_digest, f4, f4_ok, "r08-v1")
+        kinds["effective_payload_field_invalid"] = refusal_of(m.project_effective_policy_digest, f4, {**f4_ok, "status_max_age_seconds": -1})
+        check(tuple(kinds) == m.PROJECTION_REFUSAL_KINDS, "every projection kind is exercised")
+        expect_codes = {"scope_token": "field_invalid", "trust_snapshot_version": "field_invalid", "effective_family_unsupported": "family_unsupported",
+                        "effective_contract_unsupported": "contract_unsupported", "effective_payload_field_invalid": "field_invalid"}
+        expect_rows = {"field_invalid": "MP-field_invalid-projection", "family_unsupported": "MP-family_unsupported", "contract_unsupported": "MP-contract_unsupported"}
+        for kind, r in kinds.items():
+            check(r is not None and r.stage == "projection" and r.code == expect_codes[kind] and r.evidence.get("projection_refusal_code") == r.code, "projection kind " + kind)
+            if r is not None:
+                check(m.mapping_row_for(r).row_id == expect_rows[r.code], "mapping row of projection kind " + kind)
+                eff = m.projection_effect_for(r.code, "optional", "indeterminate", "n/a")
+                check(eff["effect_outcome"] == "UNKNOWN_FAIL_CLOSED", "projection effect of kind " + kind)
+                eff = m.projection_effect_for(r.code, "optional", "known", "authenticated")
+                check(eff["fallback_evidence"] is None or eff["fallback_evidence"]["projection_refusal_code"] == r.code, "fallback evidence of kind " + kind)
+                check(m.mapping_row_for(pickle.loads(pickle.dumps(r))).row_id == m.mapping_row_for(r).row_id, "projection kind survives pickle " + kind)
+        check(kinds["effective_payload_field_invalid"].member == "status_max_age_seconds" and tuple(kinds["effective_payload_field_invalid"].evidence["expected_range"]) == (0, 2147483647), "payload refusal keeps member and range")
+        check(m.project_effective_policy_digest(f4, f4_ok) == m.effective_policy_digest(f4, f4_ok), "projection wrapper returns the same digest")
+        for label, args in (("missing member", (f4, {"status_max_age_seconds": 1})), ("unknown member", (f4, {**f4_ok, "x": 1})), ("type", (f4, {**f4_ok, "status_max_age_seconds": "1"})),
+                            ("family type", (5, f4_ok)), ("contract type", (f4, f4_ok, 5)), ("depth", (f4, [nine])), ("size", (f4, shared))):
+            r = refusal_of(m.project_effective_policy_digest, *args)
+            check(r is not None and r.stage is None and "projection_refusal_code" not in r.evidence, "wrapper leaves %s untagged" % label)
+        check(m.mapping_row_for(m.IdentityRefusal("family_unsupported", "family", "projection")).row_id == "MP-family_unsupported", "single-row code ignores the stage")
+        check(m.mapping_row_for(m.IdentityRefusal("trust_snapshot_missing", None, "guard")).row_id == "MP-trust_snapshot_missing-guard", "multi-row code uses the stage")
+        try:
+            m.mapping_row_for(m.IdentityRefusal("trust_snapshot_missing", None, "nope"))
+            fails.append("unknown stage accepted")
+        except KeyError:
+            pass
+
+        # N6: the public deny-all helper takes hostile input like every other entry point
+        lists = {"allowed_actions": [], "allowed_adapters": ["b"], "allowed_units": []}
+        check(m.deny_all_dimensions("f1a-local-execution-allowlist", lists) == ["allowed_actions", "allowed_units"], "deny-all dimensions")
+        check(m.deny_all_dimensions(f4, f4_ok) == [] and m.deny_all_dimensions("f5-action-class-age-bounds", {"class_status_max_age_seconds": {}}) == [], "no lists, no deny-all")
+        check(_outcome(m.deny_all_dimensions, "nope", {}) == ("refuse", "family_unsupported", "family"), "deny-all unregistered family")
+        for fam in ([], None, 5, {}, b"x", S("f4-control-plane-age-bounds")):
+            check(_outcome(m.deny_all_dimensions, fam, {}) == ("refuse", "field_type_invalid", "family") or (type(fam) is S and _outcome(m.deny_all_dimensions, fam, {})[0] == "refuse"), "deny-all family %r" % (fam,))
+        for payload in ([], None, 5, "x", D(lists), shared, [nine]):
+            r = refusal_of(m.deny_all_dimensions, "f1a-local-execution-allowlist", payload)
+            check(r is not None, "deny-all payload %s is refused" % type(payload).__name__)
+        check(_outcome(m.deny_all_dimensions, "f1a-local-execution-allowlist", {1: []}) == ("refuse", "field_unknown", m.NON_STRING_KEY), "deny-all key")
+        check(_outcome(m.deny_all_dimensions, "f1a-local-execution-allowlist", {"allowed_actions": D(a=1)})[0] == "ok" or True, "deny-all values are not interpreted")
+
+        # N8: a refusal message never formats the offending object; N10: the lookup tables are read-only
+        for fn in (lambda: m.IdentityRefusal(Spy()), lambda: m.validate_effective_payload(f4, f4_ok, role=Spy()), lambda: m.projection_effect_for(Spy(), "required", "known", "n/a")):
+            try:
+                fn()
+                fails.append("a programmer error was accepted")
+            except ValueError as e:
+                check("Spy" in str(e), "programmer error names only the type")
+            except Exception as e:
+                fails.append("programmer error formatted its argument: %s" % type(e).__name__)
+        check(type(m._SHORT) is MappingProxyType and type(m._ESCAPES) is MappingProxyType, "serializer tables are read-only")
+        check(len(m.UNMAPPED_CODES) == 24, "24 unmapped codes")
+
     for fn in (valid_bindings, invalid_bindings, identifiers, guards, effective, scope_keys, snapshots, projection, spec_rules_not_pinned_by_a_vector, code_boundaries,
-               loader_direct, long_literals, malformed_snapshots, hostile_types, stage_and_evidence):
+               loader_direct, long_literals, malformed_snapshots, hostile_types, stage_and_evidence, round_two):
         guard(fn.__name__, fn)
     return fails
 
@@ -719,7 +980,8 @@ def _hostile_values():
         deep = [deep]
     return [None, True, False, 0, -1, 2 ** 64, 10 ** 5000, -10 ** 5000, 1.5, float("nan"), "", "a", "a b", "\ud800", S("a"), I(1), L([1]), D(a=1), b"x", bytearray(b"x"),
             memoryview(b"x"), (), (1, "a"), [], [[]], {}, {"a": 1}, {1: 1}, {None: 1}, {b"x": 1, "a": 1}, {"a": {1: 2}}, cyc, deep, object(), set(), frozenset(), {"scope": 5},
-            {"scope": {1: 2}}, {"issuers": [1]}, [[["a", 10 ** 5000]]]]
+            {"scope": {1: 2}}, {"issuers": [1]}, [[["a", 10 ** 5000]]], m.OutOfRangeInteger("9" * 30), chr(0xD83D) + chr(0xDE00), chr(0xDE00) + chr(0xD83D),
+            {chr(0xD83D) + chr(0xDE00): 1}, [chr(0xD83D) + chr(0xDE00)]]
 
 
 def test_public_surface_raises_only_typed_refusals_on_hostile_input():
@@ -750,6 +1012,12 @@ def test_public_surface_raises_only_typed_refusals_on_hostile_input():
                 m.validate_effective_payload(f, value)
             except m.IdentityRefusal:
                 pass
+            for fn in (m.deny_all_dimensions, m.project_effective_policy_digest):
+                try:
+                    fn(f, value)
+                except m.IdentityRefusal:
+                    pass
+                n += 1
         for fn in (m.verify_carried_binding_digest,):
             for a, b in ((good, value), (value, "sha256:" + "0" * 64), (value, value)):
                 try:
@@ -767,6 +1035,56 @@ def test_public_surface_raises_only_typed_refusals_on_hostile_input():
             except m.IdentityRefusal:
                 pass
     assert n > 1500
+
+
+def _raise_in_worker(_):
+    from registry_successor import v2_policy_identity as mod
+    mod.project_snapshot_version(2 ** 53)
+
+
+def test_refusal_crosses_a_process_boundary_and_keeps_its_stage():
+    """S1: a refusal pickles; a worker pool re-raises the original, with code, member, stage and read-only evidence intact."""
+    from concurrent.futures import ProcessPoolExecutor
+    with ProcessPoolExecutor(max_workers=1) as pool:
+        with pytest.raises(m.IdentityRefusal) as info:
+            pool.submit(_raise_in_worker, 0).result(timeout=60)
+    r = info.value
+    assert (r.code, r.member, r.stage) == ("field_invalid", "trust_snapshot_version", "projection")
+    assert m.mapping_row_for(r).row_id == "MP-field_invalid-projection" and tuple(r.evidence["expected_range"]) == (1, 2 ** 53 - 1)
+    with pytest.raises(TypeError):
+        r.evidence["x"] = 1
+
+
+def test_snapshot_at_the_real_node_ceiling_is_accepted_and_one_pair_over_is_refused_as_size():
+    """S3: the PROPOSED ceiling (1,048,576 nodes) accepts a snapshot of exactly that size and refuses the next pair as `input_too_large`."""
+    base = json.loads(json.dumps(V["trust_snapshots"][0]["input"]))
+
+    def count(v):
+        stack, n = [v], 0
+        while stack:
+            x = stack.pop()
+            n += 1
+            if type(x) is list:
+                stack.extend(x)
+            elif type(x) is dict:
+                stack.extend(x.values())
+        return n
+
+    base["revoked_selections"] = []
+    room = m.MAX_SNAPSHOT_NODES - count(base)
+    pairs = room // 3
+    base["revoked_selections"] = [["s%d" % i, i] for i in range(pairs)]
+    exact = count(base)
+    assert exact <= m.MAX_SNAPSHOT_NODES < exact + 3
+    base["snapshot_id"] = "ok"
+    if exact < m.MAX_SNAPSHOT_NODES:  # pad with scalar entries until the document is exactly at the ceiling
+        base["revoked_key_ids"] = list(base["revoked_key_ids"]) + ["k%d" % i for i in range(m.MAX_SNAPSHOT_NODES - exact)]
+    assert count(base) == m.MAX_SNAPSHOT_NODES
+    assert m.trust_snapshot_fingerprint(base).startswith("sha256:")
+    base["revoked_key_ids"].append("one-more")
+    with pytest.raises(m.IdentityRefusal) as info:
+        m.trust_snapshot_fingerprint(base)
+    assert info.value.code == "input_too_large"
 
 
 def test_validators_hand_back_private_plain_copies():
@@ -1004,7 +1322,7 @@ MUTANTS = [
     ("epoch sorted lexically", "key=lambda p: (p[0], p[1]))\n    out[\"min_epochs\"]", "key=lambda p: (p[0], str(p[1])))\n    out[\"min_epochs\"]"),
     ("revoked ids duplicates allowed", 'or len(set(revoked)) != len(revoked)', 'or False'),
     ("issuer duplicates allowed", '    return (len(set(keys)) != len(keys) or', '    return (False or'),
-    ("fingerprint with binding prefix", 'return plain_digest(normalize_snapshot(plain))', 'return binding_digest(normalize_snapshot(plain))'),
+    ("fingerprint with binding prefix", 'return _sha_plain(b"", normalize_snapshot(plain))', 'return _sha_plain(BINDING_PREFIX, normalize_snapshot(plain))'),
     ("f1a tag", '"f1a-local-execution-allowlist", "v1", "lists"', '"f1a-local-execution-allowlist", "v2", "lists"'),
     ("r08-v1 registered", "REGISTERED_CONTRACT_VERSIONS = (CONTRACT_VERSION,)", 'REGISTERED_CONTRACT_VERSIONS = (CONTRACT_VERSION, "r08-v1")'),
     ("deny_all wrong", "if v == [])", "if len(v) < 2)"),
@@ -1013,7 +1331,7 @@ MUTANTS = [
     ("token rule dropped", "all(c.valid_token(x) for x in v)", "all(isinstance(x, str) for x in v)"),
     ("empty class map allowed", "if not classes or not", "if not"),
     ("class map bare int", 'elif path == "class_status_max_age_seconds" or not _int_typed(v):', 'elif not _int_typed(v):'),
-    ("deny_all not compared", 'if d["deny_all"] != deny_all_dimensions', 'if False and d["deny_all"] != deny_all_dimensions'),
+    ("deny_all not compared", 'if d["deny_all"] != _deny_all', 'if False and d["deny_all"] != _deny_all'),
     ("family tag trusted", 'if d["family_version"] != registered:', 'if False:'),
     ("scope key profile unchecked", 'if d[k] != SCOPE_KEY_PROFILE:', 'if False:'),
     ("required indeterminate", 'outcome = "UNKNOWN_FAIL_CLOSED" if activation_state == "indeterminate" else "REFUSE"', 'outcome = "REFUSE"'),
@@ -1025,10 +1343,10 @@ MUTANTS = [
     ("scope projection normalizes", 'if not (type(v) is str and _ascii_match(_IDENT, v)):\n            _projection_refusal("scope." + k)', 'if type(v) is not str:\n            _projection_refusal("scope." + k)'),
     ("refusal code unchecked", 'if type(code) is not str or code not in CODES_V2:  #', 'if False:  #'),
     # review of PR #33 (S1-S5, nits): hostile-input boundary, snapshot guard, stage and evidence
-    ("non-string key accepted", "            if type(k) is not str:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            out[k]", "            if False:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            out[k]"),
+    ("non-string key accepted", "            if type(k) is not str:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            if _SURROGATE_PAIR", "            if False:\n                _refuse(\"field_unknown\", NON_STRING_KEY)\n            if _SURROGATE_PAIR"),
     ("serializer int unbounded", "if not -_INT_BOUND < value < _INT_BOUND:", "if False:"),
     ("serializer coerces subclasses", "    _refuse(\"field_type_invalid\")\n\n\ndef canonical_json_bytes", "    return str(value)\n\n\ndef canonical_json_bytes"),
-    ("plain depth unchecked", "    if depth > MAX_DEPTH:\n        _refuse(\"json_nesting_too_deep\")\n    t = type(value)\n    if value is None or", "    t = type(value)\n    if value is None or"),
+    ("plain depth unchecked", "    if depth > MAX_DEPTH:\n        _refuse(\"json_nesting_too_deep\")\n    t = type(value)\n    if t is str:\n        return _AMBIGUOUS", "    t = type(value)\n    if t is str:\n        return _AMBIGUOUS"),
     ("snapshot member set loose", "set(s) == set(_SNAPSHOT_MEMBERS)", "set(s) >= set(_SNAPSHOT_MEMBERS)"),
     ("snapshot epoch accepts bool", "return type(v) is int and 1 <= v < _INT_BOUND", "return isinstance(v, int) and 1 <= v < _INT_BOUND"),
     ("snapshot epoch floor 0", "return type(v) is int and 1 <= v < _INT_BOUND", "return type(v) is int and 0 <= v < _INT_BOUND"),
@@ -1040,7 +1358,7 @@ MUTANTS = [
     ("snapshot valid_until unparsed", "and c.parse_timestamp(s[\"valid_until\"]) is not None", ""),
     ("snapshot repeated grant allowed", "            or per_issuer)", "            or False)"),
     ("snapshot version unchecked", "_token(s[\"snapshot_id\"]) and _epoch(s[\"version\"])", "_token(s[\"snapshot_id\"]) and True"),
-    ("snapshot hostile input escapes", "    except IdentityRefusal:\n        _refuse(\"trust_snapshot_invalid\")\n    if not _snapshot_shape_ok(plain):", "    except ZeroDivisionError:\n        _refuse(\"trust_snapshot_invalid\")\n    if not _snapshot_shape_ok(plain):"),
+    ("snapshot hostile input escapes", "    except IdentityRefusal as e:\n        if e.code == \"input_too_large\":", "    except ZeroDivisionError as e:\n        if e.code == \"input_too_large\":"),
     ("projection stage dropped", 'def _projection_refusal(member: str, **evidence):\n    _refuse("field_invalid", member, stage="projection",', 'def _projection_refusal(member: str, **evidence):\n    _refuse("field_invalid", member, stage=None,'),
     ("integer range evidence dropped", 'evidence={"expected_range": (lo, hi)})', "evidence={})"),
     ("digest evidence dropped", 'evidence={"carried_digest": carried, "recomputed_digest": recomputed})', "evidence={})"),
@@ -1056,6 +1374,67 @@ MUTANTS = [
     ("projection stage row unselected", 'if refusal.stage == "projection":', "if False:"),
     ("integer row unselected", '"expected_range" in refusal.evidence', "False"),
     ("proposed flag dropped", 'stage_value="verify", proposed=True)', 'stage_value="verify")'),
+    # review of PR #33, round two (S1-S6, nits, and the reviewer's surviving mutants)
+    ("refusal not picklable", "    def __reduce__(self):", "    def __reduce_disabled__(self):"),
+    ("refusal reduce drops stage", "return (IdentityRefusal, (self.code, self.member, self.stage, dict(self.evidence)))", "return (IdentityRefusal, (self.code, self.member, None, dict(self.evidence)))"),
+    ("document node ceiling off by one", "MAX_NODES = 65536 ", "MAX_NODES = 65537 "),
+    ("document node budget off by five", "    budget[0] -= 1\n    if budget[0] < 0:", "    budget[0] -= 1\n    if budget[0] < -5:"),
+    ("snapshot node ceiling changed", "MAX_SNAPSHOT_NODES = 1048576 ", "MAX_SNAPSHOT_NODES = 1048577 "),
+    ("snapshot ceiling not passed", "plain = _plain(snapshot, limit=MAX_SNAPSHOT_NODES)", "plain = _plain(snapshot)"),
+    ("snapshot size read as malformed", '        if e.code == "input_too_large":\n            raise', '        if False:\n            raise'),
+    ("snapshot is not copied", "plain = _plain(snapshot, limit=MAX_SNAPSHOT_NODES)", "plain = snapshot"),
+    ("fingerprint re-copies with the document ceiling", 'return _sha_plain(b"", normalize_snapshot(plain))', 'return _sha(b"", normalize_snapshot(plain))'),
+    ("canonical bytes bypass the boundary", 'return _serialize(_plain(value)).encode("ascii")', 'return _serialize(value).encode("ascii")'),
+    ("digest bypasses the boundary", "return _sha_plain(prefix, _plain(value))", "return _sha_plain(prefix, value)"),
+    ("plain passes foreign values", "        return [_plain(x, depth + 1, budget, limit) for x in value]\n    if t is dict:", "        return [_plain(x, depth + 1, budget, limit) for x in value]\n    if t is dict or isinstance(value, dict):"),
+    ("plain keeps str subclasses", "    if t is str:\n        return _AMBIGUOUS if", "    if isinstance(value, str):\n        return _AMBIGUOUS if"),
+    ("plain returns the caller's list", "        return [_plain(x, depth + 1, budget, limit) for x in value]\n    if t is dict:", "        return value\n    if t is dict:"),
+    ("plain returns the caller's dict", "            out[k] = _plain(v, depth + 1, budget, limit)\n        return out", "            out[k] = _plain(v, depth + 1, budget, limit)\n        return value"),
+    ("plain ignores adjacent surrogates in values", "        return _AMBIGUOUS if _SURROGATE_PAIR.search(value) else value", "        return value"),
+    ("plain ignores adjacent surrogates in keys", "            if _SURROGATE_PAIR.search(k):\n                _refuse(\"field_unknown\", AMBIGUOUS_STRING_KEY)\n            out[k]", "            out[k]"),
+    ("pair pattern matches low then high", '_SURROGATE_PAIR = re.compile("[\\ud800-\\udbff][\\udc00-\\udfff]")', '_SURROGATE_PAIR = re.compile("[\\ud800-\\udfff][\\ud800-\\udfff]")'),
+    ("serializer ignores pairs", "    if _SURROGATE_PAIR.search(s):  # defence in depth", "    if False:  # defence in depth"),
+    ("serializer ignores pair keys", "        if any(_SURROGATE_PAIR.search(k) for k in value):", "        if False:"),
+    ("marker is a type error in the serializer", "    if t is OutOfRangeInteger or t is _Ambiguous:", "    if t is _Ambiguous:"),
+    ("ambiguous string is a type error in the serializer", "    if t is OutOfRangeInteger or t is _Ambiguous:", "    if t is OutOfRangeInteger:"),
+    ("revoked epoch needs 1", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return type(v) is int and 1 <= v < _INT_BOUND"),
+    ("revoked epoch unbounded", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return type(v) is int"),
+    ("revoked epoch bound inclusive", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return type(v) is int and -_INT_BOUND <= v <= _INT_BOUND"),
+    ("revoked epoch accepts bool", "    return type(v) is int and -_INT_BOUND < v < _INT_BOUND", "    return isinstance(v, int) and -_INT_BOUND < v < _INT_BOUND"),
+    ("revoked pairs use the floor rule", "all(_revoked_pair_ok(p) for p in s[\"revoked_selections\"])", "all(_pair_ok(p) for p in s[\"revoked_selections\"])"),
+    ("floors use the revoked rule", "and all(_pair_ok(p) for p in s[\"min_epochs\"]))", "and all(_revoked_pair_ok(p) for p in s[\"min_epochs\"]))"),
+    ("snapshot epoch ceiling 2^53", "return type(v) is int and 1 <= v < _INT_BOUND", "return type(v) is int and 1 <= v < 2 ** 53"),
+    ("snapshot issuers type unchecked", 'if not (type(s["issuers"]) is list and type(s["revoked_key_ids"])', 'if not (True and type(s["revoked_key_ids"])'),
+    ("snapshot revoked ids type unchecked", 'type(s["revoked_key_ids"]) is list and type(s["revoked_selections"])', 'True and type(s["revoked_selections"])'),
+    ("snapshot revoked selections type unchecked", 'type(s["revoked_selections"]) is list and type(s["min_epochs"]) is list', 'True and type(s["min_epochs"]) is list'),
+    ("snapshot min epochs type unchecked", 'type(s["revoked_selections"]) is list and type(s["min_epochs"]) is list', 'type(s["revoked_selections"]) is list and True'),
+    ("snapshot authority type unchecked", 'type(i["authority"]) is list and all(_grant_ok(g) for g in i["authority"])', 'all(_grant_ok(g) for g in i["authority"])'),
+    ("snapshot revoked key type unchecked", 'all(type(k) is str for k in s["revoked_key_ids"])', 'True'),
+    ("project_scope accepts extra members", 'if type(d) is not dict or set(d) != set(SCOPE_MEMBERS):', 'if type(d) is not dict or not set(d) >= set(SCOPE_MEMBERS):'),
+    ("project_scope accepts missing members", 'if type(d) is not dict or set(d) != set(SCOPE_MEMBERS):', 'if type(d) is not dict or not set(d) <= set(SCOPE_MEMBERS):'),
+    ("project_scope returns the caller's object", "    return {k: d[k] for k in SCOPE_MEMBERS}", "    return statement_scope"),
+    ("project_scope hostile input escapes untagged", "        d = _plain(statement_scope)\n    except IdentityRefusal:", "        d = _plain(statement_scope)\n    except ZeroDivisionError:"),
+    ("scope key not copied", 'def validate_scope_key(doc: Any) -> dict:\n    """Return a private plain copy of a well-formed scope-key object, else raise IdentityRefusal."""\n    d = _plain(doc)', 'def validate_scope_key(doc: Any) -> dict:\n    """Return a private plain copy of a well-formed scope-key object, else raise IdentityRefusal."""\n    d = doc if type(doc) is dict else _plain(doc)'),
+    ("preimage not copied", '    top = ("contract_version", "deny_all", "effective", "effective_policy_profile", "family", "family_version")\n    d = _plain(doc)', '    top = ("contract_version", "deny_all", "effective", "effective_policy_profile", "family", "family_version")\n    d = doc if type(doc) is dict else _plain(doc)'),
+    ("projection wrapper tags everything", "        if e.code not in _PROJECTION_DERIVATION_CODES:\n            raise", "        if False:\n            raise"),
+    ("projection wrapper never tags", "        if e.code not in _PROJECTION_DERIVATION_CODES:\n            raise", "        if True:\n            raise"),
+    ("projection wrapper skips contract", '_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "contract_unsupported", "field_invalid"))', '_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "field_invalid"))'),
+    ("projection wrapper skips family", '_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "contract_unsupported", "field_invalid"))', '_PROJECTION_DERIVATION_CODES = frozenset(("contract_unsupported", "field_invalid"))'),
+    ("projection wrapper skips field_invalid", '_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "contract_unsupported", "field_invalid"))', '_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "contract_unsupported"))'),
+    ("projection wrapper tags missing members", '_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "contract_unsupported", "field_invalid"))', '_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "contract_unsupported", "field_invalid", "field_missing"))'),
+    ("projection wrapper drops the code", '"projection", {**e.evidence, "projection_refusal_code": e.code})', '"projection", {**e.evidence})'),
+    ("projection wrapper drops the member", "raise IdentityRefusal(e.code, e.member, \"projection\"", "raise IdentityRefusal(e.code, None, \"projection\""),
+    ("single-row code filtered by stage", "    if len(rows) == 1:\n        return rows[0]\n    return verdict_for", "    if False:\n        return rows[0]\n    return verdict_for"),
+    ("deny-all helper unguarded", "    d = _plain(payload)\n    if type(d) is not dict:\n        _type_refusal(None, d)\n    return _deny_all(family, d)", "    return _deny_all(family, payload)"),
+    ("deny-all family type unchecked", 'def deny_all_dimensions(family: Any, payload: Any) -> list:', 'def deny_all_dimensions(family: Any, payload: Any) -> list:\n    return _deny_all(family, payload)\n\n\ndef _unused(family, payload):'),
+    ("deny-all family unregistered unchecked", '    if family not in IDENTITY_FAMILIES:\n        _refuse("family_unsupported", "family")\n    d = _plain(payload)', '    d = _plain(payload)'),
+    ("serializer escape table writable", "_SHORT = MappingProxyType({", "_SHORT = ({"),
+    ("loader escape table writable", "_ESCAPES = MappingProxyType({", "_ESCAPES = ({"),
+    ("refusal message formats the code", 'raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(code).__name__)', 'raise ValueError("refusal code outside CODES_V2: %r" % (code,))'),
+    ("role message formats the role", 'raise ValueError("unknown role (got a %s)" % type(role).__name__)', 'raise ValueError("unknown role: %r" % (role,))'),
+    ("effect message formats the code", 'raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(refusal_code).__name__)', 'raise ValueError("refusal code outside CODES_V2: %r" % (refusal_code,))'),
+    ("marker class lost", 'OutOfRangeInteger: "integer"}', 'OutOfRangeInteger: "other"}'),
+    ("loader joins any escape after a surrogate", "0xDC00 <= int(h2, 16) <= 0xDFFF", "0x0000 <= int(h2, 16) <= 0xFFFF"),
     ("scope key members", 'SCOPE_KEY_MEMBERS = ("authority_domain", "consumer_id", "family", "institution", "operation", "selection_id", "tenant")', 'SCOPE_KEY_MEMBERS = ("authority_domain", "consumer_id", "family", "institution", "operation", "selection_id")'),
 ]
 

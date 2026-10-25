@@ -12,12 +12,14 @@ Scope of this module (and only this):
   * the module-owned four-row `r08-v2` effective-payload table, from which `family_version` is DERIVED and never accepted (spec 6, ruling N-3);
   * the typed refusal mapping of spec 8.1 for the codes that already exist in `CODES_V2`.
 
-Hostile-input boundary (review of PR #33, S1/S2): every public validator and digest function first copies its input through `_plain`, which accepts
-ONLY exact `dict`, `list`/`tuple` (tuples become lists), `str`, `bool`, `int` and `None` (subclasses, floats, bytes and every other type become an opaque
-marker that is refused with `field_type_invalid` at its own path), requires `str` keys, and bounds nesting depth and node count. Validation and hashing
-then operate on that private plain copy, so a subclass can neither change what is validated versus hashed nor mutate the document in between. The only
-exceptions the public surface raises for a document are `IdentityRefusal`; `ValueError` is raised only for programmer errors (an unknown refusal code or
-role).
+Hostile-input boundary (review of PR #33, S1/S2): every public function that takes a document, a value to hash or a snapshot (the validators, the
+digest and canonical-bytes functions, the snapshot functions, `deny_all_dimensions`) first copies its input through `_plain`, which accepts ONLY exact
+`dict`, `list`/`tuple` (tuples become lists), `str`, `bool`, `int` and `None` (subclasses, floats, bytes and every other type become an opaque marker
+that is refused with `field_type_invalid` at its own path), requires `str` keys, refuses a string that contains an adjacent high and low surrogate (two
+different native strings would otherwise serialize to the same bytes), and bounds nesting depth and node count. Validation and hashing then operate on
+that private plain copy, so a subclass can neither change what is validated versus hashed nor mutate the document in between. The only exceptions the
+public surface raises for a document are `IdentityRefusal`; `ValueError` is raised only for programmer errors (an unknown refusal code or role, or an
+unknown refusal stage), and its message never formats the offending object.
 
 Not in this module: composition of registry and caller values (EXT-S1-4), any store, activation state or `activation_sequence` (EXT-S4), the Control
 Plane or Runtime guards, and the three ruled additive codes (`not_activated`, `policy_identity_mismatch`, `store_unknown`) and `CODES_V2_REV2`
@@ -29,10 +31,17 @@ DEFERRED (not implemented here, listed so no consumer assumes them): (1) the spe
 `activation_ref` (spec 4 and 10 assign this to the Registry source PR); (3) an adapter from the verifier's `TrustSnapshot` object to the normalized dict
 that `trust_snapshot_fingerprint` takes (the object is refused, never misread).
 
-PROPOSED by this PR in addition (each needs an Architect line, none is a ruling): a snapshot shape guard at the verifier's own strictness (lowercase
-hex key, five-token grants, versions and epochs of at least 1 and under 20 digits, repeated grants inside one issuer refused as duplicates);
-`NON_STRING_KEY` as the member of a refusal for a dict key that is not a str; long integer literals load as `OutOfRangeInteger`, never as a plausible int;
-the order in `verify_carried_binding_digest` (binding, carried-digest format, equality).
+PROPOSED by this PR in addition (each needs an Architect line, none is a ruling): a snapshot shape guard (lowercase hex key, five-token grants,
+repeated grants inside one issuer refused as duplicates) that is STRICTER than `verify._normalize_trust` in exactly these places and fail-closed in each:
+a snapshot version, floor or revoked epoch of 20 or more digits is refused (the serializer writes under 20 digits; the verifier accepts any strict int),
+a repeated grant inside one issuer is refused (the verifier accepts it); everything else is at the verifier's own strictness (a revoked epoch may be any
+strict int below 20 digits, including 0 and negative, as in the verifier; versions and floors are at least 1); a node ceiling on one in-memory document
+(MAX_NODES) and a larger one on one snapshot (MAX_SNAPSHOT_NODES), each refused as `input_too_large` (a size limit, never reported as a malformed
+snapshot); `NON_STRING_KEY` and `AMBIGUOUS_STRING_KEY` as the members of a refusal for a dict key that is not an exact str or contains an adjacent
+surrogate pair, and a refusal of such a string value at its own path (the order of these refusals against the root-object and `field_missing` checks is
+not stated by the spec: a non-str key is refused first); long integer literals load as `OutOfRangeInteger`, never as a plausible int, and the raw
+serializer refuses it `field_invalid` like a native big int; the order in `verify_carried_binding_digest` (binding, carried-digest format, equality);
+`project_effective_policy_digest` tagging the three effective-derivation kinds as projection-stage refusals.
 
 Items the spec still lists as OPEN are implemented at the spec's current PROPOSED behaviour and are marked `PROPOSED` below; they are not decisions:
 N-10 (syntax-first parse order, byte-level input boundary, no verifier ceiling), N-11 (`trust_snapshot_missing`: one code, two stages), N-12 (an
@@ -64,6 +73,7 @@ MAX_DOCUMENT_BYTES = 65536
 MAX_DEPTH = 8
 MAX_LIST_ENTRIES = 256
 MAX_NODES = 65536  # nodes of one in-memory document accepted by `_plain` (the byte limit of the loader is MAX_DOCUMENT_BYTES)
+MAX_SNAPSHOT_NODES = 1048576  # PROPOSED ceiling for one trust snapshot (about 349,000 revoked pairs): over it is `input_too_large`, never `trust_snapshot_invalid`
 _MAX_EXACT_DIGITS = 20  # every range below is under 20 digits; longer integer literals are classified by length and never converted
 _INT_BOUND = 10 ** _MAX_EXACT_DIGITS  # the serializer refuses an integer of 20 or more digits (it never calls str() on an unbounded int)
 
@@ -99,12 +109,16 @@ class IdentityRefusal(Exception):
 
     def __init__(self, code: str, member: Any = None, stage: Any = None, evidence: Any = None):
         if type(code) is not str or code not in CODES_V2:  # a raise, not an assert: this must hold under python -O
-            raise ValueError("refusal code outside CODES_V2: %r" % (code,))
+            raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(code).__name__)
         super().__init__(code)
         self.code = code
         self.member = member
         self.stage = stage
         self.evidence = MappingProxyType(dict(evidence or {}))
+
+    def __reduce__(self):
+        """Picklable and copyable (a `MappingProxyType` is neither): rebuilt from plain values, so a refusal can cross a process boundary."""
+        return (IdentityRefusal, (self.code, self.member, self.stage, dict(self.evidence)))
 
     @property
     def layer(self) -> str:
@@ -148,8 +162,19 @@ class _Foreign:
         return "<foreign>"
 
 
+class _Ambiguous(_Foreign):
+    """Stands for a `str` that contains an adjacent high and low surrogate: it would serialize to the same bytes as the astral character those two code
+    units spell, so two different native strings could share a digest. Refused like any foreign value (a type error at its own path; `field_invalid` in
+    the raw serializer)."""
+
+    __slots__ = ()
+
+
 _FOREIGN = _Foreign()
+_AMBIGUOUS = _Ambiguous()
+_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")
 NON_STRING_KEY = "<non-string key>"  # PROPOSED (spec 5.5 is silent): the member reported for a dict key that is not an exact str
+AMBIGUOUS_STRING_KEY = "<ambiguous string key>"  # PROPOSED: the member reported for a str key that contains an adjacent high and low surrogate
 
 
 def _value_class(v: Any) -> str:
@@ -158,28 +183,33 @@ def _value_class(v: Any) -> str:
     return {bool: "boolean", int: "integer", str: "string", list: "array", dict: "object", OutOfRangeInteger: "integer"}.get(type(v), "other")
 
 
-def _plain(value: Any, depth: int = 1, budget: Any = None) -> Any:
+def _plain(value: Any, depth: int = 1, budget: Any = None, limit: int = MAX_NODES) -> Any:
     """A private plain copy of `value`: exact dict/list/str/bool/int/None only (tuples become lists; anything else becomes `_FOREIGN`), `str` keys only
     (any other key refuses `field_unknown` at NON_STRING_KEY), nesting no deeper than MAX_DEPTH (`json_nesting_too_deep`, counting scalars like the loader
-    does) and at most MAX_NODES nodes (`input_too_large`). Recursion is bounded by MAX_DEPTH, so a self-referential list ends in a typed refusal."""
+    does) and at most `limit` nodes (`input_too_large`; MAX_NODES unless the caller passes MAX_SNAPSHOT_NODES). Recursion is bounded by MAX_DEPTH, so a
+    self-referential list ends in a typed refusal. A shared (DAG) input is counted per visit, so it cannot expand without bound."""
     if budget is None:
-        budget = [MAX_NODES]
+        budget = [limit]
     budget[0] -= 1
     if budget[0] < 0:
         _refuse("input_too_large")
     if depth > MAX_DEPTH:
         _refuse("json_nesting_too_deep")
     t = type(value)
-    if value is None or t is str or t is bool or t is int or t is OutOfRangeInteger:
+    if t is str:
+        return _AMBIGUOUS if _SURROGATE_PAIR.search(value) else value
+    if value is None or t is bool or t is int or t is OutOfRangeInteger:
         return value
     if t is list or t is tuple:
-        return [_plain(x, depth + 1, budget) for x in value]
+        return [_plain(x, depth + 1, budget, limit) for x in value]
     if t is dict:
         out = {}
         for k, v in value.items():
             if type(k) is not str:
                 _refuse("field_unknown", NON_STRING_KEY)
-            out[k] = _plain(v, depth + 1, budget)
+            if _SURROGATE_PAIR.search(k):
+                _refuse("field_unknown", AMBIGUOUS_STRING_KEY)
+            out[k] = _plain(v, depth + 1, budget, limit)
         return out
     return _FOREIGN
 
@@ -187,7 +217,7 @@ def _plain(value: Any, depth: int = 1, budget: Any = None) -> Any:
 # ----------------------------------------------------------------------------------------------------------------------
 # Canonical JSON and digests (spec 5.3, 5.4)
 # ----------------------------------------------------------------------------------------------------------------------
-_SHORT = {0x22: '\\"', 0x5C: "\\\\", 0x08: "\\b", 0x0C: "\\f", 0x0A: "\\n", 0x0D: "\\r", 0x09: "\\t"}
+_SHORT = MappingProxyType({0x22: '\\"', 0x5C: "\\\\", 0x08: "\\b", 0x0C: "\\f", 0x0A: "\\n", 0x0D: "\\r", 0x09: "\\t"})
 
 
 def _unit(u: int) -> str:
@@ -195,6 +225,8 @@ def _unit(u: int) -> str:
 
 
 def _serialize_string(s: str) -> str:
+    if _SURROGATE_PAIR.search(s):  # defence in depth: `_plain` already refuses it; two different native strings must never share bytes
+        _refuse("field_invalid")
     out = ['"']
     for ch in s:
         cp = ord(ch)
@@ -229,11 +261,15 @@ def _serialize(value: Any, depth: int = 1) -> str:
         return "%d" % value
     if t is str:
         return _serialize_string(value)
+    if t is OutOfRangeInteger or t is _Ambiguous:
+        _refuse("field_invalid")  # the same code a native big int gets
     if t is list or t is tuple:
         return "[" + ",".join(_serialize(x, depth + 1) for x in value) + "]"
     if t is dict:
         if any(type(k) is not str for k in value):
             _refuse("field_unknown", NON_STRING_KEY)
+        if any(_SURROGATE_PAIR.search(k) for k in value):
+            _refuse("field_unknown", AMBIGUOUS_STRING_KEY)
         return "{" + ",".join(_serialize_string(k) + ":" + _serialize(value[k], depth + 1) for k in sorted(value)) + "}"
     _refuse("field_type_invalid")
 
@@ -241,12 +277,18 @@ def _serialize(value: Any, depth: int = 1) -> str:
 def canonical_json_bytes(value: Any) -> bytes:
     """Canonical JSON: keys sorted by Unicode code point, no whitespace, every code point outside U+0020..U+007E escaped (lowercase hex, surrogate
     pairs above U+FFFF), so the output is pure ASCII. Only exact None, bool, int (under 20 digits), str, list, tuple and dict (str keys) are
-    serializable; anything else, or nesting deeper than MAX_DEPTH, is an IdentityRefusal."""
-    return _serialize(value).encode("ascii")
+    serializable; anything else, or nesting deeper than MAX_DEPTH, or more than MAX_NODES nodes, is an IdentityRefusal. The input is first copied through
+    the same bounded boundary as every validator, so a shared (DAG) input refuses `input_too_large` instead of expanding without bound."""
+    return _serialize(_plain(value)).encode("ascii")
+
+
+def _sha_plain(prefix: bytes, plain: Any) -> str:
+    """Digest of a tree that already went through `_plain` (private: skips the copy)."""
+    return "sha256:" + hashlib.sha256(prefix + _serialize(plain).encode("ascii")).hexdigest()
 
 
 def _sha(prefix: bytes, value: Any) -> str:
-    return "sha256:" + hashlib.sha256(prefix + canonical_json_bytes(value)).hexdigest()
+    return _sha_plain(prefix, _plain(value))
 
 
 def plain_digest(value: Any) -> str:
@@ -269,7 +311,7 @@ class _Pairs(list):
 _WS = " \t\n\r"
 _NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?")
 _STRING_CHUNK = re.compile(r'[^"\\\x00-\x1f]*')
-_ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
+_ESCAPES = MappingProxyType({'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"})
 _HEX = frozenset("0123456789abcdefABCDEF")
 
 
@@ -633,6 +675,12 @@ def _epoch(v: Any) -> bool:
     return type(v) is int and 1 <= v < _INT_BOUND
 
 
+def _revoked_epoch(v: Any) -> bool:
+    """A revoked-selection epoch: ANY strict int the serializer can write (under 20 digits, 0 and negatives included), because the verifier accepts any
+    strict int there (`verify._normalize_trust`) and a snapshot it accepts must not be refused by the fingerprint. PROPOSED: the 20-digit bound."""
+    return type(v) is int and -_INT_BOUND < v < _INT_BOUND
+
+
 def _hex_key(v: Any) -> bool:
     return type(v) is str and len(v) > 0 and len(v) % 2 == 0 and _LOWER_HEX.issuperset(v)
 
@@ -647,13 +695,17 @@ def _issuer_ok(i: Any) -> bool:
             and _hex_key(i["public_key"]) and type(i["authority"]) is list and all(_grant_ok(g) for g in i["authority"]))
 
 
-def _pair_ok(p: Any) -> bool:
-    return type(p) is list and len(p) == 2 and type(p[0]) is str and _epoch(p[1])
+def _pair_ok(p: Any, epoch_ok: Any = _epoch) -> bool:
+    return type(p) is list and len(p) == 2 and type(p[0]) is str and epoch_ok(p[1])
+
+
+def _revoked_pair_ok(p: Any) -> bool:
+    return _pair_ok(p, _revoked_epoch)
 
 
 def _snapshot_shape_ok(s: Any) -> bool:
     """The delivered snapshot in the spec's normalized shape, checked against the verifier's own rules (valid tokens, version and floors of at least 1,
-    parseable `valid_until`, five-token grants) plus the exact member set. Takes the PLAIN copy produced by `_checked_snapshot`."""
+    any strict-int revoked epoch, parseable `valid_until`, five-token grants) plus the exact member set. Takes the PLAIN copy produced by `_checked_snapshot`."""
     if not (type(s) is dict and set(s) == set(_SNAPSHOT_MEMBERS)):
         return False
     if not (_token(s["snapshot_id"]) and _epoch(s["version"]) and type(s["valid_until"]) is str and c.parse_timestamp(s["valid_until"]) is not None):
@@ -661,15 +713,17 @@ def _snapshot_shape_ok(s: Any) -> bool:
     if not (type(s["issuers"]) is list and type(s["revoked_key_ids"]) is list and type(s["revoked_selections"]) is list and type(s["min_epochs"]) is list):
         return False
     return (all(_issuer_ok(i) for i in s["issuers"]) and all(type(k) is str for k in s["revoked_key_ids"])
-            and all(_pair_ok(p) for p in s["revoked_selections"]) and all(_pair_ok(p) for p in s["min_epochs"]))
+            and all(_revoked_pair_ok(p) for p in s["revoked_selections"]) and all(_pair_ok(p) for p in s["min_epochs"]))
 
 
 def _checked_snapshot(snapshot: Any) -> dict:
-    """A private plain copy of a shape-valid snapshot, or `trust_snapshot_invalid` (PROPOSED REFUSE class) for ANY defect, including hostile types,
-    over-deep or over-large input."""
+    """A private plain copy of a shape-valid snapshot, or `trust_snapshot_invalid` (PROPOSED REFUSE class) for a shape defect, a hostile type or a
+    too-deep input. A snapshot over MAX_SNAPSHOT_NODES is `input_too_large` (a size limit, not a malformed snapshot)."""
     try:
-        plain = _plain(snapshot)
-    except IdentityRefusal:
+        plain = _plain(snapshot, limit=MAX_SNAPSHOT_NODES)
+    except IdentityRefusal as e:
+        if e.code == "input_too_large":
+            raise
         _refuse("trust_snapshot_invalid")
     if not _snapshot_shape_ok(plain):
         _refuse("trust_snapshot_invalid")
@@ -714,7 +768,7 @@ def trust_snapshot_fingerprint(snapshot: dict) -> str:
     if _duplicates(plain):
         _refuse("trust_snapshot_invalid")
     try:
-        return plain_digest(normalize_snapshot(plain))
+        return _sha_plain(b"", normalize_snapshot(plain))  # already plain and size-checked: no second copy, no smaller node ceiling
     except IdentityRefusal:  # unreachable for a shape-valid snapshot; kept so the entry point can only ever raise trust_snapshot_invalid
         _refuse("trust_snapshot_invalid")
 
@@ -752,6 +806,9 @@ def project_snapshot_version(version: Any) -> int:
     return version
 
 
+# The five projection kinds of spec 5.6 and the entry point that tags each (a refusal reaches the projection stage ONLY through these):
+#   scope_token -> project_scope; trust_snapshot_version -> project_snapshot_version;
+#   effective_family_unsupported / effective_contract_unsupported / effective_payload_field_invalid -> project_effective_policy_digest.
 PROJECTION_REFUSAL_KINDS = ("scope_token", "trust_snapshot_version", "effective_family_unsupported", "effective_contract_unsupported",
                             "effective_payload_field_invalid")
 
@@ -787,7 +844,7 @@ def projection_effect_for(refusal_code: str, participation: Any, activation_stat
     """Join a refusal's own code with the single effect function: the code is the only thing a refusal contributes (to the fallback evidence). The code
     is a programmer argument: anything but a `CODES_V2` string is a ValueError, never a typed refusal."""
     if type(refusal_code) is not str or refusal_code not in CODES_V2:
-        raise ValueError("refusal code outside CODES_V2: %r" % (refusal_code,))
+        raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(refusal_code).__name__)
     out = projection_effect(participation, activation_state, determination)
     if out["fallback_evidence"] is not None:
         out = {**out, "fallback_evidence": {**out["fallback_evidence"], "projection_refusal_code": refusal_code}}
@@ -881,7 +938,7 @@ def validate_effective_payload(family: Any, payload: Any, role: str = "effective
     per `common.valid_token` (platform Unicode database dependence: PROPOSED, N-13); `[]` is an explicit deny-all. Ages: strict ints in the role's range.
     A non-str family is `field_type_invalid`. `role` is a programmer argument (ValueError if unknown)."""
     if type(role) is not str or role not in AGE_RANGES:
-        raise ValueError("unknown role: %r" % (role,))
+        raise ValueError("unknown role (got a %s)" % type(role).__name__)
     if type(family) is not str:
         _type_refusal("family", family)
     if family not in IDENTITY_FAMILIES:
@@ -929,10 +986,25 @@ def validate_effective_payload(family: Any, payload: Any, role: str = "effective
     return d
 
 
-def deny_all_dimensions(family: str, payload: dict) -> list:
+def _deny_all(family: str, plain_payload: dict) -> list:
+    """Private: the deny-all dimensions of an already validated plain payload of a registered family."""
     if IDENTITY_FAMILIES[family].kind != "lists":
         return []
-    return sorted(k for k, v in payload.items() if v == [])
+    return sorted(k for k, v in plain_payload.items() if v == [])
+
+
+def deny_all_dimensions(family: Any, payload: Any) -> list:
+    """The sorted names of the payload's empty-list (explicit deny-all) dimensions; `[]` for a family that has no lists. Public, so it takes hostile
+    input like every other entry point: a non-str family is `field_type_invalid`, an unregistered one `family_unsupported`, a payload that is not a
+    plain dict is refused by `_plain` / `field_type_invalid`. Nothing but `IdentityRefusal` escapes."""
+    if type(family) is not str:
+        _type_refusal("family", family)
+    if family not in IDENTITY_FAMILIES:
+        _refuse("family_unsupported", "family")
+    d = _plain(payload)
+    if type(d) is not dict:
+        _type_refusal(None, d)
+    return _deny_all(family, d)
 
 
 def effective_preimage(family: Any, payload: Any, contract_version: Any = CONTRACT_VERSION) -> dict:
@@ -940,15 +1012,34 @@ def effective_preimage(family: Any, payload: Any, contract_version: Any = CONTRA
     version = registered_family_version(family, contract_version)
     plain_payload = validate_effective_payload(family, payload)
     return {"effective_policy_profile": EFFECTIVE_PROFILE, "contract_version": contract_version, "family": family, "family_version": version,
-            "deny_all": deny_all_dimensions(family, plain_payload), "effective": plain_payload}
+            "deny_all": _deny_all(family, plain_payload), "effective": plain_payload}
 
 
 def effective_digest_of_preimage(preimage: dict) -> str:
+    """Digest of a preimage; the input goes through the same bounded copy as every other entry point. It is NOT re-validated here (use
+    `validate_preimage` first)."""
     return _sha(EFFECTIVE_PREFIX, preimage)
 
 
 def effective_policy_digest(family: Any, payload: Any, contract_version: Any = CONTRACT_VERSION) -> str:
     return effective_digest_of_preimage(effective_preimage(family, payload, contract_version))
+
+
+_PROJECTION_DERIVATION_CODES = frozenset(("family_unsupported", "contract_unsupported", "field_invalid"))
+
+
+def project_effective_policy_digest(family: Any, payload: Any, contract_version: Any = CONTRACT_VERSION) -> str:
+    """The digest derivation at the PROJECTION stage (spec 5.6, kinds `effective_family_unsupported`, `effective_contract_unsupported`,
+    `effective_payload_field_invalid`): the same result as `effective_policy_digest`, but a `family_unsupported`, `contract_unsupported` or
+    `field_invalid` refusal is re-raised with stage `projection` and evidence `projection_refusal_code` (the member and the rest of the evidence are
+    kept), so `projection_effect` / `mapping_row_for` read it as a projection refusal. Every other refusal (missing, unknown, type, size, depth) passes
+    through unchanged: the spec lists no projection kind for it."""
+    try:
+        return effective_policy_digest(family, payload, contract_version)
+    except IdentityRefusal as e:
+        if e.code not in _PROJECTION_DERIVATION_CODES:
+            raise
+        raise IdentityRefusal(e.code, e.member, "projection", {**e.evidence, "projection_refusal_code": e.code}) from None
 
 
 def preimage_from_inputs(doc: Any) -> dict:
@@ -987,7 +1078,7 @@ def validate_preimage(doc: Any) -> dict:
     validate_effective_payload(d["family"], d["effective"])
     if d["family_version"] != registered:
         _refuse("field_invalid", "family_version")
-    if d["deny_all"] != deny_all_dimensions(d["family"], d["effective"]):
+    if d["deny_all"] != _deny_all(d["family"], d["effective"]):
         _refuse("field_invalid", "deny_all")
     return d
 
@@ -1095,11 +1186,16 @@ def verdict_for(code: str, stage: Any = None) -> MappingRow:
 def mapping_row_for(refusal: IdentityRefusal) -> MappingRow:
     """The spec 8.1 row for a refusal this module raised. `field_invalid` is split by the refusal's own data: stage `projection` selects
     MP-field_invalid-projection; an `expected_range` in its evidence selects MP-field_invalid-integer; anything else is MP-field_invalid-identifier.
-    Every other code has exactly one row, or this raises KeyError (the 20 `CODES_V2` codes in UNMAPPED_CODES are not mapped by this module)."""
+    A code with a single row (family_unsupported and contract_unsupported included, whatever their stage, projection among them) maps to that row; a
+    code with several rows is singled out by the refusal's stage. A code with no row raises KeyError (the 24 `CODES_V2` codes in UNMAPPED_CODES are
+    not mapped by this module)."""
     if refusal.code == "field_invalid":
         if refusal.stage == "projection":
             return MAPPING_BY_ID["MP-field_invalid-projection"]
         return MAPPING_BY_ID["MP-field_invalid-integer" if "expected_range" in refusal.evidence else "MP-field_invalid-identifier"]
+    rows = mapping_rows_for(refusal.code)
+    if len(rows) == 1:
+        return rows[0]
     return verdict_for(refusal.code, refusal.stage)
 
 
