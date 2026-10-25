@@ -8,7 +8,7 @@
 |---|---|---|
 | Current implemented contract | S03 `s03-v1` record, validator, S04 consumer, S05 evidence for F1a | Frozen on `main`; unchanged by this work |
 | Proposed successor | Envelope (05) plus typed family payloads (this file) | Proposal |
-| Unsupported historical representations | S05 classes E01 to E19 and E20 (values the historical constructor accepts and S03 refuses); the 3,190 catalogue entries; reason vocabularies as policy | Not representable; remain so |
+| Unsupported historical representations | S05 classes E01 to E19 (values the historical constructor accepts and S03 refuses). E20, the empty-string entry, is not a representation gap: the historical constructor already rejects it, so no such historical policy can exist [V, `docs/s06-representation-and-e05.md`]; the 3,190 catalogue entries; reason vocabularies as policy | Not representable; remain so |
 | Future engineering work | Anything in 09 | Not authorized |
 
 ## 2. Design rules
@@ -41,7 +41,7 @@ Existing S03 codes (12, ordered) and S04 codes are unchanged [V]. Proposed addit
 | `requirement_conflict` | two records impose incompatible requirements on one field and the family has no ruled composition |
 | `dependency_missing` | a mandatory dependency (for example F7 destination capability) is absent |
 | `composition_unsupported` | the family has no ruled non-widening composition |
-| `widening_attempt` | the effective value would be broader than the caller's (generalisation of `widening_violations`) |
+| `widening_attempt` | a post-composition assertion fails because the computed effective value is broader than the caller's (generalisation of `widening_violations`). This indicates a defect in a family's composition and is not expected in conforming operation: a registry value that is a superset of the caller's is clamped by intersection and is **not** a refusal |
 
 Refusal means "not applied" under the optional profile and "deny" under the mandatory profile. Neither is an authorization.
 
@@ -49,7 +49,7 @@ Refusal means "not applied" under the optional profile and "deny" under the mand
 
 - `s03-v1` records, the S04 manifest `s04-v1`, the consumer API and the S05 oracle are unchanged. A successor validator would be a **new module** that handles successor records and delegates to the existing validator for `s03-v1`. Nothing in `registry_contract/` or `registry_consumer/` is edited.
 - The three-field F1a record is representable as a successor `local-execution-allowlist` payload with identical `data`; its `record_digest` would differ because the envelope differs. No digest of an existing record changes.
-- Legacy `status: active` in an `s03-v1` record stays readable and informational; activity comes from selection and ACTIVATION in the successor (08 D3).
+- The `s03-v1` acceptance gate is preserved unchanged: the frozen validator refuses every record whose `status` is not `active` (`status_not_active`; `registry_contract/validator.py:232-233`, pinned by `tests/test_s03_contract.py`). The successor must not accept a `proposed`, `superseded` or `withdrawn` `s03-v1` record on the strength of a selection. External activity semantics (selection and ACTIVATION) apply only to successor-format records (08 D3).
 - S05 equivalence results do not transfer to any successor. A successor needs its own differential evidence (07).
 
 ## 5. Illustrative payloads

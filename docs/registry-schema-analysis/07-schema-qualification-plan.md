@@ -7,7 +7,7 @@
 | # | Scenario | Input | Expected result |
 |---|---|---|---|
 | V1 | Valid record, each proposed family | Well-formed envelope and payload, correct digests, matching applicability | Accept (validation only; not activation) |
-| V2 | Valid `s03-v1` record | Existing example | Accept under the existing validator; byte-identical outcome to current tests |
+| V2 | `s03-v1` records under the existing validator | (a) the checked-in example (`status: proposed`); (b) the active test fixture (status changed in memory and re-digested, as `tests/test_s03_contract.py` does) | (a) REFUSE `status_not_active`; (b) ACCEPT. Outcomes identical to current tests; no existing assertion changes |
 | M1 | Malformed JSON | Trailing data, NaN, invalid UTF-8, non-object | `record_malformed` |
 | M2 | Missing required field; unknown field; wrong JSON type (bool for integer) | | `record_malformed` |
 | U1 | Unsupported envelope version | `envelope_version` unknown | `envelope_unsupported` |
@@ -17,8 +17,8 @@
 | K1 | Duplicate keys at any depth | | `record_malformed` |
 | D1 | `data_digest` wrong | | `digest_mismatch` |
 | D2 | `record_digest` wrong | | `digest_mismatch` |
-| D3 | Data changed and both digests recomputed | | Accept at record level (integrity only, limitation L1); refused at selection level because the selection digest or pin no longer matches |
-| S1 | Selection digest does not match the pin | | `selection_unauthenticated` (optional: not applied; mandatory: deny) |
+| D3 | Data changed and both digests recomputed | record bytes only; selection bytes and pin unchanged | Accept at record level (integrity only, limitation L1); at selection level `record_not_in_selection`, because the recomputed `record_digest` differs from the selection entry. The selection bytes and pin are unchanged, so this is not `selection_unauthenticated` |
+| S1 | Selection bytes changed (or wrong pin supplied), so the selection digest does not match the pin | | `selection_unauthenticated` (optional: not applied; mandatory: deny) |
 | S2 | Selection and record merged in one PR with no separate pin | | No pin exists, so not applied; merging is not authorization (T3) |
 | S3 | Record absent from selection, or digest differs | | `record_not_in_selection` |
 | A1 | Incorrect consumer namespace (for example a record targeted at another system) | | `consumer_namespace_mismatch` |
@@ -33,7 +33,8 @@
 | C2 | F7 triple violates ordering | `provider_horizon > escalation_deadline`, or `escalation_deadline >= dedupe_ttl` | `record_invalid` |
 | C3 | F7 destination lacks `dedupe-ttl/0.1` or TTL below profile | | `dependency_missing` |
 | C4 | Unsupported composition | family with no ruled direction (for example F4 `clock_tolerance_seconds`) | `composition_unsupported` |
-| W1 | Authority-widening attempt: registry value broader than caller | | effective value equals caller's; `widening_attempt` recorded |
+| W1 | Registry value is a superset of the caller's (for example a broader allow-list) | | Successful non-widening case: effective value equals the caller's by intersection; no refusal (cf. `tests/test_s04_overlay.py`) |
+| W1b | Defect injection: a composition implementation returns a value broader than the caller's | test double | post-composition assertion fails: `widening_attempt` (detection of a defect, not a data case) |
 | W2 | Payload attempts to relax a toggle (`allow_synthetic_resolver`) or add an action class | | `record_malformed` (unknown field) or `requirement_conflict` |
 | W3 | Record claims `approved`, `active` or `mandatory` | | `record_malformed` (unknown field); has no effect |
 | W4 | Record carries an expression or script field | | `record_malformed` |

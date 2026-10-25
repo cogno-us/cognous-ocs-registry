@@ -8,7 +8,7 @@ Non-authorizing. Each item is a decision someone other than this analysis must m
 |---|---|---|---|
 | D1 | Classify the 32 S02 unresolved rows (03 §4), starting with W8-091, W3-063, W9-027, W8-014, W6-042 and the 60-versus-300 relationship | Every F1c, F4, F5, F7 proposal depends on them | Per row: invariant, caller data, or registry-eligible |
 | D2 | Authentication of records and selections (signing, key custody, or pin-only) | Digest is integrity only (T2); no activation is possible without this | Pin-only (current); signed records; signed selections |
-| D3 | Where "active" lives: inside the record (S03) or in selection and activation only | A self-declared status lets a record state its own activity | Keep `status` as legacy; move activity out for successors |
+| D3 | Where "active" lives: inside the record (S03) or in selection and activation only | A self-declared status lets a record state its own activity | Keep the frozen `s03-v1` gate (only `active` accepted) unchanged; move activity out for successor-format records only |
 | D4 | Stricter direction for each scalar: F7 TTL, deadline, horizon; F4 ages, `clock_tolerance_seconds`, `anchor_deadline_to_inputs`; F5 class fields | Without it, composition is not definable (04 §4) | Per field, written ruling |
 | D5 | F6 absent-agent semantics: unconstrained or deny | Two internally consistent but different policies | Unconstrained (overlay semantics); deny (key-wise intersection) |
 | D6 | Classification of the `max_effects` and `max_amount` ceilings | F1c and the W8-091 row | Invariant; caller data; registry-eligible |

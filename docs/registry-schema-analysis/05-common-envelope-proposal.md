@@ -43,7 +43,7 @@ Rules:
 
 Deliberately absent: signatures or key identifiers (an authentication scheme is a separate decision, 08 D2); an `approved`, `active` or `mandatory` flag; any expression, predicate or script field (no general-purpose policy interpretation); any grant-bearing field; any reference to an ISS authority.
 
-Open point: S03 includes `status` (`proposed`, `active`, `superseded`, `withdrawn`) inside the record, so a record states its own activity. In the successor, activity is a property of SELECTION and ACTIVATION. The record would keep only author intent (`proposed`, `withdrawn`); `active` and `superseded` would be legacy values readable only for `s03-v1` records. This is a design question for the Architect (08 D3).
+Open point: S03 includes `status` (`proposed`, `active`, `superseded`, `withdrawn`) inside the record, so a record states its own activity. In the successor, activity is a property of SELECTION and ACTIVATION. The record would keep only author intent (`proposed`, `withdrawn`); `active` and `superseded` would remain meaningful only for `s03-v1` records, whose frozen gate (non-`active` records are refused) is preserved unchanged. This is a design question for the Architect (08 D3).
 
 ## 3. SELECTION manifest
 
