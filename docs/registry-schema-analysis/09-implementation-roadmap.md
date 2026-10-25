@@ -21,7 +21,7 @@
 
 ## Recommended migration order (summary)
 
-F1a (done) → F1b → F1c → F6 → F4 scalars → F5 tightening subset → F7. F9 and F10 are not recommended (no value). F1d is not recommended without a ruling.
+This analysis' earlier order was F1a (done), F1b, F1c, F6, F4, F5, F7. The adopted plan's default order for architectural assessment (R11) is the remaining F1 set fields, then F6, then F1 numeric ceilings and target prefixes with distinct operators, then F4, F5 and justified F7/F3/F9/F10; this roadmap now follows v1.2: F1a (done) → F1b → F6 → F1c ceilings → F4 scalars → F5 tightening subset → F7. Either order is an assessment input, not an authorization; each family needs its own authorization (R11). F9 and F10 are not recommended (no value). F1d is not recommended without a ruling.
 
 ## What each step must carry
 

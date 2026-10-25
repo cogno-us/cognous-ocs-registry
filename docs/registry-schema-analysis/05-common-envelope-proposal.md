@@ -4,7 +4,7 @@
 
 ## 0. Source limitation
 
-The brief names `COG-REG-SHARED-ADD-01`. Its text was not provided to this analysis; the S06 authorization record also says it was named by the operator and not provided to the registry sessions [V, `docs/decisions/2026-10-24-s06-authorization.md`]. The envelope below is built only from the field list in the brief and the current S03/S04 documents. If the addendum differs, the addendum governs and this file is wrong in that respect.
+`COG-REG-SHARED-ADD-01` (2026-10-24, seven pages) is recorded by the adopted plan v1.2 as architectural direction approved in principle, not an implemented contract (`docs/plans/PROJECT_PLAN-v1.2.md` §2 and its crosswalk). Its text was **not** available to this analysis, which used only the envelope field list in its brief and the current S03/S04 documents; source revision and digest custody for the addendum is a separate adoption requirement in v1.2. If the addendum differs, the addendum governs and this file is wrong in that respect.
 
 ## 1. Three separate things
 
@@ -62,7 +62,7 @@ The manifest digest is compared to a pin supplied by trusted invocation, never r
 
 Host configuration: the pin, a trusted clock (new), the trusted evaluator source and evaluator registry (the registry is new; records and selections never register evaluators), and a **per-consumer profile** that is either *optional overlay* (a refusal means the overlay is not applied and the caller policy stands, T7) or *mandatory* (a refusal makes the consumer deny). Mandatory is a different, unauthorized profile today. The profile is chosen by the host, not by a record.
 
-## 5. ISS and OCS
+## 5. GCR and OCS (written as "ISS" before v1.2; terminology below follows v1.2: GCR is the architectural role, ISS V6 its current reference implementation)
 
 - [I, pending the ISS Architect, 08 ISS Q3 and Q5] Each system keeps its own authority boundary, selection custody and pin custody. There is no shared registry service and no shared authority ledger.
 - The envelope is a layout, not a shared service. It does not require common family payloads: an ISS family, if one exists, is defined only by the ISS Architect.

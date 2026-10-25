@@ -9,7 +9,7 @@ This directory answers one question: *which parts of the historical rule invento
 - Based on `main` at `1870f3a62ee16cdea53c4c23a8df8c9be3c2f2cf` (S06 complete, verified as the current head when this branch was cut).
 - Owns only `docs/registry-schema-analysis/`. Nothing under `registry_contract/`, `registry_consumer/`, `registry_records/`, `baseline/`, `tests/` or any workflow is touched. PR #13 (`recovery/v02-rule-inventory`) is not modified by this branch.
 - Does not duplicate the 3,190-entry catalogue. It is referenced by repository `cogno-us/cognous-open-control-stack`, commit `51c579a3208149922649a31a6eb041106a4121c3`, path `docs/mvp-recovery/registry/catalogue-v0.1/`, manifest digest `sha256:22f49fd1341cfaa6e46727db9b6153c2073b82a3125fd725173494f3ebb37650`.
-- Governing references: OCS-REG-PLAN v1.1 blob `6ece90f6697320fd305d8eb8c1e3a7f2f1f428a2`; Engineering Constitution `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`.
+- Governing references: OCS-REG-PLAN v1.2 (`docs/plans/PROJECT_PLAN-v1.2.md` on `main`, merged and adopted per the operator's closeout instruction) and its GCR crosswalk; this analysis was authored against v1.1 blob `6ece90f6697320fd305d8eb8c1e3a7f2f1f428a2`; Engineering Constitution `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`.
 
 ## Labels
 
