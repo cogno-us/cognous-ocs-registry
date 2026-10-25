@@ -12,11 +12,12 @@ AGE_MIN <= v <= AGE_MAX. Family names, the operator and every payload or caller 
 `dict` objects. Nothing is ever clamped, coerced or defaulted. No cross-bound among ages (an individually valid
 inverted pair is accepted) and no five-second floor (1 is accepted). There is no amount slot, reserved or inactive.
 
-Bounds. AGE_MIN = 1 (ADR D-27). AGE_MAX = 2147483647 is the V1 TECHNICAL REPRESENTATION CEILING PROPOSED in DR-CP-AGE-1
-(docs/decisions/2026-10-25-dr-cp-age-1.md) on the strength of the Architect's Batch 3 ruling; it is not an operational setting and
-the record is pending its merge conditions (Amendment 1 and a Control Plane mirror or an Architect acceptance of a registry-hosted
-table), so it cannot supersede the source-pinned contract. The constants below are a copy of that record's table; a test fails if
-the record and these constants differ (in-repo drift only). Caller domain is 0..AGE_MAX: only the class base is validated to
+Bounds. AGE_MIN = 1 (ADR D-27). AGE_MAX = 2147483647 is the V1 TECHNICAL REPRESENTATION CEILING recorded in DR-CP-AGE-1
+(docs/decisions/2026-10-25-dr-cp-age-1.md) on the strength of the Architect's Batch 3 ruling and ACCEPTED as a Registry-hosted
+canonical V1 table by Architect Batch 6 ruling 4.2 (ruling texts are not stored in this repository). It is not an operational
+setting and does not replace Control Plane validation or operational safety limits; no Control Plane mirror exists and none is a
+prerequisite for merge. The constants below are a copy of that record's table; a test fails if the record and these constants
+differ (in-repo drift only). Caller domain is 0..AGE_MAX: only the class base is validated to
 admit 0 (runtime_authority.py:87, ge=0); the F4 scalars are unvalidated constructor arguments (bounded.py:1271, :1274).
 Registry domain is 1..AGE_MAX.
 

@@ -39,9 +39,9 @@ Gaps and judgement calls (all fail closed):
 - **Exact `str` everywhere.** Family, operator and every key must be exact `str` objects; a `str` subclass is refused. Class ids are opaque exact strings with no Unicode normalization: NFC `"\u00e9"` and NFD `"e\u0301"` are two distinct valid class ids (pinned by a test).
 - **Bounded caller read.** A caller mapping is snapshotted once, at most `limit + 1` entries; a huge Mapping is refused without a full copy.
 - **`record.ok` must be exactly `True`.** A truthy non-`True` value refuses (stricter than v1, which accepts truthy values).
-- **`AGE_MAX` status: PROPOSED, pending merge conditions.** The number rests on the Architect's Batch 3 ruling (text not stored in this repository); no Control Plane mirror exists and the in-repo pin test guards drift only. Merge conditions are in DR-CP-AGE-1 ("Authority and merge conditions").
+- **`AGE_MAX` status: ACCEPTED by Architect Batch 6 ruling 4.2** (a Registry-hosted canonical V1 age table; ruling text not stored in this repository). The number rests on the Architect's Batch 3 ruling. The Registry table does not replace Control Plane validation or operational safety limits, which the Control Plane enforces through its S3 implementation; no Control Plane mirror exists and none is a prerequisite for merge; the in-repo pin test guards drift only. See DR-CP-AGE-1 ("Authority and caveats").
 - The evaluator pin of an F4/F5 record is the existing `(EVALUATOR_ID, EVALUATOR_BINDING)` pair: the contract defines no Control Plane evaluator identity. EXT-S4 should define one if it wants a distinct pin.
-- ADR D-27 and contract 2.1 still say `AGE_MAX` is pending; DR-CP-AGE-1 records the Architect's ruling that supersedes that wording (a separate docs-only amendment will record the versioned clarification). The merged ADR and contract are not edited.
+- ADR D-27 and contract 2.1 still say `AGE_MAX` is pending (contract line 35 names `2678400`). DR-CP-AGE-1 records the accepted number. The merged ADR and contract are not edited. Dependency direction: this card (PR #31) merges first and the docs-only Amendment 1 (PR #32) follows it to record the versioned clarification; #32 is not a prerequisite for #31.
 
 ## What the characterization does and does not establish
 

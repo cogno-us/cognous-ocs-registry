@@ -30,7 +30,7 @@ MAX = 2147483647
 PINS = {
     "docs/r08-v2-contract.md": "64e2d6eb3af7b6024bf0ed7778fcea5ee61fd1cbad247d0199e1b15310ddff01",
     "docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md": "b9ad06be559bfb99c5e669ca7217d2ee28b62cda7738206c31fd8e6866233b67",
-    "docs/decisions/2026-10-25-dr-cp-age-1.md": "f73e43490d90dac04f40c4adf2241259951290fcdb314679eebd87ce6ede7b38",
+    "docs/decisions/2026-10-25-dr-cp-age-1.md": "2f3d4d1b559f82ac526ef9b93b016fc5ddb376459c2a31f277c117f2d7a300b9",
 }
 CONTRACT_TEXT = [
     "| `f4-control-plane-age-bounds` (v2) | `status_max_age_seconds`, `approval_max_age_seconds` | strict integer seconds, `min(caller, registry)` per scalar | Control Plane |",
