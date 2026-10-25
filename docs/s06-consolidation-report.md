@@ -29,7 +29,7 @@ Measured by comparing the parsed function sources of `tests/test_s03_contract.py
 Decision: **do not consolidate.** Reasons:
 
 1. **Independence.** `canon` and `seal` are how each battery computes digests without calling the code under test. The S05 oracle and harness were built to avoid depending on S03 or S04 output. One shared helper module would make a single bug mask itself in all three batteries and would couple S05 to code S06 would then own.
-2. **Frozen evidence.** The S03, S04 and S01 test files and the S05 harness are pinned by blob id (`tests/test_s06_integrity.py`) and their results are recorded evidence. Editing them would invalidate the recorded runs, and the instruction forbids altering `tests/s05_expectations.json`, `tests/s05_oracle.py` and prior raw results. The S05 harness is itself the producer of the recorded results.
+2. **Frozen evidence.** The S01, S03 and S04 test files and the S05 harness (`tests/test_s05_equivalence.py`) are pinned by blob id (`tests/test_s06_integrity.py`) and their results are recorded evidence. Editing them would invalidate the recorded runs, and the instruction forbids altering `tests/s05_expectations.json`, `tests/s05_oracle.py` and prior raw results. The S05 harness is itself the producer of the recorded results.
 3. **Risk against benefit.** The only truly identical code is about ten lines (`canon`, `sha256_of`, `record_bytes`, `manifest_bytes`, and `seal` between S04 and S05). The larger helpers differ on purpose. Merging them needs parameters that would weaken each file's self-contained trust assumptions.
 
 Nothing was removed as redundant. No redundancy was demonstrated that could be removed without those costs.
@@ -46,7 +46,7 @@ Commands (CPython 3.13.17 in a venv from the hash-locked `requirements-s01.lock.
 python -m pytest -q
 ```
 
-Result on the PR branch: see the PR description and `docs/sprint-status.md` for the exact head and counts; the S01, S03, S04 and S05 batteries are unchanged, so their prior results stand. New in S06: `tests/test_s06_integrity.py` (17 blob pins, a SHA-256 pin on the baseline, a check that the recorded S05 results still show 3 SKIP and 0 failing cases, relative-link checks on the new documents). Skipped tests: none. No CI exists.
+Result on the PR branch: see the PR description and `docs/sprint-status.md` for the exact head and counts; the S01, S03, S04 and S05 batteries are unchanged, so their prior results stand. New in S06: `tests/test_s06_integrity.py` (18 blob pins, a SHA-256 pin on the baseline, a check that the recorded S05 results still show 3 SKIP and 0 failing cases, relative-link checks on the new documents). Skipped tests: none. No CI exists.
 
 ## Preserved (verified by `tests/test_s06_integrity.py`)
 
@@ -59,7 +59,7 @@ Result on the PR branch: see the PR description and `docs/sprint-status.md` for 
 | `tests/s05_expectations.json`, `tests/s05_oracle.py` | `37a68275c8c2b932d7a47adac43c05ec802d0081`, `503851c4ffa989a213c7dfb4d8957d0d540cb73c` |
 | `docs/s05-results/differential-raw.json`, `pytest-output.txt` | `acb0e6903e725766b39c541acba8dc25a4154b57`, `04c3be500d2d2464e21d0a3e0e51ca0f033d2525` |
 
-The remaining pins (S05 spec and report, S01/S03/S04 tests, S04 fixtures) are in the test file.
+The remaining pins (S05 spec, report and harness, S01/S03/S04 tests, S04 fixtures) are in the test file.
 
 ## Cleanup exclusions and open items
 

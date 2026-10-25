@@ -34,7 +34,8 @@ PINNED = {
     "docs/s05-results/differential-raw.json": "acb0e6903e725766b39c541acba8dc25a4154b57",
     "docs/s05-results/pytest-output.txt": "04c3be500d2d2464e21d0a3e0e51ca0f033d2525",
     "docs/s05-equivalence-report.md": "2a8f0999b40fe4cf32225b52c2c514d7ee79ee9c",
-    # prior test batteries (left unchanged by S06; see docs/s06-consolidation-report.md)
+    # prior test batteries and the S05 harness (left unchanged by S06; see docs/s06-consolidation-report.md)
+    "tests/test_s05_equivalence.py": "3962b875bb06214cc0a693673332a8f55dd4b929",
     "tests/test_s01_baseline_local_policy.py": "0ce3ee14b0e015f65955c66bfe572b10aac7a899",
     "tests/test_s03_contract.py": "c0f47fd0f827ebfe8d0187df9f4c080ff3c3846a",
     "tests/test_s04_overlay.py": "91c1b96ad683a346eda0e01299308faa1f1a5d2a",
