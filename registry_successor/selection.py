@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Optional, Sequence
 
 from registry_successor import common as c
+from registry_successor import families
 
 ENVELOPE_FIELDS = ("contract_version", "kind", "statement", "statement_digest", "signatures")
 STATEMENT_FIELDS = (
@@ -82,7 +83,8 @@ def _statement_code(stmt: Any) -> Optional[str]:
         return shape
     if stmt["kind"] != "selection":
         return "kind_unsupported"
-    if stmt["family"] != c.FAMILY_F1A:
+    spec = families.lookup(stmt["family"])
+    if spec is None:
         return "family_unsupported"
     for name in ("selection_id", "consumer_id", "operation", "revocation_ref", "selector_ref"):
         if not isinstance(stmt[name], str):
@@ -107,7 +109,7 @@ def _statement_code(stmt: Any) -> Optional[str]:
             and 1 <= pin["record_version"] <= c.MAX_INT and c.valid_sha_ref(pin["record_digest"])):
         return "field_invalid"
     ev = stmt["evaluator"]
-    if ev["evaluator_id"] != c.EVALUATOR_ID or ev["binding"] != c.EVALUATOR_BINDING:
+    if (ev["evaluator_id"], ev["binding"]) != spec.evaluator_binding:
         return "evaluator_unsupported"
     if not (c.valid_hex40(ev["source_blob_id"]) and c.valid_sha_ref(ev["source_sha256"])):
         return "field_invalid"
