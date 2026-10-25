@@ -71,7 +71,10 @@ def lookup(family: Any) -> Optional[FamilySpec]:
     """The registered spec for exactly this family string, or None. Never raises."""
     if not isinstance(family, str):
         return None
-    return FAMILIES.get(family)
+    try:
+        return FAMILIES.get(family)
+    except TypeError:  # an unhashable str subclass is simply not registered
+        return None
 
 
 def _refuse(code: str, detail: str = "") -> CompositionResult:

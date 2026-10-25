@@ -82,6 +82,17 @@ def test_lookup_str_subclass_with_equal_value_matches_only_as_plain_equality():
     assert (families.lookup(S(c.FAMILY_F1A)) is not None) == (S(c.FAMILY_F1A) == c.FAMILY_F1A)
 
 
+def test_unhashable_str_subclass_is_not_found_and_never_raises():
+    class U(str):
+        __hash__ = None
+
+    assert families.lookup(U(c.FAMILY_F1A)) is None
+    base = record_mod.validate_record_text(json.dumps(s.make_record()))
+    rec = record_mod.RecordResult(True, None, "", dict(base.record, family=U(c.FAMILY_F1A)), base.record_digest)
+    res = families.compose({k: ["a"] for k in F}, rec)
+    assert (res.ok, res.code) == (False, "composition_family_unsupported")
+
+
 def test_only_the_table_registers_a_family():
     """No registry_successor module except the table, the F1a composer and the constant's definition names FAMILY_F1A."""
     allowed = {"families.py", "common.py", "compose.py"}

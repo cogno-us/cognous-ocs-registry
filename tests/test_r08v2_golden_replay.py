@@ -58,7 +58,11 @@ def test_v1_golden_replay_byte_identical(chunk):
     assert not bad, "r08-v1 behaviour changed for golden case ids %s" % bad[:20]
 
 
-def test_golden_sha256_is_stable_within_run():
-    # identity of the stored file is recorded in the PR description; this only guards against accidental truncation
+# sha256 of tests/golden/r08_v1_golden.json as committed in the capture commit ad0bb79 (also recorded in
+# docs/r08-v2-implementation.md). Changing the golden file changes this digest and fails the test on purpose.
+GOLDEN_SHA256 = "2080382903dbf80ebc739513c5a2b23dba38bbb1efc97231928af898305ddded"
+
+
+def test_golden_file_matches_the_recorded_capture_digest():
     raw = (GOLDEN / "r08_v1_golden.json").read_bytes()
-    assert len(hashlib.sha256(raw).hexdigest()) == 64 and len(raw) > 1_000_000
+    assert hashlib.sha256(raw).hexdigest() == GOLDEN_SHA256
