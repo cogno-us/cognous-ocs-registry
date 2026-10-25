@@ -56,6 +56,7 @@ The tuple is two distinct things: (a) an **admission-time pin** frozen with the 
 
 ### 4.2 Binding point without a competing check
 - Pre-existing check order stays; no second validator. [PROPOSAL] Bind the registry members as an additional exact-match term inside the existing claim: i.e. extend the claim's `policy_state` projection (today `{ref, version, status}`) with selection id/epoch, record id/version/digest and evaluator identity, committed by the existing `policy_state_commitment`, and extend the destination's authoritative `authority_policies_v1` row and `_validate_claim_state` policy loop to compare them under `BEGIN IMMEDIATE`. The selection-writer would be a trusted authority writer like `set_policy_state`. This reuses the existing atomic path; the registry supplies data and the OCS destination decides.
+- **Open binding gap (selection expiry):** a selection can expire between evaluation and commit without changing its epoch, digests or the policy row, so identity equality alone does not enforce document 01 §3.4's commit-time validity requirement. Closing it needs either a lock-held validity check against trusted time in the destination, or constraining the claim's validity interval to the authenticated selection interval. Neither exists; this is registered as an unresolved gap (new decision LD-09), not solved here.
 - [PROPOSAL] Record the commit-time policy and approval state commitment in the authority receipt (today only the grant state commitment is recorded, finding 3) so evidence shows what was actually checked.
 - Alternative not recommended: a separate registry check before dispatch. It would be a competing check with a window (finding 8) and would risk being read as authorization. If used at all it is advisory pre-screening only.
 - Dependency: the claim, destination schema and receipt are Control Plane/Runtime contracts. Any change needs OCS Architect approval and a successor profile; it is not authorized here.
@@ -81,6 +82,7 @@ Mandatory profile: HOLD/REFUSE, no permissive fallback (plan §3.3). Optional pr
 | Condition | Detection point | Required behavior | Evidence recorded | Remains unproven |
 |---|---|---|---|---|
 | Mid-execution selection withdrawal | Commit-time policy row compare in destination (4.2); [EXISTING] only for `policy_state` status/version | REFUSE/DENY before commit (mandatory); if effect already committed, no rollback claim (CA22): record as completed-before-withdrawal | Failure record with closed code; receipt with commit-time commitment | Withdrawal ordering vs commit across the registry store and effect DB; selection withdrawal feed to destination is not built |
+| Selection expires mid-flight (interval ends between evaluation and commit; epoch and digests unchanged) | Not detected by identity comparison; needs a lock-held validity check or interval-constrained claim (4.2 gap) | REFUSE before commit if the check exists; otherwise not detected and must be stated, not assumed | Expected interval end, trusted `checked_at` | Trusted time source (F-06); no such check exists |
 | Concurrent selection update (epoch bump) | Epoch inequality at commit | REFUSE; RETRY only as new operation under new pin | Old pin, observed epoch, refusal | Epoch semantics (Lane A); who writes the destination row |
 | Revoked grant | [EXISTING] grant row + retained revoked set under lock | DENY (`grant_revoked` class codes) | [EXISTING] failure record; receipt only on success | Cross-host revocation propagation; holder-inventory scope |
 | Withdrawn approval | [EXISTING] approval row + terminal revocation set (head `c5e97e87`; not in S01 pin) | DENY | Failure record | Behavior at S01 pin lacks terminal approval revocation; independent qualification absent |
@@ -106,6 +108,7 @@ Mandatory profile: HOLD/REFUSE, no permissive fallback (plan §3.3). Optional pr
 | LD-05 | Receipt content: add policy/approval state commitment and selection tuple | OCS Architect | Evidence cannot show what was checked | none |
 | LD-06 | Compatibility of terminal approval revocation with S01 pin consumers | Operator | Pin-vs-head behavior differs | none |
 | LD-07 | Independent qualifier for the effect-time path (S05 limits do not qualify) | Independent qualifier | No QUALIFIED label possible | D13 |
+| LD-09 | Close the selection-expiry binding gap: lock-held validity check, interval-constrained claim, or accepted limitation | OCS Architect | Mid-flight expiry undetected at commit; document 01 §3.4 not enforceable | V1 |
 | LD-08 | Dependency: W8-091, W3-063, W9-027 classification | Operator/OCS Architect | Retry/dedupe and cap semantics stay open | D1, D6, D12 |
 
 ## 8. Interfaces expected from other lanes (stated, not designed)

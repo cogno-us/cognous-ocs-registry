@@ -111,7 +111,7 @@ Trust roots are `TrustConfig`-class inputs: per-role BitRep trust snapshots (or 
 
 ### 4.5 Version pinning and `latest`
 
-Exact `(record_id, record_version, record_digest)` only. `latest_known_version` is the selection's version (P2, retained). Directory enumeration, newest-wins and "highest epoch among files" are prohibited. Multiple valid selections for one `(selection_id, scope)`: the highest verified epoch at or above the floor governs; two different selections at the same epoch refuse (`selection_epoch_conflict`).
+Exact `(record_id, record_version, record_digest)` only. `latest_known_version` is the selection's version (P2, retained). Directory enumeration, newest-wins and "highest epoch among files" are prohibited. A newer epoch for one `(selection_id, scope)` takes effect only through the explicit approved supersession event of document 01 §3.3; it is never chosen because it is newer. Two verified selections that would both be effective for the same scope at one evaluation time refuse for both (`selection_epoch_conflict`), as in document 01 §3.3. The epoch floor (`min_epoch`) only rejects epochs below it. The final conflict rule remains subject to A-03.
 
 ### 4.6 Replay and rollback
 
