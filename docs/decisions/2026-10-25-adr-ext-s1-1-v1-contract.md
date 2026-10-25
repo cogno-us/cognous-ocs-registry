@@ -32,7 +32,7 @@ Basis: Architect ruling A2; ADR-REG-TR01; contract section 7.
 Owner: schema frozen in `EXT-S4-0`; implemented in `EXT-S4-2`.
 
 **D-04 Sync cannot manufacture authorization or reverse a revocation (A2 condition).**
-Decision: `sync` records snapshot high-water and may append `revoke` entries. It never activates or withdraws, never clears a revoked pair, never changes a revoked state and never supplies authorization. The revoked set is grow-only; a newer snapshot that omits an earlier revocation is refused. A transition at an epoch not strictly above the high-water, or without exact supersession, is refused; a revoked epoch is not resurrected by reactivation, lineage or restore.
+Decision: `sync` records snapshot high-water and may append `revoke` entries. It never activates or withdraws, never clears a revoked pair, never changes a revoked state and never supplies authorization. The revoked set is grow-only; a newer snapshot that omits an earlier revocation is refused. An `activate` or `withdraw` at an epoch not strictly above the high-water, or without exact supersession of the current row, is refused (`revoke` and `sync` follow their own preconditions in contract 7.1: revoking the current epoch and redelivering the current snapshot are permitted); a revoked epoch is not resurrected by reactivation, lineage or restore. A supersession gap is closed by a fresh higher-epoch statement naming the current row, not by processing unactivated ancestors.
 Rationale: a lagging or hostile sync channel must not widen authority; the revocation source today has no rollback check (`TrustSnapshot.version` is only checked `>= 1`).
 Basis: Architect ruling A2; `verify.py` `_normalize_trust`; plan doc 08 risks 8 and 9.
 Owner: contract in `EXT-S1-1`; floor in `EXT-S1-6`; consumer writers in `EXT-S4-2`; vectors in `EXT-S1-8`.
@@ -62,7 +62,7 @@ Basis: ADR-REG-TR01 decisions 1 to 10; `verify.py` epoch layer.
 Owner: `EXT-S1-8` (pure transition vectors), `EXT-S4-0`, `EXT-S4-2`.
 
 **D-09 `r08-v2` is strictly additive (O-2).**
-Decision: a behaviour-preserving refactor with a small family dispatch table; prefer the existing public interfaces; v2-specific modules only where reuse would alter frozen v1 behaviour; no duplicate registry implementation. `r08-v1` modules, codes, signing input, goldens and tests stay byte-identical; v1 and v2 documents and signatures do not cross-verify. The P1 alternative of v2 in new files only for every module is not taken (it would duplicate the loader, digest, layers and decision function); the P1 alternative of an unrestricted core refactor is bounded by the golden-replay proof.
+Decision: a behaviour-preserving refactor with a small family dispatch table; prefer the existing public interfaces; v2-specific modules only where reuse would alter frozen v1 behaviour; no duplicate registry implementation. `r08-v1` behaviour, codes, signing input, serialized outputs, goldens and tests stay unchanged (source-byte identity is reserved for the frozen legacy directories `registry_contract/`, `registry_consumer/` and `baseline/`; shared `registry_successor/` files may be refactored only under the golden-replay proof); v1 and v2 documents and signatures do not cross-verify. The P1 alternative of v2 in new files only for every module is not taken (it would duplicate the loader, digest, layers and decision function); the P1 alternative of an unrestricted core refactor is bounded by the golden-replay proof.
 Rationale: duplication creates two parsers that can disagree; unrestricted edits risk v1.
 Basis: Architect ruling O-2; plan doc 11 reconciliation row 5; frozen sets FS-R.
 Owner: `EXT-S1-2` (goldens captured from the unrefactored head in its first commit).
@@ -106,7 +106,7 @@ Basis: Architect ruling; `runtime_authority.py` `approval_commitment` (`:186`) a
 Owner: `EXT-S3-4` (design note and negative case), QG-04 (supersession in section 3).
 
 **D-17 Optional-scope fallback semantics.**
-Decision: optional participation may fall back to the caller policy when no valid optional selection applies; this is not a monotonic-tightening guarantee and V1 adds no universal tightening guarantee for optional policies. Required participation never silently downgrades and stays fail-closed. Fallback is visible in evidence (`applied=false`, the original `registry_code`, `fallback=caller_policy`). An invalid selection is reported under its own code and must not be relabelled `selection_withdrawn` (D-02). Previously committed effects stay governed by their original effective-policy evidence. A current claim must not reuse a stale policy identity: a claim minted under identity X is refused at the guard if the state row no longer matches X, and a fallback claim carries no binding. For continuous non-relaxation use `scope_required` (D-06).
+Decision: optional participation may fall back to the caller policy when no valid optional selection applies; this is not a monotonic-tightening guarantee and V1 adds no universal tightening guarantee for optional policies. Required participation never silently downgrades and stays fail-closed. Fallback is visible in evidence (`applied=false`, the original `registry_code`, `fallback=caller_policy`). An invalid selection is reported under its own code and must not be relabelled `selection_withdrawn` (D-02). Previously committed effects stay governed by their original effective-policy evidence. A current claim must not reuse a stale policy identity: a claim minted under identity X is refused at the guard if the state row no longer matches X (it is never downgraded to a fallback there), and a fallback claim carries no binding. The guard tells an optional fallback from a binding omitted on a required scope by the persisted `scope_required` ratchet (contract 7.4); a scope that must be fail-closed at commit must have the ratchet set. For continuous non-relaxation use `scope_required` (D-06).
 Basis: Architect ruling; `decision.py` optional path; plan doc 04 acceptance criterion 8.
 Owner: `EXT-S1-5` (evidence fields), `EXT-S4-2`.
 
@@ -147,7 +147,7 @@ Basis: plan doc 08 risks 6 and 7; ADR-REG-TR01 DT-02, DT-04.
 Owner: `EXT-S1-8` vectors, `EXT-S4-0` ADR, `EXT-S4-2`, QG-05/08/09/13.
 
 **D-25 Snapshot-version floor, fingerprint, builder and snapshot-borne revocation.**
-Decision: contract section 5. `TrustSnapshot` is unchanged; floor default off; equal version is idempotent redelivery only; fingerprint defined over the normalized snapshot; revocation rides the snapshot; the builder requires an explicit maximum lifetime and this ADR adopts none (operator cadence B-08).
+Decision: contract section 5. `TrustSnapshot` is unchanged; floor and `last_accepted_snapshot` inputs default off; equal version is idempotent redelivery only (compared with the consumer-supplied last accepted fingerprint; bootstrap is floor-only); fingerprint defined over the normalized snapshot; revocation rides the snapshot; the builder requires an explicit maximum lifetime and this ADR adopts none (operator cadence B-08).
 Basis: `verify.py` (`TrustSnapshot`, `_normalize_trust`); plan doc 08 risks 8 and 9.
 Owner: `EXT-S1-6`.
 
@@ -250,6 +250,7 @@ Head-advance check: Control Plane and Runtime heads did not move; Worker D, like
 4. **`selection_withdrawn` disposition**: the merged map says HOLD. Because an authenticated withdrawal is a determinate state (OPEN-Q12 principle), REFUSE may be the consistent mapping. This ADR does not change the map row; the Architect confirms in `EXT-S1-5`.
 5. **`activation_ref` definition** (D-14): the entry hash of the enforcing component's `activate` log entry, stable across `sync` entries. `EXT-S4-0` may refine the entry layout but not add a competing member.
 6. **Approval-revival mechanism** (D-16): mechanism (b) would be a Control Plane source edit and is not authorized; the Architect may prefer (a) (no Control Plane edit) or authorize a (b)-type exception under the same conditions as R6.
+7. **Review-driven clarifications to confirm** (added after the first Copilot review; they apply the existing rulings and add no new field to the eight-field profile): the guard comparison table and the state columns it needs (contract 7.4, 7); the `last_accepted_snapshot` input and bootstrap rule and the fingerprint encoding with a vector (contract 5, D-25); the supersession-gap closure by a fresh higher-epoch statement (contract 7.1, D-04); the optional-fallback guard rule keyed on the ratchet (D-17).
 
 ## 7. Review checklist (card element 5)
 
@@ -258,7 +259,7 @@ Head-advance check: Control Plane and Runtime heads did not move; Worker D, like
 - V0.2 contracts not reopened; ADR-REG-TR01 unchanged and cited.
 - Registry never activates, issues a grant or authorizes an effect (D-22).
 - Required scope never falls back to a wider caller policy (D-07, D-17).
-- `r08-v1` bytes and behaviour untouched; `CODES` is still 46 (D-02, D-09).
+- `r08-v1` behaviour and serialized outputs unchanged; `CODES` is still 46 (D-02, D-09).
 - Nothing is called qualified; GAP-G4-13 open; S5 PREPARE-only (D-26).
 - No edit to `engine/safe_executor.py`; no Control Plane edit authorized (D-29).
 - All links in this ADR and the contract resolve (checked mechanically before the PR).

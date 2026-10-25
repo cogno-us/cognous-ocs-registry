@@ -2,7 +2,7 @@
 
 Status: **PROPOSED, for Architect adoption through `EXT-S1-1`** (decisions in [`docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md`](decisions/2026-10-25-adr-ext-s1-1-v1-contract.md), cited as `D-nn`). Nothing here is implemented, activated, approved, qualified or released. It authorizes no EXT PR after `EXT-S1-1`. RELEASE, PUBLICATION and PRODUCTION: HOLD.
 
-Relation to `r08-v1` ([`r08-s01-contract.md`](r08-s01-contract.md)): `r08-v2` is a strict additive successor. Every `r08-v1` module, code, signing input, golden output and test stays byte-identical (D-09). This page states only what `r08-v2` adds or fixes. Anything not stated here is the `r08-v1` rule.
+Relation to `r08-v1` ([`r08-s01-contract.md`](r08-s01-contract.md)): `r08-v2` is a strict additive successor. Every `r08-v1` behaviour, code, signing input, serialized output, golden output and test stays unchanged (D-09). Source-byte identity is reserved for the frozen legacy directories `registry_contract/`, `registry_consumer/` and `baseline/`; shared `registry_successor/` files may be refactored only under the golden-replay proof. This page states only what `r08-v2` adds or fixes. Anything not stated here is the `r08-v1` rule.
 
 Scope (D-11, D-12): five Runtime allowlists and three Control Plane freshness bounds, atomic Route B only. No `max_amount` slot (reserved or inactive), no ninth field. The registry stores and distributes verified, narrowing, non-authorizing data. It never activates, never issues a grant, never authorizes an effect (D-22).
 
@@ -91,13 +91,64 @@ The registry produces the object with `activation_ref = null` (the registry cann
 
 ### 4.3 Claim carriage (D-13)
 
-The completed object travels inside the Control Plane authorization claim as a **declared optional claim field**, omitted when absent, under a successor claim profile; the claim commitment covers it. (A bare extra dictionary key is dropped on the model path, which breaks `verify_local_execution_claim`; see D-28.) A keyword-argument carrier (B-lite) is rejected. A claim with no binding stays byte-identical to today and is valid only where no registry policy governs the operation. Source-verified carrier functions are in the ADR (D-28). The destination guard (`EXT-S4-2`) compares the claim-carried members with the trusted state row under the destination lock and the lock-time clock; it recomputes `binding_digest` from the members and never trusts a digest string alone.
+The completed object travels inside the Control Plane authorization claim as a **declared optional claim field**, omitted when absent, under a successor claim profile; the claim commitment covers it. (A bare extra dictionary key is dropped on the model path, which breaks `verify_local_execution_claim`; see D-28.) A keyword-argument carrier (B-lite) is rejected. A claim with no binding stays byte-identical to today. It is valid where no registry policy governs the operation, and as an optional fallback in a scope whose ratchet is not set (section 7.4, line 7); a no-binding claim in a ratcheted scope is refused. Source-verified carrier functions are in the ADR (D-28). The destination guard (`EXT-S4-2`) compares the claim-carried members with the trusted state row under the destination lock and the lock-time clock; it recomputes `binding_digest` from the members and never trusts a digest string alone (comparison rules in section 7.4).
 
 ## 5. Trust snapshot floor and fingerprint (D-25)
 
-- `TrustSnapshot` is unchanged. New optional input `min_trust_snapshot_version` to the v2 verification path (default off so `r08-v1` and unset-v2 corpora reproduce exactly). Non-int, bool, 0 or negative floor refuses `trust_snapshot_invalid`. Order: expiry is reported before version.
-- Version below the floor: `trust_snapshot_version_stale`. Equal to the floor: accepted only as idempotent redelivery of the previously accepted fingerprint; equal with a different fingerprint refuses `trust_snapshot_version_stale`.
-- `trust_snapshot_fingerprint` = `digest` of the normalized snapshot: `{snapshot_id, version, valid_until, issuers (sorted by key_id; each key_id, issuer_id, alg, public_key as lowercase hex, authority sorted), revoked_key_ids (sorted), revoked_selections (sorted [selection_id, epoch] pairs), min_epochs (sorted [selection_id, floor] pairs)}`.
+- `TrustSnapshot` is unchanged. Two new optional inputs to the v2 verification path, both default off so `r08-v1` and unset-v2 corpora reproduce exactly: `min_trust_snapshot_version` (the external floor) and `last_accepted_snapshot` = `(version, fingerprint)` of the snapshot the consumer previously accepted. A non-int, bool, 0 or negative floor, or a malformed `last_accepted_snapshot`, refuses `trust_snapshot_invalid`. Order: expiry is reported before version.
+- Version below the floor, or below `last_accepted_snapshot.version`: `trust_snapshot_version_stale`. Equal to `last_accepted_snapshot.version`: accepted only if the fingerprint is equal (idempotent redelivery); equal version with a different fingerprint refuses `trust_snapshot_version_stale`. **Bootstrap:** with no `last_accepted_snapshot` only the floor applies, and the first accepted fingerprint is recorded by the consumer (a `sync` log entry); the verifier is stateless and the comparison against history is the consumer's input, never something the verifier remembers.
+- `trust_snapshot_fingerprint` = `digest` (registry `canonical_bytes`, section 4.1 serializer, no domain prefix) of the normalized snapshot object `{snapshot_id, version, valid_until, issuers, revoked_key_ids, revoked_selections, min_epochs}`: `issuers` sorted by `key_id`, each `{key_id, issuer_id, alg, public_key (lowercase hex), authority}` where `authority` is a list of five-element arrays `[consumer_id, tenant, institution, authority_domain, operation]` (the `AuthorityGrant` fields in that order) sorted lexicographically by array (string comparison by Unicode code point); `revoked_key_ids` sorted; `revoked_selections` sorted as `[selection_id, epoch]` pairs by `(selection_id, epoch)`; `min_epochs` sorted as `[selection_id, floor]` pairs by `selection_id`. Duplicates are refused (`trust_snapshot_invalid`), as the existing normalizer already does for issuer key ids and floors. Vector (input in unsorted order; the normalized form and digest were computed by a throwaway script that applies exactly this profile, not by repository code):
+
+```json
+{
+  "input_authority_order": "unsorted: op-transfer before op-audit",
+  "normalized": {
+    "snapshot_id": "snap-example-7",
+    "version": 7,
+    "valid_until": "2026-12-01T00:00:00Z",
+    "issuers": [
+      {
+        "key_id": "key-example-1",
+        "issuer_id": "issuer-a",
+        "alg": "ed25519",
+        "public_key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "authority": [
+          [
+            "runtime-emulator",
+            "tenant-a",
+            "inst-a",
+            "domain-a",
+            "op-audit"
+          ],
+          [
+            "runtime-emulator",
+            "tenant-a",
+            "inst-a",
+            "domain-a",
+            "op-transfer"
+          ]
+        ]
+      }
+    ],
+    "revoked_key_ids": [
+      "key-old-1"
+    ],
+    "revoked_selections": [
+      [
+        "sel-old-1",
+        2
+      ]
+    ],
+    "min_epochs": [
+      [
+        "sel-example-f1ab",
+        3
+      ]
+    ]
+  },
+  "fingerprint": "sha256:fa8e41adb7732a8f6cb5e593e9328f7b247814ba4631ae4629f7bdcb077ee7a6"
+}
+```
 - Revocation rides the operator-delivered snapshot (`revoked_selections`, `revoked_key_ids`). `revocation_ref` stays validated and unconsumed. A snapshot that omits an entry present in an earlier accepted snapshot is refused by the consumer (revoked set is grow-only, section 7). The snapshot builder takes a required `max_lifetime_seconds` argument and refuses a longer lifetime and unsorted, duplicate or oversize input; **no default lifetime is adopted here** (it follows the operator-set sync cadence, B-08).
 - The durable floor and the revoked set belong to the enforcing component, never to the registry.
 
@@ -118,7 +169,7 @@ The registry holds none of this. The contract fixes the logical schema so `EXT-S
 
 | Logical store | Content | Mutability |
 |---|---|---|
-| State | one row per scope key: `activation_state` in `{active, withdrawn, revoked}`, `epoch`, `selection_digest`, `activation_ref`, `high_water_epoch` | current value only; written by the trusted writer |
+| State | one row per scope key: `activation_state` in `{active, withdrawn, revoked}`, `epoch`, `selection_digest`, `participation`, the verified `valid_from` and `valid_until`, the record pin (`record_id`, `record_version`, `record_digest`), `effective_policy_digest`, `activation_ref`, `high_water_epoch` | current value only; the verified values are copied from the authenticated statement at activation and are immutable for that epoch; written by the trusted writer |
 | Transition history | append-only, hash-chained log; `entry_type` in `{activate, withdraw, revoke, sync}`; each entry holds scope key, epoch, selection digest, issuer key id, previous entry hash, prior and new `activation_state`, timestamp | append only; never edited or deleted |
 | Revoked set | `(selection_id, epoch)` pairs | grow only |
 | Scope ratchet | `scope_required` per scope key | one-way (section 7.3) |
@@ -133,7 +184,9 @@ State is distinct from history: a row says what is true now; the log says how it
 | `activate` | verified `select`; epoch strictly greater than `high_water_epoch`; `supersedes` null only if the scope has no history, else exactly the current row's `(selection_id, epoch, statement_digest)`; `(selection_id, epoch)` not in the revoked set; participation not weaker than the ratchet | state `active`, new high-water, log entry |
 | `withdraw` | verified `withdraw`; epoch strictly greater than high-water; `supersedes` exactly the current row; participation not weaker than the ratchet | state `withdrawn`, new high-water, log entry; history kept |
 | `revoke` | a verified snapshot at or above the floor lists `(selection_id, epoch)` | pair added to the revoked set; state `revoked` if it is the row's epoch; terminal for that pair |
-| `sync` | a verified snapshot at or above the floor and the previous fingerprint rule | updates snapshot high-water; may append `revoke` entries; **never** activates, withdraws, clears a revoked pair, changes a revoked state, or supplies authorization |
+| `sync` | a verified snapshot at or above the floor and the `last_accepted_snapshot` rule of section 5 | updates snapshot high-water and records its version and fingerprint in the log; may append `revoke` entries; **never** activates, withdraws, clears a revoked pair, changes a revoked state, or supplies authorization |
+
+**Closing a supersession gap.** A statement may name any strictly lower epoch of the same `selection_id`. If the consumer holds epoch 1 and the issuer produced epoch 2 that never reached it (or that is expired or revoked), the issuer closes the gap by issuing a fresh higher-epoch statement that names the consumer's **current row** exactly. The consumer never processes unactivated ancestors and authenticated lineage stays unavailable (`resolve_authoritative` still refuses). Until then a required scope stays unavailable and an optional scope reports `overlay_not_applied`; neither is success.
 
 Any transition whose precondition fails is refused with the registry code that names the cause and is logged as a refusal only if the log schema reserves it (`EXT-S4-0`). A gap in the supersession chain leaves the state unchanged and fails closed until the missing link is delivered. A revoked epoch is never resurrected by reactivation, lineage or restore; reversal is only a new, strictly higher epoch statement that names its predecessor.
 
@@ -146,6 +199,18 @@ Any transition whose precondition fails is refused with the registry code that n
 `scope_required` is set one-way by the trusted writer when a `required` selection is activated for the scope (or by explicit authenticated provisioning of the ratchet). Once set: an optional presentation (per call, per selection, per withdrawal, per replayed older statement) refuses `participation_mismatch`; withdrawal or revocation of the selection makes the scope `REQUIRED — UNAVAILABLE` and operations refuse; restoring an older store cannot clear it (the restore fence of section 8 fails closed instead). The ratchet is part of the hash-chained evidence and of restore custody.
 
 **Defined, not authorized.** The only way to clear the ratchet is the administrative transition `relax_scope_required`: an authenticated statement from an authority holding a separate relax grant, naming the scope key and the current ratchet record digest, carrying a strictly higher ratchet generation and an operator-approved `decision_ref`, and logged as its own entry. **No relaxation is authorized in V1.** The closed `entry_type` vocabulary is not extended, no writer exists and no code path is built; adding the entry type needs an ADR amendment and operator authorization.
+
+### 7.4 Guard comparison at the effect boundary (`EXT-S4-2`)
+
+Under the destination lock, with the lock-time clock and no network I/O, a claim that carries a binding is refused unless every line holds; the refusal names the first failing cause as a typed code (D-19), never as parsed text:
+
+1. The members are well formed and ASCII, `activation_ref` is non-null, and the recomputed `binding_digest` equals the carried one.
+2. A state row exists for the scope key built from the claim and its `activation_state` is `active` (else the cause is not activated, withdrawn or revoked).
+3. `selection_epoch`, `selection_digest`, the record triple, `effective_policy_digest` and `activation_ref` equal the row's values; the epoch equals the high-water for the scope (a lower epoch is `selection_epoch_stale`).
+4. `(selection_id, epoch)` is not in the revoked set.
+5. The lock-time clock is inside the row's `[valid_from, valid_until)`.
+6. `trust_snapshot_version` is at or above the external snapshot floor and `trust_snapshot_fingerprint` equals the fingerprint recorded in the log for that version (else `trust_snapshot_version_stale`). Revocation is always judged against the current revoked set, so a newer snapshot never invalidates an older claim only because it is newer.
+7. If `scope_required` is set for the scope, a claim with no binding is refused. If it is not set and the claim has no binding, the claim is an optional fallback: it is accepted only as "no registry policy applied", the gate's evidence carries `applied=false` and the original registry code, and the guard never treats an active selection at the destination as applying to it. A claim minted under a binding is never converted to a fallback at the guard: if its row is withdrawn, revoked, expired or replaced it is refused and the operation must be presented again so the gate decides afresh. A scope that must be fail-closed at the commit boundary must have the ratchet set (section 7.3), because without it the guard cannot tell a required operation from an optional one.
 
 ## 8. Restore, rollback and custody requirements (D-24)
 
