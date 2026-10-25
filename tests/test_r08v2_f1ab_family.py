@@ -71,7 +71,7 @@ def compose(cl, pl=None, **kw):
 # ---------------------------------------------------------------- table registration
 def test_v2_table_has_f1ab_and_v1_table_does_not():
     assert set(families.FAMILIES) == {c.FAMILY_F1A}
-    assert set(families.FAMILIES_V2) == {c.FAMILY_F1A, f.FAMILY_F1AB}
+    assert {c.FAMILY_F1A, f.FAMILY_F1AB} <= set(families.FAMILIES_V2)  # EXT-S1-4 adds f4 and f5 (own test file)
     spec = families.lookup_v2(f.FAMILY_F1AB)
     assert spec is families.FAMILIES_V2[f.FAMILY_F1AB]
     assert spec.payload_fields == FIELDS and f.F1AB_FIELDS == FIELDS
@@ -85,7 +85,7 @@ def test_v2_table_has_f1ab_and_v1_table_does_not():
 
 @pytest.mark.parametrize("fam", ["F1AB-LOCAL-EXECUTION-ALLOWLIST", " f1ab-local-execution-allowlist", "f1ab-local-execution-allowlist ",
                                  "f1ab-local-execution-allowlist\n", "f1a-b-local-execution-allowlist", "f1b-local-execution-allowlist",
-                                 "f4-control-plane-age-bounds", "", None, 3, [f.FAMILY_F1AB], b"f1ab"])
+                                 "", None, 3, [f.FAMILY_F1AB], b"f1ab"])
 def test_v2_lookup_exact_only(fam):
     assert families.lookup_v2(fam) is None
 
@@ -295,7 +295,7 @@ def test_invalid_record_refuses():
         assert (r.ok, r.code, r.effective) == (False, "composition_record_invalid", None)
 
 
-@pytest.mark.parametrize("fam", ["f1a-local-execution-allowlist", "F1AB-LOCAL-EXECUTION-ALLOWLIST", "f4-control-plane-age-bounds", None, "", 5])
+@pytest.mark.parametrize("fam", ["f1a-local-execution-allowlist", "F1AB-LOCAL-EXECUTION-ALLOWLIST", None, "", 5])
 def test_wrong_or_varied_family_refuses_composition_family_unsupported(fam):
     r = families.compose_v2(caller(), rec(family=fam))
     if fam == c.FAMILY_F1A:  # f1a is dispatched to the f1a composer, which refuses the five-set payload
