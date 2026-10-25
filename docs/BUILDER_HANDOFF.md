@@ -20,9 +20,7 @@ Also read pinned `ADOPTION.md` and `ORCHESTRATION.md`. The Constitution governs 
 Build → Test → Fix → Retest → Commit. Autonomous routine repairs; small PRs; maximum productive parallelism for disjoint tasks within authorized S01, with one integration owner for shared files; no bulk history/corpus import; no new multi-repo governance system. No paid calls/cloud/effects/releases. Historical evidence stays in old repos.
 
 ## Current authorization
-**S01 ONLY — Historical baseline recovery.**
-Use the existing S01 PR if suitable; add these governance docs there without widening its engineering objective. The g8-r10 tuple is a **proposed candidate**, not operator-approved simply because tests pass. Do not assert the narrow Runtime local-policy slice represents the entire historic OCS.
-Stop after S01; submit evidence and ask for S01 disposition / S02 authorization. No automatic next sprint.
+**No work beyond S06 is authorized.** S01 to S05 are complete; the state of S06 (consolidation) is whatever [sprint-status.md](sprint-status.md), the only live status document, records. Each sprint was authorized by its own dated decision under `docs/decisions/` (the plan's "NOT AUTHORIZED" headings are static text). A new rule family, shared ISS/OCS registry work, dynamic activation, approval of a manifest selection pin, publication, production and formal independent qualification need a new operator decision. Read [trust-limitations.md](trust-limitations.md) before any new work. Historical note: this section previously read "S01 ONLY"; the g8-r10 tuple was operator-selected under D1 (see [decisions](decisions/2026-10-24-operator-decisions-D1-D5.md)).
 
 ## Anti-drift check
 Before any new PR or sprint, read the static plan and latest dated decisions. If work lies outside the authorized sprint, record it as a future candidate rather than silently implementing. Changes to the static plan require a new numbered revision and operator decision, never an in-place rewrite to match work already performed.

@@ -20,13 +20,15 @@ Newly authored material: Apache-2.0 (`LICENSE`); imported material keeps its own
 
 D1–D5 of 2026-10-24: [docs/decisions/2026-10-24-operator-decisions-D1-D5.md](docs/decisions/2026-10-24-operator-decisions-D1-D5.md).
 
-## Currently authorized sprint
+## Current state (reconciled in S06; the live record is [docs/sprint-status.md](docs/sprint-status.md))
 
-**S01 only** until it is closed: reproduce the operator-selected (D1) bounded historical OCS v0.1 behavioural baseline for registry migration (minimality not established). S02 (hardcoded-rule inventory) is conditionally pre-authorized by operator decision D5 and becomes effective only after S01 satisfies D4, PR #1 is merged, the accepted baseline and merge SHA are recorded, `docs/sprint-status.md` records S01 PASS, and the S02 assignment is checked against the unchanged S02 section of the plan. No S03 without a new operator decision. The live state is in [docs/sprint-status.md](docs/sprint-status.md), the only live status document.
+S01 to S05 are complete and merged (S01 baseline recovery, S02 inventory, S03 contract, S04 consumer, S05 differential equivalence); S06 consolidation is recorded in the status file. No further sprint is authorized: a new rule family, shared ISS/OCS registry work, dynamic activation, approval of a manifest pin, publication, production and formal independent qualification each need a separate operator decision. Release, publication and production are on HOLD.
+
+What exists: a record contract and validator for three `LocalExecutionPolicy` allow-lists (`registry_contract/`, [S03](docs/s03-contract.md)); a consumer that can only narrow a caller's policy (`registry_consumer/`, [S04](docs/s04-implementation.md)); a differential battery and its recorded results ([S05](docs/s05-equivalence-report.md), `docs/s05-results/`). Nothing calls the consumer, no pin is approved, and the Runtime is unchanged. Read [docs/trust-limitations.md](docs/trust-limitations.md) before relying on any of it, and [docs/s06-representation-and-e05.md](docs/s06-representation-and-e05.md) for what the contract cannot express. The next-family recommendation is [docs/s06-next-family-recommendation.md](docs/s06-next-family-recommendation.md) (a proposal, not authorization).
 
 ## What this repository does NOT do
 
-- It does not contain a registry, rule records, scenarios or an extraction tool (no `registry/` or `tools/` directory exists). No rule is extracted or migrated in S01.
+- It does not contain a registry service, an active rule record, scenarios or an extraction tool (no `registry/` or `tools/` directory exists). Since S03 it holds one contract, one non-activated consumer and synthetic fixtures for exactly three `LocalExecutionPolicy` allow-lists; no other rule is extracted or migrated.
 - It does not import the historical registry catalogue (about 3,190 rule records, about 2,840 scenarios, 6,648 tests, accumulated evidence) or any of its generated artifacts. That catalogue is a read-only discovery and provenance resource.
 - It does not import historical tests in bulk, execution logs, generated test artifacts, CI output, PR reports, superseded planning documents, corpus copies or release-packaging machinery.
 - It does not import the Control Plane, Replay, Evidence Pack, ODES, Verifier or Action Manifest. It imports no later improvement (for example the F3 repairs); those are listed, not applied.
