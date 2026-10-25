@@ -96,8 +96,11 @@ def _admission_mandatory(selection: Any, contract_version: Any) -> bool:
     `contract_version` value, or an envelope that itself says r08-v2, selects the mandatory path."""
     if type(contract_version) is not str or contract_version != LEGACY_CONTRACT:
         return True
-    return getattr(selection, "envelope", None) is not None and \
-        isinstance(selection.envelope, dict) and selection.envelope.get("contract_version") == V2_CONTRACT
+    envelope = getattr(selection, "envelope", None)
+    if type(envelope) is not dict:
+        return False  # no parsed envelope: nothing declares r08-v2 (structural layer refuses such a selection anyway)
+    declared = envelope.get("contract_version")
+    return type(declared) is not str or declared != LEGACY_CONTRACT  # only an exact-str r08-v1 envelope may be legacy
 
 
 def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:

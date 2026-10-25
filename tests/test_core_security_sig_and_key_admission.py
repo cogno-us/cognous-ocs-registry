@@ -634,3 +634,73 @@ def test_decision_pipeline_reports_junk_keys_as_key_admission_invalid_on_v2(junk
         assert d.detail_cause == cause and d.operationally_authorized is False
         legacy = decision.verify_and_decide(part, caller, r.dumps(rec), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW)
         assert legacy.code == "trust_snapshot_invalid" and not hasattr(legacy, "detail_code")
+
+
+class _EqLiar:
+    """Instance that tries to pass as the legacy version by coercion: __eq__, __str__, __hash__ and __class__ all lie."""
+    __class__ = str  # type() is unaffected by this
+
+    def __eq__(self, other):
+        return other == "r08-v1" or other is self
+
+    def __ne__(self, other):
+        return False
+
+    def __str__(self):
+        return "r08-v1"
+
+    def __hash__(self):
+        return hash("r08-v1")
+
+
+def _contract_version_cases():
+    import collections
+
+    class StrSub(str):
+        pass
+
+    class StrSubLiar(str):
+        def __eq__(self, other):
+            return True
+
+        def __ne__(self, other):
+            return False
+        __hash__ = str.__hash__
+    return [("exact r08-v2", "r08-v2"), ("UserString r08-v2", collections.UserString("r08-v2")),
+            ("str subclass r08-v2", StrSub("r08-v2")), ("bytes r08-v2", b"r08-v2"), ("None", None),
+            ("UserString r08-v1", collections.UserString("r08-v1")), ("str subclass r08-v1", StrSub("r08-v1")),
+            ("bytes r08-v1", b"r08-v1"), ("__eq__ liar str subclass", StrSubLiar("anything")), ("__eq__/__str__ liar instance", _EqLiar()),
+            ("int", 1), ("empty", "")]
+
+
+@pytest.mark.parametrize("label,version", _contract_version_cases(), ids=[x[0] for x in _contract_version_cases()])
+@pytest.mark.parametrize("policy_name", ["omitted", "always_true"])
+def test_every_contract_version_but_the_exact_legacy_str_is_mandatory(label, version, policy_name):
+    from registry_successor import decision  # noqa: F401
+    assert verify._admission_mandatory(None, version) is True
+    report = _v2(IDENTITY, CALLBACKS[policy_name], version)
+    assert report.ok is False and report.code == "trust_snapshot_invalid" and report.detail_cause == "key_small_order"
+    assert _v2(LEGIT_KEYS[0], CALLBACKS[policy_name], version).ok is True  # ordinary callers still pass
+
+
+def test_envelope_declared_v2_beats_a_legacy_argument_and_odd_envelope_values_are_mandatory():
+    import collections
+    import dataclasses
+    _stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    t = _trust(IDENTITY)
+    for declared in (V2, collections.UserString("r08-v1"), b"r08-v1", None, 1, _EqLiar()):
+        forged = dataclasses.replace(sel, envelope={**sel.envelope, "contract_version": declared})
+        assert verify._admission_mandatory(forged, "r08-v1") is True, declared
+        assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW, contract_version="r08-v1").code == "trust_snapshot_invalid"
+        assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW, key_admission=lambda a, k: True).code == "trust_snapshot_invalid"
+    assert verify._admission_mandatory(sel, "r08-v1") is False  # the single legacy skip: exact-str v1 argument AND exact-str v1 envelope
+    assert verify._admission_mandatory(None, "r08-v1") is False
+
+
+def test_the_only_non_mandatory_path_is_exact_str_r08_v1_argument_with_an_exact_str_r08_v1_envelope():
+    _stmt, sel = _signed_selection("AAAA")
+    non_mandatory = [(sel, "r08-v1"), (None, "r08-v1")]
+    for version in [x[1] for x in _contract_version_cases()] + ["r08-v1"]:
+        for selection_obj in (sel, None):
+            expected_legacy = (selection_obj, version) in non_mandatory and type(version) is str
+            assert verify._admission_mandatory(selection_obj, version) is (not expected_legacy)

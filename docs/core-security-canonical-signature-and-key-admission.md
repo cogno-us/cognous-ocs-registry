@@ -39,6 +39,45 @@ envelope parser in the repository yet (`selection.py` accepts only `r08-v1`); th
 that the v2 parser (EXT-S1-5/6) inherits it with no further wiring, and the v2 path is exercised here by passing
 `contract_version="r08-v2"` with a v1-shaped envelope.
 
+### 2.0-pre The single legacy skip (audit, Batch 7)
+
+`verify._admission_mandatory` returns False (admission NOT mandatory) in exactly one situation: the `contract_version`
+argument is an exact built-in `str` (`type(x) is str`) equal to "r08-v1" AND the parsed selection envelope is either absent
+(a structurally invalid selection, refused earlier) or a plain `dict` whose `contract_version` is an exact `str` "r08-v1". Why it
+exists: the frozen r08-v1 golden corpus and fixtures use non-32-byte placeholder keys, and r08-v1 behaviour must replay
+byte-identically. Everything else is mandatory, and the type test runs before any equality so `__eq__`, `__str__`, `__hash__`
+and `__class__` tricks are never consulted:
+
+| `contract_version` argument | result |
+|---|---|
+| exact `str` "r08-v2" | mandatory |
+| `UserString("r08-v2")`, `str` subclass "r08-v2", `bytes` b"r08-v2" | mandatory (not an exact `str`) |
+| `None`, `int`, "" , any other string | mandatory |
+| `UserString("r08-v1")`, `str` subclass "r08-v1", b"r08-v1" | mandatory (equal-looking but not an exact `str`) |
+| `str` subclass or instance with lying `__eq__`/`__str__`/`__class__` | mandatory (type checked first) |
+| exact `str` "r08-v1" with an envelope declaring "r08-v2", or any non-exact-`str` envelope version | mandatory (envelope overrides the argument) |
+| exact `str` "r08-v1" with an exact-`str` "r08-v1" envelope | legacy: callback-optional (the only skip) |
+
+A callback can only add refusals on every path, and the built-in check is never disabled by omitting it. No reason code is
+added. Pinned by `test_every_contract_version_but_the_exact_legacy_str_is_mandatory`,
+`test_envelope_declared_v2_beats_a_legacy_argument_and_odd_envelope_values_are_mandatory`,
+`test_the_only_non_mandatory_path_is_exact_str_r08_v1_argument_with_an_exact_str_r08_v1_envelope` and the mutants
+`legacy_equality_only`, `legacy_isinstance_str`, `envelope_equality_only`, `mandatory_ignores_envelope_v2`.
+
+### 2.0-adapter Adapter coordination (PR #26 seam; docs only, no #26 code changed here)
+
+- Seam: `verify._verify` normalizes the snapshot with `_normalize_trust(trust_in, mandatory)` and then calls
+  `_admission_failure(trust, key_admission, mandatory)` before any other trust or authenticity layer; signature checking
+  (`_authenticity`, which calls `verifier.verify(alg, public_key, message, signature)`) runs only after the snapshot passed.
+- Order is fixed: (1) built-in `inspect_ed25519_key` always runs first on the mandatory path (and on the legacy path whenever a
+  policy is supplied); (2) then the caller policy. The Ed25519 adapter's `acceptable_public_key` composes at step (2) through
+  `key_admission=compose_key_admission(adapter.acceptable_public_key)` (or any callable `(alg, public_key) -> bool`). It can only
+  further restrict; returning `True` never admits a key the built-in check refused, and a raise or non-`True` result refuses.
+- Not done here: on-curve decompression, prime-order subgroup and mixed-order checking. That is the adapter's job (PR #26) and
+  this PR does not perform or claim it. Until it is composed in, mixed-order keys pass admission and signatures made with them MAY
+  be accepted by a verifier that does not itself enforce subgroup membership.
+- Adapter integration is a separate step after #34 is approved and merged; no code in PR #26 is changed by this PR.
+
 ### 2.0 Exact rules checked (`key_admission.inspect_ed25519_key`, pure standard library)
 
 Applied to `alg == "ed25519"` keys, in this order:

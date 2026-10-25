@@ -93,6 +93,11 @@ class _V64:
         return alg == "ed25519" and signature == hashlib.sha512(b"sig|" + public_key + b"|" + message).digest()
 
 
+def collections_UserString(text):
+    import collections
+    return collections.UserString(text)
+
+
 def _verify_probe(mod):
     from registry_successor.selection import signing_input
     ctx = c.ExpectedContext("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
@@ -142,6 +147,8 @@ def _verify_probe(mod):
     assert run(bad_sig, bad_key, None, None).code == "trust_snapshot_invalid"
     assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": "r08-v2"}).code == "trust_snapshot_invalid"
     assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": "r08-v1"}).ok is True
+    assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": collections_UserString("r08-v1")}).code == "trust_snapshot_invalid"
+    assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": None}).code == "trust_snapshot_invalid"
     assert run(canon, key, None, "r08-v2").ok is True
     assert run(canon, key, lambda a, k: True, "r08-v2").ok is True
     stricter = run(canon, key, lambda a, k: False, "r08-v2")
@@ -261,7 +268,8 @@ MUTANTS = {
         "junk_key_left_to_normalizer": [("(not mandatory and (not isinstance(entry.public_key, bytes)", "((not isinstance(entry.public_key, bytes)")],
         "junk_key_check_dropped": [("    if mandatory and cause is None and (type(entry.public_key) is not bytes or not entry.public_key):", "    if False:")],
         "junk_key_type_label_swapped": [('cause = "key_type" if type(entry.public_key) is not bytes else "key_length"', 'cause = "key_length"')],
-        "mandatory_ignores_envelope_v2": [("selection.envelope.get(\"contract_version\") == V2_CONTRACT", "False")],
+        "mandatory_ignores_envelope_v2": [("return type(declared) is not str or declared != LEGACY_CONTRACT", "return False")],
+        "envelope_equality_only": [("return type(declared) is not str or declared != LEGACY_CONTRACT", "return declared == V2_CONTRACT")],
         "contract_version_not_threaded": [("record, key_admission, contract_version)", "record, key_admission, LEGACY_CONTRACT)")],
         "malformed_detail_always_typed": [("(DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None", "(DETAIL_TRUST_SNAPSHOT_MALFORMED, None)")],
         "malformed_detail_never_typed": [("(DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None", "None")],
