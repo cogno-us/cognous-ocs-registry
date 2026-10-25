@@ -2175,6 +2175,78 @@
     "layer": "shape",
     "member": "scope.\ue000"
    }
+  },
+  {
+   "id": "BI-SCOPE-LITERAL-DOT-KEY-AFTER",
+   "category": "scope-collision",
+   "description": "a literal top-level member `scope.tenant` after a complete nested `scope`: an unlisted TOP-LEVEL member, never the nested tenant",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\", \"scope.tenant\": \"tenant-a\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "layer": "shape",
+    "member": "scope.tenant"
+   }
+  },
+  {
+   "id": "BI-SCOPE-LITERAL-DOT-KEY-BEFORE",
+   "category": "scope-collision",
+   "description": "the same literal top-level member `scope.tenant` placed BEFORE `scope`: same refusal, so the outcome does not depend on key order",
+   "input_json": "{\"scope.tenant\": \"tenant-a\", \"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "layer": "shape",
+    "member": "scope.tenant"
+   }
+  },
+  {
+   "id": "BI-SCOPE-LITERAL-DOT-KEY-IMPERSONATES-MISSING",
+   "category": "scope-collision",
+   "description": "`scope` lacks `tenant` and a literal top-level `scope.tenant` is present: the literal does NOT fill the nested member, `tenant` is missing (missing is checked before unknown)",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\", \"scope.tenant\": \"tenant-a\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_missing",
+    "layer": "shape",
+    "member": "scope.tenant"
+   }
+  },
+  {
+   "id": "BI-SCOPE-LITERAL-DOT-KEYS-WITHOUT-SCOPE",
+   "category": "scope-collision",
+   "description": "no `scope` member but three literal top-level `scope.*` members: the single missing member is `scope`",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\", \"scope.tenant\": \"tenant-a\", \"scope.institution\": \"inst-a\", \"scope.authority_domain\": \"domain-a\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_missing",
+    "layer": "shape",
+    "member": "scope"
+   }
+  },
+  {
+   "id": "BI-SCOPE-LITERAL-DOT-KEY-INVALID-VALUE",
+   "category": "scope-collision",
+   "description": "a literal top-level `scope.tenant` with an INVALID value beside a valid nested scope: unlisted (`field_unknown`), its value is never validated as the nested tenant",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\", \"scope.tenant\": \"bad value!\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "layer": "shape",
+    "member": "scope.tenant"
+   }
+  },
+  {
+   "id": "BI-SCOPE-NESTED-UNKNOWN-DOTTED",
+   "category": "scope-collision",
+   "description": "an unlisted member inside `scope` whose name contains a dot (`scope.x`, nested path `scope.scope.x`): field_unknown at the nested path",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\", \"scope.x\": \"a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 7, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "layer": "shape",
+    "member": "scope.scope.x"
+   }
   }
  ],
  "identifier_matrix": {
@@ -3629,7 +3701,7 @@
    "preimage_canonical_bytes_hex": "7b22636f6e74726163745f76657273696f6e223a227230382d7632222c2264656e795f616c6c223a5b5d2c22656666656374697665223a7b22616c6c6f7765645f616374696f6e73223a5b227472616e73666572222c2276696577225d2c22616c6c6f7765645f6164617074657273223a5b22616461707465722d61225d2c22616c6c6f7765645f617574686f726974795f646f6d61696e73223a5b22646f6d61696e2d61225d2c22616c6c6f7765645f696e737469747574696f6e73223a5b22696e73742d61225d2c22616c6c6f7765645f756e697473223a5b22657572225d7d2c226566666563746976655f706f6c6963795f70726f66696c65223a226f63732d6566666563746976652d706f6c6963792f31222c2266616d696c79223a22663161622d6c6f63616c2d657865637574696f6e2d616c6c6f776c697374222c2266616d696c795f76657273696f6e223a227632227d",
    "effective_policy_digest": "sha256:bc30fed4f7ef7c5f00f3fa944da8713ad1aece71fb2c78bcfd51a2bd071529fd",
    "must_differ_from": "EP-001",
-   "registrable": false
+   "registrable": true
   },
   {
    "id": "EC-007",
@@ -6340,6 +6412,23 @@
     "snapshot_floor"
    ],
    "source": "contract 7.4 line 7; kit REFUSE_STALE"
+  },
+  {
+   "id": "MP-trust_snapshot_invalid",
+   "defect": "a trust snapshot DELIVERED for the fingerprint or verification is malformed: a duplicate issuer key_id, revoked_selections pair, min_epochs selection id or revoked_key_ids entry (TI-001 to TI-004)",
+   "verdict_class": "REFUSE",
+   "registry_code": "trust_snapshot_invalid",
+   "decision_kind": "required_policy_unavailable",
+   "retry": "never_same_input",
+   "evidence_fields": [
+    "registry_code",
+    "layer",
+    "participation",
+    "decision_kind",
+    "stage",
+    "trust_snapshot_version"
+   ],
+   "source": "contract 5; registry_successor/verify.py:245; PROPOSED verdict class (this PR): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped"
   },
   {
    "id": "MP-selection_withdrawn",

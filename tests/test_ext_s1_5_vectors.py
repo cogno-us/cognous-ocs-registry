@@ -391,6 +391,8 @@ TOP_KEYS = ("activation_ref", "binding_profile", "consumer_id", "effective_polic
 
 
 def _flatten(doc):
+    """Only for a document whose top-level and `scope` member sets were ALREADY checked separately (validate_binding): by then no top-level key can
+    contain a dot, so a literal `scope.tenant` can never collide with the nested member."""
     flat = {}
     for k, v in doc.items():
         if k == "scope" and isinstance(v, dict):
@@ -402,21 +404,23 @@ def _flatten(doc):
 
 
 def validate_binding(doc):
-    """Returns the doc if it is a well formed COMPLETED binding; raises Refuse(code, member) otherwise."""
+    """Returns the doc if it is a well formed COMPLETED binding; raises Refuse(code, member) otherwise.
+    The top-level member set and the `scope` member set are checked as TWO separate sets BEFORE anything is flattened (review of PR #30, Copilot): a
+    top-level key that is literally `scope.tenant` is an unlisted TOP-LEVEL member (`field_unknown`), never the nested tenant, whatever the key order."""
     if not isinstance(doc, dict):
         raise Refuse("field_type_invalid")
-    expected = set(TOP_KEYS) - {"scope"}
-    expected |= ({"scope." + k for k in SCOPE_KEYS} if "scope" in doc else {"scope"})
-    flat = _flatten(doc)
-    if "scope" in doc and not isinstance(doc["scope"], dict):
+    nested = doc.get("scope") if "scope" in doc else None
+    if "scope" in doc and not isinstance(nested, dict):
         raise Refuse("field_type_invalid", "scope")
+    top_required = set(TOP_KEYS) - {"scope"}
     # phase 1: missing, phase 2: unknown (sorted path order); an absent scope is the single missing member `scope`
-    missing = sorted(expected - set(flat))
+    missing = sorted((top_required - set(doc)) | ({"scope"} if "scope" not in doc else {"scope." + k for k in SCOPE_KEYS if k not in nested}))
     if missing:
         raise Refuse("field_missing", missing[0])
-    unknown = sorted(set(flat) - expected)
+    unknown = sorted({k for k in doc if k not in TOP_KEYS} | ({"scope." + k for k in nested if k not in SCOPE_KEYS} if nested is not None else set()))
     if unknown:
         raise Refuse("field_unknown", unknown[0])
+    flat = _flatten(doc)
     for path in sorted(flat):  # phase 3: types
         val = flat[path]
         if path in INT_MEMBERS:
@@ -1025,7 +1029,13 @@ def test_effective_policy_controls_and_invalid_inputs():
         assert canon(load(c["preimage_canonical_ascii"])).decode("ascii") == c["preimage_canonical_ascii"]
         assert effective_digest_of_preimage(load(c["preimage_canonical_ascii"])) == c["effective_policy_digest"], c["id"]
         assert c["effective_policy_digest"] != base["expected"]["effective_policy_digest"], c["id"]
-        assert c["registrable"] is False
+        # review (Copilot): each control is validated against its DECLARED status; only a control the validator refuses is non-registrable
+        try:
+            validate_preimage(load(c["preimage_canonical_ascii"]))
+            validates = True
+        except Refuse:
+            validates = False
+        assert c["registrable"] is validates, c["id"]
     ids = {c["id"] for c in V["effective_policy_controls"]}
     assert {"EC-001", "EC-002", "EC-003", "EC-007"} <= ids  # family version, family id, contract version, display metadata
     # wrong-prefix and no-prefix preimage digests differ
@@ -1538,11 +1548,11 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
     for code, br in branches.items():
         assert br["decision_kind"] == "overlay_not_applied" and br["registry_code"] == code and br["applied"] is False, code
         assert "authenticated optional-state determination" in br["only_through"], code
-    assert len(V["defect_mapping"]) == 34
+    assert len(V["defect_mapping"]) == 35
     # every code used by an identity validator in this file appears in the mapping
     mapped = set(by_code)
     for c in V["outcome_map"]["codes_used_by_this_file"]:
-        assert c in mapped or c == "trust_snapshot_invalid", c
+        assert c in mapped, c  # no exemption: every code an identity validator can emit has a mapping row (review, Copilot)
     # the vocabulary matches the merged conformance kit when that README is present in this checkout (PR #28 is merged; the README is present at base f618cdf)
     # the vocabulary is the one in the merged conformance README, whose verdict section is an ENFORCED pin (test_contract_section_pins; ruling N-6)
     readme = ROOT / "docs" / "conformance" / "README.md"
