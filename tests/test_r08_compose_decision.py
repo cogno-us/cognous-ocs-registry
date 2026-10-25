@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import r08_support as s  # noqa: E402
 from registry_successor import common as c  # noqa: E402
 from registry_successor.compose import compose_f1a  # noqa: E402
-from registry_successor.decision import decide_policy  # noqa: E402
+from registry_successor.decision import decide_policy as _real_decide  # noqa: E402
 
 F = c.F1A_FIELDS
 
@@ -32,7 +32,19 @@ class Rec:
 class Rep:
     ok: bool = True
     code: Optional[str] = None
-    participation: Optional[str] = None
+    participation: Optional[str] = "any"
+    layers: Any = None
+    bound_record_digest: Optional[str] = None
+
+
+def decide_policy(participation, caller, record, report):
+    """Stand-in reports are bound to the record under test here; real record binding is covered in test_r08_regressions.py."""
+    if isinstance(report, Rep) and report.layers is None:
+        body = getattr(record, "record", None)
+        digest = body.get("record_digest") if isinstance(body, dict) else None
+        part = participation if report.participation == "any" else report.participation
+        report = Rep(report.ok, report.code, part, {"record_binding": "pass"}, digest)
+    return _real_decide(participation, caller, record, report)
 
 
 def rec(**payload):
@@ -178,7 +190,7 @@ def refusal_sources():
         "missing_record": ((None, OK), "composition_record_invalid"),
         "bad_record": ((Rec(ok=False, code="digest_mismatch"), OK), "digest_mismatch"),
         "bad_record_no_code": ((Rec(ok=False), OK), "composition_record_invalid"),
-        "wrong_family": ((Rec(record=dict(s.make_record(), family="other")), OK), "composition_family_unsupported"),
+        "wrong_family": ((Rec(record=s.seal_record(dict(s.make_record(), family="other"))), OK), "composition_family_unsupported"),
         "selection_participation_differs": ((rec(), Rep(ok=True, participation="optional")), "participation_mismatch"),
     }
 
@@ -229,7 +241,7 @@ def test_matching_selection_participation_is_accepted():
 def test_five_way_distinction_has_distinct_observable_outcomes():
     cases = {
         "valid_deny_all": decide_policy("required", caller(), rec(allowed_units=[]), OK),
-        "field_absent": decide_policy("required", caller(), Rec(record={**s.make_record(), "payload": {"allowed_actions": []}}), OK),
+        "field_absent": decide_policy("required", caller(), Rec(record=s.seal_record({**s.make_record(), "payload": {"allowed_actions": []}})), OK),
         "invalid_record": decide_policy("required", caller(), Rec(ok=False, code="field_invalid"), OK),
         "missing_required_selection": decide_policy("required", caller(), rec(), None),
         "optional_overlay_refusal": decide_policy("optional", caller(), rec(), None),

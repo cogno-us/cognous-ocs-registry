@@ -430,7 +430,8 @@ def good_report():
 def test_QP01_applied_and_applied_deny_all():
     d = decision.decide_policy("required", CALLER, rec_result(), good_report())
     assert d.kind == "applied" and norm(d.effective)["allowed_units"] == ("unit-a",)
-    d = decision.decide_policy("required", CALLER, rec_result(with_payload(allowed_units=[])), good_report())
+    empty = with_payload(allowed_units=[])
+    d = decision.decide_policy("required", CALLER, rec_result(empty), pipeline(record_obj=empty)[1])
     assert d.kind == "applied_deny_all"
 
 

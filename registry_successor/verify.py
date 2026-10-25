@@ -71,6 +71,8 @@ class VerificationReport:
     authenticated: bool
     issuer_id: Optional[str]
     operationally_authorized: bool = False
+    participation: Optional[str] = None
+    bound_record_digest: Optional[str] = None
 
 
 def _normalize_trust(trust: Any) -> Optional[dict]:
@@ -146,6 +148,11 @@ def _record_binding(statement: dict, record: Any) -> Optional[tuple]:
     if not getattr(record, "ok", False) or not isinstance(getattr(record, "record", None), dict):
         return ("composition_record_invalid", "record is not a valid record")
     body = record.record
+    if not isinstance(body.get("payload"), dict) or not isinstance(body.get("record_digest"), str):
+        return ("composition_record_invalid", "record body is incomplete")
+    if c.digest(body["payload"]) != body.get("payload_digest") or c.digest(
+            {k: v for k, v in body.items() if k != "record_digest"}) != body["record_digest"]:
+        return ("digest_mismatch", "record content does not match its recorded digests (altered after validation)")
     pin = statement.get("record")
     if not isinstance(pin, dict):
         return ("record_identity_mismatch", "statement carries no record pin")
@@ -161,19 +168,20 @@ def _record_binding(statement: dict, record: Any) -> Optional[tuple]:
 
 
 def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -> tuple:
-    """Returns (code_or_None, detail, entry_or_None, grants)."""
+    """Returns (code_or_None, detail, valid) where valid lists every (entry, grants) whose signature verified."""
     from registry_successor import selection as sel_mod
     signatures = getattr(selection, "signatures", None)
     if not isinstance(signatures, (list, tuple)) or not signatures:
-        return ("signature_missing", "statement carries no signature", None, ())
+        return ("signature_missing", "statement carries no signature", [])
     supported = [s for s in signatures if isinstance(s, dict) and s.get("alg") == SUPPORTED_ALG]
     if not supported:
-        return ("signature_algorithm_unsupported", "no ed25519 signature present", None, ())
+        return ("signature_algorithm_unsupported", "no ed25519 signature present", [])
     try:
         message = sel_mod.signing_input(statement)
     except Exception:
-        return ("signature_invalid", "signing input cannot be built", None, ())
+        return ("signature_invalid", "signing input cannot be built", [])
     first_failure = None
+    valid = []
     for sig in supported:
         key_id = sig.get("key_id")
         found = trust["issuers"].get(key_id) if isinstance(key_id, str) else None
@@ -193,11 +201,14 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -
                 except Exception:
                     good = False
                 if good is True:
-                    return (None, "", entry, grants)
+                    valid.append((entry, grants))
+                    continue
                 failure = ("signature_invalid", "signature does not verify")
         if first_failure is None:
             first_failure = failure
-    return (first_failure[0], first_failure[1], None, ())
+    if valid:
+        return (None, "", valid)
+    return (first_failure[0], first_failure[1], [])
 
 
 def _verify(selection, context, trust_in, verifier, now, record) -> VerificationReport:
@@ -240,22 +251,24 @@ def _verify(selection, context, trust_in, verifier, now, record) -> Verification
         mark("trust_snapshot", None)
     trust_ok = layers["trust_snapshot"] == PASS
 
-    authenticated, issuer_id, grants = False, None, ()
+    authenticated, issuer_id, valid_signers = False, None, []
     if statement is not None:
         if verifier is None:
             mark("authenticity", "verifier_unavailable", "no signature verifier supplied; digest match is not authentication")
         elif trust_ok:
-            code, detail, entry, grants = _authenticity(statement, selection, trust, verifier)
+            code, detail, valid_signers = _authenticity(statement, selection, trust, verifier)
             mark("authenticity", code, detail)
             if code is None:
-                authenticated, issuer_id = True, entry.issuer_id
+                authenticated = True
 
         if layers["authenticity"] == PASS:
             scope = statement.get("scope") if isinstance(statement.get("scope"), dict) else {}
             wanted = (statement.get("consumer_id"), scope.get("tenant"), scope.get("institution"),
                       scope.get("authority_domain"), statement.get("operation"))
-            held = any((g.consumer_id, g.tenant, g.institution, g.authority_domain, g.operation) == wanted for g in grants)
-            mark("authority", None if held else "issuer_not_authorized", "issuer holds no exact authority for this consumer, scope and operation")
+            authorized = [entry for entry, grants in valid_signers if any(
+                (g.consumer_id, g.tenant, g.institution, g.authority_domain, g.operation) == wanted for g in grants)]
+            issuer_id = (authorized or [entry for entry, _ in valid_signers])[0].issuer_id
+            mark("authority", None if authorized else "issuer_not_authorized", "no valid signer holds exact authority for this consumer, scope and operation")
 
         if not isinstance(context, ExpectedContext):
             mark("scope", "selection_scope_mismatch", "expected context is missing or invalid")
@@ -300,7 +313,10 @@ def _verify(selection, context, trust_in, verifier, now, record) -> Verification
         ok=ok, code=None if ok else codes.get(first, "selection_missing"),
         detail="" if ok else details.get(first, "verification incomplete"),
         layers=dict(layers), selection_digest=getattr(selection, "statement_digest", None) if statement is not None else None,
-        authenticated=authenticated, issuer_id=issuer_id, operationally_authorized=False)
+        authenticated=authenticated, issuer_id=issuer_id, operationally_authorized=False,
+        participation=statement.get("participation") if statement is not None else None,
+        bound_record_digest=(statement.get("record") or {}).get("record_digest")
+        if statement is not None and layers["record_binding"] == PASS and isinstance(statement.get("record"), dict) else None)
 
 
 def verify_selection(selection, context, trust, verifier, now, record=None) -> VerificationReport:

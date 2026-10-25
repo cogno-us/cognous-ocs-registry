@@ -45,14 +45,27 @@ def decide_policy(participation: Any, caller: Any, record: Any, report: Any) -> 
         if getattr(report, "ok", False) is not True:
             code = getattr(report, "code", None)
             return _refusal(participation, caller, code if code in c.CODES else "selection_missing")
-        selected = getattr(report, "participation", None)
-        if selected is not None and selected != participation:
-            return _refusal(participation, caller, "participation_mismatch")
+        if getattr(report, "participation", None) != participation:
+            return _refusal(participation, caller, "participation_mismatch",
+                            "the signed selection's participation does not equal the operation class")
         if record is None:
             return _refusal(participation, caller, "composition_record_invalid", "no record supplied")
         if getattr(record, "ok", False) is not True:
             code = getattr(record, "code", None)
             return _refusal(participation, caller, code if code in c.CODES else "composition_record_invalid")
+        layers = getattr(report, "layers", None)
+        if not isinstance(layers, dict) or layers.get("record_binding") != "pass":
+            return _refusal(participation, caller, "record_identity_mismatch",
+                            "the verification report has no passing record binding")
+        body = getattr(record, "record", None)
+        if not isinstance(body, dict) or not isinstance(body.get("payload"), dict):
+            return _refusal(participation, caller, "composition_record_invalid", "record body is missing")
+        recomputed = c.digest({k: v for k, v in body.items() if k != "record_digest"})
+        if recomputed != body.get("record_digest") or c.digest(body["payload"]) != body.get("payload_digest"):
+            return _refusal(participation, caller, "digest_mismatch", "record content was altered after validation")
+        if getattr(report, "bound_record_digest", None) != recomputed:
+            return _refusal(participation, caller, "record_digest_mismatch",
+                            "the record is not the one the verified selection pinned")
         result = compose_f1a(caller, record)
         if not result.ok:
             return _refusal(participation, caller, result.code, result.detail)

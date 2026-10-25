@@ -179,17 +179,19 @@ def _in_window(stmt: dict, now: datetime.datetime) -> bool:
     return start is not None and end is not None and start <= now < end
 
 
-def _chain_covers(head: SelectionResult, by_key: dict, everyone: set) -> bool:
+def _chain_covers(head: SelectionResult, history: dict, effective: set) -> bool:
+    """True when following explicit supersession links from `head` (through ANY structurally valid statement of this
+    context, effective or not) reaches every effective candidate. Historical nodes need not themselves be effective."""
     seen = {head.statement_digest}
     node = head
     while node.statement["supersedes"] is not None:
         sup = node.statement["supersedes"]
-        older = by_key.get((sup["selection_id"], sup["epoch"], sup["statement_digest"]))
+        older = history.get((sup["selection_id"], sup["epoch"], sup["statement_digest"]))
         if older is None or older.statement_digest in seen:
             break
         seen.add(older.statement_digest)
         node = older
-    return seen == everyone
+    return effective <= seen
 
 
 def _resolve(selections: Any, context: Any, now: Any) -> ConflictResult:
@@ -198,22 +200,25 @@ def _resolve(selections: Any, context: Any, now: Any) -> ConflictResult:
     if not isinstance(context, c.ExpectedContext) or not isinstance(selections, (list, tuple)):
         return ConflictResult(False, "selection_missing", "no usable context or selections")
     unique: dict = {}
+    history: dict = {}
     for sel in selections:
         if not isinstance(sel, SelectionResult) or not sel.ok or not isinstance(sel.statement, dict):
             continue
-        if _matches(sel.statement, context) and _in_window(sel.statement, now):
+        if not _matches(sel.statement, context):
+            continue
+        history.setdefault((sel.statement["selection_id"], sel.statement["epoch"], sel.statement_digest), sel)
+        if _in_window(sel.statement, now):
             unique.setdefault(sel.statement_digest, sel)
     if not unique:
         return ConflictResult(False, "selection_missing", "no effective selection for this context")
     cands = list(unique.values())
     if len(cands) == 1:
         return ConflictResult(True, None, "", cands[0])
-    by_key = {(s.statement["selection_id"], s.statement["epoch"], s.statement_digest): s for s in cands}
     ids_epochs = [(s.statement["selection_id"], s.statement["epoch"]) for s in cands]
     if len(set(ids_epochs)) != len(ids_epochs):
         return ConflictResult(False, "selection_conflict", "same selection id and epoch with different content")
-    everyone = {s.statement_digest for s in cands}
-    heads = [s for s in cands if _chain_covers(s, by_key, everyone)]
+    effective = {s.statement_digest for s in cands}
+    heads = [s for s in cands if _chain_covers(s, history, effective)]
     if len(heads) == 1:
         return ConflictResult(True, None, "", heads[0])
     return ConflictResult(False, "selection_conflict", "effective selections without an explicit supersession chain")
