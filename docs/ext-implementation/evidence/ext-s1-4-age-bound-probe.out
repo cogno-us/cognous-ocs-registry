@@ -1,0 +1,28 @@
+== class base ActionClass.max_status_age_seconds, grant status age 0
+  base=2147483647 freshness-on: ok:authorized
+  base=2147483647 anchored: ok:authorized
+  base=2147483647 off: ok:authorized
+  base=2147483648 freshness-on: ok:authorized
+  base=2147483648 anchored: ok:authorized
+  base=2147483648 off: ok:authorized
+== class base MAX, grant status aged exactly MAX and MAX+1 (freshness on)
+  grant age 2147483647: ok:authorized
+  grant age 2147483648: ok:hold
+== workflow scalars status_max_age_seconds / approval_max_age_seconds
+  status_max_age_seconds=2147483647: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  status_max_age_seconds=2147483648: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  status_max_age_seconds=17179869184: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  status_max_age_seconds=9007199254740992: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  status_max_age_seconds=1000000000000000000000000000000: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=2147483647: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  approval_max_age_seconds=2147483648: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  approval_max_age_seconds=17179869184: freshness-on:ok:authorized | anchored:ok:authorized | off:ok:authorized
+  approval_max_age_seconds=9007199254740992: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+  approval_max_age_seconds=1000000000000000000000000000000: freshness-on:ok:authorized | anchored:EXC:OverflowError:Python int too large to convert to C int | off:ok:authorized
+== outage extension composed to the ceiling (base 60, limit MAX-60, extension to MAX), grant aged MAX
+   ok:authorized
+== float-vs-int comparison edge `(now - observed).total_seconds() <= max_age` (bounded.py _fresh): +1 microsecond
+  B=2147483647: age=B+1us accepted=False (must be False)
+  B=2147483648: age=B+1us accepted=False (must be False)
+  B=8589934592: age=B+1us accepted=False (must be False)
+  B=17179869184: age=B+1us accepted=True (must be False)
