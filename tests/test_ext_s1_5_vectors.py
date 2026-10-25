@@ -2073,7 +2073,7 @@ for (const x of V.scope_projection) {
 // review N-d additions: the identifier matrix, the snapshot version bound, and code point sortedness of every list, recomputed in a second language
 V.identifier_matrix.bad_values.forEach((e, i) => { out['IM:' + i] = /^[\x00-\x7f]*$/.test(e.value) && IDENT.test(e.value); });
 for (const x of V.projection_stage_refusals) { const v = BigInt(x.trust_snapshot_version); out[x.id] = (v >= 1n && v <= 9007199254740991n) ? 'projected' : 'refuse'; }
-for (const x of V.snapshot_version_ingest_bound.vectors) { out[x.id] = (x.representation === 'int' && /^-?(0|[1-9][0-9]*)$/.test(x.text) && BigInt(x.text) >= 1n && BigInt(x.text) <= 9007199254740991n) ? 'accepted' : 'refuse'; }
+for (const x of V.snapshot_version_ingest_bound.vectors) { const t = x.text_repeat ? x.text_repeat[0].repeat(x.text_repeat[1]) : x.text; out[x.id] = (x.representation === 'int' && /^-?(0|[1-9][0-9]*)$/.test(t) && BigInt(t) >= 1n && BigInt(t) <= 9007199254740991n) ? 'accepted' : 'refuse'; }
 const sortedLists = p => Object.values(p).every(l => !Array.isArray(l) || l.every((v, i) => i === 0 || cmp(l[i - 1], v) < 0));
 for (const x of V.effective_payloads) out[x.id + ':sorted'] = sortedLists(x.payload);
 for (const x of V.effective_payloads_invalid) if (x.id === 'EI-016') out[x.id + ':sorted'] = sortedLists(JSON.parse(x.payload_json));
@@ -2423,7 +2423,9 @@ def ingest_snapshot_version(representation, text, probe):
     """N-10(c) reference: the representation bound is applied FIRST. Only a strict integer in [1, 2^53 - 1] (exact canonical JSON integer text) goes on
     to authority evaluation and projection; anything else is refused at ingest and neither is called."""
     lo, hi = RANGES["trust_snapshot_version"]
-    ok = representation == "int" and re.fullmatch(r"-?(0|[1-9][0-9]*)", text) is not None and lo <= int(text) <= hi
+    # _parse_int classifies a literal of more than MAX_EXACT_DIGITS digits by LENGTH (int() is never called on it), so a 700- or 5000-digit literal is
+    # refused whatever sys.set_int_max_str_digits says (no ValueError from the interpreter's 4300-digit limit)
+    ok = representation == "int" and re.fullmatch(r"-?(0|[1-9][0-9]*)", text) is not None and lo <= _parse_int(text) <= hi
     if not ok:
         raise Refuse("trust_snapshot_invalid", "trust_snapshot_version")
     version = int(text)
@@ -2439,7 +2441,10 @@ def test_snapshot_version_bound_is_applied_before_authority_evaluation_n10c():
     assert "BEFORE the snapshot is used in authorization or projection" in sec["rule"] and sec["stage"] == "ingest" and sec["code"] == "trust_snapshot_invalid"
     assert (sec["min"], sec["max"]) == RANGES["trust_snapshot_version"] and "PROPOSED mapping" in sec["code_status"]
     ids = [v["id"] for v in sec["vectors"]]
-    assert ids == ["SIB-%03d" % i for i in range(1, 12)]
+    assert ids == ["SIB-%03d" % i for i in range(1, 14)]
+    for v in sec["vectors"]:  # long literals are generated (the file stays small): "text_repeat": [digit, count]
+        if "text_repeat" in v:
+            v["text"] = v["text_repeat"][0] * v["text_repeat"][1]
     accepted = refused = 0
     for v in sec["vectors"]:
         probe, exp = _AuthorityProbe(), v["expected"]
@@ -2454,7 +2459,18 @@ def test_snapshot_version_bound_is_applied_before_authority_evaluation_n10c():
         else:
             assert ingest_snapshot_version(v["representation"], v["text"], probe) == int(v["text"]) and (probe.authority_calls, probe.projection_calls) == (1, 1), v["id"]
             accepted += 1
-    assert accepted == 3 and refused == 8
+    assert accepted == 3 and refused == 10
+    import sys
+    for limit in (640, 4300, 0):  # the interpreter's integer-string limit must not change any ingest decision
+        old = sys.get_int_max_str_digits()
+        sys.set_int_max_str_digits(limit)
+        try:
+            for v in sec["vectors"]:
+                if v["expected"]["result"] == "refuse":
+                    with pytest.raises(Refuse):
+                        ingest_snapshot_version(v["representation"], v["text"], _AuthorityProbe())
+        finally:
+            sys.set_int_max_str_digits(old)
     # the strict JSON loader agrees on the textual forms that parse as something other than a strict integer (no coercion: none becomes an int)
     for text, kind in (("7.0", "float"), ("7e0", "float"), ('"7"', "string"), ("true", "bool"), ("null", "null")):
         try:

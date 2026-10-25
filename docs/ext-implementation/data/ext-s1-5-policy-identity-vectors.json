@@ -6579,7 +6579,7 @@
   },
   {
    "id": "MP-trust_snapshot_invalid",
-   "defect": "a trust snapshot DELIVERED for the fingerprint or verification is malformed: a duplicate issuer key_id, revoked_selections pair, min_epochs selection id or revoked_key_ids entry (TI-001 to TI-004); or a delivered snapshot whose version is not a strict integer in [1, 2^53 - 1] (N-10(c): the representation bound is applied at ingest, before the snapshot is used in authorization or projection; vectors SIB-001 to SIB-011)",
+   "defect": "a trust snapshot DELIVERED for the fingerprint or verification is malformed: a duplicate issuer key_id, revoked_selections pair, min_epochs selection id or revoked_key_ids entry (TI-001 to TI-004); or a delivered snapshot whose version is not a strict integer in [1, 2^53 - 1] (N-10(c): the representation bound is applied at ingest, before the snapshot is used in authorization or projection; vectors SIB-001 to SIB-013)",
    "verdict_class": "REFUSE",
    "registry_code": "trust_snapshot_invalid",
    "decision_kind": "required_policy_unavailable",
@@ -9353,6 +9353,46 @@
     "description": "null",
     "representation": "null",
     "text": "null",
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-012",
+    "description": "a 700-digit integer literal (beyond the 640-digit interpreter setting): refused by length, never converted",
+    "representation": "int",
+    "text_repeat": [
+     "9",
+     700
+    ],
+    "expected": {
+     "result": "refuse",
+     "code": "trust_snapshot_invalid",
+     "stage": "ingest",
+     "member": "trust_snapshot_version",
+     "authority_evaluation_reached": false,
+     "projection_reached": false,
+     "binding_created": false,
+     "yields_overlay_not_applied": false,
+     "yields_accept": false
+    }
+   },
+   {
+    "id": "SIB-013",
+    "description": "a 5000-digit integer literal (beyond Python's default 4300-digit limit): refused with trust_snapshot_invalid, never an uncaught interpreter error",
+    "representation": "int",
+    "text_repeat": [
+     "1",
+     5000
+    ],
     "expected": {
      "result": "refuse",
      "code": "trust_snapshot_invalid",
