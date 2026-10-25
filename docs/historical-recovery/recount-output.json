@@ -1,0 +1,509 @@
+{
+ "catalogue_directory_bytes": 53940243,
+ "catalogue_paths_by_basename_in_s02_sources": [
+  "src/agent_control_plane/manifest_validation.py"
+ ],
+ "code_name_string_overlap_by_s02_class": {
+  "MANDATORY-INVARIANT": 64,
+  "REFUSAL-OR-REASON-VOCABULARY": 6,
+  "SERIALIZATION-OR-EVIDENCE": 1
+ },
+ "code_name_string_overlap_distinct": 69,
+ "crosswalk_dispositions": {
+  "ALIAS_OF": 1291,
+  "ATTACHED_TO_ENTRY": 242,
+  "CANONICAL": 13345,
+  "HISTORICAL_REVISION_OF": 693,
+  "SOURCE_ONLY_ARTIFACT": 4812,
+  "TEST_INSTANCE_OR_EXECUTION_OCCURRENCE": 31445,
+  "UNRESOLVED": 9
+ },
+ "decode_problem_head": [],
+ "decode_problems": 0,
+ "denominators_equal_manifest": true,
+ "denominators_recomputed": {
+  "differential_vector_instances_not_scenarios": 2290,
+  "rule_code_registries": {
+   "distinct_registry_code_names": 164,
+   "headline": "none by design: entries and distinct code names are different denominators and are never one number",
+   "rule_entries_resting_on_raw_set_B": 384,
+   "runtime_authority_reasons_entries_label_0_1": 121,
+   "runtime_authority_reasons_entries_label_0_2": 164
+  },
+  "rule_headline": {
+   "mvp_fixed_rules_by_normative_type": {
+    "decision": 2,
+    "mandatory": 1,
+    "reason_code_or_refusal_vocabulary": 3,
+    "validator_rule": 1
+   },
+   "mvp_fixed_rules_excluding_requirement_rows": 7,
+   "requirement_rows_in_the_rule_layer_reported_apart": 134,
+   "requirement_rows_mvp_fixed": 0
+  },
+  "scenario_classes_reported_separately": {
+   "adversarial_or_unexecuted_spec:adversarial": 103,
+   "adversarial_or_unexecuted_spec:spec_cases": 696,
+   "adversarial_or_unexecuted_spec:unexecuted_other": 146,
+   "demo_step": 7,
+   "fixture_defined_case": 1459,
+   "logical:post_v0_1_reported_apart": 38,
+   "logical:v0_1": 271,
+   "other": 78,
+   "suite_level_acceptance": 42
+  },
+  "ten_denominators": {
+   "1_canonical_rules_by_normative_type": {
+    "advisory": 10,
+    "constitutional_floor": 35,
+    "decision": 15,
+    "mandatory": 39,
+    "principle": 68,
+    "reason_code_or_refusal_vocabulary": 1819,
+    "requirement_row": 134,
+    "unknown": 869,
+    "validator_rule": 201
+   },
+   "2_logical_governance_scenarios": {
+    "post_v0_1_reported_apart": 38,
+    "release_scope_not_stated": 0,
+    "v0_1": 271
+   },
+   "3_suite_level_acceptance_scenarios": 42,
+   "4_adversarial_ideas_or_unexecuted_specifications": {
+    "adversarial": 103,
+    "category_not_stated": 0,
+    "spec_cases": 696,
+    "unexecuted_other": 146
+   },
+   "5_test_implementations": 6648,
+   "6_parametrized_test_instances": 8177,
+   "7_fixtures_and_input_vectors": 2011,
+   "8_historical_execution_records": 19860,
+   "9_distinct_execution_identities": {
+    "distinct_run_and_test_node_pairs": 19509,
+    "distinct_runs": 313,
+    "distinct_runs_with_run_results": 263
+   }
+  }
+ },
+ "duplicate_statement_groups": {
+  "cross_repo_groups": 164,
+  "entries": 716,
+  "groups": 199
+ },
+ "historical_verdicts_verbatim": {
+  " | expected_safety_property=None": 20,
+  "(long verdict text: digest in the index, text in the external record)": 1358,
+  "(none recorded)": 1153,
+  "FAIL": 213,
+  "INCOMPLETE": 4,
+  "INCONCLUSIVE": 651,
+  "JUnit suite attributes: tests=10 failures=0 errors=0 skipped=0": 7,
+  "JUnit suite attributes: tests=106 failures=0 errors=0 skipped=0": 4,
+  "JUnit suite attributes: tests=114 failures=0 errors=0 skipped=0": 3,
+  "JUnit suite attributes: tests=120 failures=0 errors=0 skipped=0": 3,
+  "JUnit suite attributes: tests=14 failures=0 errors=0 skipped=0": 6,
+  "JUnit suite attributes: tests=168 failures=0 errors=0 skipped=0": 4,
+  "JUnit suite attributes: tests=168 failures=14 errors=0 skipped=0": 2,
+  "JUnit suite attributes: tests=17 failures=0 errors=0 skipped=0": 9,
+  "JUnit suite attributes: tests=19 failures=0 errors=0 skipped=0": 12,
+  "JUnit suite attributes: tests=19 failures=10 errors=0 skipped=0": 3,
+  "JUnit suite attributes: tests=20 failures=0 errors=0 skipped=0": 2,
+  "JUnit suite attributes: tests=213 failures=0 errors=0 skipped=0": 4,
+  "JUnit suite attributes: tests=231 failures=0 errors=0 skipped=0": 3,
+  "JUnit suite attributes: tests=26 failures=0 errors=0 skipped=0": 4,
+  "JUnit suite attributes: tests=27 failures=0 errors=0 skipped=0": 6,
+  "JUnit suite attributes: tests=3 failures=0 errors=0 skipped=0": 7,
+  "JUnit suite attributes: tests=34 failures=0 errors=0 skipped=0": 6,
+  "JUnit suite attributes: tests=43 failures=0 errors=0 skipped=0": 6,
+  "JUnit suite attributes: tests=45 failures=0 errors=0 skipped=0": 6,
+  "JUnit suite attributes: tests=54 failures=0 errors=0 skipped=0": 2,
+  "JUnit suite attributes: tests=70 failures=0 errors=0 skipped=0": 6,
+  "JUnit suite attributes: tests=74 failures=0 errors=0 skipped=0": 5,
+  "JUnit suite attributes: tests=74 failures=1 errors=0 skipped=0": 2,
+  "JUnit suite attributes: tests=74 failures=1 errors=68 skipped=0": 2,
+  "NO VERDICT STATED": 52,
+  "NOT APPLICABLE": 322,
+  "NOT RUN": 590,
+  "PASS": 12477,
+  "Python 3.11: **11 failed, 88 passed**.": 1,
+  "applied=false": 4,
+  "checks=\"5/5 exact-head workflows successful; source panel only\"": 1,
+  "complete test invocation reached **90 passed, 10 failed**;": 2,
+  "complete_batch_executed=false; exit_code=0; release_ready=false": 4,
+  "complete_batch_executed=false; exit_code=1; release_ready=false": 3,
+  "conclusion=\"success\"": 8,
+  "detected only": 5,
+  "disposition=\"PARTIAL / HOLD\"": 1,
+  "disposition=\"PARTIAL / owner/admin actions pending\"": 1,
+  "disposition=\"PARTIAL / rights acceptance pending\"": 1,
+  "disposition=\"Technical source/package identity VERIFIED; owner decision pending\"": 1,
+  "error": 10,
+  "errors=0; failures=0; passed=1014; skipped=0; tests=1014": 2,
+  "errors=0; failures=0; passed=843; skipped=0; tests=843": 4,
+  "errors=0; failures=0; skipped=0; tests=19": 4,
+  "errors=0; failures=10; skipped=0; tests=19": 3,
+  "errors=0; failures=14; passed=829; skipped=0; tests=843": 1,
+  "errors=0; failures=15; passed=828; skipped=0; tests=843": 1,
+  "execution_status=\"executed\"; classification=\"required_safety_invariant\"": 26,
+  "execution_status=executed | expected_safety_property=None": 4,
+  "expected=ALLOW; observed=ALLOW; oracle_satisfied=True": 27,
+  "expected=BLOCK; observed=ALLOW; oracle_satisfied=False": 57,
+  "expected=BLOCK; observed=BLOCK; oracle_satisfied=True": 114,
+  "expected=PENDING; observed=ALLOW; oracle_satisfied=False": 3,
+  "expected=PENDING; observed=PENDING; oracle_satisfied=True": 6,
+  "expected=RESTORED; observed=NOT_ATTEMPTED; oracle_satisfied=False": 3,
+  "expected=RESTORED; observed=RESTORED; oracle_satisfied=True": 6,
+  "failure": 2138,
+  "failures=[]; state=\"tested locally\"": 12,
+  "failures=[]; status=\"passed\"": 6,
+  "failures=null; errors=null; skips=null": 1,
+  "passed": 76,
+  "passed=10 || sibling numeric/bool fields: deselected=9": 1,
+  "passed=19; failures=0; errors=0; skipped=0": 2,
+  "passed=false": 3,
+  "passed=true": 4,
+  "prevented": 13,
+  "reference_release_authorized=false; production_deployment_authorized=false": 2,
+  "reproduced failure": 2,
+  "required_safety_invariant_pass": 52,
+  "result=\"PASS\"": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=0.312": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=0.313": 2,
+  "returncode=0 || sibling numeric/bool fields: seconds=0.353": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=0.357": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=0.364": 2,
+  "returncode=0 || sibling numeric/bool fields: seconds=0.383": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=1.71": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=1.869": 2,
+  "returncode=0 || sibling numeric/bool fields: seconds=1.931": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=2.186": 1,
+  "returncode=0 || sibling numeric/bool fields: seconds=3.727": 1,
+  "returncode=0; seconds=0.384": 1,
+  "returncode=0; seconds=0.477": 1,
+  "returncode=0; seconds=0.505": 1,
+  "returncode=0; seconds=0.543": 2,
+  "returncode=0; seconds=0.545": 1,
+  "returncode=0; seconds=0.604": 1,
+  "returncode=0; seconds=0.732": 1,
+  "returncode=0; seconds=1.073": 1,
+  "returncode=0; seconds=1.162": 1,
+  "returncode=0; seconds=1.17": 1,
+  "returncode=0; seconds=1.241": 1,
+  "returncode=0; seconds=1.242": 1,
+  "returncode=0; seconds=1.422": 1,
+  "returncode=0; seconds=1.431": 1,
+  "returncode=0; seconds=1.514": 1,
+  "returncode=0; seconds=1.638": 1,
+  "returncode=0; seconds=1.766": 1,
+  "returncode=0; seconds=1.984": 1,
+  "returncode=0; seconds=2.134": 1,
+  "returncode=0; seconds=2.198": 1,
+  "returncode=0; seconds=2.275": 1,
+  "returncode=0; seconds=2.411": 1,
+  "returncode=0; seconds=2.486": 1,
+  "returncode=0; seconds=3.381": 1,
+  "returncode=0; seconds=3.425": 1,
+  "returncode=0; seconds=3.463": 1,
+  "returncode=0; seconds=3.471": 1,
+  "returncode=0; seconds=4.211": 1,
+  "returncode=0; seconds=4.381": 1,
+  "returncode=1": 18,
+  "returncode=1 || sibling numeric/bool fields: accepted_lock_advanced=false": 1,
+  "schema_valid=False; reference_errors=None; oracle_satisfied=True": 9,
+  "schema_valid=True; reference_errors=['conflicting_rules']; oracle_satisfied=True": 1,
+  "schema_valid=True; reference_errors=['missing_status']; oracle_satisfied=True": 1,
+  "schema_valid=True; reference_errors=['no_issued_grant']; oracle_satisfied=True": 1,
+  "schema_valid=True; reference_errors=['policy_changed']; oracle_satisfied=True": 1,
+  "schema_valid=True; reference_errors=['stale_status']; oracle_satisfied=True": 1,
+  "schema_valid=True; reference_errors=[]; oracle_satisfied=True": 7,
+  "selected=false": 1,
+  "skipped=1 || sibling numeric/bool fields: success=46": 2,
+  "skips=[]": 3,
+  "state=\"unexecuted\"": 4,
+  "status=\"BLOCKED / UNMERGED / NONSELECTED\"": 1,
+  "status=\"BLOCKED\"": 2,
+  "status=\"MERGED / NONSELECTED / OWNER SELECTION PENDING\"": 1,
+  "status=\"MERGED\"": 11,
+  "status=\"completed\"; conclusion=\"skipped\"": 1,
+  "status=\"completed\"; conclusion=\"success\"": 96,
+  "status=\"re-freezing stopped by owner on 2026-10-17\"": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=1488927": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=203845": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=203874": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=227247": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=236709": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=236809": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=239124": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=239149": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=255166": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=297371": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=303199": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=319284": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=323549": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=329138": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=341418": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=342730": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=351636": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=352207": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=352515": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=353560": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=355641": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=365283": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=370016": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=387360": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=393493": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=41731": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=477854": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=48740": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=507474": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=55256": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=65499": 1,
+  "status=200 || sibling numeric/bool fields: bytes_read=69315": 1,
+  "status=404": 5,
+  "status=503": 1,
+  "the demonstration step did not run because the test step failed.": 2,
+  "top-level recorded fields (verbatim): {\"exitcode\": -15, \"passed\": true}": 11,
+  "top-level recorded fields (verbatim): {\"passed\": true}": 30,
+  "{\"passed\": 19, \"failures\": 0, \"errors\": 0, \"skipped\": 0}": 2
+ },
+ "largest_catalogue_file_bytes": 4128681,
+ "layer_counts": {
+  "coverage": 6030,
+  "crosswalk": 51837,
+  "evidence": 19860,
+  "fixtures": 2011,
+  "lineage_sets": 2,
+  "rules": 3190,
+  "scenarios": 2840,
+  "tests": 6648
+ },
+ "layer_counts_match_manifest": true,
+ "lexical_leads_not_matches": {
+  "F1": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 9,
+    "unknown": 1,
+    "validator_rule": 1
+   },
+   "entries": 11,
+   "pattern": "allowed_units|allowed_adapters|allowed_actions|allowed_institutions|authority_domains|max_amount|max_effects|allowed_target_prefixes|LocalExecutionPolicy"
+  },
+  "F10": {
+   "by_normative_type": {
+    "decision": 1,
+    "unknown": 4
+   },
+   "entries": 5,
+   "pattern": "rule_revision|trend"
+  },
+  "F11": {
+   "by_normative_type": {
+    "advisory": 1,
+    "mandatory": 1,
+    "reason_code_or_refusal_vocabulary": 1,
+    "requirement_row": 1,
+    "unknown": 3,
+    "validator_rule": 7
+   },
+   "entries": 14,
+   "pattern": "redact"
+  },
+  "F2": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "target_match|legacy-prefix"
+  },
+  "F3": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 29,
+    "requirement_row": 1,
+    "unknown": 8,
+    "validator_rule": 1
+   },
+   "entries": 39,
+   "pattern": "max_text|MAX_|max_nodes|timeout"
+  },
+  "F4": {
+   "by_normative_type": {
+    "decision": 1,
+    "mandatory": 1,
+    "principle": 1,
+    "reason_code_or_refusal_vocabulary": 85,
+    "requirement_row": 5,
+    "unknown": 104,
+    "validator_rule": 2
+   },
+   "entries": 199,
+   "pattern": "max_age|stale|status age|observation window|ObservationPolicy|freshness"
+  },
+  "F5": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 13,
+    "unknown": 4
+   },
+   "entries": 17,
+   "pattern": "on_unreadable|revocation assurance|holder inventory|runtime_authority"
+  },
+  "F6": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "permissions\\.json|agent permission"
+  },
+  "F7": {
+   "by_normative_type": {
+    "reason_code_or_refusal_vocabulary": 11,
+    "unknown": 7
+   },
+   "entries": 18,
+   "pattern": "dedupe"
+  },
+  "F8": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "demo_policies|demo polic"
+  },
+  "F9": {
+   "by_normative_type": {},
+   "entries": 0,
+   "pattern": "tenant.{0,20}length"
+  }
+ },
+ "manifest_digest": "sha256:22f49fd1341cfaa6e46727db9b6153c2073b82a3125fd725173494f3ebb37650",
+ "native_ids_in_more_than_one_repo": 68,
+ "non_rule_layers": {
+  "coverage_rows": 6030,
+  "evidence_kind": {
+   "run_result": 18697,
+   "unknown": 1153,
+   "validation_claim": 10
+  },
+  "evidence_records": 19860,
+  "fixtures": 2011,
+  "parametrized_instances": 8177,
+  "scenario_class": {
+   "adversarial_or_unexecuted_spec": 945,
+   "demo_step": 7,
+   "fixture_defined_case": 1459,
+   "logical": 309,
+   "other": 78,
+   "suite_level_acceptance": 42
+  },
+  "scenario_release_scope": {
+   "post_v0_1": 38,
+   "v0_1": 2802
+  },
+  "scenarios": 2840,
+  "tests": 6648
+ },
+ "reason_code_distinct_names": 1662,
+ "reason_code_distinct_names_raw_native_ids": 1783,
+ "reason_code_entries": 1819,
+ "rules_by_adoption": {
+  "adopted": 35,
+  "proposed_not_adopted": 229,
+  "unknown": 2926
+ },
+ "rules_by_category": {
+  "C1 governance policy rules (as stated)": 247,
+  "C2 mandatory / enforcement candidates (source-stated; enforcement NOT established)": 240,
+  "C3 configurable policy parameters": 0,
+  "C4 reason codes / refusal vocabulary": 1819,
+  "C7 historical proposals / decisions": 244,
+  "C8 unresolved / unattributed (normative strength not stated)": 640
+ },
+ "rules_by_mvp_applicability": {
+  "mvp_fixed": 7,
+  "requires_unavailable_component": 205,
+  "unresolved": 2978
+ },
+ "rules_by_normative_type": {
+  "advisory": 10,
+  "constitutional_floor": 35,
+  "decision": 15,
+  "mandatory": 39,
+  "principle": 68,
+  "reason_code_or_refusal_vocabulary": 1819,
+  "requirement_row": 134,
+  "unknown": 869,
+  "validator_rule": 201
+ },
+ "rules_by_release_scope": {
+  "v0_1": 3190
+ },
+ "rules_by_repo": {
+  "cognous-action-manifest": 35,
+  "cognous-control-plane": 349,
+  "cognous-execution-runtime": 20,
+  "cognous-governance-evidence-pack": 42,
+  "cognous-governed-exchange": 204,
+  "cognous-institutional-governance": 778,
+  "cognous-open-control-stack": 347,
+  "cognous-open-control-stack-ergonomics": 163,
+  "cognous-open-control-stack-verifier": 363,
+  "cognous-replay-bundle": 77,
+  "cognous-stack-qualification": 171,
+  "open-decision-evidence-standard": 641
+ },
+ "rules_with_alias_candidates": 874,
+ "rules_with_aliases": 132,
+ "rules_with_program_v0_2_source_path": 0,
+ "runtime_authority_reasons": {
+  "0.1_entries": 121,
+  "0.2_entries": 164
+ },
+ "s02_by_class": {
+  "CONFIGURABLE-CANDIDATE": 43,
+  "INCIDENTAL-CONDITIONAL": 51,
+  "MANDATORY-INVARIANT": 354,
+  "REFUSAL-OR-REASON-VOCABULARY": 50,
+  "SERIALIZATION-OR-EVIDENCE": 90,
+  "UNRESOLVED": 32
+ },
+ "s02_rows": 620,
+ "s02_unresolved_ids": [
+  "W1-029",
+  "W1-056",
+  "W1-058",
+  "W1-073",
+  "W2-025",
+  "W2-036",
+  "W2-038",
+  "W2-067",
+  "W2-077",
+  "W2-082",
+  "W3-024",
+  "W3-063",
+  "W4-004",
+  "W4-014",
+  "W4-015",
+  "W4-018",
+  "W4-022",
+  "W4-023",
+  "W4-033",
+  "W5-011",
+  "W5-012",
+  "W5-023",
+  "W5-028",
+  "W5-044",
+  "W6-004",
+  "W6-005",
+  "W6-042",
+  "W8-014",
+  "W8-091",
+  "W9-007",
+  "W9-017",
+  "W9-027"
+ ],
+ "s02_unresolved_rows_with_overlap": [],
+ "unresolved_accounting_equal_manifest": true,
+ "unresolved_accounting_recomputed": {
+  "crosswalk_unresolved_rows": 9,
+  "entries_with_unrecorded_source_revision": 45,
+  "entries_with_unresolved_mvp_applicability": 14176,
+  "evidence_unrecorded_source_revisions": 17704,
+  "unresolved_reference_placeholders": 15384,
+  "unresolved_relationships": 15384
+ }
+}
