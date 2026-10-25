@@ -2,8 +2,9 @@
 
 Verifies only that the amendment's quoted provenance matches the checkout: the sha256 and git blob ids of the frozen
 documents it amends, the section anchors and verbatim excerpts of its supersession table, the recomputable worked-example
-digests, and that the three additive reason codes do not overlap the existing 48 `CODES_V2` codes. It pins nothing else and
-does not modify any module.
+digests, and that the three additive reason codes do not overlap the existing 48 `CODES_V2` codes. It also pins the revision-2 declaration
+rules once a `CODES_V2_REV2` exists (51 codes, the 48 first, the three additions in order with their layers) and that no
+module other than `v2_codes.py` defines it. It does not modify any module.
 """
 import hashlib
 import json
@@ -186,7 +187,12 @@ def test_revision_designation_is_not_a_contract_version_and_no_second_registry()
         assert "r08-v2-reasons/2" in text and "CODES_V2_REV2" in text
     amend = AMEND.read_text(encoding="utf-8")
     assert "### 6.7 Compatibility and migration" in amend and "One registry rule." in amend
-    # the three codes are not in any parallel registry file of this checkout, and the existing sets are untouched
+    # one registry rule: no module other than v2_codes.py may define a revision-2 symbol or the withdrawn draft symbol
+    for src in list((ROOT / "registry_successor").rglob("*.py")) + list((ROOT / "registry_conformance").rglob("*.py")):
+        if src.name == "v2_codes.py":
+            continue
+        body = src.read_text(encoding="utf-8")
+        assert not re.search(r"^\s*CODES_V2_(REV2|1)\s*[:=]", body, re.M), f"parallel registry symbol in {src}"
     import registry_successor.v2_codes as v2c
     from registry_successor import common as c
 
