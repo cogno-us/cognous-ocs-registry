@@ -2,8 +2,8 @@
 
 Implements the protocol `verify(alg, public_key, message, signature) -> bool` of `registry_successor.verify`.
 Fail closed: it returns True only for a valid signature from an acceptable key and False for everything else,
-including malformed input and any backend error. It holds no key, no trust root and no policy; the signing domain
-(`ocs-reg/r08-v*/selection\\n`) is part of the `message` the caller supplies and is not added or removed here.
+including malformed input and any backend error. It holds no key, no trust root and no policy; any signing domain
+prefix (the core's r08-v1 selection signing input starts `ocs-reg/r08-v1/selection\\n`) is part of the `message` the caller supplies and is not added or removed here.
 
 Verifier: PyNaCl (libsodium), the only runtime dependency. This module contains NO curve arithmetic, NO point
 decompression and NO byte-level re-implementation of any check: every cryptographic decision is made by libsodium.

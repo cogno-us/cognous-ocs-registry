@@ -446,13 +446,15 @@ def test_flipped_sign_bit_of_honest_key_and_r_is_refused(verifier, key_a):
 
 # ---- envelope: algorithm string, types, subclasses ------------------------------------------------------------
 @needs_backend
-def test_v1_and_v2_signing_domains_do_not_cross_verify(verifier, key_a):
+def test_signatures_over_v1_and_v2_prefixed_messages_do_not_cross_verify(verifier, key_a):
     seed, pub = key_a
     body = c.canonical_bytes(r.make_statement())
+    # Byte-string property of Ed25519 only: the adapter treats the prefix as ordinary message bytes. The V2 prefix is the one
+    # docs/r08-v2-contract.md section 1 specifies; no r08-v2 signing/verification path exists in the core, so this is not r08-v2 behaviour.
     sig_v1, sig_v2 = _sign(seed, V1 + body), _sign(seed, V2 + body)
     assert verifier.verify(ALG, pub, V1 + body, sig_v1) is True
     assert verifier.verify(ALG, pub, V2 + body, sig_v2) is True
-    assert verifier.verify(ALG, pub, V2 + body, sig_v1) is False  # v1-domain signature is not a v2 statement signature
+    assert verifier.verify(ALG, pub, V2 + body, sig_v1) is False  # signature over the V1-prefixed bytes does not verify the V2-prefixed bytes
     assert verifier.verify(ALG, pub, V1 + body, sig_v2) is False  # and the reverse
     assert verifier.verify(ALG, pub, body, sig_v1) is False  # no domain at all
 
@@ -585,6 +587,9 @@ def test_wycheproof_file_is_the_recorded_upstream_file():
     source = (WYC_DIR / "SOURCE.md").read_text()
     assert hashlib.sha256(WYC_RAW).hexdigest() in source and "d17cc89fa5c8f4f4d378b5385ebf75da5d0926c9" in source
     assert (WYC_DIR / "LICENSE").read_text().lstrip().startswith("Apache License")
+    lic = (WYC_DIR / "LICENSE").read_bytes()
+    assert hashlib.sha256(lic).hexdigest() == "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd" in source
+    assert "a3d5d1423f2592d6646836a45a21a1b209da9f4d" in source and "License: Apache-2.0" in source
     assert WYC["algorithm"] == "EDDSA" and WYC["numberOfTests"] == 210
     tests = [t for g in WYC["testGroups"] for t in g["tests"]]
     assert len(tests) == 210 and len({t["tcId"] for t in tests}) == 210
@@ -763,7 +768,7 @@ def test_core_refuses_wrong_key_tampered_statement_and_foreign_domain(verifier, 
     tampered = dict(env, statement=r.make_statement(epoch=2))
     tampered["statement_digest"] = c.digest(tampered["statement"])
     assert _run_core(tampered, verifier, pub).code == "signature_invalid"
-    v2_signed = _signed_envelope(seed, prefix=V2)  # a v2-domain signature must not authenticate a v1 selection
+    v2_signed = _signed_envelope(seed, prefix=V2)  # a signature over V2-prefixed bytes is not a valid signature over the core's V1 signing input
     assert _run_core(v2_signed, verifier, pub).code == "signature_invalid"
     assert _run_core(_signed_envelope(seed, prefix=V1), verifier, pub).ok is True
 

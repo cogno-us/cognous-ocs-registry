@@ -36,6 +36,8 @@ README_RAW = (CCTV_DIR / "UPSTREAM-README.md").read_bytes()
 SOURCE = (CCTV_DIR / "SOURCE.md").read_text()
 VECTORS = json.loads(RAW)
 ALG = "ed25519"
+UPSTREAM_COMMIT = "0fb2c3b5dc50437ce3272abcbec7567dde497047"  # C2SP/CCTV; the commit that last touched ed25519/ed25519vectors.json
+LICENSE_SHA256 = "9fe727c21f00a770a683a4c8491bf24203ec839628bad09b026258c5afc17076"  # C2SP/CCTV ed25519/LICENSE (BSD-3-Clause)
 KNOWN_FLAGS = {"low_order_A", "low_order_R", "low_order_component_A", "low_order_component_R", "low_order_residue",
                "non_canonical_A", "non_canonical_R", "reencoded_k"}
 needs_backend = pytest.mark.skipif(not HAVE_BACKEND, reason="pynacl not installed (requirements-ed25519.lock.txt)")
@@ -67,7 +69,15 @@ def test_ci_runs_the_cctv_corpus_through_the_real_backend():
 def test_cctv_files_are_the_recorded_upstream_files():
     assert hashlib.sha256(RAW).hexdigest() == "b38e84caf3e7e89170ff520292dbeae421b0a794c27408ce5ce973018fe3d7f9"
     assert hashlib.sha256(RAW).hexdigest() in SOURCE and hashlib.sha256(README_RAW).hexdigest() in SOURCE
-    assert "License: not established" in SOURCE and "No upstream commit id is recorded" in SOURCE
+    # provenance and redistribution terms (resolved): exact upstream commit, preserved BSD-3-Clause LICENSE, attribution NOTICE
+    assert UPSTREAM_COMMIT in SOURCE and "https://github.com/C2SP/CCTV" in SOURCE
+    assert "License: BSD-3-Clause" in SOURCE and "not established" not in SOURCE
+    license_raw = (CCTV_DIR / "LICENSE").read_bytes()
+    assert hashlib.sha256(license_raw).hexdigest() == LICENSE_SHA256 and LICENSE_SHA256 in SOURCE
+    assert license_raw.startswith(b"Copyright 2019 Google LLC\nCopyright 2022 Filippo Valsorda\n")
+    assert b"Redistributions of source code must retain the above copyright" in license_raw
+    notice = (CCTV_DIR / "NOTICE").read_text()
+    assert "Google LLC" in notice and "Filippo Valsorda" in notice and UPSTREAM_COMMIT in notice and "BSD 3-Clause" in notice
     assert len(VECTORS) == 914 and [t["number"] for t in VECTORS] == list(range(914))
     assert all(set(t) == {"number", "key", "sig", "msg", "flags"} for t in VECTORS)
     assert all(len(bytes.fromhex(t["key"])) == 32 and len(bytes.fromhex(t["sig"])) == 64 for t in VECTORS)
