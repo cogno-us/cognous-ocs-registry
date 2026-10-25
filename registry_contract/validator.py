@@ -37,6 +37,7 @@ SUPPLIES = ("allowed_actions", "allowed_adapters", "allowed_units")
 STATUSES = ("proposed", "active", "superseded", "withdrawn")
 MAX_ENTRIES = 256
 MAX_ENTRY_CHARS = 128
+MAX_VERSION = 2**31 - 1
 
 TOP_LEVEL_FIELDS = (
     "record_type", "contract_version", "record_id", "record_version", "status", "non_authorizing", "supersedes",
@@ -55,7 +56,7 @@ CONTEXT_FIELDS = ("runtime_source_blob_id", "runtime_source_sha256", "latest_kno
 _ID = r"[a-z0-9][a-z0-9._-]{2,63}"
 _HEX40 = r"[0-9a-f]{40}"
 _SHA = r"sha256:[0-9a-f]{64}"
-_LINES = r"[0-9]+-[0-9]+"
+_LINES = r"[0-9]{1,9}-[0-9]{1,9}"
 
 
 class Result(NamedTuple):
@@ -158,7 +159,7 @@ def _lines_ok(text: str) -> bool:
 
 def _values_ok(record: dict) -> bool:
     """Check 5: value rules, assuming check 3 passed."""
-    if re.fullmatch(_ID, record["record_id"]) is None or record["record_version"] < 1:
+    if re.fullmatch(_ID, record["record_id"]) is None or not 1 <= record["record_version"] <= MAX_VERSION:
         return False
     if record["status"] not in STATUSES or record["non_authorizing"] is not True:
         return False
@@ -166,7 +167,7 @@ def _values_ok(record: dict) -> bool:
         return False
     sup = record["supersedes"]
     if sup is not None and (
-            re.fullmatch(_ID, sup["record_id"]) is None or sup["record_version"] < 1
+            re.fullmatch(_ID, sup["record_id"]) is None or not 1 <= sup["record_version"] <= MAX_VERSION
             or re.fullmatch(_SHA, sup["record_digest"]) is None):
         return False
     src = record["source"]
@@ -200,7 +201,19 @@ def _supersession_ok(record: dict) -> bool:
 
 
 def validate_record(record: Any, context: Any) -> Result:
-    """Validate one parsed record against a verifier context. Never raises for bad input; never mutates it."""
+    """Validate one parsed record against a verifier context. Never mutates it and never raises.
+
+    Value rules are bounded so no check can overflow. As a last line of defence, any unexpected internal exception
+    is a refusal (record_malformed), never an acceptance. No such exception is known; the guard is exercised by
+    fault injection in the tests.
+    """
+    try:
+        return _validate(record, context)
+    except Exception:  # noqa: BLE001 - fail closed; the result is always REFUSE
+        return _refuse("record_malformed")
+
+
+def _validate(record: Any, context: Any) -> Result:
     if record is None:
         return _refuse("record_missing")
     if not _context_ok(context):

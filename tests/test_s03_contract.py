@@ -277,6 +277,54 @@ def test_N13_invalid_values(name, mut):
     refused(make(mut, reseal=False), ctx(), "record_invalid")
 
 
+@pytest.mark.parametrize("field", ["field_lines", "check_lines"])
+@pytest.mark.parametrize("value", ["9" * 5000 + "-1", "1-" + "9" * 5000, "1234567890-1234567891", "10-5", "0-5", "5-0"])
+def test_N14_bad_line_ranges_refuse_through_both_entry_points(field, value):
+    rec = make(lambda r: r["source"].update({field: value}), reseal=False)
+    refused(rec, ctx(), "record_invalid")
+    result = validate_record_text(json.dumps(rec), ctx())
+    assert (result.outcome, result.reason) == ("REFUSE", "record_invalid")
+
+
+def test_N14b_line_range_digit_bound_is_inclusive():
+    rec = make(lambda r: r["source"].update(field_lines="1-999999999", check_lines="999999999-999999999"))
+    assert validate_record(rec, ctx()).outcome == "ACCEPT"
+
+
+def test_N14c_oversized_version_refuses_instead_of_raising():
+    rec = make(lambda r: r.update(record_version=10 ** 5000), reseal=False)
+    refused(rec, ctx(), "record_invalid")
+    text = json.dumps(make()).replace('"record_version": 1,', '"record_version": ' + "9" * 5000 + ",")
+    assert '"record_version": 9999' in text
+    result = validate_record_text(text, ctx())
+    assert (result.outcome, result.reason) == ("REFUSE", "record_malformed")
+    refused(make(lambda r: r.update(record_version=2 ** 31), reseal=False), ctx(), "record_invalid")
+
+
+def test_N14d_version_range_boundary_and_supersedes_bound():
+    top = 2 ** 31 - 1
+
+    def mut(r):
+        r["record_version"] = top
+        r["supersedes"] = {"record_id": r["record_id"], "record_version": top - 1, "record_digest": "sha256:" + "3" * 64}
+    assert validate_record(make(mut), ctx(latest_known_version=top)).outcome == "ACCEPT"
+    big = make(lambda r: r.update(supersedes={"record_id": r["record_id"], "record_version": 10 ** 5000,
+                                              "record_digest": "sha256:" + "3" * 64}, record_version=2), reseal=False)
+    refused(big, ctx(latest_known_version=2), "record_invalid")
+
+
+def test_N14e_unexpected_internal_exception_is_a_refusal_never_an_acceptance_or_a_raise(monkeypatch):
+    from registry_contract import validator
+
+    def boom(_record):
+        raise RuntimeError("injected fault")
+
+    monkeypatch.setattr(validator, "_shape_ok", boom)
+    refused(make(), ctx(), "record_malformed")
+    result = validate_record_text(json.dumps(make()), ctx())
+    assert (result.outcome, result.reason) == ("REFUSE", "record_malformed")
+
+
 # ---------------------------------------------------------------- M: malformed
 
 @pytest.mark.parametrize("bad", [[], ["a"], "text", 7, 1.5, True])

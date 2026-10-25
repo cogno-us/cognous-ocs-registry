@@ -27,11 +27,11 @@ All fields are required. Unknown fields are refused at every level. Machine-read
 | `record_type` | string, exactly `local-execution-allowlist` |
 | `contract_version` | string, exactly `s03-v1` |
 | `record_id` | stable identity; string matching `^[a-z0-9][a-z0-9._-]{2,63}$`; never reused for a different family |
-| `record_version` | integer >= 1; one record_id has strictly increasing versions |
+| `record_version` | integer 1 to 2147483647; one record_id has strictly increasing versions |
 | `status` | `proposed`, `active`, `superseded` or `withdrawn`; only `active` can be accepted |
 | `non_authorizing` | boolean, exactly `true` |
-| `supersedes` | `null` iff `record_version` is 1; otherwise `{record_id, record_version, record_digest}` naming the same `record_id` at `record_version - 1` |
-| `source` | `{repository, commit, path, blob_id, sha256, field_lines, check_lines}`: where the values were taken from. `commit` and `blob_id` are 40 lowercase hex; `sha256` is `sha256:` plus 64 lowercase hex |
+| `supersedes` | `null` iff `record_version` is 1; otherwise `{record_id, record_version, record_digest}` naming the same `record_id` at `record_version - 1` (same ID pattern, version range and digest format as above) |
+| `source` | `{repository, commit, path, blob_id, sha256, field_lines, check_lines}`: where the values were taken from. `commit` and `blob_id` are 40 lowercase hex; `sha256` is `sha256:` plus 64 lowercase hex; `field_lines` and `check_lines` are `start-end` with 1 to 9 digits each and 1 <= start <= end |
 | `applicability` | `{runtime_source_blob_id}`: the evaluator source revision (40 lowercase hex) these values may apply to. Exact match only; no ranges |
 | `evaluator` | `{evaluator_id, binding, supplies}`. v1 registers one binding: `engine.safe_executor.LocalExecutionPolicy.check`, binding `registered-code-reference`, supplies exactly `["allowed_actions","allowed_adapters","allowed_units"]`. No scripts, expressions or other evaluator ids |
 | `data` | `{allowed_units, allowed_adapters, allowed_actions}`, each a non-empty, duplicate-free, ascending-sorted array of strings, at most 256 entries, each 1 to 128 characters, no character in Unicode categories C* or Z*, and no `*` |
@@ -47,7 +47,7 @@ Semantics of the digests: they provide integrity, not authenticity. A record alt
 
 ## 4. Deterministic failure treatment
 
-The validator takes a record (or strict JSON text) and a verifier context, and returns exactly one outcome: `ACCEPT`, or `REFUSE` with one reason code from a closed set. Checks run in this fixed order and the first failure wins. The verifier context is `{runtime_source_blob_id, runtime_source_sha256, latest_known_version}`, supplied by the consumer from the running evaluator and its own knowledge of the record, never read from the record.
+The validator takes a record (or strict JSON text) and a verifier context, and returns exactly one outcome (it never raises; any unexpected internal exception is returned as `record_malformed`, never as acceptance; no such exception is known and the guard is tested by fault injection): `ACCEPT`, or `REFUSE` with one reason code from a closed set. Checks run in this fixed order and the first failure wins. The verifier context is `{runtime_source_blob_id, runtime_source_sha256, latest_known_version}`, supplied by the consumer from the running evaluator and its own knowledge of the record, never read from the record.
 
 | # | Reason code | Refused when |
 |---|---|---|
@@ -94,7 +94,8 @@ These were committed with the tests before the validator existed (first commit: 
 | N10 | v1 with `supersedes`; v2 without; wrong id; wrong version | `supersession_invalid` |
 | N11 | wildcard entry; whitespace entry; zero-width entry; empty string entry | `record_invalid` |
 | N12 | empty list; duplicate entries; unsorted entries; over 256 entries; entry over 128 characters | `record_invalid` |
-| N13 | bad digest format (uppercase hex, missing prefix, wrong length); bad `record_id`; bad `authored_at`; version 0 | `record_invalid` |
+| N13 | bad digest format (uppercase hex, missing prefix, wrong length); bad `record_id`; bad `authored_at`; version 0 or above 2147483647; line ranges that are oversized (more than 9 digits), reversed or start at 0 | `record_invalid` |
+| N14 | never raises: 5000-digit line numbers or version through both entry points; an injected internal fault | REFUSE with `record_invalid` or `record_malformed` (text with an oversized integer literal, injected fault), never an exception |
 | M1 | record is a list, string, number or boolean | `record_malformed` |
 | M2 | each required top-level field absent in turn | `record_malformed` |
 | M3 | unknown field at top level and in each nested object | `record_malformed` |

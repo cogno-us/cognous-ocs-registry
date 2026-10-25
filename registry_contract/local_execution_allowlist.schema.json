@@ -18,7 +18,7 @@
     "record_type": {"const": "local-execution-allowlist"},
     "contract_version": {"const": "s03-v1"},
     "record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
-    "record_version": {"type": "integer", "minimum": 1},
+    "record_version": {"type": "integer", "minimum": 1, "maximum": 2147483647},
     "status": {"enum": ["proposed", "active", "superseded", "withdrawn"]},
     "non_authorizing": {"const": true},
     "supersedes": {
@@ -28,7 +28,7 @@
          "required": ["record_id", "record_version", "record_digest"],
          "properties": {
            "record_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
-           "record_version": {"type": "integer", "minimum": 1},
+           "record_version": {"type": "integer", "minimum": 1, "maximum": 2147483647},
            "record_digest": {"$ref": "#/$defs/sha256"}}}
       ]
     },
@@ -41,8 +41,8 @@
         "path": {"type": "string", "minLength": 1},
         "blob_id": {"$ref": "#/$defs/hex40"},
         "sha256": {"$ref": "#/$defs/sha256"},
-        "field_lines": {"type": "string", "pattern": "^[0-9]+-[0-9]+$"},
-        "check_lines": {"type": "string", "pattern": "^[0-9]+-[0-9]+$"}
+        "field_lines": {"type": "string", "pattern": "^[0-9]{1,9}-[0-9]{1,9}$"},
+        "check_lines": {"type": "string", "pattern": "^[0-9]{1,9}-[0-9]{1,9}$"}
       }
     },
     "applicability": {
