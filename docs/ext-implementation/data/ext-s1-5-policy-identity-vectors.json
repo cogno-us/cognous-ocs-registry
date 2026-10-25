@@ -1,7 +1,7 @@
 {
  "schema": "ocs-ext-s1-5-policy-identity-vectors/1",
  "status": "BUILDER_TESTED",
- "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5 and Batch-4 rulings N-1, N-3, N-4, N-5, N-6 (2026-10-25). Revised after the PR #30 AI technical reviews, two rounds (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
+ "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5, Batch-4 rulings N-1, N-3, N-4, N-5, N-6 and the Batch 6 rulings N-10, N-11, N-12, N-13 and 4.3 (2026-10-25; the open parts N-10(c), N-12(c) and N-13(b) stay open). Revised after the PR #30 AI technical reviews, two rounds (parse order, input boundary, code point sort order, contract_version keying, projection-stage refusals, mapping vocabulary).",
  "spec": "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md",
  "pins": {
   "contract_file": "docs/r08-v2-contract.md",
@@ -6592,7 +6592,7 @@
     "decision_kind": "overlay_not_applied",
     "registry_code": "selection_withdrawn",
     "applied": false,
-    "only_through": "the authenticated optional-state determination (contract 3.2, 7.4 line 8); the fallback reason `withdrawn` is preserved in evidence"
+    "only_through": "the authenticated optional-state determination (contract 3.2, 7.4 line 8); the fallback reason `withdrawn` is preserved in evidence; permitted only as a valid explicit withdrawal or fallback transition that does not revive previous authority (Architect Batch 6 rulings, N-12)"
    }
   },
   {
@@ -6653,12 +6653,7 @@
     "selection_epoch"
    ],
    "source": "contract 7.4 line 5; kit REFUSE",
-   "optional_branch": {
-    "decision_kind": "overlay_not_applied",
-    "registry_code": "selection_expired",
-    "applied": false,
-    "only_through": "the authenticated optional-state determination (contract 7.4 line 8(c): an optional row past its verified valid_until); the fallback reason `expired` is preserved in evidence"
-   }
+   "optional_rule": "NOT a permitted fallback under N-12 (expiry matches none of the permitted fallback bases); owner decision needed (spec section 11 item 17, section 12 N-12(c)); refuses for optional participation, HOLD when state is indeterminate"
   },
   {
    "id": "MP-selection_not_yet_effective",
@@ -8374,6 +8369,17 @@
     "kind": "control"
    },
    {
+    "id": "TU-018",
+    "description": "code point assigned exactly in Unicode 15.1 (CJK Extension I, U+2EBF0, Lo): permitted by the table, and refused by a runtime database older than 15.1",
+    "code_points": [
+     "2EBF0"
+    ],
+    "expected": {
+     "valid": true
+    },
+    "kind": "control"
+   },
+   {
     "id": "TU-D01",
     "description": "divergent code point U+088F: unassigned (Cn) in Unicode 15.1, assigned in Unicode 17.0; the frozen table refuses it on every runtime",
     "code_points": [
@@ -8608,6 +8614,32 @@
     "kind": "divergent",
     "frozen_class": "Cn@15.1.0",
     "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D19",
+    "description": "divergent plane 3 code point U+323B0 (first of 4298 in U+30000..U+33479): Cn in 15.1, assigned in 17.0",
+    "code_points": [
+     "323B0"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
+   },
+   {
+    "id": "TU-D20",
+    "description": "divergent plane 3 code point U+33479 (last): Cn in 15.1, assigned in 17.0",
+    "code_points": [
+     "33479"
+    ],
+    "expected": {
+     "valid": false
+    },
+    "kind": "divergent",
+    "frozen_class": "Cn@15.1.0",
+    "live_database_may_accept": true
    }
   ],
   "divergence_measured": {
@@ -8616,7 +8648,20 @@
    "count": 5690,
    "direction": "unassigned in 15.1, assigned in 17.0; none in the other direction",
    "first": "U+088F",
-   "last": "U+2CEAD"
+   "last": "U+2CEAD",
+   "whole_range": {
+    "between": "Python 3.13 (Unicode 15.1) and Node 22.23.4 (Unicode 17.0)",
+    "range": "U+0000..U+10FFFF",
+    "count": 9988,
+    "plane3_extra": {
+     "range": "U+30000..U+33479",
+     "count": 4298,
+     "first": "U+323B0",
+     "last": "U+33479"
+    },
+    "direction": "unassigned in 15.1, assigned in 17.0; none in the other direction"
+   },
+   "note": "'count' (5690) is for U+0080..U+2FFFF only; the whole-range total is 9988. Both are one comparison on one release pair, not a bound."
   }
  },
  "policy_identity_members": {
@@ -8924,8 +8969,41 @@
      "fallback_permitted": false,
      "yields_overlay_not_applied_by_itself": false
     }
+   },
+   {
+    "id": "OFD-015",
+    "description": "optional row past its verified valid_until, authenticated determination: expiry is not a permitted basis under N-12 (owner decision needed), so it refuses",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "known",
+    "determination_basis": "row_past_valid_until",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "REFUSE",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
+   },
+   {
+    "id": "OFD-016",
+    "description": "optional row past valid_until under an unknown store: HOLD",
+    "refusal_kind": "selection_expired",
+    "participation": "optional",
+    "store": "unknown",
+    "determination_basis": "row_past_valid_until",
+    "authenticated": true,
+    "independent_of_refusal": true,
+    "revives_previous_authority": false,
+    "expected": {
+     "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+     "fallback_permitted": false,
+     "yields_overlay_not_applied_by_itself": false
+    }
    }
-  ]
+  ],
+  "open_interpretation": "expiry (selection_expired) is not a permitted fallback basis under N-12; owner decision needed (spec 12, N-12(c))"
  },
  "n10_input_contract": {
   "rule": "Architect Batch 6 rulings, N-10 (syntax-first parsing accepted). The canonical v2 identity boundary does not reuse load_document where it differs from this contract.",

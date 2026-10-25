@@ -1569,10 +1569,12 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
     assert {r["id"]: r["stage_value"] for r in miss} == {"MP-trust_snapshot_missing-input": "INPUT", "MP-trust_snapshot_missing-durable-state": "DURABLE_STATE"}  # ruling N-11
     assert all(r["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and r["retry"] == "after_authoritative_state_available" and "definitive" not in r["defect"].lower() for r in miss)
     assert not any("definitive input fact" in json.dumps(r) for r in V["defect_mapping"])
-    # review SF-6: an optional fallback exists only through the authenticated optional-state determination, for exactly the two registry codes whose
-    # contract reason is withdrawn or expired (contract 7.4 line 8(c)); never_activated has no registry code
+    # review SF-6, narrowed by the N-12 ruling: an optional branch exists only for the withdrawn row (a valid withdrawal transition); expiry matches no
+    # permitted basis, so it carries no branch and is marked as an open owner decision; never_activated has no registry code
     branches = {r["registry_code"]: r["optional_branch"] for r in V["defect_mapping"] if "optional_branch" in r}
-    assert set(branches) == {"selection_withdrawn", "selection_expired"}
+    assert set(branches) == {"selection_withdrawn"}
+    exp_row = next(r for r in V["defect_mapping"] if r["id"] == "MP-selection_expired")
+    assert "optional_branch" not in exp_row and "NOT a permitted fallback under N-12" in exp_row["optional_rule"] and "owner decision needed" in exp_row["optional_rule"]
     for code, br in branches.items():
         assert br["decision_kind"] == "overlay_not_applied" and br["registry_code"] == code and br["applied"] is False, code
         assert "authenticated optional-state determination" in br["only_through"], code
@@ -2251,10 +2253,13 @@ def test_token_unicode_vectors_and_known_divergent_code_points():
     for v in vecs:
         assert frozen_token_valid(_vector_token(v)) is v["expected"]["valid"], v["id"]
     div = [v for v in vecs if v["kind"] == "divergent"]
-    assert len(div) >= 17 and "TU-D01" in ids and next(v for v in div if v["id"] == "TU-D01")["code_points"] == ["088F"]
+    assert len(div) >= 20 and "TU-D01" in ids and next(v for v in div if v["id"] == "TU-D01")["code_points"] == ["088F"]
     assert all(v["expected"]["valid"] is False and v["frozen_class"] == "Cn@15.1.0" for v in div)
     meas = V["token_unicode"]["divergence_measured"]
-    assert meas["count"] == 5690 and meas["first"] == "U+088F" and meas["last"] == "U+2CEAD"
+    assert meas["count"] == 5690 and meas["first"] == "U+088F" and meas["last"] == "U+2CEAD"  # U+0080..U+2FFFF only
+    assert meas["whole_range"]["count"] == 9988 and meas["whole_range"]["plane3_extra"]["count"] == 4298
+    assert any(int(v["code_points"][0], 16) >= 0x30000 for v in div)  # a plane 3 divergent vector
+    assert frozen_token_valid("\U0002ebf0") and next(v for v in vecs if v["id"] == "TU-018")["expected"]["valid"] is True  # assigned exactly in 15.1
     # a code point assigned after 15.1.0 (unassigned in the table) is refused, and also refused inside an otherwise valid token
     assert not frozen_token_valid("\u088f") and not frozen_token_valid("a\u088fb") and frozen_token_valid("ab")
     # Unicode entries that were permitted stay permitted: the rule is not silently replaced by the ASCII binding identifier grammar
@@ -2293,7 +2298,8 @@ def test_defect_mapping_stage_is_typed_and_versioned_n11():
     assert "stage_version" in V["evidence_field_vocabulary"]
     for r in miss:
         assert {"stage", "stage_version"} <= set(r["evidence_fields"]) and r["stage_version"] == "ocs-evidence-stage/1", r["id"]
-        assert r["verdict_class"] == "UNKNOWN_FAIL_CLOSED" and "NOT equivalent causes" in r["note"] + r.get("note", "") or "not an equivalent underlying cause" in r["note"], r["id"]
+        assert r["verdict_class"] == "UNKNOWN_FAIL_CLOSED", r["id"]
+        assert "NOT equivalent causes" in r["note"] or "not an equivalent underlying cause" in r["note"], r["id"]
     inp, dur = (next(r for r in miss if r["stage_value"] == s) for s in ("INPUT", "DURABLE_STATE"))
     assert inp["defect"] != dur["defect"] and "none was supplied" in inp["defect"] and "durable state" in dur["defect"]
     assert "trust_snapshot_invalid" in inp["note"] and "never `trust_snapshot_missing`" in inp["note"]  # definitive malformed input is not 'missing'
@@ -2311,7 +2317,9 @@ def optional_fallback(refusal_kind, participation, store, basis, authenticated, 
         return {"effect_outcome": "REFUSE", "fallback_permitted": False}
     if not authenticated or not independent or revives:
         return {"effect_outcome": "REFUSE", "fallback_permitted": False}
-    if refusal_kind in ("effective_family_unsupported", "effective_contract_unsupported"):
+    if refusal_kind == "selection_expired":
+        ok = False  # not a permitted fallback under N-12; owner decision needed (spec 12, N-12(c)): never decided here
+    elif refusal_kind in ("effective_family_unsupported", "effective_contract_unsupported"):
         ok = basis == "authenticated_non_participation"
     else:
         ok = basis in ("never_required_governed_policy", "valid_withdrawal_fallback_transition")
@@ -2322,7 +2330,7 @@ def test_optional_fallback_rules_n12():
     sec = V["optional_fallback_determination"]
     assert "Architect Batch 6 rulings, N-12" in sec["rule"] and set(sec["bases"]) == {"never_required_governed_policy", "valid_withdrawal_fallback_transition", "authenticated_non_participation"}
     ids = [v["id"] for v in sec["vectors"]]
-    assert len(ids) == len(set(ids)) >= 14
+    assert len(ids) == len(set(ids)) >= 16 and "owner decision needed" in sec["open_interpretation"]
     for v in sec["vectors"]:
         got = optional_fallback(v["refusal_kind"], v["participation"], v["store"], v["determination_basis"], v["authenticated"], v["independent_of_refusal"], v["revives_previous_authority"])
         assert got == {k: v["expected"][k] for k in got}, v["id"]
@@ -2337,11 +2345,11 @@ def test_optional_fallback_rules_n12():
     for i in ("OFD-010", "OFD-011"):
         assert by_id[i]["expected"]["effect_outcome"] == "REFUSE"  # family/contract unsupported without a separate non-participation determination
     # exhaustive: over every input combination, a fallback needs optional + known store + authenticated + independent + no revival + a matching basis
-    kinds = ("scope_token", "trust_snapshot_version", "effective_family_unsupported", "effective_contract_unsupported", "effective_payload_field_invalid")
+    kinds = ("scope_token", "trust_snapshot_version", "effective_family_unsupported", "effective_contract_unsupported", "effective_payload_field_invalid", "selection_expired")
     for kind in kinds:
         for part in ("required", "optional"):
             for store in ("known", "unknown"):
-                for basis in sec["bases"] + [None]:
+                for basis in sec["bases"] + [None, "row_past_valid_until"]:
                     for auth in (True, False):
                         for indep in (True, False):
                             for rev in (True, False):
@@ -2349,6 +2357,7 @@ def test_optional_fallback_rules_n12():
                                 assert out["effect_outcome"] != "ACCEPT"
                                 if out["fallback_permitted"]:
                                     assert (part, store, auth, indep, rev) == ("optional", "known", True, True, False)
+                                    assert kind != "selection_expired" and basis != "row_past_valid_until"  # expiry never falls back (N-12(c), owner decision needed)
                                 if store == "unknown":
                                     assert out["effect_outcome"] == "UNKNOWN_FAIL_CLOSED"
     with pytest.raises(Refuse):
