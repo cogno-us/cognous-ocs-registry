@@ -5,7 +5,7 @@
   "registry_pin": "d61ef729",
   "runtime_pin": "c5e97e87",
   "control_plane_pin": "7a4bcd40",
-  "code_count": 47,
+  "code_count": 48,
   "codes_source": "registry_successor/common.py CODES",
   "route": "Route B atomic only; Route A excluded from the registry-mediated effect-time guarantee",
   "detail_schema": "ocs-registry-failure-detail/1",
@@ -45,7 +45,7 @@
    "policy_denial"
   ],
   "open_questions_ref": "laneH.md section 7",
-  "code_count_note": "46 r08-v1 codes (registry_successor/common.py CODES, verified) plus trust_snapshot_version_stale (r08-v2 only). Mapped items: 47 codes; decision kinds applied, applied_deny_all, overlay_not_applied, refused (registry kind name required_policy_unavailable). Reconciliation: the 46 r08-v1 CODES are all mapped (completeness required); v2-only additions are trust_snapshot_version_stale and selection_withdrawn (both in_CODES false until EXT-S1-2 declares CODES_V2).",
+  "code_count_note": "46 r08-v1 codes (registry_successor/common.py CODES, verified) plus two v2-only codes, trust_snapshot_version_stale and selection_withdrawn (both in_CODES false until EXT-S1-2 declares CODES_V2). Mapped items: 48. Completeness rule: every CODES_V2 entry must be mapped (the 46 v1 codes, then the v2 additions); deleting any entry fails the completeness test. Decision kinds: applied, applied_deny_all, overlay_not_applied, refused (registry kind name required_policy_unavailable).",
   "vetting": {
    "base_codes_verified": "46 keys equal set(registry_successor.common.CODES) exactly (checked programmatically); one extra key trust_snapshot_version_stale is r08-v2 only and absent from CODES",
    "completeness_test_rule": "r08-v1 completeness test iterates CODES (46). The r08-v2 completeness test iterates CODES plus trust_snapshot_version_stale (47). The v2 code must not be added to CODES until EXT-S1-2.",

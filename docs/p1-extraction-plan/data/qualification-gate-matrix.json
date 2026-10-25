@@ -2,7 +2,7 @@
   {
     "gate_id": "QG-01",
     "name": "Differential old/new evaluator, five DIRECT fields (allowed_actions, allowed_adapters, allowed_units, allowed_institutions, allowed_authority_domains)",
-    "statement": "Registry-backed LocalExecutionPolicy yields identical first-failing-check disposition and reason text to the historical policy built from the effective sets, per field and per route (A and B).",
+    "statement": "Registry-backed LocalExecutionPolicy yields identical first-failing-check disposition and reason text to the historical policy built from the effective sets, per field and per route (A and B), for policies whose effective sets are all non-empty. When any effective set is empty (deny-all) the gate denies before constructing a policy (`registry_deny_all`), so the check is denial, zero effects, an unconsumed claim and an unchanged budget, not reason-text equality.",
     "existing_test_ids": [
       "suites/v1-scenarios/test_scn_c11.py (parametrized [action][adapter][unit][institution][authority_domain][max_amount])",
       "suites/v1-probes/test_runtime_probes.py::test_probe_policy_bypass_out_of_scope_operation_denied_with_no_effect[...]",
@@ -28,7 +28,7 @@
       "omitted deployed value in registry set refuses all (fail-closed)",
       "empty registry and empty caller set deny-all",
       "exact-string membership (wildcard, case, whitespace, unicode, substring, bare str)",
-      "check order and reason texts old vs new with multi-violation pairs",
+      "check order and reason texts old vs new with multi-violation pairs (non-empty effective sets only); for empty or disjoint intersections: denial, zero effects, claim not consumed, budget unchanged",
       "F1b: independent _check_trusted_context still refuses substituted institution/domain",
       "caller policy object not mutated",
       "independent successor-contract oracle written without reading tests/s05_oracle.py"
@@ -139,7 +139,7 @@
       "effective profile == profile hashed into approval_commitment (CP-F5-12)",
       "relaxing toggles (on_unreadable, allow_synthetic_resolver) unreachable from registry",
       "class bounds 5 and 120 old vs new",
-      "approval under P1 then narrowing withdrawn: P0 does not revive the approval; approval hashing the caller profile is refused",
+      "approval bound to P1 fails after narrowing is withdrawn (P1 to P0 commitment mismatch); revival of an older P0 approval is not guaranteed and is disclosed; approval hashing the caller profile is refused",
       "positive control: an approval bound to the narrowed profile P1 passes"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; W8-014 and D4 are ruled (doc 10): not blockers; remaining prerequisites are EXT-S3-3, EXT-S3-4 and the independent-lead restriction",
@@ -184,7 +184,8 @@
       "withdrawn, absent, revoked, expired and superseded each produce their own code for required and optional participation (schema-readiness A1/A2)",
       "a withdraw statement without supersedes, at an equal or lower epoch, or carrying a record pin is refused; withdrawal never lowers the high-water",
       "no code path writes activation_state without an authenticated selection, withdrawal or revocation (no local-only or UI-writable writer)",
-      "policy_state precedence cases (unknown, revoked, withdrawn, superseded, expired, active) derive identically in every consumer"
+      "policy_state precedence cases (unknown, revoked, withdrawn, superseded, expired, active) derive identically in every consumer",
+      "scope_required ratchet (planned, EXT-S4-2): an optional presentation for a required scope refused from claim, selection, caller and restored older store; ratchet survives restart; restored older store fails closed until re-baselined"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; lead (not builder) owns real-key trust snapshot fixtures",
     "sprint": "S5-4",
@@ -211,7 +212,7 @@
       "Runtime/Control-Plane-level required-profile tests: unavailable, invalid, stale, revoked, expired, no trust root, no verifier, malformed caller each yield typed refusal and zero effects",
       "optional mode caller unchanged and not a denial",
       "detector for bounded_tolerance toggle (GAP-G4-05)",
-      "completeness: every code in CODES (r08-v1) and, for r08-v2, trust_snapshot_version_stale maps to a typed refusal, and the test fails on any unmapped code",
+      "completeness: every entry of CODES_V2 (the 46 r08-v1 codes plus trust_snapshot_version_stale and selection_withdrawn, and any v2 addition the S1-1 ADR enumerates) maps to a typed refusal, and the test fails on any unmapped entry, including deletion of selection_withdrawn",
       "each mapped code keeps detail.registry_code; overloaded codes keep their subcause text distinguishable",
       "verifier failure and malformed caller policy on a required profile: no dispatch, no fallback to the caller policy",
       "falling back to the caller per failure class, or deleting a code from the map, must make its case fail (mutation leg)",

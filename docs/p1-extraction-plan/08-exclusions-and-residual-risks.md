@@ -37,6 +37,7 @@ Status: planning only. Exclusions are stated as customer capability that is not 
 | 21 | Any head change invalidates evidence at the old tuple; the evaluator blob must never be edited | Re-pin of S01, all records and S05 | R10-F-03; zero-edit rule |
 | 22 | Concurrency and clock gates are probabilistic | One run is not evidence | Repetition and raw logs required (QG-08, QG-09) |
 | 23 | Trusted-host threat model only (T1, T5); same-host file access, loaded-code integrity, non-SQLite or remote destinations are outside every gate | Guarantee is bounded to the synthetic emulator profile | Disclosed |
+| 25 | Optional-scope failure fallback: an expired, unavailable, revoked or withdrawn selection on an **optional** scope returns the unchanged caller policy, possibly wider than the prior narrowing; the `scope_required` ratchet is planned (`EXT-S4-2`), not present in `r08-v1` | A failure can relax a narrowed scope without a signed statement | Mark scopes that must never relax as required; disclosed in every status report ([04](04-component-ownership-and-adapter-matrix.md))
 | 24 | Naming collisions: P0 prerequisites G1..G9 versus inventory `GAP-Gx-xx`; sprint labels S1..S6 versus historical S01..S06; selection `epoch` versus record-succession `epoch` (DT-03) | Mis-citation | `EXT-` prefix; DT-03 naming map in `EXT-S1-1` |
 
 ## Deferred functionality (documented, never a release blocker)
