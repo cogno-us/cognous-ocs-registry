@@ -60,7 +60,7 @@ No V0.2 code evaluates numeric/set parameter payloads: `tools/registry_records.p
 | G5 | **Authenticated trust root and verifier (R09).** `verify_selection` refuses `verifier_unavailable` when none is supplied | `verify.py:60`; plan v1.3 P2 | Operator/Architect | P2 |
 | G6 | **Activation owner for Runtime-enforced parameters** unassigned (Q14 default 5 gives the Control Plane activation only for the mandatory-check registry) | hub `2.4-architect-defaults-successor-note.md`; `REG:r08-preparation/03` §2 item 4 | **Architecturally resolved by ADR-REG-TR01; mechanics delegated (DT-01, DT-02, DT-04).** Not implemented | P2/P4 |
 | G7 | **Evaluator qualification references** (above) | `registry_records.py`; DGR | Qualification repo owner | P3/P6 |
-| G8 | **Independent oracle author** for Tier 1 (D13 designation unmet); the S05 oracle is builder-written | `REG:docs/sprint-status.md` "Outstanding operator decisions" (3) | Operator designates | P6 |
+| G8 | **Independent oracle author** for Tier 1 (D13 designation unmet); the S05 oracle is builder-written | `REG:docs/sprint-status.md` "Outstanding operator decisions" (3) | Independent qualification owner appoints the lead (plan v1.3 section 8); operator involvement only if no independent lead can be secured | P6 |
 | G9 | **Record the Architect R07 rulings** (D1–D13) as a decision file; today only a builder transcription exists (`R07-ARCHITECT-RULINGS-D1-D13`, UNVERIFIED) | R07 `08` ruling table | Architect | P1 |
 
 ## Genuine conflicts from this lane

@@ -79,5 +79,5 @@ Not resolved by the ADR (ADR §6): implementation of any kind; the R09 trust roo
 | OB-01 | Named host integrator for Runtime policy construction (C-01) | Emulator: Architect and Runtime owner (DT-01). Production: operator. ADR-REG-TR01 settles the role, not the name | P4 (emulator), production gate |
 | OB-02 | R09 trust-root custody, key ceremony, witness holder (B-02, B-04, B-11) | Operator authorizes any ceremony; Architect specifies | P2 |
 | OB-03 | Production registry location and pin carrier (ADR-P03 follow-on; Q14 default 4) | Architect, at R09 | P2 |
-| OB-04 | Independent Tier 1 qualification lead (F-01/D13) | Operator designates | P6 |
+| OB-04 | Independent Tier 1 qualification lead (F-01/D13) | Independent qualification owner appoints the lead (plan v1.3 section 8); operator involvement only if no independent lead can be secured | P6 |
 | OB-05 | Terminal-approval-revocation pin: hub `ec728da6` versus `c5e97e87` | Component owners | P4 |

@@ -47,7 +47,7 @@ Dispositions: `REUSE_UNCHANGED`, `REUSE_WITH_ADAPTER`, `TARGETED_RECONCILIATION`
 
 Optional narrow field `architectural_resolution` (added in the TR-01 remediation) records an architectural resolution alongside a row's original historical `current_status` and `disposition`, which are not rewritten. It is set on `ACTIVATION-EPOCH-AUTHORITY-OWNER` and `REGISTRY-ACTIVATION-2.4-V02`. The new row `ADR-TR-01-ACTIVATION-EPOCH-OWNERSHIP` is `ADOPTED_FROZEN` meaning decision recorded; not implemented; not qualified.
 
-`qualification_reference` is null on every row except where a controller run is cited: **no independent qualification of any registry contract exists** in the three repositories.
+`qualification_reference` is a free-text note, not a pointer to a qualification verdict. It is null or "None" where no qualification evidence exists, and otherwise records what was searched for or found (for example "No qualification record found", builder tests, Copilot review, or a bounded controller run). **No independent qualification of any registry contract exists** in the three repositories; a non-empty note is never evidence of independent qualification.
 
 ## Method
 
