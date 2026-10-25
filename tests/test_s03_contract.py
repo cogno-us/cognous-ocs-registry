@@ -466,7 +466,7 @@ def test_O1b_reason_codes_are_the_closed_ordered_set():
 
 def test_L1_integrity_is_not_authenticity():
     """Pinned limitation: a tampered record whose digests were recomputed is ACCEPTED. S03 has no authentication."""
-    rec = make(lambda r: r["data"].update(allowed_actions=["refund.issue", "attacker.action"]))
+    rec = make(lambda r: r["data"].update(allowed_actions=["attacker.action", "refund.issue"]))
     assert validate_record(rec, ctx()).outcome == "ACCEPT"
 
 
