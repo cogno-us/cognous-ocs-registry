@@ -12,7 +12,9 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Protocol
 
 from registry_successor import common as c
+from registry_successor.canonical_b64 import decode_canonical_base64
 from registry_successor.common import ExpectedContext
+from registry_successor.key_admission import inspect_ed25519_key
 
 LAYERS = (
     "structural", "integrity", "record_binding", "trust_snapshot", "authenticity",
@@ -128,6 +130,21 @@ def _normalize_trust(trust: Any) -> Optional[dict]:
             "floors": floors, "valid_until": c.parse_timestamp(trust.valid_until)}
 
 
+def _admission_failure(trust: dict, key_admission: Any) -> Optional[str]:
+    """Detail text when an admitted signing key is refused by the key-admission policy, else None. Fail closed."""
+    if key_admission is None:
+        return None
+    for key_id, (entry, _grants) in trust["issuers"].items():
+        cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None
+        try:
+            admitted = key_admission(entry.alg, entry.public_key) is True
+        except Exception:
+            admitted = False
+        if cause is not None or not admitted:
+            return f"trust snapshot admits a signing key refused by the key-admission policy ({cause or 'policy_refused'}; key_id={key_id})"
+    return None
+
+
 def _statement_view(selection: Any) -> Optional[dict]:
     if not getattr(selection, "ok", False):
         return None
@@ -191,10 +208,14 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -
             failure = ("issuer_key_revoked", "the key id is revoked")
         else:
             entry, grants = found
-            try:
-                raw = base64.b64decode(sig.get("signature"), validate=True)
-            except (binascii.Error, ValueError, TypeError):
-                failure = ("signature_invalid", "signature is not valid base64")
+            text = sig.get("signature")
+            raw = decode_canonical_base64(text)
+            if raw is None:
+                try:
+                    base64.b64decode(text, validate=True)
+                    failure = ("signature_invalid", "signature is not canonical base64")
+                except (binascii.Error, ValueError, TypeError):
+                    failure = ("signature_invalid", "signature is not valid base64")
             else:
                 try:
                     good = verifier.verify(entry.alg, entry.public_key, message, raw) if entry.alg == SUPPORTED_ALG else False
@@ -211,7 +232,7 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -
     return (first_failure[0], first_failure[1], [])
 
 
-def _verify(selection, context, trust_in, verifier, now, record) -> VerificationReport:
+def _verify(selection, context, trust_in, verifier, now, record, key_admission=None) -> VerificationReport:
     layers = {name: NOT_EVALUATED for name in LAYERS}
     codes: dict = {}
     details: dict = {}
@@ -239,10 +260,13 @@ def _verify(selection, context, trust_in, verifier, now, record) -> Verification
             mark("record_binding", *(bad if bad else (None,)))
 
     trust = _normalize_trust(trust_in)
+    admission_detail = None if trust is None else _admission_failure(trust, key_admission)
     if trust_in is None:
         mark("trust_snapshot", "trust_snapshot_missing", "no trust snapshot supplied")
     elif trust is None:
         mark("trust_snapshot", "trust_snapshot_invalid", "trust snapshot is malformed")
+    elif admission_detail is not None:
+        mark("trust_snapshot", "trust_snapshot_invalid", admission_detail)
     elif when is None:
         mark("trust_snapshot", "time_unavailable", "no trusted current time")
     elif when >= trust["valid_until"]:
@@ -319,10 +343,14 @@ def _verify(selection, context, trust_in, verifier, now, record) -> Verification
         if statement is not None and layers["record_binding"] == PASS and isinstance(statement.get("record"), dict) else None)
 
 
-def verify_selection(selection, context, trust, verifier, now, record=None) -> VerificationReport:
-    """Layered technical verification. Never raises; never returns an acceptance on internal error."""
+def verify_selection(selection, context, trust, verifier, now, record=None, key_admission=None) -> VerificationReport:
+    """Layered technical verification. Never raises; never returns an acceptance on internal error.
+
+    `key_admission` is an optional policy `(alg, public_key) -> bool` applied to every issuer key when the trust
+    snapshot is admitted (see registry_successor.key_admission). Default None keeps the legacy behaviour.
+    """
     try:
-        return _verify(selection, context, trust, verifier, now, record)
+        return _verify(selection, context, trust, verifier, now, record, key_admission)
     except Exception:
         layers = {name: NOT_EVALUATED for name in LAYERS}
         layers["structural"] = REFUSE
