@@ -47,7 +47,7 @@
 | S2 | No pin supplied by trusted invocation | merging selection and record in one PR supplies none | `trust_config_invalid` (existing); merging is not authorization (T3) |
 | S3 | Selection malformed: malformed JSON, duplicate keys, unknown field, unsupported selection version, oversize | | `manifest_invalid` family (existing) |
 | S4 | Selection with two entries for one record id | | `manifest_invalid` |
-| S5 | Selection entry path traversal, or path not matching the record id | | `manifest_invalid` |
+| S5 | Selection entry path traversal or a path not matching the record id **[successor path-binding check; S04 does not bind paths today]** | | `manifest_invalid` |
 | S6 | Selection `target_consumer` mismatch | | `consumer_namespace_mismatch` |
 | S7 | Record absent from selection or `record_digest` differs from entry | | `record_not_in_selection` |
 | S8 | Record bytes differ from entry `file_sha256` | | `record_file_mismatch` (existing) |
@@ -72,9 +72,10 @@ Rollback to an older pinned selection is undetectable under pin-only trust. It i
 | W1 | Registry value is a superset of the caller's | | successful clamp; effective equals the caller's by intersection; no refusal (cf. `tests/test_s04_overlay.py`) |
 | W1b | Defect injection: a composition implementation returns a broader value | test double | `widening_attempt` (successor mapping; S04 surfaces the same defect as `consumer_error`) |
 | W2 | Payload tries to relax a toggle (`allow_synthetic_resolver`) or add an undeclared action class | | `relaxation_unsupported` (or `record_malformed` for an unknown field) |
-| W2b | F5 payload changes `irreversible` alone for a class with `reversibility`, or `reads_protected_data` true, or `counterparty_observable` false | | `relaxation_unsupported` (the host class would raise `irreversible_flag_mismatch`) **[cond D4]** |
-| H1 | Caller policy tightened after authoring | | effective is the caller's tighter value (intersection/min families only; F7 requires C2) |
-| H2 | Caller policy loosened | | effective follows the record's narrower value, never above the caller's |
+| W2b | F5 payload contains an `irreversible` field (the proposed payload excludes it) | | `record_malformed` (unknown field, before any composition check) |
+| W2c | Host-profile coherence, as a separate fault-injection scenario: a composition implementation applies a tightening that would change `irreversible` alone for a class with `reversibility`, `reads_protected_data` true or `counterparty_observable` false | test double against the host class | host class raises `irreversible_flag_mismatch`; successor maps it to `relaxation_unsupported` **[cond D4]** |
+| H1 | Caller policy tightened after authoring (for example record `{b,c}`, caller `{a,b,c}` becomes `{a,b}`) | | effective is the intersection (minimum for ceilings) of the new caller value and the record: `{b}`, not the caller's `{a,b}`. Intersection/min families only; F7 also requires C2 |
+| H2 | Caller policy loosened or replaced by an unrelated set | | effective is again the intersection/minimum of the new caller value and the record; never above the caller's and never dropping the record's constraint |
 | H3 | Destination capability changed after selection | | `dependency_missing` **[cond D4]** |
 
 ## 4. Activation and isolation scenarios

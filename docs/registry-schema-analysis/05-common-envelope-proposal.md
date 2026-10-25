@@ -51,7 +51,7 @@ Open point: S03 includes `status` (`proposed`, `active`, `superseded`, `withdraw
 |---|---|
 | `selection_id`, `selection_version` | identity |
 | `target_consumer` | must equal the consumer's own namespace and id, else refused |
-| `entries[]` | each: family, record id, record version, `record_digest`, `file_sha256` of the record bytes and path (as `s04-v1`, so re-serialized bytes and path changes are caught); exactly one entry per record id; no ranges |
+| `entries[]` | each: family, record id, record version, `record_digest`, `file_sha256` of the record bytes, as `s04-v1` does (re-serialized bytes are caught). `s04-v1` reads the explicitly supplied record path and does **not** bind a record to its path (`record_source.path` is informational, T6), so identical bytes at another path are accepted today; a successor path-binding check would be new, not inherited, and is a design option (08); exactly one entry per record id; no ranges |
 | `runtime_source` | exact blob id, compared with the host's trusted value and never read as the source (in `s04-v1` the manifest value must equal `TrustConfig`) |
 | `selected_by` | reference to the separately attributable decision; informational |
 | `valid_from`, `valid_until` | optional; UTC `YYYY-MM-DDTHH:MM:SSZ` (the S03 `authored_at` pattern), `valid_from` not after `valid_until`, evaluated by the host's trusted clock. Absent means no time limit, so such a selection is perpetual; that default is flagged for review (08). Expiry under the optional profile reverts to the caller's possibly broader policy (T7 by time) |

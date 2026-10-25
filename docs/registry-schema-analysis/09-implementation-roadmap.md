@@ -9,7 +9,7 @@
 | 0 | Architect rulings D1 to D13 as relevant to the next step, plus an operator decision to proceed | none | Rulings are input only; building needs an operator decision |
 | 1 | Authenticate selection (D2) and decide the ACTIVATION profile (D7) | 0 | Precondition for any activation; today none exists |
 | 2 | Successor envelope validator as a new module, with the F1a payload only | 0, 1 | Proves the envelope without new semantics; S03/S04 untouched |
-| 3 (alt) | Minimal alternative for F1b: an `s03-v2` contract with the existing five-or-so fields and the existing S04 manifest, without the full envelope | 0 | Smaller than steps 1-2; trades away the common envelope |
+| 3 (alt) | Minimal alternative for F1b: an `s03-v2` contract with its own validator, a separately versioned manifest and a separate consumer path, all in new modules (the frozen S04 consumer accepts only `contract_version == "s03-v1"`, delegates to the frozen validator and applies only the three F1a fields, so it cannot consume `s03-v2`), without the full envelope | 0 | Smaller than steps 1-2; trades away the common envelope; frozen S03/S04 untouched |
 | 3 | F1b (`allowed_institutions`, `allowed_authority_domains`) | 2 | Recommended by S06; same type and check; needs a new contract version and fresh differential evidence |
 | 4 | F1c ceilings with typed numeric payload | 0 (D6), W1-015 | Min with code hard cap |
 | 5 | F6 agent permissions | new baseline import, D5 | Moderate |
