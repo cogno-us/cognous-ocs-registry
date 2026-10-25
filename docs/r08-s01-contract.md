@@ -33,6 +33,10 @@ Payload lists: sorted, duplicate-free, at most 256 entries, each 1..128 characte
 
 An epoch is not authorization. A higher epoch never supersedes by itself: supersession needs the newer statement to name the older one exactly (id, epoch, digest) with a `decision_ref`. Two effective selections for the same (consumer_id, scope, operation, family) without such a chain refuse with `selection_conflict`.
 
+### 3a. Clarification recorded after the blind specification run (builder resolution, pending Architect ruling)
+
+A selection `supersedes` object that is malformed in any way (missing or unknown member, wrong type, different selection id, epoch not lower, bad digest, missing or invalid `decision_ref`) refuses with `selection_supersession_invalid`, because that code's meaning covers "supersession reference or decision reference is invalid". For records, a `supersedes` object with a bad shape returns the shape code (`field_unknown`, `field_missing`, `field_type_invalid`) and a well-shaped but rule-violating one returns `supersession_invalid`. The asymmetry is deliberate and is flagged for Architect ruling; the blind qualification spec expected `field_missing` for the missing-`decision_ref` case and was amended to this clarification (disclosed in `docs/r08-s01/qualification-spec.md`, ambiguity 10).
+
 ## 4. Verification (`verify.py`)
 
 Explicit trusted inputs only; nothing is hardcoded or discovered. `ExpectedContext(consumer_id, tenant, institution, authority_domain, operation)` is defined in `common.py` (re-exported by `verify.py`). `TrustSnapshot(snapshot_id, version, valid_until, issuers, revoked_key_ids, revoked_selections, min_epochs)`; `IssuerEntry(key_id, issuer_id, alg, public_key, authority)`; `AuthorityGrant(consumer_id, tenant, institution, authority_domain, operation)` exact-match, no wildcards. `SignatureVerifier.verify(alg, public_key, message, signature) -> bool`; **no verifier is supplied by this package**: with none, the authenticity layer refuses `verifier_unavailable`. A SHA-256 match is integrity only and never sets `authenticated`.
