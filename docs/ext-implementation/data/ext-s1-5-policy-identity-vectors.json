@@ -6590,7 +6590,8 @@
     "participation",
     "decision_kind",
     "stage",
-    "trust_snapshot_version"
+    "trust_snapshot_version",
+    "member"
    ],
    "source": "contract 5; registry_successor/verify.py:245; PROPOSED verdict class (this PR): a malformed delivered snapshot is a definitive input defect, like the other shape refusals, not an indeterminate durable state; no new code, the existing trust_snapshot_invalid code is mapped",
    "ingest_bound": "N-10(c) RULED: stage `ingest`, member `trust_snapshot_version`; the refusal precedes every authority evaluation and every projection. The code reuses the existing trust_snapshot_invalid (the N-11 invalid-input refusal); the exact stage vocabulary and code are flagged for Architect confirmation"

@@ -2562,3 +2562,12 @@ def test_spec_records_the_batch6_rulings_and_keeps_open_items_open():
     assert "713 ascending" in spec and len(_TOKEN_RANGES) == 713
     # the kit and every frozen pin are untouched by this change: the verdict section pin is still enforced elsewhere in this file
     assert "readme:## Verdicts (ruling R1)" in V["pins"]["enforced_section_hashes"]
+
+
+def test_ingest_refusal_evidence_carries_the_member_n10c():
+    """N-10(c): the ingest refusal names its member, so the mapping row must carry `member` in its evidence fields (spec 8.1 and the JSON row agree)."""
+    row = next(r for r in V["defect_mapping"] if r["id"] == "MP-trust_snapshot_invalid")
+    assert "member" in row["evidence_fields"] and "trust_snapshot_version" in row["evidence_fields"]
+    spec_row = next(l for l in (ROOT / V["spec"]).read_text(encoding="utf-8").splitlines() if l.startswith("| MP-trust_snapshot_invalid |"))
+    assert "`trust_snapshot_version`, `member`" in spec_row
+    assert V["snapshot_version_ingest_bound"]["member"] == "trust_snapshot_version"
