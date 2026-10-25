@@ -408,3 +408,40 @@ def test_decision_pipeline_forwards_key_admission_policy():
     d = decision.verify_and_decide(*args, key_admission=policy)
     assert seen == [("ed25519", PK)]
     assert d.kind != "applied" and d.code == "trust_snapshot_invalid"
+
+
+def test_revoked_nonsigning_issuer_bad_key_still_blocks_snapshot():
+    from registry_successor.selection import signing_input
+    good = bytes.fromhex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")
+    grant = verify.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+    trust = verify.TrustSnapshot(
+        snapshot_id="trust-snap-test-1", version=1, valid_until="2026-12-31T00:00:00Z",
+        issuers=(verify.IssuerEntry(KEY, "issuer-test-1", "ed25519", good, (grant,)),
+                 verify.IssuerEntry("key-test-2", "issuer-test-2", "ed25519", b"\x01" + b"\x00" * 31, (grant,))),
+        revoked_key_ids=frozenset({"key-test-2"}))
+    raw = hashlib.sha512(b"sig|" + good + b"|" + signing_input(r.make_statement())).digest()
+    _stmt, sel = _signed_selection(base64.b64encode(raw).decode("ascii"))
+    assert verify.verify_selection(sel, CTX, trust, Sig64Verifier(), r.NOW).ok is True
+    report = verify.verify_selection(sel, CTX, trust, Sig64Verifier(), r.NOW, key_admission=ka.builtin_key_admission)
+    assert report.code == "trust_snapshot_invalid" and "key-test-2" in report.detail
+
+
+def test_custom_policy_cannot_relax_the_builtin_ed25519_check():
+    report, _ = _verify(base64.b64encode(_canonical_signature()).decode("ascii"), public_key=b"\x01" + b"\x00" * 31,
+                        key_admission=lambda a, k: True)
+    assert report.code == "trust_snapshot_invalid" and "key_small_order" in report.detail
+
+
+def test_admission_refusal_outranks_snapshot_expiry():
+    grant = verify.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+    bad = b"\x01" + b"\x00" * 31
+    expired = verify.TrustSnapshot("trust-snap-test-1", 1, "2000-01-01T00:00:00Z",
+                                   (verify.IssuerEntry(KEY, "issuer-test-1", "ed25519", bad, (grant,)),))
+    _stmt, sel = _signed_selection(base64.b64encode(_canonical_signature()).decode("ascii"))
+    assert verify.verify_selection(sel, CTX, expired, Sig64Verifier(), r.NOW).code == "trust_snapshot_expired"
+    refused = verify.verify_selection(sel, CTX, expired, Sig64Verifier(), r.NOW, key_admission=ka.builtin_key_admission)
+    assert refused.code == "trust_snapshot_invalid"
+
+
+def test_non_ed25519_algorithms_are_passed_through_by_the_builtin_policy():
+    assert ka.builtin_key_admission("rsa", b"short") is True

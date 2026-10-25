@@ -42,6 +42,39 @@ small-order point) pass this built-in check; a test pins that limitation. The Ed
 verifier is in place, mixed-order keys and signatures made with them MAY be accepted; PR #26 reports libsodium's signature check
 alone accepting mixed-order cases. This PR does not close that gap.
 
+### 2a. Behaviour notes (documented, not changed)
+
+- **The built-in Ed25519 check always runs.** Whenever any `key_admission` policy is supplied, `inspect_ed25519_key` is applied
+  to every ed25519 issuer key in addition to the policy, and a refusal by either refuses the snapshot. A custom policy can
+  therefore only tighten admission; it cannot relax the built-in check (for example to admit test keys). Pinned by a test.
+- **Ordering.** An admission refusal outranks `time_unavailable` and `trust_snapshot_expired`: a bad key with an expired snapshot
+  reports `trust_snapshot_invalid`.
+- **Every issuer is checked.** All issuers in the snapshot are checked, including revoked and non-signing ones, so one bad key
+  blocks the whole snapshot. This is fail-closed and intended. Pinned by a test and a mutant.
+- **Non-ed25519 algorithms.** `builtin_key_admission` returns `True` for them because the verifier never verifies them
+  (`_authenticity` treats any non-ed25519 algorithm as not good); admission is therefore irrelevant to them.
+- **Detail is not surfaced by the decision layer.** `verify_and_decide` drops the report detail for every code (pre-existing),
+  so callers of that entrypoint see only `trust_snapshot_invalid`.
+
+### 2b. Envelope-level spelling is not unique
+
+Canonical spelling applies to the signature that is evaluated. The `signatures` array is outside the signed statement, so an
+envelope that carries a canonical signature that verifies plus a non-canonical sibling signature is accepted: the sibling is
+ignored because success is "any trusted signer verifies". The non-canonical entry alone is refused. The canonical rule
+therefore does not make the whole envelope text unique. Behaviour is unchanged by this PR. If whole-envelope uniqueness is
+wanted, a separate decision would reject any non-canonical supported-algorithm signature for a trusted key even when another
+verifies.
+
+### 2c. OPEN GATE for Architect decision (not implemented here)
+
+`key_admission` defaults to `None`, so a caller that omits it gets no admission at all on the single public entrypoint
+`verify_and_decide` (a small-order key is then refused only generically at signature time). Before any trust-root activation:
+1. admission must be mandatory on the r08-v2 path, or default to `builtin_key_admission` there (the v1 path stays legacy,
+   because v1 fixtures use placeholder keys); and
+2. a subgroup-validating check (the PR #26 adapter's `acceptable_public_key`, or equivalent) must be composed in with
+   `compose_key_admission`.
+Trust-root activation stays held until both are decided and implemented.
+
 ## 3. Evidence
 
 - 85 behavioural tests and 37 mutation checks (`tests/test_core_security_*.py`): 16 non-canonical spellings through the full

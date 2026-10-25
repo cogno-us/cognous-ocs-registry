@@ -139,6 +139,11 @@ def _verify_probe(mod):
     second = mod.verify_selection(sel, ctx, two, _V64(), r.NOW, key_admission=ka.builtin_key_admission)
     assert second.code == "trust_snapshot_invalid" and "key-test-2" in second.detail
     assert mod.verify_selection(sel, ctx, two, _V64(), r.NOW).ok is True
+    # a revoked, non-signing issuer's bad key still blocks the snapshot
+    revoked = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", two.issuers,
+                                revoked_key_ids=frozenset({"key-test-2"}))
+    rv = mod.verify_selection(sel, ctx, revoked, _V64(), r.NOW, key_admission=ka.builtin_key_admission)
+    assert rv.code == "trust_snapshot_invalid" and "key-test-2" in rv.detail
 
 
 MUTANTS = {
@@ -173,7 +178,8 @@ MUTANTS = {
         "noncanonical_detail_collapsed": [('"signature is not canonical base64"', '"signature is not valid base64"')],
         "drop_admission_branch": [("    elif admission_detail is not None:\n        mark(\"trust_snapshot\", \"trust_snapshot_invalid\", admission_detail)\n", "")],
         "admission_ignored": [("    if key_admission is None:\n        return None\n    for key_id", "    return None\n    for key_id")],
-        "admission_none_means_builtin": [("    if key_admission is None:\n        return None\n", "    if key_admission is None:\n        key_admission = lambda a, k: True\n        return _noop\n")],
+        "admission_none_means_builtin": [("    if key_admission is None:\n        return None\n", "    if key_admission is None:\n        key_admission = lambda a, k: True\n")],
+        "admission_skips_revoked": [("    for key_id, (entry, _grants) in trust[\"issuers\"].items():\n        cause", "    for key_id, (entry, _grants) in trust[\"issuers\"].items():\n        if key_id in trust[\"revoked_keys\"]:\n            continue\n        cause")],
         "policy_truthy_accepted": [("admitted = key_admission(entry.alg, entry.public_key) is True", "admitted = bool(key_admission(entry.alg, entry.public_key))")],
         "policy_exception_admits": [("        except Exception:\n            admitted = False", "        except Exception:\n            admitted = True")],
         "drop_builtin_cause": [("cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None", "cause = None")],
