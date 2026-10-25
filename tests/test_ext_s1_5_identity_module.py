@@ -689,8 +689,78 @@ def _oracle_failures():
         check(type(m._SHORT) is MappingProxyType and type(m._ESCAPES) is MappingProxyType, "serializer tables are read-only")
         check(len(m.UNMAPPED_CODES) == 24, "24 unmapped codes")
 
+    def round_three():
+        """Re-review gaps (PR #33): behaviours the vectors do not pin, each checked at its exact boundary."""
+        import dataclasses
+        # 1. surrogate-pair ambiguity: each corner of both ranges is refused, each neighbour just outside is accepted and stays distinct
+        for a in (0xD800, 0xDBFF):
+            for b in (0xDC00, 0xDFFF):
+                got = _outcome(m.canonical_json_bytes, chr(a) + chr(b))
+                check(got[0] == "refuse", "adjacent pair U+%04X U+%04X is refused" % (a, b))
+        seen = {}
+        for a, b in ((0xD7FF, 0xDC00), (0xD800, 0xE000), (0xDBFF, 0xE000), (0xD7FF, 0xDFFF), (0xDC00, 0xD800), (0xDFFF, 0xDBFF), (0xD800, 0xDBFF), (0xDC00, 0xDFFF)):
+            got = _outcome(m.canonical_json_bytes, chr(a) + chr(b))
+            check(got[0] == "ok" and got[1] not in seen, "neighbour U+%04X U+%04X is accepted and distinct" % (a, b))
+            if got[0] == "ok":
+                seen[got[1]] = (a, b)
+        for astral, want in (("\U00010000", b'"\\ud800\\udc00"'), ("\U0010ffff", b'"\\udbff\\udfff"')):
+            check(_outcome(m.canonical_json_bytes, astral) == ("ok", want), "astral corner")
+        check(_outcome(m.canonical_json_bytes, {"\ud800\udc00": 1}) == ("refuse", "field_unknown", m.AMBIGUOUS_STRING_KEY), "ambiguous key")
+        check(_outcome(m.canonical_json_bytes, {"\ud7ff\udc00": 1})[0] == "ok", "non-ambiguous key")
+        # 2. loader: a high escape joins only a LOW escape (U+DC00..U+DFFF), including both corners; anything else stays two units
+        check(m.load_document('"\\ud83d\\udfff"') == "\U0001f7ff" and m.load_document('"\\udbff\\udfff"') == "\U0010ffff", "loader joins at U+DFFF")
+        check(m.load_document('"\\ud800\\udc00"') == "\U00010000" and m.load_document('"\\ud83d\\udc00"') == "\U0001f400", "loader joins at U+DC00")
+        check(m.load_document('"\\ud83d\\ue000"') == "\ud83d\ue000" and m.load_document('"\\ud83d\\udbff"') == "\ud83d\udbff", "loader does not join outside the low range")
+        # 3. depth counts scalars: a scalar at depth 8 is accepted, at depth 9 refused, for a NATIVE value as well
+        ok8, bad9 = [1], [1]
+        for _ in range(6):
+            ok8 = [ok8]
+        for _ in range(7):
+            bad9 = [bad9]
+        check(_outcome(m._plain, ok8)[0] == "ok", "scalar at depth 8 is accepted")
+        check(_outcome(m._plain, bad9) == ("refuse", "json_nesting_too_deep", None), "scalar at depth 9 is refused")
+        # 4. deny-all is read from list families only: a family without lists reports none even for an empty-list member
+        check(m.deny_all_dimensions("f4-control-plane-age-bounds", {"x": []}) == [], "no deny-all for a non-list family")
+        check(m.deny_all_dimensions("f1a-local-execution-allowlist", {"allowed_actions": []}) == ["allowed_actions"], "deny-all for a list family")
+        # 5. a refusal copies its evidence on construction
+        held = {"a": 1}
+        r = m.IdentityRefusal("field_invalid", None, None, held)
+        held["a"] = 2
+        held["b"] = 3
+        check(dict(r.evidence) == {"a": 1}, "evidence is copied on construction")
+        # 6. the import-time table check fails loudly for each broken table and passes for the real ones
+        m._check_module_tables()
+        real = m.REFUSAL_MAPPING
+        try:
+            for label, row in (("code outside CODES_V2", dataclasses.replace(real[0], registry_code="not_a_registry_code")),
+                               ("verdict class outside the vocabulary", dataclasses.replace(real[0], verdict_class="NOT_A_VERDICT"))):
+                m.REFUSAL_MAPPING = real + (row,)
+                try:
+                    m._check_module_tables()
+                    fails.append("module table check accepted a " + label)
+                except RuntimeError:
+                    pass
+        finally:
+            m.REFUSAL_MAPPING = real
+        # 7. a hostile stage is never called and never selects a row
+        class Liar:
+            def __eq__(self, other):
+                raise RuntimeError("stage compared")
+
+            __hash__ = None
+
+        for fn in (lambda: m.verdict_for("trust_snapshot_missing", Liar()), lambda: m.mapping_row_for(m.IdentityRefusal("trust_snapshot_missing", None, Liar()))):
+            try:
+                fn()
+                fails.append("a hostile stage selected a row")
+            except KeyError:
+                pass
+            except Exception as e:
+                fails.append("a hostile stage escaped as %s" % type(e).__name__)
+        check(m.mapping_row_for(m.IdentityRefusal("field_invalid", "x", Liar())).row_id == "MP-field_invalid-identifier", "hostile stage on field_invalid is the identifier row")
+
     for fn in (valid_bindings, invalid_bindings, identifiers, guards, effective, scope_keys, snapshots, projection, spec_rules_not_pinned_by_a_vector, code_boundaries,
-               loader_direct, long_literals, malformed_snapshots, hostile_types, stage_and_evidence, round_two):
+               loader_direct, long_literals, malformed_snapshots, hostile_types, stage_and_evidence, round_two, round_three):
         guard(fn.__name__, fn)
     return fails
 
@@ -1371,7 +1441,7 @@ MUTANTS = [
     ("loader accepts bytearray", "    if type(raw) is bytes:", "    if isinstance(raw, (bytes, bytearray)):"),
     ("ranges writable", "INTEGER_RANGES = MappingProxyType({", "INTEGER_RANGES = ({"),
     ("age ranges writable", "AGE_RANGES = MappingProxyType({", "AGE_RANGES = ({"),
-    ("projection stage row unselected", 'if refusal.stage == "projection":', "if False:"),
+    ("projection stage row unselected", 'if type(refusal.stage) is str and refusal.stage == "projection":', "if False:"),
     ("integer row unselected", '"expected_range" in refusal.evidence', "False"),
     ("proposed flag dropped", 'stage_value="verify", proposed=True)', 'stage_value="verify")'),
     # review of PR #33, round two (S1-S6, nits, and the reviewer's surviving mutants)
@@ -1435,6 +1505,21 @@ MUTANTS = [
     ("effect message formats the code", 'raise ValueError("refusal code outside CODES_V2 (got a %s)" % type(refusal_code).__name__)', 'raise ValueError("refusal code outside CODES_V2: %r" % (refusal_code,))'),
     ("marker class lost", 'OutOfRangeInteger: "integer"}', 'OutOfRangeInteger: "other"}'),
     ("loader joins any escape after a surrogate", "0xDC00 <= int(h2, 16) <= 0xDFFF", "0x0000 <= int(h2, 16) <= 0xFFFF"),
+    ("surrogate pair: high range ends early", r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")', r'_SURROGATE_PAIR = re.compile("[\ud800-\udbfe][\udc00-\udfff]")'),
+    ("surrogate pair: high range starts late", r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")', r'_SURROGATE_PAIR = re.compile("[\ud801-\udbff][\udc00-\udfff]")'),
+    ("surrogate pair: high range starts early", r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")', r'_SURROGATE_PAIR = re.compile("[퟿-\udbff][\udc00-\udfff]")'),
+    ("surrogate pair: low range starts late", r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")', r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc01-\udfff]")'),
+    ("surrogate pair: low range ends early", r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")', r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udffe]")'),
+    ("surrogate pair: low range ends late", r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-\udfff]")', r'_SURROGATE_PAIR = re.compile("[\ud800-\udbff][\udc00-]")'),
+    ("loader joins only up to U+DFFE", "0xDC00 <= int(h2, 16) <= 0xDFFF", "0xDC00 <= int(h2, 16) <= 0xDFFE"),
+    ("loader joins only from U+DC01", "0xDC00 <= int(h2, 16) <= 0xDFFF", "0xDC01 <= int(h2, 16) <= 0xDFFF"),
+    ("native scalar at depth 9 accepted", '    if depth > MAX_DEPTH:\n        _refuse("json_nesting_too_deep")\n    t = type(value)\n    if t is str:\n        return _AMBIGUOUS', '    if depth > MAX_DEPTH + 1:\n        _refuse("json_nesting_too_deep")\n    t = type(value)\n    if t is str:\n        return _AMBIGUOUS'),
+    ("deny-all read from every family", '    if IDENTITY_FAMILIES[family].kind != "lists":\n        return []', '    if False:\n        return []'),
+    ("refusal keeps the caller's evidence dict", "self.evidence = MappingProxyType(dict(evidence or {}))", "self.evidence = MappingProxyType(evidence if evidence else {})"),
+    ("module table check: code outside CODES_V2", "    if not used <= set(CODES_V2):", "    if False:"),
+    ("module table check: verdict class", "    if not all(r.verdict_class in VERDICT_CLASSES for r in REFUSAL_MAPPING):", "    if False:"),
+    ("verdict_for compares a hostile stage", '        if type(stage) is not str:  # a hostile `stage` (e.g. a raising `__eq__`) must neither be called nor reach a row: no match\n            raise KeyError((code, "<non-string stage>"))\n', ""),
+    ("projection stage compared without a type check", 'if type(refusal.stage) is str and refusal.stage == "projection":', 'if refusal.stage == "projection":'),
     ("scope key members", 'SCOPE_KEY_MEMBERS = ("authority_domain", "consumer_id", "family", "institution", "operation", "selection_id", "tenant")', 'SCOPE_KEY_MEMBERS = ("authority_domain", "consumer_id", "family", "institution", "operation", "selection_id")'),
 ]
 

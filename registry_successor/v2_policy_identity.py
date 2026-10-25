@@ -18,8 +18,9 @@ digest and canonical-bytes functions, the snapshot functions, `deny_all_dimensio
 that is refused with `field_type_invalid` at its own path), requires `str` keys, refuses a string that contains an adjacent high and low surrogate (two
 different native strings would otherwise serialize to the same bytes), and bounds nesting depth and node count. Validation and hashing then operate on
 that private plain copy, so a subclass can neither change what is validated versus hashed nor mutate the document in between. The only exceptions the
-public surface raises for a document are `IdentityRefusal`; `ValueError` is raised only for programmer errors (an unknown refusal code or role, or an
-unknown refusal stage), and its message never formats the offending object.
+public surface raises for a document are `IdentityRefusal`; `ValueError` is raised only for programmer errors (an unknown refusal code or role), and its
+message never formats the offending object. `IdentityRefusal` does not validate `stage` (a constructor argument, not a document path); `verdict_for` and
+`mapping_row_for` treat a `stage` that is not an exact `str` as no match (`KeyError`, or the identifier row for `field_invalid`), never calling its `==`.
 
 Not in this module: composition of registry and caller values (EXT-S1-4), any store, activation state or `activation_sequence` (EXT-S4), the Control
 Plane or Runtime guards, and the three ruled additive codes (`not_activated`, `policy_identity_mismatch`, `store_unknown`) and `CODES_V2_REV2`
@@ -42,6 +43,12 @@ surrogate pair, and a refusal of such a string value at its own path (the order 
 not stated by the spec: a non-str key is refused first); long integer literals load as `OutOfRangeInteger`, never as a plausible int, and the raw
 serializer refuses it `field_invalid` like a native big int; the order in `verify_carried_binding_digest` (binding, carried-digest format, equality);
 `project_effective_policy_digest` tagging the three effective-derivation kinds as projection-stage refusals.
+
+Known, disclosed limits (PR #33 re-review, PROPOSED where they are choices): (N-C) native input is bounded by node count (MAX_NODES, MAX_SNAPSHOT_NODES)
+and depth, not by byte or string length: a very long native string costs time linear in its length and nothing else; (N-D) a NATIVE `str` that contains an
+adjacent high and low surrogate in an identifier member is refused `field_type_invalid` (class `other`) where the spec grammar gives `field_invalid` for a
+string that does not match; the verdict and retry class are the same, the loader can never produce such a string, and the raw serializer says
+`field_invalid`; (N-E) `IdentityRefusal.__reduce__` rebuilds the base class, so a subclass would not survive pickling (none exists in the package).
 
 Items the spec still lists as OPEN are implemented at the spec's current PROPOSED behaviour and are marked `PROPOSED` below; they are not decisions:
 N-10 (syntax-first parse order, byte-level input boundary, no verifier ceiling), N-11 (`trust_snapshot_missing`: one code, two stages), N-12 (an
@@ -117,7 +124,8 @@ class IdentityRefusal(Exception):
         self.evidence = MappingProxyType(dict(evidence or {}))
 
     def __reduce__(self):
-        """Picklable and copyable (a `MappingProxyType` is neither): rebuilt from plain values, so a refusal can cross a process boundary."""
+        """Picklable and copyable (a `MappingProxyType` is neither): rebuilt from plain values, so a refusal can cross a process boundary. It rebuilds the BASE
+        class: a subclass (none exists here) must define its own `__reduce__`."""
         return (IdentityRefusal, (self.code, self.member, self.stage, dict(self.evidence)))
 
     @property
@@ -768,7 +776,8 @@ def trust_snapshot_fingerprint(snapshot: dict) -> str:
     if _duplicates(plain):
         _refuse("trust_snapshot_invalid")
     try:
-        return _sha_plain(b"", normalize_snapshot(plain))  # already plain and size-checked: no second copy, no smaller node ceiling
+        return _sha_plain(b"", normalize_snapshot(plain))  # `plain` is already plain and size-checked at the snapshot ceiling; `normalize_snapshot` copies and re-validates it once more (a second pass, about
+        # twice the cost at the ceiling, never a smaller ceiling and never the caller's original object)
     except IdentityRefusal:  # unreachable for a shape-valid snapshot; kept so the entry point can only ever raise trust_snapshot_invalid
         _refuse("trust_snapshot_invalid")
 
@@ -1177,6 +1186,8 @@ def verdict_for(code: str, stage: Any = None) -> MappingRow:
     `MAPPING_BY_ID`); `field_invalid` has three (use `mapping_row_for`, which reads a refusal's own stage and evidence)."""
     rows = mapping_rows_for(code) if type(code) is str else ()
     if stage is not None:
+        if type(stage) is not str:  # a hostile `stage` (e.g. a raising `__eq__`) must neither be called nor reach a row: no match
+            raise KeyError((code, "<non-string stage>"))
         rows = tuple(r for r in rows if r.stage_value == stage)
     if len(rows) != 1:
         raise KeyError((code, stage))
@@ -1190,7 +1201,7 @@ def mapping_row_for(refusal: IdentityRefusal) -> MappingRow:
     code with several rows is singled out by the refusal's stage. A code with no row raises KeyError (the 24 `CODES_V2` codes in UNMAPPED_CODES are
     not mapped by this module)."""
     if refusal.code == "field_invalid":
-        if refusal.stage == "projection":
+        if type(refusal.stage) is str and refusal.stage == "projection":
             return MAPPING_BY_ID["MP-field_invalid-projection"]
         return MAPPING_BY_ID["MP-field_invalid-integer" if "expected_range" in refusal.evidence else "MP-field_invalid-identifier"]
     rows = mapping_rows_for(refusal.code)
