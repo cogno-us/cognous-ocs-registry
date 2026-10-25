@@ -27,3 +27,23 @@ One frozen-v1 detail is kept deliberately: when an optional operation refuses be
 ## Not done here
 
 No F1ab/F4/F5 family, no v2 statement shape or `disposition` layer, no `selection_withdrawn` or snapshot-floor behaviour, no identity object or code-disposition map, no adapters, no Ed25519, no Runtime or Control Plane change, no `max_amount` slot. `registry_contract/`, `registry_consumer/`, `baseline/` and existing tests are untouched.
+
+# EXT-S1-3: `f1ab-local-execution-allowlist` five-set family
+
+Status: **IMPLEMENTED / BUILDER_TESTED, not independently qualified.** No claim of independent qualification, Architect verdict or release. RELEASE, PUBLICATION and PRODUCTION: HOLD. Governing text (pinned by sha256 in `tests/test_r08v2_f1ab_family.py`): `docs/r08-v2-contract.md` section 2, ADR EXT-S1-1 D-10 and D-11, card `EXT-S1-3`.
+
+| Item | File | Notes |
+|---|---|---|
+| Family module | `registry_successor/v2_f1ab.py` | Payload validator, caller normalizer and `compose_f1ab` for exactly `allowed_actions`, `allowed_adapters`, `allowed_units`, `allowed_institutions`, `allowed_authority_domains`. |
+| Registration | `registry_successor/families.py` | New read-only `FAMILIES_V2` (= v1 table plus `f1ab`), `lookup_v2`, `compose_v2`. `FAMILIES`, `lookup`, `compose` and every v1 entry point are unchanged. |
+| Tests | `tests/test_r08v2_f1ab_family.py` | Source-pinned, BUILDER_TESTED. |
+
+Behaviour: an absent key refuses `field_missing`, any sixth key (including any amount or age key) `field_unknown`, an empty list is an explicit deny-all for that dimension (all 32 combinations tested), lists must be plain, sorted, duplicate-free, at most 256 entries of 1..128 valid characters without `*`, exact-string matching. Composition is caller INTERSECTION registry per key; any refusal returns no effective policy and never the caller policy; no Runtime policy is ever constructed. A missing, extra, non-list or malformed caller key refuses `composition_caller_invalid` and is never replaced.
+
+Rulings applied and judgement calls (prefer fail-closed):
+
+- **Separate v2 table.** The frozen v1 golden pins that a v1 entry point refuses `f1ab` `family_unsupported`, so `f1ab` is registered only in `FAMILIES_V2`. A v2 entry point (v2 statement shape, EXT-S1-5/6) selects the table by `contract_version`; none exists yet, so `f1ab` is reachable only through `compose_v2` and the spec's validators. The v1 decision path therefore still refuses an `f1ab` record (required: no policy; optional: caller unchanged as `overlay_not_applied`).
+- **ASCII grammar.** `allowed_institutions` and `allowed_authority_domains` entries are values of the v2 scope identifiers and must match `\A[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\Z` on the raw string (no normalization, case folding or trimming; non-ASCII refused `field_invalid`). Section 2 states only the opaque-token rule, so this is a stricter, fail-closed reading; actions, adapters and units keep the section 2 token rule. All entries must be plain `str`.
+- **Optional fallback is not decided here.** Whether an omitted binding may fall back to the caller policy needs an authenticated, valid optional-state determination owned by the enforcing consumer (contract sections 4.3 and 7.4, EXT-S4-2). This module returns no fallback.
+
+Not done: no v2 statement shape, no `r08-v2` record/selection entry point, no identity object, no `max_amount` or age slot (EXT-S1-4), no Runtime or Control Plane change, no evaluator rewrite. The `r08-v1` golden replay is unchanged and passes.
