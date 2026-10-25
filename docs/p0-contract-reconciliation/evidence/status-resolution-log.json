@@ -1,0 +1,388 @@
+[
+ {
+  "contract_id": "REG-RECORD-1-SUCCESSOR",
+  "lane_statuses": {
+   "A1-registry-record-1-successor-closed-predicates": "PROPOSED_ONLY",
+   "A2-successor-registry-record-1-conditional-applicability": "PROPOSED_ONLY",
+   "D7-registry-record-1-and-manifest-1": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-registry-record-1-successor-closed-predicates": "REUSE_WITH_ADAPTER",
+   "A2-successor-registry-record-1-conditional-applicability": "REUSE_WITH_ADAPTER",
+   "D7-registry-record-1-and-manifest-1": "DEFER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "DEFER",
+  "note": null
+ },
+ {
+  "contract_id": "MANIFEST-0",
+  "lane_statuses": {
+   "A2-mandatory-manifest-0": "IMPLEMENTED_NOT_QUALIFIED",
+   "B06-mandatory-check-manifest-0": "IMPLEMENTED_NOT_QUALIFIED",
+   "D6-mandatory-manifest-0": "IMPLEMENTED_NOT_QUALIFIED",
+   "E16-step-2.3-mandatory-manifest-profile-0": "IMPLEMENTED_NOT_QUALIFIED"
+  },
+  "lane_dispositions": {
+   "A2-mandatory-manifest-0": "REUSE_WITH_ADAPTER",
+   "B06-mandatory-check-manifest-0": "REUSE_UNCHANGED",
+   "D6-mandatory-manifest-0": "REUSE_UNCHANGED",
+   "E16-step-2.3-mandatory-manifest-profile-0": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "IMPLEMENTED_NOT_QUALIFIED",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": null
+ },
+ {
+  "contract_id": "MANIFEST-1-CANDIDATE",
+  "lane_statuses": {
+   "A2-mandatory-manifest-1-candidate": "PROPOSED_ONLY",
+   "E17-mandatory-manifest-profile-1-and-registry-record-1": "PROPOSED_ONLY",
+   "B07-mandatory-check-manifest-1-conditional-applicability": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A2-mandatory-manifest-1-candidate": "REUSE_WITH_ADAPTER",
+   "E17-mandatory-manifest-profile-1-and-registry-record-1": "REUSE_WITH_ADAPTER",
+   "B07-mandatory-check-manifest-1-conditional-applicability": "DEFER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "DEFER",
+  "note": null
+ },
+ {
+  "contract_id": "CHECK-DISPOSITIONS-Q7",
+  "lane_statuses": {
+   "A1-q7-typed-abstaining-check-dispositions": "PROPOSED_ONLY",
+   "A2-abstention-error-na-semantics-q7-q10": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-q7-typed-abstaining-check-dispositions": "REUSE_UNCHANGED",
+   "A2-abstention-error-na-semantics-q7-q10": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": "Q7 requires an abstained outcome that code and the /1 candidate do not have (four outcomes). Architect ruling is not adopted; implementation gap, not a conflict."
+ },
+ {
+  "contract_id": "EVALUATOR-IDENTITY-BINDING",
+  "lane_statuses": {
+   "A2-evaluator-identity-exact-binding": "PROPOSED_ONLY",
+   "B05-registered-evaluator-identity-and-qualification": "IMPLEMENTED_NOT_QUALIFIED"
+  },
+  "lane_dispositions": {
+   "A2-evaluator-identity-exact-binding": "REUSE_UNCHANGED",
+   "B05-registered-evaluator-identity-and-qualification": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": "Exact (id,version) pair binding is proposed (2.3); evaluators carry no qualification_ref, which V0.2 requires."
+ },
+ {
+  "contract_id": "SCANNER-RULESET-0-CANDIDATE",
+  "lane_statuses": {
+   "A2-scanner-ruleset-profile-0": "PROPOSED_ONLY",
+   "D5-scanner-profile-2-2": "IMPLEMENTED_NOT_QUALIFIED",
+   "E15-step-2.2-scanner-rule-profile": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A2-scanner-ruleset-profile-0": "REUSE_WITH_ADAPTER",
+   "D5-scanner-profile-2-2": "REUSE_WITH_ADAPTER",
+   "E15-step-2.2-scanner-rule-profile": "DEFER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": "Candidate data and tests exist; the contract is not adopted. D-1..D-4/O-1/O-2 decisions cited from hub issue #193 are not in custody."
+ },
+ {
+  "contract_id": "ADR-P03-REGISTRY-LOCATION",
+  "lane_statuses": {
+   "A1-adr-p03-registry-location-hub-immutable-artifact": "ADOPTED_FROZEN",
+   "E03-adr-p03-registry-location": "ADOPTED_FROZEN"
+  },
+  "lane_dispositions": {
+   "A1-adr-p03-registry-location-hub-immutable-artifact": "TARGETED_RECONCILIATION",
+   "E03-adr-p03-registry-location": "DEFER"
+  },
+  "resolved_status": "ADOPTED_FROZEN",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": "ADR-P03 itself says a separate registry repository can follow if requirements justify it; the cognous-ocs-registry repository is therefore not a conflict. Production pin-carrier/location remains OB-03."
+ },
+ {
+  "contract_id": "REG-AUTHN-PIN-CARRIER",
+  "lane_statuses": {
+   "A1-registry-authentication-pinned-immutable-not-signed": "ADOPTED_FROZEN",
+   "B17-registry-artifact-location-and-pin-carrier": "UNVERIFIED"
+  },
+  "lane_dispositions": {
+   "A1-registry-authentication-pinned-immutable-not-signed": "REUSE_WITH_ADAPTER",
+   "B17-registry-artifact-location-and-pin-carrier": "DEFER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "DEFER",
+  "note": null
+ },
+ {
+  "contract_id": "ACCEPTANCE-LEVELS-MIN-PROFILE",
+  "lane_statuses": {
+   "A1-registry-acceptance-levels-l1-mechanism-l2-migration": "PROPOSED_ONLY",
+   "A1-minimum-profile-claim-limits": "PROPOSED_ONLY",
+   "A2-minimum-profile-and-m1-acceptance-a1-a8": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-registry-acceptance-levels-l1-mechanism-l2-migration": "REUSE_WITH_ADAPTER",
+   "A1-minimum-profile-claim-limits": "REUSE_UNCHANGED",
+   "A2-minimum-profile-and-m1-acceptance-a1-a8": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": null
+ },
+ {
+  "contract_id": "EFFECT-SURFACE-CLASSES-COVERAGE",
+  "lane_statuses": {
+   "A1-effect-surface-classes-mxub-and-five-surface-seed": "PROPOSED_ONLY",
+   "C-effect-surface-designations": "PROPOSED_ONLY",
+   "A2-coverage-declaration-schema-and-effect-surface-designations": "PROPOSED_ONLY",
+   "A1-ca04-enforcement-coverage-declaration-schema": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-effect-surface-classes-mxub-and-five-surface-seed": "REUSE_WITH_ADAPTER",
+   "C-effect-surface-designations": "DEFER",
+   "A2-coverage-declaration-schema-and-effect-surface-designations": "DEFER",
+   "A1-ca04-enforcement-coverage-declaration-schema": "DEFER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "DEFER",
+  "note": null
+ },
+ {
+  "contract_id": "FP-04-RULESET-IDENTITY-IN-DECISION",
+  "lane_statuses": {
+   "A1-f3-fp04-rule-set-identity-and-rule-kinds": "PROPOSED_ONLY",
+   "C-selection-applicability-binding-at-commit": "PROPOSED_ONLY",
+   "B16-decision-context-binding": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-f3-fp04-rule-set-identity-and-rule-kinds": "REUSE_WITH_ADAPTER",
+   "C-selection-applicability-binding-at-commit": "DEFER",
+   "B16-decision-context-binding": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": "Missing contract: rule-set/selection identity has no home in decision context. Needs a bounded design in P2/P4; it does not conflict with an adopted contract."
+ },
+ {
+  "contract_id": "AUTHORITY-SEPARATION-1.2-TEXT",
+  "lane_statuses": {
+   "A1-authority-separation-exclusive-powers-table": "ADOPTED_FROZEN",
+   "C-exclusive-powers-table": "PROPOSED_ONLY",
+   "A1-authority-forbidden-transitions-f01-f10": "PROPOSED_ONLY",
+   "C-forbidden-transitions-F01-F10": "PROPOSED_ONLY",
+   "E10-contract-1.2-authority-and-separation": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-authority-separation-exclusive-powers-table": "REUSE_UNCHANGED",
+   "C-exclusive-powers-table": "REUSE_UNCHANGED",
+   "A1-authority-forbidden-transitions-f01-f10": "REUSE_UNCHANGED",
+   "C-forbidden-transitions-F01-F10": "REUSE_UNCHANGED",
+   "E10-contract-1.2-authority-and-separation": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": "1.2 header: PROPOSED until M0 records an outcome; no M0 row approves contract 1.2 as such. Underlying boundaries are adopted individually (ADR-P05/P07/P08, operator-decisions.md)."
+ },
+ {
+  "contract_id": "HANDOFF-ENVELOPE-1.4",
+  "lane_statuses": {
+   "A1-handoff-envelope-fields-1.4-s4": "PROPOSED_ONLY",
+   "C-evidence-handoff-adds-evidence-only": "PROPOSED_ONLY",
+   "E13-contract-1.4-evidence-handoff": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-handoff-envelope-fields-1.4-s4": "REUSE_UNCHANGED",
+   "C-evidence-handoff-adds-evidence-only": "REUSE_UNCHANGED",
+   "E13-contract-1.4-evidence-handoff": "DEFER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": null
+ },
+ {
+  "contract_id": "CONSTITUTION-REVISION-1C2E920F",
+  "lane_statuses": {
+   "A1-engineering-constitution-revision-adoption": "UNVERIFIED",
+   "A3-constitution-pinned-1c2e920f": "UNVERIFIED"
+  },
+  "lane_dispositions": {
+   "A1-engineering-constitution-revision-adoption": "REUSE_WITH_ADAPTER",
+   "A3-constitution-pinned-1c2e920f": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "UNVERIFIED",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": "Pinned as a reference only; the revision is not adopted for the stack."
+ },
+ {
+  "contract_id": "IDENTITY-LIFECYCLE-CROSSWALK",
+  "lane_statuses": {
+   "A2-identity-crosswalk-18": "PROPOSED_ONLY",
+   "A2-lifecycle-term-mapping-and-unknown-qualification": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A2-identity-crosswalk-18": "REUSE_WITH_ADAPTER",
+   "A2-lifecycle-term-mapping-and-unknown-qualification": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": null
+ },
+ {
+  "contract_id": "ARCHITECT-DISPOSITION-Q1-Q17",
+  "lane_statuses": {
+   "A2-architect-disposition-q1-q17": "UNVERIFIED",
+   "E19-architect-disposition-q1-q17": "ADOPTED_FROZEN"
+  },
+  "lane_dispositions": {
+   "A2-architect-disposition-q1-q17": "REUSE_UNCHANGED",
+   "E19-architect-disposition-q1-q17": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "UNVERIFIED",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": "Self-described binding; no operator transcription or M0 row adopts it. Reusable as Architect-role technical rulings, not as frozen contract. Lane E rated ADOPTED_FROZEN; overruled for lack of a decision record."
+ },
+ {
+  "contract_id": "REGISTRY-ACTIVATION-2.4-V02",
+  "lane_statuses": {
+   "A1-registry-activation-by-control-plane-gate": "PROPOSED_ONLY",
+   "A2-activation-design-2-4": "PROPOSED_ONLY",
+   "A3-registry-activation-freshness-semantics": "PROPOSED_ONLY",
+   "D8-activation-ownership-defaults": "PROPOSED_ONLY",
+   "E18-step-2.4-activation-rollback-freshness": "PROPOSED_ONLY",
+   "B15-rollback-recovery-restart": "PROPOSED_ONLY"
+  },
+  "lane_dispositions": {
+   "A1-registry-activation-by-control-plane-gate": "REUSE_WITH_ADAPTER",
+   "A2-activation-design-2-4": "DEFER",
+   "A3-registry-activation-freshness-semantics": "DEFER",
+   "D8-activation-ownership-defaults": "DEFER",
+   "E18-step-2.4-activation-rollback-freshness": "DEFER",
+   "B15-rollback-recovery-restart": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "PROPOSED_ONLY",
+  "resolved_disposition": "DEFER",
+  "note": null
+ },
+ {
+  "contract_id": "ACTIVATION-EPOCH-AUTHORITY-OWNER",
+  "lane_statuses": {
+   "B12-activation-gate-and-epoch-authority": "CONFLICTING",
+   "C-activation-consumer-owned": "ADOPTED_FROZEN"
+  },
+  "lane_dispositions": {
+   "B12-activation-gate-and-epoch-authority": "TARGETED_RECONCILIATION",
+   "C-activation-consumer-owned": "SUPERSEDED_BY_ADOPTED_CONTRACT"
+  },
+  "resolved_status": "CONFLICTING",
+  "resolved_disposition": "TARGETED_RECONCILIATION",
+  "note": null
+ },
+ {
+  "contract_id": "COMPONENT-LOCK-SELECTION",
+  "lane_statuses": {
+   "E22-component-lock-selection": "ADOPTED_FROZEN",
+   "A3-component-lock-selection-record": "SUPERSEDED"
+  },
+  "lane_dispositions": {
+   "E22-component-lock-selection": "REUSE_UNCHANGED",
+   "A3-component-lock-selection-record": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "ADOPTED_FROZEN",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": "Frozen as the historical g8-r10 reference baseline, not as current release or qualification status."
+ },
+ {
+  "contract_id": "COMPONENT-LOCK-QUALIFICATION-LABEL",
+  "lane_statuses": {
+   "E23-component-lock-qualification-status-accepted": "CONFLICTING",
+   "A3-component-lock-qualification-label": "UNVERIFIED"
+  },
+  "lane_dispositions": {
+   "E23-component-lock-qualification-status-accepted": "REUSE_WITH_ADAPTER",
+   "A3-component-lock-qualification-label": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "CONFLICTING",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": "Status-label hazard: label belongs to an earlier tuple and is stale per release-status.md. Do not use as a status source. Not a contract incompatibility."
+ },
+ {
+  "contract_id": "RESIDUAL-RISK-REGISTER",
+  "lane_statuses": {
+   "E35-hub-residual-risk-register": "UNVERIFIED",
+   "A3-residual-risks-register-1.2": "IMPLEMENTED_NOT_QUALIFIED"
+  },
+  "lane_dispositions": {
+   "E35-hub-residual-risk-register": "REUSE_UNCHANGED",
+   "A3-residual-risks-register-1.2": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "UNVERIFIED",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": null
+ },
+ {
+  "contract_id": "R08-V1-SUCCESSOR-FOUNDATION",
+  "lane_statuses": {
+   "D12-r08-v1-successor-foundation": "IMPLEMENTED_NOT_QUALIFIED",
+   "E30-registry-r08-s01-successor-contract": "IMPLEMENTED_NOT_QUALIFIED",
+   "B09-typed-configuration-payload": "IMPLEMENTED_NOT_QUALIFIED"
+  },
+  "lane_dispositions": {
+   "D12-r08-v1-successor-foundation": "REUSE_WITH_ADAPTER",
+   "E30-registry-r08-s01-successor-contract": "REUSE_WITH_ADAPTER",
+   "B09-typed-configuration-payload": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "IMPLEMENTED_NOT_QUALIFIED",
+  "resolved_disposition": "REUSE_WITH_ADAPTER",
+  "note": null
+ },
+ {
+  "contract_id": "S03-LOCALEXECUTIONPOLICY-ALLOWLIST",
+  "lane_statuses": {
+   "E27-registry-s03-contract-frozen": "ADOPTED_FROZEN",
+   "D9-s03-v1-record-validator": "IMPLEMENTED_NOT_QUALIFIED"
+  },
+  "lane_dispositions": {
+   "E27-registry-s03-contract-frozen": "REUSE_UNCHANGED",
+   "D9-s03-v1-record-validator": "REUSE_UNCHANGED"
+  },
+  "resolved_status": "ADOPTED_FROZEN",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": null
+ },
+ {
+  "contract_id": "S04-OVERLAY-CONSUMER",
+  "lane_statuses": {
+   "E28-registry-s04-consumer-frozen": "ADOPTED_FROZEN",
+   "D10-s04-overlay-consumer": "IMPLEMENTED_NOT_QUALIFIED"
+  },
+  "lane_dispositions": {
+   "E28-registry-s04-consumer-frozen": "REUSE_UNCHANGED",
+   "D10-s04-overlay-consumer": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "ADOPTED_FROZEN",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": null
+ },
+ {
+  "contract_id": "S05-DIFFERENTIAL-EQUIVALENCE",
+  "lane_statuses": {
+   "E29-registry-s05-differential-equivalence": "IMPLEMENTED_NOT_QUALIFIED",
+   "D11-s05-differential-method": "IMPLEMENTED_NOT_QUALIFIED"
+  },
+  "lane_dispositions": {
+   "E29-registry-s05-differential-equivalence": "REUSE_UNCHANGED",
+   "D11-s05-differential-method": "REUSE_WITH_ADAPTER"
+  },
+  "resolved_status": "IMPLEMENTED_NOT_QUALIFIED",
+  "resolved_disposition": "REUSE_UNCHANGED",
+  "note": null
+ }
+]
