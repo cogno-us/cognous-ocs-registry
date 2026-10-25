@@ -32,7 +32,7 @@ def test_vector_corpus_shape():
     assert len(DOCS) >= 10
     ids = [v["id"] for _, _, v in ALL]
     assert len(ids) == len(set(ids))
-    assert len(ids) >= 80
+    assert len(ids) >= 100
     for d in DOCS.values():
         kit.validate_vector_set(d)
         assert d["label"] == "SYNTHETIC-TEST-ONLY"
@@ -163,7 +163,7 @@ def test_advance_does_not_mutate_inputs_and_is_deterministic():
     obs = {"kind": "select", "now": 200, "scope": {
         "selection_id": "sel-a", "consumer_id": "c", "tenant": "t", "institution": "i", "authority_domain": "d",
         "operation": "o", "family": "f"}, "epoch": 1, "selection_digest": "sha256:" + "a" * 64, "supersedes": None,
-        "participation": "required", "valid_from": 100, "valid_until": 1000, "issuer_key_id": "k", "verified": True,
+        "participation": "required", "valid_from": 100, "valid_until": 1000, "issuer_key_id": "k", "issuer_id": "i1", "verified": True,
         "record": {"record_id": "r", "record_version": 1, "record_digest": "sha256:" + "b" * 64}}
     st0, obs0 = copy.deepcopy(st), copy.deepcopy(obs)
     new1, v1 = kit.advance(st, obs)
@@ -245,8 +245,8 @@ def test_mutation_relaxation_refusal_is_caught(monkeypatch):
 def test_mutation_policy_state_precedence_is_caught(monkeypatch):
     orig = hw.policy_state
 
-    def mutated(state, scope, now, known_selection=None):
-        r = orig(state, scope, now, known_selection)
+    def mutated(state, scope, now, known_selection=None, epoch=None):
+        r = orig(state, scope, now, known_selection, epoch)
         if r["policy_state"] == "revoked":
             return hw._view("withdrawn", r["required"])
         return r
@@ -271,28 +271,35 @@ def _rand_obs(rng, state):
     sup = None
     if row and rng.random() < 0.8:
         sup = {"selection_id": sc["selection_id"], "epoch": row["epoch"], "statement_digest": row["selection_digest"]}
-    k = rng.choice(["select", "select", "withdraw", "sync", "sync", "read", "external_floor", "guard", "relax_scope_required"])
+    k = rng.choice(["select", "select", "withdraw", "sync", "sync", "read", "external_floor", "guard", "relax_scope_required", "rebaseline", "lose_state"])
+    if k == "lose_state" and rng.random() < 0.85:
+        k = "read"  # loss is permanent in the kit (no recovery), keep most sequences alive
     now = rng.choice([150, 200, 999, 1000])
     if k == "select":
         return {"kind": k, "now": now, "scope": sc, "epoch": e, "selection_digest": dig(rng.randrange(8)), "supersedes": sup,
                 "participation": rng.choice(["required", "optional"]), "valid_from": 100, "valid_until": 1000,
-                "issuer_key_id": rng.choice(["k1", "k2"]), "verified": rng.random() < 0.9,
+                "issuer_key_id": rng.choice(["k1", "k2"]), "issuer_id": rng.choice(["i1", "i2"]), "verified": rng.random() < 0.9,
                 "record": {"record_id": "r", "record_version": 1, "record_digest": dig(9)}}
     if k == "withdraw":
         return {"kind": k, "now": now, "scope": sc, "epoch": e, "selection_digest": dig(rng.randrange(8)), "supersedes": sup,
-                "participation": rng.choice(["required", "optional"]), "issuer_key_id": "k1", "verified": True}
+                "participation": rng.choice(["required", "optional"]), "issuer_key_id": "k1", "issuer_id": "i1", "verified": True}
     if k == "sync":
         rev = [["sel-%d" % rng.randrange(2), rng.randrange(1, 6)] for _ in range(rng.randrange(3))]
         rev = [list(x) for x in {tuple(x) for x in rev}]
         return {"kind": k, "now": now, "snapshot": {"version": rng.randrange(1, 6), "fingerprint": dig(rng.randrange(3)),
                 "valid_until": 5000, "revoked_selections": rev, "revoked_key_ids": rng.choice([[], ["k1"]]),
-                "min_epochs": rng.choice([[], [["sel-0", 2]]])}}
+                "min_epochs": rng.choice([[], [["sel-0", 2]]]),
+                "revoked_records": rng.choice([[], [["r", 1]]]), "revoked_issuers": rng.choice([[], ["i2"]])}}
     if k == "external_floor":
         return {"kind": k, "now": now, "min_trust_snapshot_version": rng.randrange(0, 4)}
     if k == "guard":
         return {"kind": k, "now": now, "claim": {"scope": sc, "binding": None}}
     if k == "relax_scope_required":
         return {"kind": k, "now": now, "scope": sc}
+    if k == "rebaseline":
+        return {"kind": k, "now": now, "authorized": True, "decision_ref": "op-r"}
+    if k == "lose_state":
+        return {"kind": k, "now": now}
     return {"kind": "read", "now": now}
 
 
@@ -307,7 +314,7 @@ def test_random_sequences_keep_monotonic_invariants(seed):
         if new["store"] == "known":
             assert kit.verify_state(new) is None
         state = new
-    assert kit.verify_state(state) is None
+    assert state["store"] == "unknown" or kit.verify_state(state) is None
 
 
 def test_monotonicity_survives_random_restore_and_loss():
@@ -324,3 +331,110 @@ def test_monotonicity_survives_random_restore_and_loss():
     for k, v in before["floors"]["high_water"].items():
         assert new["floors"]["high_water"].get(k, 0) >= v
     assert all(p in new["floors"]["revoked"] for p in before["floors"]["revoked"])
+
+
+# ------------------------------------------------ architect rulings R1-R4
+
+
+def _verdict_codes():
+    out = {}
+    for _, _, v in ALL:
+        for s in v["steps"]:
+            if s["op"] == "advance":
+                out.setdefault(s["expect"]["code"], set()).add(s["expect"]["verdict"])
+    return out
+
+
+def test_r1_each_verdict_has_its_own_vector_and_codes_do_not_straddle_classes():
+    doc = DOCS["11_verdict_semantics.json"]
+    per = {}
+    for v in doc["vectors"]:
+        per[v["id"]] = {s["expect"]["verdict"] for s in v["steps"] if s["op"] == "advance"}
+    assert per["VD-01-accept-means-valid-under-authority-and-state"] == {"ACCEPT"}
+    assert "REFUSE" in per["VD-02-refuse-is-definitive-invalidity-or-authority-violation"]
+    assert per["VD-03-refuse-stale-is-definitive-stale-replay-or-rollback"] >= {"REFUSE_STALE"}
+    assert per["VD-04-unknown-fail-closed-authority-or-state-indeterminate"] >= {"UNKNOWN_FAIL_CLOSED"}
+    # a cause code names one verdict class; the only documented dual code is trust_snapshot_expired
+    # (REFUSE for a delivered expired snapshot, UNKNOWN_FAIL_CLOSED for an expired current snapshot at the guard)
+    dual = {c for c, vs in _verdict_codes().items() if len(vs) > 1}
+    assert dual <= {"trust_snapshot_expired"}, dual
+    assert not any("UNKNOWN_FAIL_CLOSED" in vs and "ACCEPT" in vs for vs in _verdict_codes().values())
+
+
+def test_r2_revocation_scopes_are_checked_and_never_cleared():
+    names = {n for n, _ in hw._SELECT_CHECKS}
+    assert {"revoked_pair", "revoked_key", "revoked_record", "revoked_issuer"} <= names
+    assert {"revoked_key", "revoked_issuer"} <= {n for n, _ in hw._WITHDRAW_CHECKS}
+
+
+def test_r3_known_unactivated_epoch_never_changes_the_row_view():
+    d = DOCS["07_policy_state.json"]
+    v = [x for x in d["vectors"] if x["id"] == "PS-11-higher-unactivated-epoch-does-not-supersede"][0]
+    assert kit.run_vector(d, v) == []
+    import inspect
+    src = inspect.getsource(hw.policy_state)
+    assert 'ks.get("epoch"' not in src and 'known_selection.get("epoch"' not in src
+
+
+def test_r3_mutation_unactivated_epoch_supersedes_is_caught(monkeypatch):
+    orig = hw.policy_state
+
+    def mutated(state, scope, now, known_selection=None, epoch=None):
+        r = orig(state, scope, now, known_selection, epoch)
+        if known_selection and r["policy_state"] == "active":
+            return hw._view("superseded", r["required"])
+        return r
+
+    monkeypatch.setattr(kit, "policy_state", mutated)
+    assert _run_all() != []
+
+
+def test_r4_no_rebaseline_state_or_entry_type_and_closed_vocabulary():
+    st = kit.empty_state()
+    assert "rebaselines" not in st
+    assert "rebaseline" not in hw._replay.__code__.co_consts
+    for e in ("activate", "withdraw", "revoke", "sync"):
+        assert e in hw._replay_unsafe.__code__.co_consts
+    assert "rebaseline" in hw.KINDS  # an input kind only, always refused
+
+
+@pytest.mark.parametrize("authorized", [True, False])
+@pytest.mark.parametrize("lost", [True, False])
+def test_r4_rebaseline_never_accepts_and_never_changes_store(authorized, lost):
+    st, v = kit.advance(kit.empty_state(), {"kind": "lose_state", "now": 5}) if lost else (kit.empty_state(), None)
+    before = copy.deepcopy(st)
+    new, verdict = kit.advance(st, {"kind": "rebaseline", "now": 6, "authorized": authorized, "decision_ref": "op-1"})
+    assert verdict["verdict"] == "REFUSE" and verdict["code"] == "rebaseline_not_authorized_v1"
+    assert new["store"] == before["store"] and new["anchor"] == before["anchor"]
+    assert new["log"] == before["log"] and new["rows"] == before["rows"]
+
+
+def test_r4_unknown_store_is_never_made_known_by_restore():
+    st = kit.empty_state()
+    good = copy.deepcopy(st)
+    lost, _ = kit.advance(st, {"kind": "lose_state", "now": 5})
+    for backup in (good, copy.deepcopy(lost)):
+        new, verdict = kit.advance(lost, {"kind": "restore", "now": 6, "backup": backup})
+        assert verdict["verdict"] == "UNKNOWN_FAIL_CLOSED" and new["store"] == "unknown"
+
+
+def test_r4_mutation_automatic_rebaseline_is_caught(monkeypatch):
+    def accepting(st, o):
+        st["store"] = "known"
+        st["unknown_reason"] = None
+        return st, hw._verdict(hw.ACCEPT, "rebaselined")
+
+    monkeypatch.setattr(hw, "_do_rebaseline", accepting)
+    assert _run_all() != []
+
+
+def test_r4_mutation_restore_recovering_unknown_store_is_caught(monkeypatch):
+    orig = hw._do_restore
+
+    def recovering(st, o):
+        if st["store"] == "unknown":
+            st = {**st, "store": "known", "unknown_reason": None}
+        return orig(st, o)
+
+    monkeypatch.setattr(hw, "_do_restore", recovering)
+    assert _run_all() != []

@@ -28,18 +28,18 @@ class MalformedVector(ValueError):
 
 _STEP_KEYS = {
     "advance": ({"op", "obs", "expect"}, {"note", "raw"}),
-    "policy_state": ({"op", "scope", "now", "expect"}, {"known_selection", "note"}),
+    "policy_state": ({"op", "scope", "now", "expect"}, {"known_selection", "epoch", "note"}),
     "save": ({"op", "name"}, {"note"}),
     "swap_to": ({"op", "name"}, {"note"}),
     "tear": ({"op", "kind"}, {"scope", "note"}),
     "concurrent": ({"op", "observations", "expect"}, {"note"}),
     "check": ({"op", "expect"}, {"note"}),
 }
-_TEARS = ("state_ahead_of_log", "log_ahead_of_state", "log_entry_corrupted", "row_validity_extended",
+_TEARS = ("state_absent", "state_ahead_of_log", "log_ahead_of_state", "log_entry_corrupted", "row_validity_extended",
           "row_issuer_changed", "revoked_set_truncated", "ratchet_cleared")
 _ALLOWED_EXPECT_ADVANCE = {"verdict", "code", "applied", "fallback_reason"}
 _ALLOWED_VERDICT_KEYS = {"verdict", "code", "applied", "fallback", "fallback_reason", "activation_ref"}
-_CHECK_KEYS = {"log_length", "evidence_count", "store", "row", "row_absent", "high_water", "revoked", "scope_required", "rebaselines"}
+_CHECK_KEYS = {"log_length", "evidence_count", "store", "row", "row_absent", "high_water", "revoked", "scope_required"}
 
 
 def _bad(msg):
@@ -116,6 +116,8 @@ def _validate_step(s, scopes):
     elif op == "policy_state":
         if not _scope_ref_ok(s["scope"], scopes) or not _is_int(s["now"]):
             _bad("policy_state step")
+        if "epoch" in s and not (_is_int(s["epoch"]) and s["epoch"] >= 1):
+            _bad("policy_state epoch")
         e = s["expect"]
         if not isinstance(e, dict) or set(e) - {"policy_state", "display"} or "policy_state" not in e or e["policy_state"] not in highwater.POLICY_STATES:
             _bad("policy_state expect")
@@ -123,7 +125,7 @@ def _validate_step(s, scopes):
         if not isinstance(s["name"], str) or not s["name"]:
             _bad("name")
     elif op == "tear":
-        if s["kind"] not in _TEARS or (s["kind"] != "log_entry_corrupted" and not _scope_ref_ok(s.get("scope"), scopes)):
+        if s["kind"] not in _TEARS or (s["kind"] not in ("log_entry_corrupted", "state_absent") and not _scope_ref_ok(s.get("scope"), scopes)):
             _bad("tear step")
     elif op == "concurrent":
         obs = s["observations"]
@@ -147,7 +149,7 @@ def _validate_step(s, scopes):
 def _validate_check(e, scopes):
     if not isinstance(e, dict) or not e or set(e) - _CHECK_KEYS:
         _bad("check expect")
-    for k in ("log_length", "evidence_count", "rebaselines"):
+    for k in ("log_length", "evidence_count"):
         if k in e and not (_is_int(e[k]) and e[k] >= 0):
             _bad("check %s must be a non-negative int" % k)
     if "store" in e and e["store"] not in ("known", "unknown"):
@@ -227,6 +229,14 @@ def _invariants(kind, before, after, verdict):
         errs.append("verdict carries unknown keys (kit must not mint authorization): %s" % sorted(verdict))
     if verdict["verdict"] not in VERDICTS:
         errs.append("unknown verdict")
+    # R1/R4: UNKNOWN never collapses into authorization, and nothing recovers an unknown store inside the kit
+    if isinstance(before, dict) and before.get("store") == "unknown":
+        if verdict["verdict"] == ACCEPT:
+            errs.append("ACCEPT while the store is unknown")
+        if not isinstance(after, dict) or after.get("store") != "unknown":
+            errs.append("an unknown store became known without an authorized recovery procedure")
+    if kind == "rebaseline" and verdict["verdict"] not in (REFUSE, UNKNOWN_FAIL_CLOSED):
+        errs.append("rebaseline must always be refused (REFUSE, or UNKNOWN_FAIL_CLOSED when the state value itself is unusable)")
     if kind == "guard" and verdict["code"] != "observation_malformed":
         if before != after:
             errs.append("guard changed state")
@@ -239,7 +249,9 @@ def _invariants(kind, before, after, verdict):
     for k, v in bf["high_water"].items():
         if af["high_water"].get(k, 0) < v:
             errs.append("high-water lowered")
-    if not all(p in af["revoked"] for p in bf["revoked"]) or not all(k in af["revoked_keys"] for k in bf["revoked_keys"]):
+    if (not all(p in af["revoked"] for p in bf["revoked"]) or not all(k in af["revoked_keys"] for k in bf["revoked_keys"])
+            or not all(p in af["revoked_records"] for p in bf["revoked_records"])
+            or not all(k in af["revoked_issuers"] for k in bf["revoked_issuers"])):
         errs.append("revocation set shrank")
     if af["snapshot_version"] < bf["snapshot_version"]:
         errs.append("snapshot high-water lowered")
@@ -285,8 +297,6 @@ def _check(state, exp, scopes, base):
             errs.append("evidence_count %d != %s" % (len(state["evidence"]), val))
         elif key == "store" and state["store"] != val:
             errs.append("store %s != %s" % (state["store"], val))
-        elif key == "rebaselines" and len(state["rebaselines"]) != val:
-            errs.append("rebaselines %d != %s" % (len(state["rebaselines"]), val))
         elif key == "row":
             for label, want in val.items():
                 if fin.get(label) != want:
@@ -314,6 +324,8 @@ def _check(state, exp, scopes, base):
 def _tear(state, step, scopes, base):
     st = copy.deepcopy(state)
     kind = step["kind"]
+    if kind == "state_absent":
+        return None  # the durable state is missing altogether
     if kind == "log_entry_corrupted":
         st["log"][-1]["timestamp"] = (st["log"][-1].get("timestamp") or 0) + 1
     else:
@@ -361,7 +373,7 @@ def run_vector(doc, vector):
             state = new
         elif op == "policy_state":
             ks = step.get("known_selection")
-            got = policy_state(state, _resolve_scope(step["scope"], scopes, base), step["now"], ks)
+            got = policy_state(state, _resolve_scope(step["scope"], scopes, base), step["now"], ks, step.get("epoch"))
             for k, v in step["expect"].items():
                 if got[k] != v:
                     fail(i, "policy_state %s expected %r got %r" % (k, v, got[k]))

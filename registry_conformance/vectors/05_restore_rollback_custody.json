@@ -23,13 +23,15 @@
     "record_id": "rec-1",
     "record_version": 1,
     "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
-   }
+   },
+   "issuer_id": "issuer-1"
   },
   "withdraw": {
    "now": 200,
    "verified": true,
    "participation": "optional",
-   "issuer_key_id": "key-1"
+   "issuer_key_id": "key-1",
+   "issuer_id": "issuer-1"
   },
   "sync": {
    "now": 200
@@ -139,11 +141,12 @@
   },
   {
    "id": "RC-02-older-than-ack-fails-closed",
-   "title": "Restore from a backup older than the last acknowledgement fails closed until explicitly re-baselined",
+   "title": "Restore from a backup older than the last acknowledgement fails closed and stays unknown: neither rebaseline nor a consistent restore recovers it",
    "cites": [
     "contract 8.3",
     "ADR D-24",
-    "DT-02"
+    "DT-02",
+    "ruling R4"
    ],
    "scopes": {
     "A": {
@@ -203,6 +206,10 @@
       "verdict": "ACCEPT",
       "code": "synced"
      }
+    },
+    {
+     "op": "save",
+     "name": "latest"
     },
     {
      "op": "advance",
@@ -276,7 +283,7 @@
      },
      "expect": {
       "verdict": "REFUSE",
-      "code": "rebaseline_not_authorized"
+      "code": "rebaseline_not_authorized_v1"
      }
     },
     {
@@ -293,15 +300,15 @@
       "decision_ref": "op-1"
      },
      "expect": {
-      "verdict": "ACCEPT",
-      "code": "rebaselined"
+      "verdict": "REFUSE",
+      "code": "rebaseline_not_authorized_v1"
      }
     },
     {
      "op": "check",
      "expect": {
-      "store": "known",
-      "rebaselines": 1
+      "store": "unknown",
+      "log_length": 2
      }
     },
     {
@@ -309,25 +316,26 @@
      "scope": "A",
      "now": 300,
      "expect": {
-      "policy_state": "active"
+      "policy_state": "unknown"
      }
     },
     {
      "op": "advance",
      "obs": {
-      "kind": "sync",
-      "snapshot": {
-       "version": 2,
-       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
-       "valid_until": 5000,
-       "revoked_selections": [],
-       "revoked_key_ids": [],
-       "min_epochs": []
+      "kind": "restore",
+      "backup": {
+       "$saved": "latest"
       }
      },
      "expect": {
-      "verdict": "REFUSE_STALE",
-      "code": "trust_snapshot_version_stale"
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_older_than_anchor"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "store": "unknown"
      }
     },
     {
@@ -344,19 +352,30 @@
       }
      },
      "expect": {
-      "verdict": "ACCEPT",
-      "code": "synced"
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read"
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
      }
     }
    ]
   },
   {
    "id": "RC-03-restore-missing-withdrawal-no-reactivation",
-   "title": "A backup that predates a withdrawal cannot be re-baselined: no implicit reactivation by restore",
+   "title": "A backup that predates a withdrawal does not reactivate: the store stays unknown, rebaseline is refused",
    "cites": [
     "R3",
     "contract 7.1",
-    "contract 8.3"
+    "contract 8.3",
+    "ruling R4"
    ],
    "scopes": {
     "A": {
@@ -423,7 +442,7 @@
      },
      "expect": {
       "verdict": "REFUSE",
-      "code": "rebaseline_refused_state_behind_floor"
+      "code": "rebaseline_not_authorized_v1"
      }
     },
     {
@@ -466,11 +485,12 @@
   },
   {
    "id": "RC-04-restore-cannot-clear-revocation",
-   "title": "A backup that predates a revocation cannot clear it; re-baseline is refused",
+   "title": "A backup that predates a revocation cannot clear it; rebaseline is refused and the revoked set stays",
    "cites": [
     "contract 7.1 revoked set grow-only",
     "contract 8.3",
-    "contract 8.4"
+    "contract 8.4",
+    "ruling R4"
    ],
    "scopes": {
     "A": {
@@ -552,7 +572,7 @@
      },
      "expect": {
       "verdict": "REFUSE",
-      "code": "rebaseline_refused_state_behind_floor"
+      "code": "rebaseline_not_authorized_v1"
      }
     },
     {
@@ -571,10 +591,11 @@
   },
   {
    "id": "RC-05-lost-state-is-unknown-not-zero",
-   "title": "Lost state is unknown, never zero: no re-activation at a low epoch, no re-baseline, an older copy does not repair it",
+   "title": "Lost state is unknown, never zero: no re-activation at a low epoch, rebaseline always refused, an older copy does not repair it",
    "cites": [
     "contract 8.3 lost state",
-    "ADR D-24"
+    "ADR D-24",
+    "ruling R4"
    ],
    "scopes": {
     "A": {
@@ -666,7 +687,7 @@
      },
      "expect": {
       "verdict": "REFUSE",
-      "code": "rebaseline_refused_state_lost"
+      "code": "rebaseline_not_authorized_v1"
      }
     },
     {
@@ -1431,18 +1452,20 @@
      },
      "expect": {
       "verdict": "UNKNOWN_FAIL_CLOSED",
-      "code": "state_older_than_anchor"
-     }
+      "code": "anchor_head_mismatch"
+     },
+     "note": "restore into an unknown store is never a recovery; the original cause is reported"
     }
    ]
   },
   {
    "id": "RC-16-restored-snapshot-cannot-bypass-expiry",
-   "title": "A restored older snapshot record is invalidated: after re-baseline the retained newer (expired) high-water yields HOLD, not the old record's validity",
+   "title": "A restored older snapshot record cannot bypass expiry: the store stays unknown, rebaseline is refused and the guard never accepts",
    "cites": [
     "contract 7.4 line 7",
     "contract 8.3",
-    "ADR D-24"
+    "ADR D-24",
+    "ruling R4"
    ],
    "scopes": {
     "A": {
@@ -1526,8 +1549,8 @@
       "now": 300
      },
      "expect": {
-      "verdict": "ACCEPT",
-      "code": "rebaselined"
+      "verdict": "REFUSE",
+      "code": "rebaseline_not_authorized_v1"
      }
     },
     {
@@ -1557,7 +1580,7 @@
      },
      "expect": {
       "verdict": "UNKNOWN_FAIL_CLOSED",
-      "code": "trust_snapshot_missing"
+      "code": "store_unknown"
      }
     },
     {
@@ -1574,8 +1597,8 @@
       }
      },
      "expect": {
-      "verdict": "REFUSE_STALE",
-      "code": "trust_snapshot_version_stale"
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
      }
     },
     {
@@ -1592,8 +1615,8 @@
       }
      },
      "expect": {
-      "verdict": "ACCEPT",
-      "code": "synced"
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
      }
     },
     {
@@ -1622,9 +1645,442 @@
       }
      },
      "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RC-17-absent-durable-state-never-accepts",
+   "title": "Absent durable state: a missing state value or a wiped state checked against the external anchor is UNKNOWN_FAIL_CLOSED, never ACCEPT",
+   "cites": [
+    "contract 8.3",
+    "ruling R4",
+    "ADR D-24"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "save",
+     "name": "fresh"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
       "verdict": "ACCEPT",
-      "code": "guard_pass",
-      "applied": true
+      "code": "activated"
+     }
+    },
+    {
+     "op": "save",
+     "name": "latest"
+    },
+    {
+     "op": "swap_to",
+     "name": "fresh"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "external_anchor": {
+       "$saved_anchor": "latest"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_older_than_anchor"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "store": "unknown",
+      "row_absent": [
+       "A"
+      ]
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read",
+      "external_anchor": {
+       "$saved_anchor": "latest"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "rebaseline",
+      "authorized": true,
+      "decision_ref": "op-6"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "rebaseline_not_authorized_v1"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "store": "unknown"
+     }
+    },
+    {
+     "op": "tear",
+     "kind": "state_absent"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_malformed"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read"
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_malformed"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "rebaseline",
+      "authorized": true,
+      "decision_ref": "op-6"
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_malformed"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "restore",
+      "backup": {
+       "$saved": "latest"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_malformed"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "unknown"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RC-18-rebaseline-always-refused-known-store",
+   "title": "rebaseline is refused on a healthy known store too and changes nothing; it is not an activation event",
+   "cites": [
+    "contract 7.1",
+    "contract 8.3",
+    "ruling R4"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 2,
+      "evidence_count": 0
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "rebaseline",
+      "authorized": true,
+      "decision_ref": "op-7"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "rebaseline_not_authorized_v1"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "rebaseline",
+      "authorized": false,
+      "decision_ref": "op-7"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "rebaseline_not_authorized_v1"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "log_length": 2,
+      "evidence_count": 2,
+      "store": "known"
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "active",
+      "display": "ENABLED"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RC-19-lost-state-nothing-proceeds",
+   "title": "After lost state every effect-bearing observation is UNKNOWN_FAIL_CLOSED; floors, a consistent restore and rebaseline do not resume",
+   "cites": [
+    "contract 8.3",
+    "ruling R4",
+    "ADR D-24"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "save",
+     "name": "before-loss"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "lose_state"
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_lost"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "claim": {
+       "scope": "A",
+       "binding": null
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "withdraw",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "external_floor",
+      "min_trust_snapshot_version": 1
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "store_unknown"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "restore",
+      "backup": {
+       "$saved": "before-loss"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_lost"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "rebaseline",
+      "authorized": true,
+      "decision_ref": "op-8"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "rebaseline_not_authorized_v1"
+     }
+    },
+    {
+     "op": "check",
+     "expect": {
+      "store": "unknown",
+      "row_absent": [
+       "A"
+      ]
+     }
+    },
+    {
+     "op": "policy_state",
+     "scope": "A",
+     "now": 300,
+     "expect": {
+      "policy_state": "unknown"
      }
     }
    ]

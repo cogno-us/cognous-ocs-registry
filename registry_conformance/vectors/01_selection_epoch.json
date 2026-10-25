@@ -23,13 +23,15 @@
     "record_id": "rec-1",
     "record_version": 1,
     "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
-   }
+   },
+   "issuer_id": "issuer-1"
   },
   "withdraw": {
    "now": 200,
    "verified": true,
    "participation": "optional",
-   "issuer_key_id": "key-1"
+   "issuer_key_id": "key-1",
+   "issuer_id": "issuer-1"
   },
   "sync": {
    "now": 200

@@ -13,7 +13,7 @@ Public surface:
 
 * ``empty_state()``                 a fresh, known, empty state value
 * ``advance(state, observation)``   -> ``(new_state, verdict)``; never mutates inputs
-* ``policy_state(state, scope, now, known_selection=None)``  derived read model
+* ``policy_state(state, scope, now, known_selection=None, epoch=None)``  derived read model
 * ``scope_key(scope)``              canonical scope key string
 * ``verify_state(state)``           None or the code that makes the state suspect
 
@@ -130,12 +130,13 @@ def empty_state():
         "rows": {},
         "log": [],
         "evidence": [],
-        "rebaselines": [],
         "scope_required": {},
         "floors": {
             "high_water": {},
             "revoked": [],
             "revoked_keys": [],
+            "revoked_records": [],
+            "revoked_issuers": [],
             "snapshot_revoked": [],
             "snapshot_version": 0,
             "min_epochs": {},
@@ -149,13 +150,13 @@ def empty_state():
 # ------------------------------------------------------- state validation
 
 _STATE_KEYS = {
-    "schema", "store", "unknown_reason", "rows", "log", "evidence", "rebaselines",
+    "schema", "store", "unknown_reason", "rows", "log", "evidence",
     "scope_required", "floors", "snapshot", "external", "anchor",
 }
-_FLOOR_KEYS = {"high_water", "revoked", "revoked_keys", "snapshot_revoked", "snapshot_version", "min_epochs"}
+_FLOOR_KEYS = {"high_water", "revoked", "revoked_keys", "revoked_records", "revoked_issuers", "snapshot_revoked", "snapshot_version", "min_epochs"}
 _ROW_KEYS = {
     "activation_state", "epoch", "selection_digest", "participation", "valid_from",
-    "valid_until", "issuer_key_id", "record", "activation_ref", "high_water_epoch",
+    "valid_until", "issuer_key_id", "issuer_id", "record", "activation_ref", "high_water_epoch",
 }
 
 
@@ -167,7 +168,7 @@ def _shape_problem(st):
             return True
         if not isinstance(st["rows"], dict) or not isinstance(st["log"], list):
             return True
-        if not isinstance(st["evidence"], list) or not isinstance(st["rebaselines"], list):
+        if not isinstance(st["evidence"], list):
             return True
         if not isinstance(st["scope_required"], dict):
             return True
@@ -178,6 +179,11 @@ def _shape_problem(st):
             return True
         if not isinstance(fl["revoked"], list) or not isinstance(fl["revoked_keys"], list) or not isinstance(fl["snapshot_revoked"], list):
             return True
+        if not isinstance(fl["revoked_records"], list) or not isinstance(fl["revoked_issuers"], list):
+            return True
+        for pair in fl["revoked_records"]:
+            if not (isinstance(pair, list) and len(pair) == 2 and isinstance(pair[0], str) and _is_int(pair[1])):
+                return True
         if not _is_int(fl["snapshot_version"]) or fl["snapshot_version"] < 0:
             return True
         for pair in fl["revoked"] + fl["snapshot_revoked"]:
@@ -224,6 +230,8 @@ def _replay_unsafe(st):
     revoked = set()
     explicit = set()
     keys = set()
+    records = set()
+    issuers = set()
     required = set()
     min_epochs = {}
     last_sync = None
@@ -239,7 +247,7 @@ def _replay_unsafe(st):
                 "activation_state": "active", "epoch": e["epoch"], "selection_digest": e["selection_digest"],
                 "activation_ref": e["entry_hash"], "participation": e["participation"],
                 "valid_from": e["valid_from"], "valid_until": e["valid_until"],
-                "issuer_key_id": e["issuer_key_id"], "record": e["record"],
+                "issuer_key_id": e["issuer_key_id"], "issuer_id": e["issuer_id"], "record": e["record"],
             }
             if e["scope_required"]:
                 required.add(k)
@@ -248,7 +256,7 @@ def _replay_unsafe(st):
             if r is None:
                 return None
             rows[k] = {**r, "activation_state": "withdrawn", "epoch": e["epoch"], "selection_digest": e["selection_digest"],
-                       "participation": e["participation"], "issuer_key_id": e["issuer_key_id"]}
+                       "participation": e["participation"], "issuer_key_id": e["issuer_key_id"], "issuer_id": e["issuer_id"]}
         elif t == "revoke":
             sel = _scope_from_key(k)["selection_id"]
             revoked.add((sel, e["epoch"]))
@@ -260,11 +268,13 @@ def _replay_unsafe(st):
                 explicit.add((pair[0], pair[1]))
                 revoked.add((pair[0], pair[1]))
             keys.update(e["revoked_key_ids"])
+            records.update((p[0], p[1]) for p in e["revoked_records"])
+            issuers.update(e["revoked_issuers"])
             for sel, floor in e["min_epochs"]:
                 if floor > min_epochs.get(sel, 0):
                     min_epochs[sel] = floor
             last_sync = e
-    return {"rows": rows, "revoked": revoked, "explicit": explicit, "keys": keys, "required": required,
+    return {"rows": rows, "revoked": revoked, "explicit": explicit, "keys": keys, "records": records, "issuers": issuers, "required": required,
             "min_epochs": min_epochs, "last_sync": last_sync}
 
 
@@ -317,6 +327,8 @@ def _state_problem(st, ext_anchor=None, check_anchor=True, extra_anchors=()):
     if not rep["explicit"] <= {(p[0], p[1]) for p in fl["snapshot_revoked"]}:
         return "state_log_mismatch"
     if not rep["keys"] <= set(fl["revoked_keys"]):
+        return "state_log_mismatch"
+    if not rep["records"] <= {(p[0], p[1]) for p in fl["revoked_records"]} or not rep["issuers"] <= set(fl["revoked_issuers"]):
         return "state_log_mismatch"
     if any(fl["min_epochs"].get(sel, 0) < floor for sel, floor in rep["min_epochs"].items()):
         return "state_log_mismatch"
@@ -379,7 +391,7 @@ def _check_statement(obs, with_window):
     if not (_is_int(obs["epoch"]) and obs["epoch"] >= 1 and _sha(obs["selection_digest"])):
         raise _Malformed("statement")
     _check_supersedes(obs["supersedes"])
-    if obs["participation"] not in ("required", "optional") or not _ident(obs["issuer_key_id"]):
+    if obs["participation"] not in ("required", "optional") or not _ident(obs["issuer_key_id"]) or not _ident(obs["issuer_id"]):
         raise _Malformed("statement")
     if type(obs["verified"]) is not bool:
         raise _Malformed("verified")
@@ -390,12 +402,13 @@ def _check_statement(obs, with_window):
 
 
 def _check_snapshot(s):
-    if not isinstance(s, dict) or set(s) != {"version", "fingerprint", "valid_until", "revoked_selections", "revoked_key_ids", "min_epochs"}:
+    base = {"version", "fingerprint", "valid_until", "revoked_selections", "revoked_key_ids", "min_epochs"}
+    if not isinstance(s, dict) or not base <= set(s) or set(s) - base - {"revoked_records", "revoked_issuers"}:
         raise _Malformed("snapshot")
     if not (_is_int(s["version"]) and s["version"] >= 1 and _sha(s["fingerprint"]) and _is_int(s["valid_until"])):
         raise _Malformed("snapshot")
-    for f in ("revoked_selections", "min_epochs", "revoked_key_ids"):
-        if not isinstance(s[f], list):
+    for f in ("revoked_selections", "min_epochs", "revoked_key_ids", "revoked_records", "revoked_issuers"):
+        if f in s and not isinstance(s[f], list):
             raise _Malformed("snapshot collection type")
     for pair in s["revoked_selections"]:
         if not (isinstance(pair, list) and len(pair) == 2 and _ident(pair[0]) and _is_int(pair[1]) and pair[1] >= 1):
@@ -405,6 +418,14 @@ def _check_snapshot(s):
             raise _Malformed("snapshot")
     if not all(_ident(k) for k in s["revoked_key_ids"]):
         raise _Malformed("snapshot")
+    # explicit-scope revocations (kit extension): record by (record_id, record_version), issuer by issuer_id
+    for pair in s.get("revoked_records", []):
+        if not (isinstance(pair, list) and len(pair) == 2 and _ident(pair[0]) and _is_int(pair[1]) and pair[1] >= 1):
+            raise _Malformed("snapshot")
+    if not all(_ident(k) for k in s.get("revoked_issuers", [])):
+        raise _Malformed("snapshot")
+    if len({tuple(p) for p in s.get("revoked_records", [])}) != len(s.get("revoked_records", [])) or len(set(s.get("revoked_issuers", []))) != len(s.get("revoked_issuers", [])):
+        raise _Malformed("snapshot duplicate")
     if len({tuple(p) for p in s["revoked_selections"]}) != len(s["revoked_selections"]):
         raise _Malformed("snapshot duplicate")
     if len({p[0] for p in s["min_epochs"]}) != len(s["min_epochs"]) or len(set(s["revoked_key_ids"])) != len(s["revoked_key_ids"]):
@@ -436,10 +457,10 @@ def _validate_obs(obs):
     ):
         raise _Malformed("external_anchor")
     if k == "select":
-        _need(obs, ("kind", "now", "scope", "epoch", "selection_digest", "supersedes", "participation", "valid_from", "valid_until", "issuer_key_id", "record", "verified"))
+        _need(obs, ("kind", "now", "scope", "epoch", "selection_digest", "supersedes", "participation", "valid_from", "valid_until", "issuer_key_id", "issuer_id", "record", "verified"))
         _check_statement(obs, True)
     elif k == "withdraw":
-        _need(obs, ("kind", "now", "scope", "epoch", "selection_digest", "supersedes", "participation", "issuer_key_id", "verified"))
+        _need(obs, ("kind", "now", "scope", "epoch", "selection_digest", "supersedes", "participation", "issuer_key_id", "issuer_id", "verified"))
         _check_statement(obs, False)
     elif k == "sync":
         _need(obs, ("kind", "now", "snapshot"))
@@ -566,6 +587,19 @@ def _c_revoked_key(st, o, ctx):
         return REFUSE, "issuer_key_revoked"
 
 
+def _c_revoked_record(st, o, ctx):
+    # record-level revocation: a higher epoch never carries a revoked record back in
+    r = o["record"]
+    if [r["record_id"], r["record_version"]] in st["floors"]["revoked_records"]:
+        return REFUSE, "record_revoked"
+
+
+def _c_revoked_issuer(st, o, ctx):
+    # issuer-level revocation: every key of the issuer is covered, whatever the key id
+    if o["issuer_id"] in st["floors"]["revoked_issuers"]:
+        return REFUSE, "issuer_revoked"
+
+
 def _c_stale_epoch(st, o, ctx):
     if o["epoch"] <= _hw(st, ctx["key"]):
         return REFUSE_STALE, "selection_epoch_stale"
@@ -614,12 +648,14 @@ def _names(row, o, s):
 
 _SELECT_CHECKS = (
     ("verified", _c_verified), ("window", _c_window), ("conflict", _c_conflict),
-    ("revoked_pair", _c_revoked_pair), ("revoked_key", _c_revoked_key), ("stale_epoch", _c_stale_epoch),
+    ("revoked_pair", _c_revoked_pair), ("revoked_key", _c_revoked_key), ("revoked_record", _c_revoked_record),
+    ("revoked_issuer", _c_revoked_issuer), ("stale_epoch", _c_stale_epoch),
     ("supersession", _c_supersession_select), ("ratchet", _c_ratchet),
 )
 _WITHDRAW_CHECKS = (
     ("verified", _c_verified), ("revoked_pair", _c_revoked_pair),
-    ("revoked_key", _c_revoked_key), ("withdraw_revoked_row", _c_withdraw_revoked_row),
+    ("revoked_key", _c_revoked_key), ("revoked_issuer", _c_revoked_issuer),
+    ("withdraw_revoked_row", _c_withdraw_revoked_row),
     ("stale_epoch", _c_stale_epoch), ("supersession", _c_supersession_withdraw), ("ratchet", _c_ratchet),
 )
 
@@ -641,14 +677,14 @@ def _do_select(st, o):
     prior = ctx["row"]["activation_state"] if ctx["row"] else None
     entry = _append(st, {
         "entry_type": "activate", "scope_key": key, "epoch": o["epoch"], "selection_digest": o["selection_digest"],
-        "issuer_key_id": o["issuer_key_id"], "prior_state": prior, "new_state": "active", "timestamp": o["now"],
+        "issuer_key_id": o["issuer_key_id"], "issuer_id": o["issuer_id"], "prior_state": prior, "new_state": "active", "timestamp": o["now"],
         "participation": o["participation"], "valid_from": o["valid_from"], "valid_until": o["valid_until"],
         "record": o["record"], "scope_required": o["participation"] == "required",
     })
     st["rows"][key] = {
         "activation_state": "active", "epoch": o["epoch"], "selection_digest": o["selection_digest"],
         "participation": o["participation"], "valid_from": o["valid_from"], "valid_until": o["valid_until"],
-        "issuer_key_id": o["issuer_key_id"], "record": o["record"], "activation_ref": entry["entry_hash"],
+        "issuer_key_id": o["issuer_key_id"], "issuer_id": o["issuer_id"], "record": o["record"], "activation_ref": entry["entry_hash"],
         "high_water_epoch": o["epoch"],
     }
     _bump(st["floors"]["high_water"], key, o["epoch"])
@@ -666,12 +702,12 @@ def _do_withdraw(st, o):
     row = ctx["row"]
     _append(st, {
         "entry_type": "withdraw", "scope_key": key, "epoch": o["epoch"], "selection_digest": o["selection_digest"],
-        "issuer_key_id": o["issuer_key_id"], "prior_state": row["activation_state"], "new_state": "withdrawn",
+        "issuer_key_id": o["issuer_key_id"], "issuer_id": o["issuer_id"], "prior_state": row["activation_state"], "new_state": "withdrawn",
         "timestamp": o["now"], "participation": o["participation"],
     })
     st["rows"][key] = {**row, "activation_state": "withdrawn", "epoch": o["epoch"], "selection_digest": o["selection_digest"],
                        "participation": o["participation"], "issuer_key_id": o["issuer_key_id"],
-                       "high_water_epoch": o["epoch"]}
+                       "issuer_id": o["issuer_id"], "high_water_epoch": o["epoch"]}
     _bump(st["floors"]["high_water"], key, o["epoch"])
     return st, _verdict(ACCEPT, "withdrawn")
 
@@ -696,8 +732,11 @@ def _do_sync(st, o):
     if s["version"] < st["external"]["min_trust_snapshot_version"] or s["version"] < fl["snapshot_version"]:
         return _refuse(st, o, REFUSE_STALE, "trust_snapshot_version_stale")
     revoked_in = {tuple(p) for p in s["revoked_selections"]}
+    records_in = {tuple(p) for p in s.get("revoked_records", [])}
+    issuers_in = set(s.get("revoked_issuers", []))
     # omission is judged against pairs earlier snapshots listed explicitly; locally derived key revocations are retained, not required
-    if not {tuple(p) for p in fl["snapshot_revoked"]} <= revoked_in or not set(fl["revoked_keys"]) <= set(s["revoked_key_ids"]):
+    if not {tuple(p) for p in fl["snapshot_revoked"]} <= revoked_in or not set(fl["revoked_keys"]) <= set(s["revoked_key_ids"]) \
+            or not {tuple(p) for p in fl["revoked_records"]} <= records_in or not set(fl["revoked_issuers"]) <= issuers_in:
         return _refuse(st, o, REFUSE_STALE, "trust_snapshot_revocation_omitted")
     for sel, floor in fl["min_epochs"].items():
         if dict((p[0], p[1]) for p in s["min_epochs"]).get(sel, 0) < floor:
@@ -711,6 +750,7 @@ def _do_sync(st, o):
         "prior_state": None, "new_state": None, "timestamp": o["now"], "snapshot_version": s["version"],
         "fingerprint": s["fingerprint"], "valid_until": s["valid_until"],
         "revoked_selections": [list(p) for p in s["revoked_selections"]], "revoked_key_ids": list(s["revoked_key_ids"]),
+        "revoked_records": [list(p) for p in s.get("revoked_records", [])], "revoked_issuers": list(s.get("revoked_issuers", [])),
         "min_epochs": [list(p) for p in s["min_epochs"]],
     })
     fl["snapshot_version"] = s["version"]
@@ -723,6 +763,12 @@ def _do_sync(st, o):
     for k in s["revoked_key_ids"]:
         if k not in fl["revoked_keys"]:
             fl["revoked_keys"].append(k)
+    for p in s.get("revoked_records", []):
+        if list(p) not in fl["revoked_records"]:
+            fl["revoked_records"].append(list(p))
+    for k in s.get("revoked_issuers", []):
+        if k not in fl["revoked_issuers"]:
+            fl["revoked_issuers"].append(k)
     for sel, floor in s["min_epochs"]:
         _bump(fl["min_epochs"], sel, floor)
     # revoke entries for rows hit by the snapshot; revocation is terminal for the pair
@@ -736,6 +782,10 @@ def _do_sync(st, o):
             cause = "selection_revoked"
         elif row["issuer_key_id"] in fl["revoked_keys"]:
             cause = "issuer_key_revoked"
+        elif row["issuer_id"] in fl["revoked_issuers"]:
+            cause = "issuer_revoked"
+        elif [row["record"]["record_id"], row["record"]["record_version"]] in fl["revoked_records"]:
+            cause = "record_revoked"
         if cause:
             _append(st, {
                 "entry_type": "revoke", "scope_key": key, "epoch": row["epoch"], "selection_digest": row["selection_digest"],
@@ -764,6 +814,12 @@ def _merge_floors(a, b):
     for k in b["revoked_keys"]:
         if k not in out["revoked_keys"]:
             out["revoked_keys"].append(k)
+    for p in b["revoked_records"]:
+        if p not in out["revoked_records"]:
+            out["revoked_records"].append(p)
+    for k in b["revoked_issuers"]:
+        if k not in out["revoked_issuers"]:
+            out["revoked_issuers"].append(k)
     out["snapshot_version"] = max(a["snapshot_version"], b["snapshot_version"])
     for k, v in b["min_epochs"].items():
         _bump(out["min_epochs"], k, v)
@@ -784,9 +840,13 @@ def _do_lose_state(st, o):
 
 def _do_restore(st, o):
     cur = st
+    if cur["store"] == "unknown":
+        # R4: an unknown store (lost, rolled back, torn, tampered) is never made known by a restore. Recovery needs an
+        # independently authenticated and authorized procedure that this kit does not implement (README, recovery proposal).
+        # The store is returned unchanged; the original cause is reported, never ACCEPT.
+        return _refuse(cur, o, UNKNOWN_FAIL_CLOSED, cur["unknown_reason"] or "store_unknown")
     new = copy.deepcopy(o["backup"])
     ok_cur = not _shape_problem(cur)
-    lost = ok_cur and cur["store"] == "unknown" and cur["unknown_reason"] == "state_lost"
     if ok_cur:
         new["floors"] = _merge_floors(new["floors"], cur["floors"])
         for k, row in cur["rows"].items():
@@ -796,7 +856,6 @@ def _do_restore(st, o):
         new["external"]["min_trust_snapshot_version"] = max(
             new["external"]["min_trust_snapshot_version"], cur["external"]["min_trust_snapshot_version"])
         new["evidence"] = copy.deepcopy(cur["evidence"])
-        new["rebaselines"] = copy.deepcopy(cur["rebaselines"])
     anchors = [copy.deepcopy(o["backup"]["anchor"])]
     if ok_cur:
         anchors.append(copy.deepcopy(cur["anchor"]))
@@ -807,11 +866,6 @@ def _do_restore(st, o):
     if new["snapshot"] is not None and new["snapshot"]["version"] < new["floors"]["snapshot_version"]:
         # the restored support record is older than the retained snapshot high-water: no current support until a newer sync
         new["snapshot"] = None
-    if lost:
-        # lost state is unknown, never zero; an older copy does not repair it (needs external re-provisioning)
-        new["store"] = "unknown"
-        new["unknown_reason"] = "state_lost"
-        return _refuse(new, o, UNKNOWN_FAIL_CLOSED, "state_lost")
     problem = _state_problem(new, extra_anchors=anchors)
     if problem is None and new["store"] == "known":
         return new, _verdict(ACCEPT, "restore_consistent")
@@ -821,20 +875,10 @@ def _do_restore(st, o):
 
 
 def _do_rebaseline(st, o):
-    if st["store"] != "unknown":
-        return _refuse(st, o, REFUSE, "rebaseline_not_needed")
-    if o["authorized"] is not True:
-        return _refuse(st, o, REFUSE, "rebaseline_not_authorized")
-    if st["unknown_reason"] == "state_lost":
-        return _refuse(st, o, REFUSE, "rebaseline_refused_state_lost")
-    problem = _state_problem(st, check_anchor=False)
-    if problem is not None:
-        return _refuse(st, o, REFUSE, "rebaseline_refused_" + problem)
-    st["store"] = "known"
-    st["unknown_reason"] = None
-    st["anchor"] = {"log_head": len(st["log"]), "head_hash": st["log"][-1]["entry_hash"] if st["log"] else None}
-    st["rebaselines"].append({"decision_ref": o["decision_ref"], "timestamp": o["now"], "log_head": len(st["log"])})
-    return st, _verdict(ACCEPT, "rebaselined")
+    # R4: automatic re-baselining after loss of authoritative durable state is rejected. `rebaseline` is not part of the
+    # closed activation event vocabulary (activate, withdraw, revoke, sync). It is kept only as an input kind that is
+    # ALWAYS refused, however it is populated, and it never changes the store (known or unknown) or the anchor.
+    return _refuse(st, o, REFUSE, "rebaseline_not_authorized_v1")
 
 
 def _do_external_floor(st, o):
@@ -848,12 +892,19 @@ def _do_external_floor(st, o):
 # ------------------------------------------------------------ policy_state
 
 
-def policy_state(state, scope, now, known_selection=None):
+def policy_state(state, scope, now, known_selection=None, epoch=None):
     """Derived read model (contract 7.2). Never stored, never input, never authority.
 
     ``known_selection`` is an optional ``{"selection_id", "epoch"}`` the reader knows
-    about that is not (yet) activated. Returns ``{"policy_state", "required",
-    "display"}``. There is no authorizing boolean in the result.
+    about that is not activated. It only distinguishes ``selected_not_activated`` from
+    ``not_selected`` when the scope has no row; it never changes the state of an existing
+    row (R3: observing a higher unactivated epoch does not supersede or activate anything).
+
+    ``superseded`` is derived only from (a) the ``min_epochs`` floor for the selection id or
+    (b) an ACTIVATED newer selection: pass ``epoch`` to ask about an earlier selection
+    identity; it reads ``superseded`` when the scope's activated row has a higher epoch.
+
+    Returns ``{"policy_state", "required", "display"}``. There is no authorizing boolean.
     """
     if not _is_int(now) or now < 0:
         raise ValueError("now must be a non-negative int")
@@ -870,18 +921,31 @@ def policy_state(state, scope, now, known_selection=None):
         ks = known_selection
         return _view("selected_not_activated" if ks else "not_selected", required)
     sel = scope["selection_id"]
-    if row["activation_state"] == "revoked" or [sel, row["epoch"]] in fl["revoked"] or row["issuer_key_id"] in fl["revoked_keys"]:
+    if epoch is not None:
+        # a specific (earlier or later) selection identity of this scope
+        if [sel, epoch] in fl["revoked"]:
+            return _view("revoked", required)
+        if epoch < row["epoch"]:
+            return _view("superseded", required)  # an activated newer selection exists (the row)
+        if epoch > row["epoch"]:
+            return _view("selected_not_activated", required)
+    if _row_revoked(fl, row, sel):
         return _view("revoked", required)
     if row["activation_state"] == "withdrawn":
         return _view("withdrawn", required)
-    ks = known_selection
-    if row["epoch"] < fl["min_epochs"].get(sel, 0) or (ks and ks.get("selection_id") == sel and ks.get("epoch", 0) > row["epoch"]):
+    if row["epoch"] < fl["min_epochs"].get(sel, 0):
         return _view("superseded", required)
     if now >= row["valid_until"]:
         return _view("expired", required)
     if now < row["valid_from"]:
         return _view("not_yet_valid", required)
     return _view("active", required)
+
+
+def _row_revoked(fl, row, sel):
+    return (row["activation_state"] == "revoked" or [sel, row["epoch"]] in fl["revoked"]
+            or row["issuer_key_id"] in fl["revoked_keys"] or row["issuer_id"] in fl["revoked_issuers"]
+            or [row["record"]["record_id"], row["record"]["record_version"]] in fl["revoked_records"])
 
 
 def _view(ps, required):
@@ -939,6 +1003,10 @@ def _guard(st, o):
         return st_out, _verdict(REFUSE_STALE, "selection_epoch_stale")
     if row["issuer_key_id"] in fl["revoked_keys"]:
         return st_out, _verdict(REFUSE, "issuer_key_revoked")
+    if row["issuer_id"] in fl["revoked_issuers"]:
+        return st_out, _verdict(REFUSE, "issuer_revoked")
+    if [row["record"]["record_id"], row["record"]["record_version"]] in fl["revoked_records"]:
+        return st_out, _verdict(REFUSE, "record_revoked")
     if now < row["valid_from"]:
         return st_out, _verdict(REFUSE, "selection_not_yet_effective")
     if now >= row["valid_until"]:
