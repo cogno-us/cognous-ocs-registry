@@ -41,7 +41,7 @@ Architect rulings are cited by topic and date. Project documents named below are
 | `AGE_MAX = 2147483647` decision and DR-CP-AGE-1 | Architect Batch 3 and Batch 4 rulings | OCS Project docs `claude/ocs-p1-batch3-consolidated-report-2026-10-25.md`, `claude/ocs-p1-batch4-handoff-2026-10-25.md`, `claude/ocs-p1-architect-final-rulings-2026-10-25.md` (not in this repository); registry PR #31 (pending) | A1-01 |
 | Identifier grammar accepted; payload entries keep the opaque token rule | Architect acceptance and confirmation (relayed in the brief for this PR) | OCS Project (not in this repository); ADR section 6 open item 4 (frozen, still reads proposed) | A1-04 |
 | N-3 family-version identity | Architect ruling (relayed in the brief for this PR), recorded as a clarification only | OCS Project (not in this repository) | A1-06 |
-| N-4 additive reason codes | Architect Batch 3 and Batch 4 ruling | OCS Project docs as above; PR #30 spec section 8.2 (pending) | A1-05 |
+| N-4 additive reason codes | Architect Batch 4 ruling (PR #30 section 12 N-4) | OCS Project docs as above; PR #30 spec section 8.2 (pending) | A1-05 |
 | Track C authorization of one small documentation amendment | Architect | OCS Project (Track C authorization, relayed in the brief for this PR) | The whole amendment |
 | Four-verdict vocabulary (`ACCEPT`, `REFUSE`, `REFUSE_STALE`, `UNKNOWN_FAIL_CLOSED`), ruling R1 | Architect | This repository: `docs/conformance/README.md` (registry PR #28, merged) | A1-05 verdict classes |
 
