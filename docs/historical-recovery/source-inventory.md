@@ -89,7 +89,11 @@ Partition D (Qualification) also cites `main` `4298247e860126d04d0bc44e1f2aef0fd
 
 These digests are [R]: the raw inputs are not in either repository, so they cannot be re-hashed. `manifest.regeneration` records 426 input files with `input_files_sha256` `sha256:b2db6326ce8f198e91aff572081b9e86f397bacc3e443aa78a38dc397a142a63` [R]. Regeneration was not reproduced.
 
-## 5. Not verified in this exercise
+## 5. Reconciliation with current `main` (S06 complete)
+
+`main` is now `1870f3a62ee16cdea53c4c23a8df8c9be3c2f2cf`. Between the PR base `091355fd` and that head, ten paths changed: `README.md`, `docs/BUILDER_HANDOFF.md`, `docs/architecture.md`, `docs/decisions/2026-10-24-s06-authorization.md`, `docs/s06-consolidation-report.md`, `docs/s06-next-family-recommendation.md`, `docs/s06-representation-and-e05.md`, `docs/sprint-status.md`, `docs/trust-limitations.md`, `tests/test_s06_integrity.py`. [V, `git diff --name-only`] None of the sources this directory relies on changed: `docs/s02-inventory.md`, `docs/s02-evidence/` and `docs/plans/PROJECT_PLAN-v1.1.md` (blob `6ece90f6...` still) are identical at both commits. [V] `docs/sprint-status.md` changed (S06 closeout); this directory cites it only for the Constitution pin, which this exercise did not re-read from the S06 version. The branch has not been merged or rebased onto `main`; the PR remains mergeable with a clean state at the time of checking.
+
+## 6. Not verified in this exercise
 
 - Content of the raw inputs, and any entry other than the Control Plane reason registries, against source at its tag.
 - The Constitution pin, the `CR-001` to `CR-035` text, and whether `CONSTITUTION_v0.1.md` (the origin of the 229 proposed clauses) was ever adopted.

@@ -12,6 +12,8 @@ It executes no rule, scenario or test and writes nothing.
 """
 import collections, glob, json, os, re, sys
 
+sys.dont_write_bytecode = True  # never write caches into the source tree being inspected
+
 src, reg = sys.argv[1], sys.argv[2]
 cat = os.path.join(src, 'docs/mvp-recovery/registry/catalogue-v0.1')
 sys.path.insert(0, os.path.join(src, 'docs/mvp-recovery/registry/tools'))
@@ -21,7 +23,7 @@ rep = v.Report()
 manifest, L = v.load_registry(cat, rep, v.load_schemas(cat, rep))
 R, S, T, F, E = (L[k] for k in ('rules', 'scenarios', 'tests', 'fixtures', 'evidence'))
 C = collections.Counter
-out = {'manifest_digest': manifest['digest'], 'decode_problems': len(getattr(rep, 'items', []) or [])}
+out = {'manifest_digest': manifest['digest'], 'decode_problems': len(rep.errors), 'decode_problem_head': [list(e) for e in rep.errors[:5]]}
 out['layer_counts'] = {k: len(x) for k, x in L.items()}
 out['layer_counts_match_manifest'] = out['layer_counts'] == manifest['layer_counts']
 
@@ -51,7 +53,19 @@ r01 = [x for x in R if reg_label(x).startswith('runtime-authority-reasons/0.1')]
 r02 = [x for x in R if reg_label(x).startswith('runtime-authority-reasons/0.2')]
 out['runtime_authority_reasons'] = {'0.1_entries': len(r01), '0.2_entries': len(r02)}
 out['reason_code_entries'] = sum(1 for x in R if x['normative_type'] == 'reason_code_or_refusal_vocabulary')
-out['reason_code_distinct_names'] = len({i for x in R if x['normative_type'] == 'reason_code_or_refusal_vocabulary' for i in x['native_ids']})
+strip = lambda n: n[:-4] if n.endswith('@0.1') else n  # registry-version suffix; entries stay distinct
+out['reason_code_distinct_names_raw_native_ids'] = len({i for x in R if x['normative_type'] == 'reason_code_or_refusal_vocabulary' for i in x['native_ids']})
+out['reason_code_distinct_names'] = len({strip(i) for x in R if x['normative_type'] == 'reason_code_or_refusal_vocabulary' for i in x['native_ids']})
+den = v.compute_denominators(L)
+out['denominators_recomputed'] = {k: x for k, x in den.items() if k != 'ten_denominators'}
+out['denominators_recomputed']['ten_denominators'] = {k: x for k, x in den['ten_denominators'].items() if not k.startswith('10_')}
+out['historical_verdicts_verbatim'] = den['ten_denominators']['10_historical_verdicts_verbatim']
+out['denominators_equal_manifest'] = den == manifest['denominators']
+out['crosswalk_dispositions'] = dict(C(r['disposition'] for r in L['crosswalk']))
+out['unresolved_accounting_recomputed'] = v.unresolved_accounting(L)
+out['unresolved_accounting_equal_manifest'] = out['unresolved_accounting_recomputed'] == manifest['unresolved_accounting']
+out['catalogue_directory_bytes'] = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(cat) for f in fs)
+out['largest_catalogue_file_bytes'] = max(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(cat) for f in fs)
 out['rules_with_program_v0_2_source_path'] = sum(1 for x in R if 'program-v0.2' in x['source']['path'])
 stm = collections.defaultdict(list)
 for x in R: stm[x['statement_verbatim'].strip()].append(x['source']['repo'])
@@ -64,7 +78,6 @@ for x in R:
 out['native_ids_in_more_than_one_repo'] = sum(1 for s in nid.values() if len(s) > 1)
 out['rules_with_alias_candidates'] = sum(1 for x in R if x['alias_candidates'])
 out['rules_with_aliases'] = sum(1 for x in R if x['aliases'])
-out['unresolved_accounting'] = manifest['unresolved_accounting']
 
 # --- S02 (620 rows) ---
 cls = ('MANDATORY-INVARIANT', 'SERIALIZATION-OR-EVIDENCE', 'INCIDENTAL-CONDITIONAL',
@@ -81,7 +94,7 @@ out['s02_rows'] = len(rows)
 out['s02_by_class'] = dict(C(r['cls'] for r in rows))
 out['s02_unresolved_ids'] = sorted(r['id'] for r in rows if r['cls'] == 'UNRESOLVED')
 tok = re.compile(r'([a-z][a-z0-9]*(?:_[a-z0-9]+)+)')
-names = {i for x in R if x['normative_type'] == 'reason_code_or_refusal_vocabulary' for i in x['native_ids']}
+names = {strip(i) for x in R if x['normative_type'] == 'reason_code_or_refusal_vocabulary' for i in x['native_ids']}
 ov = collections.defaultdict(set)
 for r in rows:
     for t in set(tok.findall(' '.join(r['cells'][1:4]))):

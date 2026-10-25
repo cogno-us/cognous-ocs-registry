@@ -1,4 +1,4 @@
-# Historical recovery: V0.2 rule inventory reconciliation
+# Historical recovery: V0.1 catalogue reconciliation (no separate V0.2 inventory)
 
 Non-authorizing, builder-side, unqualified. Release, publication and production HOLD. This directory is an independent research workstream. It is not S06, not a registry migration and not a change to the static engineering plan. Nothing here activates a registry record, approves a manifest pin or changes runtime behaviour.
 
@@ -9,7 +9,7 @@ Non-authorizing, builder-side, unqualified. Release, publication and production 
 
 ## Purpose and scope
 
-Recover and classify the historical rule inventory held in `docs/mvp-recovery/registry/catalogue-v0.1/` of `cogno-us/cognous-open-control-stack`, and reconcile it against the current S02 source-based inventory (`docs/s02-inventory.md`, 620 rows, F1 to F11, 32 unresolved).
+Recover and classify the historical rule inventory (a V0.1 review-tag catalogue; this exercise does not claim a separate V0.2 inventory was recovered) held in `docs/mvp-recovery/registry/catalogue-v0.1/` of `cogno-us/cognous-open-control-stack`, and reconcile it against the current S02 source-based inventory (`docs/s02-inventory.md`, 620 rows, F1 to F11, 32 unresolved).
 
 The catalogue is evidence to be classified, not a rule set. No catalogue entry has present-day authorization because it appears there (every entry carries `authority: none`).
 
@@ -33,18 +33,19 @@ Labels used throughout: **[V]** verified by reading or recomputing in this exerc
 | `classification-crosswalk.md` | Historical categories against S02 categories and families F1 to F11 |
 | `unresolved.md` | Missing provenance, contradictions, the 32 S02 unresolved rows, items not verified |
 | `migration-candidates.md` | Ranked recommendations (not implementation authority) |
-| `recount.py` | Read-only script that recomputes every number quoted here |
+| `recount.py` | Read-only script that recomputes the catalogue counts quoted in `catalogue-accounting.md` (see its scope note) |
 | `recount-output.json` | Its output at the recorded source commit |
 
 ## Reproduction
 
 ```
-git clone https://github.com/cogno-us/cognous-open-control-stack SRC   # at 51c579a3208149922649a31a6eb041106a4121c3
+git clone https://github.com/cogno-us/cognous-open-control-stack SRC
+git -C SRC checkout 51c579a3208149922649a31a6eb041106a4121c3   # the clone follows the default branch; pin explicitly
 python3 -I docs/historical-recovery/recount.py SRC .
 python3 -I SRC/docs/mvp-recovery/registry/tools/validate_registry.py --root SRC/docs/mvp-recovery/registry/catalogue-v0.1
 ```
 
-`recount.py` imports the catalogue's own decoder from `SRC` (read-only use) and executes no rule, scenario or test.
+`recount.py` imports the catalogue's own decoder and denominator functions from `SRC` (read-only use; bytecode writes are disabled) and executes no rule, scenario or test. It recomputes layer counts, normative-type, adoption, scope and applicability counts, the ten denominators (and checks them equal to the manifest), crosswalk dispositions, unresolved accounting (checked equal to the manifest), verdict groups, directory size, duplicate groups, and the S02 class counts. It does **not** recompute: raw-to-canonical absorption ratios and coverage-report figures (read from the generated reports, [R]), source tag peels, reason-registry file contents and file hashes (checked by separate commands recorded in `source-inventory.md`).
 
 ## Limitations
 

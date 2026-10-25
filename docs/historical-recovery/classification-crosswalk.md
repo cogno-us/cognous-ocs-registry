@@ -24,7 +24,7 @@ Consequences [V counts]:
 | S02 class (rows) | Nearest catalogue category (entries) | Entry-level match established? | String-level lead |
 |---|---|---|---|
 | `MANDATORY-INVARIANT` (354) | 2. enforcement candidates (240) and 1. policy (247) | No | 64 distinct reason-code names appear both in S02 mandatory rows and in catalogue reason codes (for example `action_blocked`, `adapter_mismatch`, `amount_exceeded`); S02 rows describe the check, the catalogue entry names the code [I] |
-| `REFUSAL-OR-REASON-VOCABULARY` (50) | 4. reason codes (1,819 entries, 1,783 names) | No | 4 of 50 rows name 6 codes also in the catalogue: `escalation_after_key_ttl`, `grant_revocation_recorded`, `operation_grant_mismatch`, `operation_not_admitted`, `operation_renewal_unrecorded`, `renewal_not_written_by_grant_issuer`. The other 46 rows have no name-level counterpart under a crude extraction (snake_case tokens in the construct and what-it-encodes cells only) |
+| `REFUSAL-OR-REASON-VOCABULARY` (50) | 4. reason codes (1,819 entries, 1,662 names) | No | 4 of 50 rows name 6 codes also in the catalogue: `escalation_after_key_ttl`, `grant_revocation_recorded`, `operation_grant_mismatch`, `operation_not_admitted`, `operation_renewal_unrecorded`, `renewal_not_written_by_grant_issuer`. The other 46 rows have no name-level counterpart under a crude extraction (snake_case tokens in the construct and what-it-encodes cells only) |
 | `SERIALIZATION-OR-EVIDENCE` (90) | 6. evidence artifacts (not rules) | No | 1 name (`observation_unavailable`) |
 | `INCIDENTAL-CONDITIONAL` (51) | none | No | none |
 | `CONFIGURABLE-CANDIDATE` (43) | 3. configurable parameters (0) | No: the catalogue has no such type | see section 3 |

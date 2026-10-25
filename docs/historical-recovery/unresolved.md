@@ -32,7 +32,7 @@ The partition-B load-problem record lists 123 entries without a source revision,
 
 1. **Label versus assignment.** Assignment says V0.2; catalogue says 0.1.0 (U1).
 2. **Passing validation does not mean true.** The validator checks internal consistency and digest commitments, not truth of source claims and not raw record content. [R, catalogue README]
-3. **Size note.** The catalogue README says the compact catalogue is "about 42 MB, no file over 4 MB". `catalogue-v0.1/` is 53,940,243 bytes; no file exceeds 4 MB. [V] Possibly the README excludes some directories; not investigated.
+3. **Size note.** The catalogue README says the compact catalogue is "about 42 MB, no file over 4 MB". `catalogue-v0.1/` is 53,940,243 bytes; no file exceeds 4 MiB; the largest is 4,128,681 bytes, above 4,000,000. [V] Possibly the README excludes some directories; not investigated.
 4. **`mvp_fixed` does not mean enforced.** Of the 7 `mvp_fixed` rules, several are named known limits, a known failure or an expected ABSTAIN. [V] The label cannot be read as "required" or "satisfied".
 5. **Statement text that is not rule text.** 28 + 9 + 8 Qualification entries carry a metadata object as their statement; 116 verifier entries carry a templated "refuted finding code ... emitted by `<file>`" sentence; 12 verifier entries state "NO DISPOSITION TEXT in docs/tiers.md (id exists in source only)". [V] These are entries, not independent rules.
 6. **Same identifier, several repositories.** 68 native ids (for example `E001`) occur in more than one repository, kept distinct because equivalence is not established. [V]
