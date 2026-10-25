@@ -20,6 +20,7 @@ from typing import Any, Callable, Optional
 from registry_successor import common as c
 from registry_successor import compose as compose_mod
 from registry_successor.compose import CompositionResult
+from registry_successor import v2_f1ab
 
 # Enforcing components named by the contract (section 2 table). Descriptive labels only: never an authorization.
 COMPONENT_RUNTIME = "runtime"
@@ -62,6 +63,21 @@ _F1A = FamilySpec(
 # Read-only view: a family is registered by editing this file, never at run time.
 FAMILIES: Mapping = MappingProxyType({_F1A.family: _F1A})
 
+_F1AB = FamilySpec(
+    family=v2_f1ab.FAMILY_F1AB,
+    payload_fields=v2_f1ab.F1AB_FIELDS,
+    payload_validator=v2_f1ab.payload_validator,
+    composer=v2_f1ab.compose_f1ab,
+    evaluator_binding=(c.EVALUATOR_ID, c.EVALUATOR_BINDING),
+    caller_normalizer=v2_f1ab.normalize_caller,
+    enforcing_component=COMPONENT_RUNTIME,
+)
+
+# `r08-v2` table (EXT-S1-3): the v1 families plus `f1ab`. Kept SEPARATE from `FAMILIES` because the frozen `r08-v1` entry
+# points (record, selection, decision) read `FAMILIES`, and the v1 golden pins that they refuse `f1ab` `family_unsupported`.
+# A v2 entry point selects a table through `table_for_contract_version` (below); the v2 statement shape is EXT-S1-5/6.
+FAMILIES_V2: Mapping = MappingProxyType({**FAMILIES, _F1AB.family: _F1AB})
+
 # The family the unchanged `r08-v1` entry points normalize an optional caller policy with when a refusal happens before
 # (or without) a registered family being known. Part of the frozen v1 behaviour, not a general default for new families.
 V1_DEFAULT_FAMILY = _F1A.family
@@ -77,14 +93,75 @@ def lookup(family: Any) -> Optional[FamilySpec]:
         return None
 
 
+def lookup_v2(family: Any) -> Optional[FamilySpec]:
+    """Like `lookup`, against the `r08-v2` table. Exact string equality; never raises."""
+    if not isinstance(family, str):
+        return None
+    try:
+        return FAMILIES_V2.get(family)
+    except TypeError:
+        return None
+
+
+# Contract-version strings. V1 is the frozen constant; the v2 string is the one the contract and the golden corpus use.
+CONTRACT_V1 = c.CONTRACT_VERSION
+CONTRACT_V2 = "r08-v2"
+
+
+@dataclass(frozen=True)
+class TableSelection:
+    """Result of selecting a family table by `contract_version`. On refusal `table` is None and `code` is typed."""
+    ok: bool
+    code: Optional[str]
+    version: Optional[str]
+    table: Optional[Mapping]
+
+
+def table_for_contract_version(version: Any) -> TableSelection:
+    """Select the family table for exactly `r08-v1` (FAMILIES) or exactly `r08-v2` (FAMILIES_V2). Any other value (None,
+    bytes, a str subclass, another case or whitespace, an unknown version, a non-str) refuses `contract_unsupported` with no
+    table: there is no fallback, no implicit upgrade and no default. Pure; never raises."""
+    if type(version) is str:  # exact str only: a subclass could override __eq__/__hash__
+        if version == CONTRACT_V1:
+            return TableSelection(True, None, CONTRACT_V1, FAMILIES)
+        if version == CONTRACT_V2:
+            return TableSelection(True, None, CONTRACT_V2, FAMILIES_V2)
+    return TableSelection(False, "contract_unsupported", None, None)
+
+
+def lookup_for(version: Any, family: Any) -> Optional[FamilySpec]:
+    """The spec for `family` in the table of exactly this contract version, or None (unsupported version or family)."""
+    if not table_for_contract_version(version).ok:
+        return None
+    return lookup(family) if version == CONTRACT_V1 else lookup_v2(family)
+
+
+def compose_for(version: Any, caller: Any, record: Any, operator: Any = "intersection") -> CompositionResult:
+    """Compose with the table of exactly `version`; an unsupported version refuses `contract_unsupported` (no policy). The
+    record's own `contract_version` is not consulted here and never reinterpreted: callers pass the version they validated."""
+    sel = table_for_contract_version(version)
+    if not sel.ok:
+        return _refuse("contract_unsupported")
+    return compose(caller, record, operator) if version == CONTRACT_V1 else compose_v2(caller, record, operator)
+
+
 def _refuse(code: str, detail: str = "") -> CompositionResult:
     assert code in c.CODES, code
     return CompositionResult(False, code, detail)
 
 
 def compose(caller: Any, record: Any, operator: Any = "intersection") -> CompositionResult:
-    """Dispatch composition on the validated record's family. Check order is the `r08-v1` order: operator, record
-    validity, family registration, then the family composer. Any refusal returns no effective policy."""
+    """Dispatch composition on the validated record's family in the `r08-v1` table. Check order is the `r08-v1` order:
+    operator, record validity, family registration, then the family composer. Any refusal returns no effective policy."""
+    return _compose(lookup, caller, record, operator)
+
+
+def compose_v2(caller: Any, record: Any, operator: Any = "intersection") -> CompositionResult:
+    """Same dispatch and check order against the `r08-v2` table (adds `f1ab`). Any refusal returns no effective policy."""
+    return _compose(lookup_v2, caller, record, operator)
+
+
+def _compose(find: Callable[[Any], Optional[FamilySpec]], caller: Any, record: Any, operator: Any) -> CompositionResult:
     try:
         if operator != "intersection":
             return _refuse("composition_operator_unsupported")
@@ -93,7 +170,7 @@ def compose(caller: Any, record: Any, operator: Any = "intersection") -> Composi
         body = getattr(record, "record", None)
         if not isinstance(body, Mapping):
             return _refuse("composition_record_invalid")
-        spec = lookup(body.get("family"))
+        spec = find(body.get("family"))
         if spec is None:
             return _refuse("composition_family_unsupported")
         return spec.composer(caller, record, operator)
