@@ -4,6 +4,8 @@ Purpose: design the minimum credible mechanism by which a future OCS consumer ca
 
 **Architectural preparation only. Candidate models, not normative. No implementation, approval, activation or qualification.**
 
+**Architect disposition applied (PR #18 review; Architect ruling, not operator-approved):** authentication uses an asymmetric authenticated statement and an independently trusted selection authority; preferred direction is reuse of the existing OCS evidence-attestation or ODES Ed25519 verification contract, subject to a bounded fitness and compatibility assessment; no fourth cryptographic system; a signature is not authorization. Trust-root custody, issuer enrollment, signing-key ownership, key ceremony, trust-snapshot distribution and key rotation are **not adopted** by the ruling: they need an operator-approved R09 mechanism. D2 ruling (R07): pin-only integrity is insufficient as a general authorization mechanism; the S04 pin-only profile stays a frozen, optional-overlay limitation. Where this document names BitRep, ODES or Control Plane facilities, none is declared qualified; each is a reuse candidate for assessment.
+
 Author lane: B. Date: 2026-10-25. Reviewed claims are labelled [EXISTING], [DEV-TESTED], [QUALIFIED], [PROPOSAL], [APPROVED], [PRODUCTION]. No [QUALIFIED] or [PRODUCTION] claim appears here because none was established for any custody component.
 
 ## 1. Sources and revisions examined
@@ -11,7 +13,7 @@ Author lane: B. Date: 2026-10-25. Reviewed claims are labelled [EXISTING], [DEV-
 | Source | Revision | Used for |
 |---|---|---|
 | Registry repo `cogno-us/cognous-ocs-registry` | `main` `eb850c8d303961d099a123534121aeac280b242b` (rev-parse confirmed) | `docs/trust-limitations.md` T1-T14, `docs/s03-contract.md`, `docs/s04-implementation.md`, `registry_records/*.manifest.json`, `docs/decisions/2026-10-24-s04-preconditions-and-authorization.md` (P1/P2), plan v1.2 §§3.1, 3.3, R09/R10/R16/R17, crosswalk A1-A10 |
-| PR #17 `docs/registry-schema-analysis/08-open-architectural-decisions.md` | head `bdfb2b7268690d9406cc1de257dc6feede0fdb5a` | D2, D3, V1, V3 (cross-referenced only) |
+| PR #17 (merged `e3f5bbc32f957a10822a15a1b642e48c63d428e9`) `docs/registry-schema-analysis/08-open-architectural-decisions.md`; PR #13 merged `e20504df8d2c8ddf8b3944c0dabb0dcf5f1009b6` | Merged source evidence with provisional classifications (originally read at PR head `bdfb2b72...`); D2, D3, V1, V3 and the recorded Architect R07 rulings (cross-referenced only) |
 | Control Plane `cognous-control-plane` | clone head `7a4bcd40b3b49e61ff3c294dcca53b52f460b22c` | `rule_revision.py`, `runtime_authority.py`, `bounded.py` (policy status read), `signing.py`, `witness.py`, `docs/threat-model-lite.md`, `docs/runtime-authority-profile.md` |
 | Execution Runtime | clone head `c5e97e87dd239c821b1b4a406a55dcd03c5bc61f` | `engine/revocation_closeout.py`, `engine/local_authority_effect.py` (grant revision binding) |
 | ODES `open-decision-evidence-standard` | `1a5e1d300250d832e611633f0bf8f762e398c0ec` | `src/odes/signatures.py`, `contracts/rule-revision`, `authority-lineage`, `witness-digest`, `non-broadening-delegation`, `index-evidence-registry` READMEs |
@@ -38,7 +40,7 @@ Pin differences: S01/S02 pinned Runtime `ec728da6` and Control Plane `0a41faa9`.
 - [DEV-TESTED] S04 negative battery `tests/test_s04_overlay.py` covers re-digested record, wrong digest, manifest replacement, wrong version, wrong Runtime/evaluator, missing selection, consumer exception. Copilot-reviewed, not independently qualified (T10). Only case R09 tests substitution against an unchanged pin (T4).
 - [EXISTING] Pin custody is a *named gap*: "Whoever holds the pin holds the trust decision"; the S05 harness plays operator; T8 says no approved activation pin exists. The candidate manifest digest `sha256:948ab4f4...2791` is not a pin.
 - [EXISTING] Excluded by P1/T1: compromised host admin or root, compromised interpreter, malicious trusted maintainer, malicious build infrastructure, anyone controlling the selection mechanism. T5: the consumer hashes the evaluator file on disk, not the loaded code object. T6: `record_source` is unverified.
-- Contradiction check: P1 says "Do not introduce signatures, key management ... production authentication infrastructure" for S04. That bound applied to S04 only; plan v1.2 §3.3 and R09 now require trust roots, key lifecycle and signed or equivalent custody "before active Runtime adoption". Not a contradiction, but R09 must obtain a new operator decision; P1 cannot be read as permitting or forbidding it.
+- Contradiction check: P1 says "Do not introduce signatures, key management ... production authentication infrastructure" for S04. That bound applied to S04 only; plan v1.2 §3.3-binding and R09 now require trust roots, key lifecycle and signed or equivalent custody "before active Runtime adoption". Not a contradiction, but R09 must obtain a new operator decision; P1 cannot be read as permitting or forbidding it.
 
 ### 2.2 Existing components against the required functions
 
@@ -61,7 +63,7 @@ Net finding: [EXISTING] the stack already contains an Ed25519 trust-snapshot ver
 
 ## 3. Threat model (candidate, for R09; amends nothing frozen)
 
-| Threat (plan v1.2 §3.3 list) | In scope for the candidate? | Control and residual |
+| Threat (plan v1.2 §3.3-threat-model list) | In scope for the candidate? | Control and residual |
 |---|---|---|
 | Untrusted policy/record input | Yes | S03 validation plus selection binding; unchanged |
 | Unauthorized repository changes (PR merge, force-push, branch edit) | Yes, as a *content* threat | Repository state confers no authority; only a verified signed selection does. Residual: a repository writer who also holds a selection key |
@@ -79,6 +81,9 @@ Stated exclusions: no claim against root on the consumer host, a compromised int
 
 ## 4. Candidate design [PROPOSAL]
 
+### 4.0 Architect ruling on the verifier contract (Architect ruling, not operator-approved; phase R08/R09)
+A selection is accepted only if verification establishes **all** of: (1) trusted issuer identity; (2) issuer authority for the exact operation and scope; (3) audience/consumer binding; (4) exact selection digest; (5) record and evaluator revision binding; (6) tenant/institution applicability; (7) selection epoch; (8) effective interval; (9) revocation and supersession status; (10) trust-root version; (11) current trusted time; and (12) unavailable verification refuses (fail-closed to the profile's own refusal semantics). Record approval and selection authorization are distinct authorities. One individual may hold several roles only under an explicit operator-approved separation-of-duties policy. The mapping of these twelve properties to sections 4.3-4.10 is candidate design; the fitness assessment of BitRep (v1 verifier and custody profile), ODES DSSE and the Control Plane `producer_keys` pattern is not yet performed and no outcome is presumed.
+
 ### 4.1 Separation that must be preserved
 
 | Question | Answered by | Never answered by |
@@ -93,7 +98,7 @@ A valid digest is not authorization. A valid signature authenticates origin of t
 
 ### 4.2 Roles and trust roots (consumer-owned)
 
-Four roles, each a distinct key set in the consumer's trust configuration: **record author** (informational; may be unsigned), **record approver** (signs approval statements; Lane A lifecycle 1), **selection authority** (signs selection and revocation statements), **witness** (signs custody commitments; must not share an issuer or key with the selection authority, per the BitRep custody checks). Rules: the consumer's `TrustConfig` successor carries the role-to-key-snapshot mapping, supplied only by the operator's trusted channel, never from a record, manifest or repository, extending the S04 pin custody. `selection_authority != record_approver` unless the operator records a waiver (B-04). Self-signed rows are refused, mirroring `self_signed_revision_row`.
+Four roles (record approval and selection authorization are distinct authorities per section 4.0), each a distinct key set in the consumer's trust configuration: **record author** (informational; may be unsigned), **record approver** (signs approval statements; Lane A lifecycle 1), **selection authority** (signs selection and revocation statements), **witness** (signs custody commitments; must not share an issuer or key with the selection authority, per the BitRep custody checks). Rules: the consumer's `TrustConfig` successor carries the role-to-key-snapshot mapping, supplied only by the operator's trusted channel, never from a record, manifest or repository, extending the S04 pin custody. `selection_authority != record_approver` unless the operator approves an explicit separation-of-duties policy permitting it (B-04). Self-signed rows are refused, mirroring `self_signed_revision_row`.
 
 ### 4.3 Selection statement
 
@@ -101,7 +106,7 @@ One immutable signed object per selection revision. Required content (all fields
 
 `selection_id`; `epoch` (positive integer, strictly increasing per `selection_id`); exact `record_id`, `record_version`, `record_digest`, `file_sha256` (the S04 binding retained); `manifest` content digest if a separate manifest is kept; evaluator id, binding and Runtime source blob/sha256 (S04 retained); **consumer identity** (audience); **scope tuple** `{tenant_id, institution_id, authority_domain, operation/profile}`; `effective_from/until`; `supersedes` (digest of the previous selection revision); `revocation_ref`; `participation` (declared optional|mandatory, semantics owned by Lane C and the operator); `non_authorizing: true` (a selection is not an OCS execution grant or GCR admission).
 
-Authentication form (candidate, composition of existing parts): a BitRep v1 statement with `statement_type` `registry_selection` (new value; BitRep owner decision), `subject` `selection_id`, `audience` the consumer identity, `content_digest` the SHA-256 of the canonical selection bytes, plus a witness commitment under the Authority Digest Custody Profile. Because the custody claim has no scope field, scope and consumer are carried in the signed selection bytes and **compared by the consumer to its own configuration**; they are not trusted merely because the signature verifies. Alternative: ODES DSSE (B-01). The ODES DSSE and BitRep verifiers use different formats; choose one, do not add a third.
+Authentication form (candidate, composition of existing parts; direction per section 4.0, subject to the fitness assessment; ODES Ed25519 is equally eligible and no outcome is presumed): a BitRep v1 statement with `statement_type` `registry_selection` (new value; BitRep owner decision), `subject` `selection_id`, `audience` the consumer identity, `content_digest` the SHA-256 of the canonical selection bytes, plus a witness commitment under the Authority Digest Custody Profile. Because the custody claim has no scope field, scope and consumer are carried in the signed selection bytes and **compared by the consumer to its own configuration**; they are not trusted merely because the signature verifies. Alternative: ODES DSSE (B-01). The ODES DSSE and BitRep verifiers use different formats; choose one, do not add a third.
 
 Binding of manifest to record: the signed selection commits to `file_sha256` and `record_digest`; the consumer verifies those against the bytes it read (S04 behavior unchanged). Binding of selection to consumer and scope: audience equality and scope-tuple equality, mirroring `evidence_subject_mismatch` and `policy_tenant_mismatch` semantics. A tenant mismatch, or a tenant-less consumer receiving a tenant-scoped selection, refuses (mirrors `tenant_proposal_required`).
 
@@ -111,7 +116,7 @@ Trust roots are `TrustConfig`-class inputs: per-role BitRep trust snapshots (or 
 
 ### 4.5 Version pinning and `latest`
 
-Exact `(record_id, record_version, record_digest)` only. `latest_known_version` is the selection's version (P2, retained). Directory enumeration, newest-wins and "highest epoch among files" are prohibited. A newer epoch for one `(selection_id, scope)` takes effect only through the explicit approved supersession event of document 01 §3.3; it is never chosen because it is newer. Two verified selections that would both be effective for the same scope at one evaluation time refuse for both (`selection_epoch_conflict`), as in document 01 §3.3. The epoch floor (`min_epoch`) only rejects epochs below it. The final conflict rule remains subject to A-03.
+Exact `(record_id, record_version, record_digest)` only. `latest_known_version` is the selection's version (P2, retained). Directory enumeration, newest-wins and "highest epoch among files" are prohibited. A newer epoch for one `(selection_id, scope)` takes effect only through the explicit, attributable, approved selection-decision (supersession) event of document 01 §3.3-binding; a higher epoch alone never authorizes supersession and it is never chosen because it is newer. Documents 01 and 02 now agree on this. Two verified selections that would both be effective for the same scope at one evaluation time refuse for both (`selection_epoch_conflict`), as in document 01 §3.3-binding. The epoch floor (`min_epoch`) only rejects epochs below it. The final conflict rule remains subject to A-03.
 
 ### 4.6 Replay and rollback
 
@@ -167,16 +172,16 @@ Text read at pin `1c2e920f`. ADOPTION.md says publication or merge "does **not**
 | CA04, CA23, EP7 | "Machine assistance or a passing test cannot certify itself." Independence "wherever required" | Role separation (§4.2); the S04 Copilot exception does not extend (P3 text) |
 | CA14, Tier 1 | Authority, trust, authentication and negative-evidence custody are Tier 1 | Focused independent review before activation (R09 gate) |
 
-Plan v1.2 mapping: §3.1 selection object (identity, epoch, tenant/scope, interval, revocation reference, exact pins) = §4.3; §3.3 threat-model paragraph = §3; R09 tasks (trusted activation configuration, immutable approved selection manifests/pins/epochs, anti-rollback, selection revocation, key/identity management or approved equivalent, recovery) = §§4.2-4.10; R09 exit negatives (forged, altered, replayed, cross-tenant, expired, superseded, revoked, source substitution, stale cache, missing custody, rollback) are the acceptance targets for §4.10; R17 key compromise/rotation and loaded-code custody = §4.8 and B-09; R16 "no global authority ledger" = §4.12. Crosswalk: A2 (authority separation), A3 (separate lifecycles), A5 (atomic effective-policy binding, scope clarification), A10 (independent qualification). COG-REG-SHARED-ADD-01 was not read; shared-envelope conventions are Lane D/E territory.
+Plan v1.2 mapping: §3.1 selection object (identity, epoch, tenant/scope, interval, revocation reference, exact pins) = §4.3; §3.3-binding threat-model paragraph = §3; R09 tasks (trusted activation configuration, immutable approved selection manifests/pins/epochs, anti-rollback, selection revocation, key/identity management or approved equivalent, recovery) = §§4.2-4.10; R09 exit negatives (forged, altered, replayed, cross-tenant, expired, superseded, revoked, source substitution, stale cache, missing custody, rollback) are the acceptance targets for §4.10; R17 key compromise/rotation and loaded-code custody = §4.8 and B-09; R16 "no global authority ledger" = §4.12. Crosswalk: A2 (authority separation), A3 (separate lifecycles), A5 (atomic effective-policy binding, scope clarification), A10 (independent qualification). COG-REG-SHARED-ADD-01 was not read; shared-envelope conventions are Lane D/E territory.
 
 ## 6. Decisions raised
 
 | ID | Decision | Owner | Blocking consequence | PR #17 overlap |
 |---|---|---|---|---|
-| B-01 | Choose the authentication primitive: BitRep v1 plus custody profile, ODES DSSE Ed25519, or CP `producer_keys` pattern; or remain pin-only. Do not add a fourth | OCS Architect, then Operator | R09 cannot specify verification, tests or dependency footprint | D2 (pin-only, signed records, signed selections), V1 |
-| B-02 | Name the owner and procedure for issuer enrollment, key ceremony, secure time, trust-snapshot distribution and key storage (HSM/KMS or not) | Operator | No trust root exists; R09 activation gate cannot be met; T8 stays open | D2 |
-| B-03 | Whether records themselves need origin signatures, or whether authority via signed selection suffices | OCS Architect | Determines who signs approval statements and what Lane A lifecycle events require | D2, D3, V3 |
-| B-04 | Role separation: selection authority versus record approver versus witness; any waiver | Operator | "Independently authorized selection" (v1.2) is unenforceable | D2 |
+| B-01 | Authentication primitive. **RULED in direction (Architect ruling, not operator-approved):** asymmetric authenticated statement; prefer reuse of the OCS evidence-attestation or ODES Ed25519 contract; no fourth system; pin-only not general authorization. Remaining: bounded fitness/compatibility assessment of BitRep, ODES, CP `producer_keys`, and the choice | OCS Architect (verifier contract); independent security reviewer (qualification) | R09 cannot specify verification, tests or dependency footprint until the assessment concludes | D2 (ruled), V1 |
+| B-02 | Owner and procedure for trust-root custody, issuer enrollment, signing-key ownership, key ceremony, secure time, trust-snapshot distribution, key rotation and storage (HSM/KMS or not). **NOT adopted by the Architect ruling**; needs an operator-approved R09 mechanism | Operator | No trust root exists; R09 activation gate cannot be met; T8 stays open | D2 |
+| B-03 | Whether records themselves need origin signatures, or whether authority via signed selection suffices (the ruling requires record approval and selection authorization to be distinct authorities; record-signature need still open) | OCS Architect | Determines who signs approval statements and what Lane A lifecycle events require | D2, D3, V3 |
+| B-04 | Role separation. **RULED in principle (Architect ruling):** distinct authorities; one individual in several roles only under an explicit operator-approved separation-of-duties policy. Remaining: the policy itself, witness role and any waiver | Operator | "Independently authorized selection" (v1.2) is unenforceable until the policy exists | D2 |
 | B-05 | Anti-rollback state: configuration floor only, or consumer-side durable high-water mark | OCS Architect | Rollback tests (R09 exit) cannot be written; durable state adds new mutable state needing its own custody | none |
 | B-06 | Add scope/tenant to the BitRep custody claim, or carry it in signed selection bytes (convention) | OCS Architect with BitRep owner | Cross-tenant substitution protection depends on it; a profile change touches another component | V1 |
 | B-07 | Whether a selection may name an older record version (rollback as forward epoch) and how S03 `version_not_latest`/`supersedes` interact | OCS Architect with Lane A | Rollback and recovery procedures undefined; successor schema needed | D3 |
@@ -186,7 +191,7 @@ Plan v1.2 mapping: §3.1 selection object (identity, epoch, tenant/scope, interv
 | B-11 | External witness location and holder (signed tag in hub repo is the stated owner default for `witness-digest`) | Operator | Tamper visibility against the store writer is unavailable | none |
 | B-12 | Independent security review scope of authority-bearing paths before activation (G2) and qualifier identity | Operator | Gate G2 and R09 exit cannot close; Copilot review was scoped to S04 only | none |
 
-No decision is made by this document.
+No decision is made by this document beyond recording the Architect rulings above; none is operator-approved.
 
 ## 7. Risks and unresolved constraints
 

@@ -4,20 +4,22 @@ Purpose: specify candidate state machines for the three registry-lifecycle objec
 
 **Architectural preparation only. Candidate models, not normative. No implementation, approval, activation or qualification.**
 
+**Architect disposition applied (PR #18 review; Architect ruling, not operator-approved):** the RECORD / SELECTION / ACTIVATION division is adopted as the normative *successor architectural division* (A-01); the successor record uses event-derived lifecycle state (A-02). The transition tables, event vocabulary and storage representation below remain candidate R08/R09 implementation-contract work. Frozen `s03-v1` and `s04-v1` are unchanged. PR #13 and PR #17 are merged source evidence with provisional classifications (not adopted requirements).
+
 ## 1. Sources and revisions examined
 
 | Source | Pin |
 |---|---|
-| Registry repo `main` | `eb850c8d303961d099a123534121aeac280b242b` (verified `git rev-parse HEAD`) |
-| Plan v1.2 (`docs/plans/PROJECT_PLAN-v1.2.md`) §3.1, §3.3, R08, R09 | blob `32319775...` (as supplied; blob hash not recomputed) |
+| Registry repo `main` | `eb850c8d303961d099a123534121aeac280b242b` at original drafting; `main` is now `e3f5bbc32f957a10822a15a1b642e48c63d428e9` (adds merged PR #13 and #17); frozen S03/S04 files unchanged |
+| Plan v1.2 (`docs/plans/PROJECT_PLAN-v1.2.md`) §3.1, §3.3-binding, R08, R09 | blob `32319775...` (as supplied; blob hash not recomputed) |
 | Crosswalk A3, A4, A5 | blob `a53a5b31...` (as supplied) |
 | Frozen S03: `docs/s03-contract.md`, `registry_records/*.record.json`, `docs/s03-example-record.json` | at `eb850c8` |
 | Frozen S04: `registry_consumer/consumer.py`, `docs/s04-implementation.md`, `registry_records/*.manifest.json`, `docs/trust-limitations.md` | at `eb850c8` |
-| PR #17 `08-open-architectural-decisions.md` (D1-D13, V1-V9), `05-common-envelope-proposal.md` §2-4 | head `bdfb2b7268690d9406cc1de257dc6feede0fdb5a` (verified) |
+| PR #17 (merged, `e3f5bbc3...`) `08-open-architectural-decisions.md` (D1-D13, V1-V9, and the recorded Architect R07 rulings), `05-common-envelope-proposal.md` §2-4; PR #13 merged as `e20504df8d2c8ddf8b3944c0dabb0dcf5f1009b6` | Merged source evidence with provisional classifications; originally read at PR head `bdfb2b72...` |
 | ISS review: envelope-compatibility, transaction-binding, authority-crosswalk | ISS Core PR #12 head `547b9052...`, files in the eight ISS review documents (head not re-verified; the files cite PR #16 head `100aa407...`, i.e. they review a pre-adoption v1.2 draft) |
 | Constitution `ENGINEERING_CONSTITUTION.md` | `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b` (verified); CA03, CA05, CA06, CA12, CA15-CA22 read |
 
-Not inspected: COG-REG-SHARED-ADD-01; `ADOPTION.md` and `ORCHESTRATION.md` (so no claim of formal adoption is made); Control Plane / Runtime clones (this lane needs only the frozen baseline S03/S04 already pins; no divergence between S01/S02 pin and clone heads was examined); PR #13; the other five ISS review documents; S02 evidence directory.
+Not inspected: COG-REG-SHARED-ADD-01; `ADOPTION.md` and `ORCHESTRATION.md` by this lane (no claim of formal adoption is made; see 08 R-07); Control Plane / Runtime clones (this lane needs only the frozen baseline S03/S04 already pins; no divergence between S01/S02 pin and clone heads was examined); PR #13 content; the other five ISS review documents; S02 evidence directory.
 
 ## 2. Findings from source
 
@@ -34,6 +36,12 @@ F10 [EXISTING, source-asserted] Plan v1.2 §3.1 defines record lifecycle draft/v
 F11 [EXISTING, constitution text] CA18 (version, authenticate, review policy; protect invariants), CA17/CA19 (finality, only competent authority confers canonical standing; merge mechanics are not adoption), CA06 (retain supersession/adverse evidence), CA20 (scope, expiry, revocation), CA22 (rollback of decision config cannot reverse a committed effect), CA05 (missing/stale prerequisites never become approval or not-applicable), CA16 (no silent promotion of lifecycle labels). The constitution states no particular storage or rules engine is required.
 
 ## 3. Candidate contract / design [PROPOSAL throughout]
+
+### 3.0 Architect ruling A-01 / A-02 (Architect ruling, not operator-approved; implementation phase R08/R09)
+- The three objects are independent: record approval confers no selection authority; selection approval confers no execution authority; activation is consumer-owned; no machine silently confers another machine's authority.
+- Successor record content is immutable and versioned; record lifecycle transitions are separately evidenced; publication status is not operational activation.
+- Successor record lifecycle state is **event-derived**; a mutable in-record `active` declaration is never the authoritative activation decision. Supersession never mutates previously digested bytes; all supersession and withdrawal evidence is preserved.
+- Not settled by the ruling (R08/R09 work): final event vocabulary and storage representation, the exact transition tables in 3.2-3.4, and field names (see 3.10).
 
 ### 3.1 Cross-cutting rules (apply to all three machines)
 - C1 Each machine has its own state variable, owner, store, log and version counter. No machine reads another machine's state as a precondition of *its own* transition except through an exact, digest-pinned reference (see 3.5).
@@ -62,7 +70,7 @@ F11 [EXISTING, constitution text] CA18 (version, authenticate, review policy; pr
 Allowed transitions (REQUIRED set): draft->validated; draft->withdrawn (abandon); validated->approved; validated->draft (rejected, with reason; new version required to proceed); approved->published; approved->withdrawn; published->superseded; published->withdrawn; superseded->archived; withdrawn->archived; superseded->withdrawn (defect found later). 
 PROHIBITED: any transition skipping a state (draft->approved, validated->published, draft->published); approved/published->draft (no un-publish into draft: use withdrawn); superseded->published or withdrawn->published (reinstatement = new record_version); any transition out of archived; any state change performed by the record's own content; self-approval by author; supersession by an unapproved/unpublished successor; supersession as a side effect of digest `supersedes` pointer alone (the pointer is a claim, the event is the fact); deletion of any state or event.
 
-Archived = removed from default discovery and retained under CA06 retention; archival is not erasure; authorized erasure is a separate governed decision (plan §3.3 non-forgetting; GCR-owned for cognitive material).
+Archived = removed from default discovery and retained under CA06 retention; archival is not erasure; authorized erasure is a separate governed decision (plan §3.3-binding non-forgetting; GCR-owned for cognitive material).
 
 ### 3.3 SELECTION machine (candidate states: proposed, approved, effective, withdrawn, revoked, expired)
 
@@ -74,7 +82,7 @@ Archived = removed from default discovery and retained under CA06 retention; arc
 | Preconditions | proposed: exact `(record_id, record_version, record_digest)` refs for each record, evaluator `(id, revision, build/source identity)`, consumer_domain, tenant/scope, requested interval, participation mode (mandatory/optional, per operation: V5 open). proposed->approved: every referenced record is `published` and not `withdrawn` at approval time (checked, recorded, but the dependency is one-way: see X-3); composition check passes (unknown composition REFUSES); approver independence satisfied. approved->effective: authenticated epoch published AND `valid_from` reached under the authority's clock AND no revocation event. |
 | Version increments | A selection is immutable once approved. Any change of pins, scope or interval = new `selection_revision` with strictly increasing `epoch` per `(selection_id, consumer_domain, scope)`; old epoch goes to `withdrawn` (planned replacement) by event. Anti-rollback: consumers hold a high-water epoch (Lane D/C interface); an older epoch is refused (R09 anti-rollback). |
 | Effective-time rules | Interval `[valid_from, valid_until)` lives here only. `expired` is derived: evaluation_time >= valid_until, with an explicit event recorded when observed. No `valid_until` = perpetual only if the approver explicitly states "no expiry" (PR #17 05 open (a)); default absent interval = not effective. No retroactive interval edits. |
-| Supersession | A newer epoch for the same scope supersedes the older one only by explicit approved event, never because it is newer. At most one `effective` epoch per `(consumer_domain, scope, family, operation)` at an evaluation time; two overlapping effective = conflict = REFUSE for both (CA05; no tie-break by recency). |
+| Supersession | A newer epoch for the same scope supersedes the older one only by an explicit, attributable, approved selection-decision event, never because it is newer: a higher epoch alone never authorizes supersession (document 02 section 4.5 states the same rule; Copilot finding 1 was an inconsistency there, now aligned). At most one `effective` epoch per `(consumer_domain, scope, family, operation)` at an evaluation time; two overlapping effective = conflict = REFUSE for both (CA05; no tie-break by recency). |
 | Revocation | `revoked` = authority or approver declares the selection invalid immediately, for cause (compromise, defect, authority loss). Distinct from `withdrawn` (orderly end) and `expired` (time). A `withdrawal_or_revocation_ref` points at the authenticated event. Revocation reaches consumers via a revocation check at activation and at commit/effect boundary (Lane C/D). Revocation does not reverse committed effects (CA22); compensation needs distinct authority. |
 | Evidence commitments | Approval, interval, pins, revocation events hash into a selection log; the selection manifest digest is what ACTIVATION binds. Rejected proposals and objections retained. |
 | Retry/recovery | Approval is not retried automatically. A lost-publication selection (approved, epoch not published) stays `approved` and is not effective. Epoch publication is idempotent by digest. Revocation publication failure is an incident: the authority log is the truth; consumers with stale view are bounded by the freshness rule from Lane D. |
@@ -112,7 +120,7 @@ PROHIBITED: skipping validated or applicable; committed without recorded revalid
 ### 3.6 Coexistence of the frozen `s03-v1` `active` gate and a successor format [PROPOSAL; cross-reference D3, V3, no decision]
 1. `s03-v1` is frozen: `contract_version` selects the validator. The successor uses a distinct `contract_version` value; `s03-v1` records continue to be judged by the unchanged S03 validator and S04 consumer (check #4 `contract_unsupported` already refuses any other version in the frozen validator, so successor records cannot be accepted by frozen code by accident).
 2. For `s03-v1` the in-record `status` remains the only activity signal and the gate is unchanged: only `active` accepted. In this world RECORD state, SELECTION (manifest pin) and activity are conflated by design; this is the documented frozen limitation, not extended.
-3. A successor record omits an activity-bearing `status` (or restricts it to author intent such as `proposed`/`withdrawn`, the option PR #17 05 §2 floats; D3 remains open). Lifecycle position comes from the RECORD event log (3.2), activity from SELECTION (3.3). A consumer of a successor record MUST NOT read any record field as activation.
+3. A successor record carries no mutable activity-bearing `status`: lifecycle position is event-derived from the RECORD event log (3.2) and activity comes from SELECTION (3.3) (Architect ruling A-02; D3 ruling: publication status confers no authority, frozen `s03-v1` status validation is preserved). Whether an author-intent field such as `proposed`/`withdrawn` may exist (the option PR #17 05 §2 floats) is not ruled. A consumer of a successor record MUST NOT read any record field as activation.
 4. Bridge for legacy records, if ever wanted [PROPOSAL, optional, needs D3 ruling]: a SELECTION may pin an `s03-v1` record (digest + file hash, as in S04). The frozen gate then acts as an additional *record-level precondition inside ACTIVATION validated*, in addition to and never instead of selection effectiveness. Selection `effective` + record `status != active` => refuse (existing behavior). Selection `effective` + record `active` => proceed. Record `active` alone => nothing (this is consistent with F4: S04's manifest is the real gate).
 5. Legacy `status: superseded|withdrawn` in `s03-v1` records are, per F3, only expressible as new bytes with new digests. They are honored by the frozen validator if presented, but the successor lifecycle does not rely on them: legacy supersession/withdrawal is expressed by SELECTION withdrawal and by the new machine's events keyed to the legacy digest.
 6. No frozen text, test, schema or semantics is rewritten. The successor adds a new contract; the frozen contract is read by reference. Migration of a record from `s03-v1` to successor is a new record_version authoring through the RECORD machine, not a status change.
@@ -129,6 +137,9 @@ PROHIBITED: skipping validated or applicable; committed without recorded revalid
 | EVIDENCE | Domain evidence custodian; registry holds only record/selection logs | appended, never mutated; retention state: retained/expired-by-authorized-policy | None; custody only |
 Lanes B, C and D define mechanics for EVALUATION/ADMISSION/COMMIT/EVIDENCE; this lane only fixes ownership and separation. Exact states for the last four are domain-owned and not specified here beyond the above.
 
+### 3.8a Field names used in this document (for harmonization, 08 R-11; not normative)
+SELECTION: `selection_id`, `epoch` (also written `selection_revision`), `consumer_domain`, `scope`, `family`, `operation`, `valid_from`/`valid_until`, `withdrawal_or_revocation_ref`, exact pins `(record_id, record_version, record_digest)`, evaluator `(id, revision, build/source identity)`, participation mode. RECORD events: `machine`, `object id`, `from-state`, `to-state`, `actor`, `authority reference`, `predecessor event digest`, `artifact digest`. Document 02 uses `selection_id`, `epoch`, `consumer identity` (audience), `scope tuple`, `effective_from/until`, `revocation_ref`, `supersedes`.
+
 ### 3.8 Interfaces expected from other lanes
 - I-B1 (Lane B): authenticated record-event, I-B2 authenticated selection-event/manifest with approver identity and role evidence, I-B3 consumer-side verification against trusted configuration; key/identity lifecycle and revocation-of-signers (signer revoked => events after revocation invalid; events before remain historically valid).
 - I-C1 (Lane C): consumer entry points returning typed refusals per activation state; participation mode per operation; no-discovery rule retained.
@@ -141,30 +152,30 @@ Unknown state, unknown transition, missing authority roster, unauthenticated eve
 | Topic | Constitution (read) | Plan v1.2 | Crosswalk |
 |---|---|---|---|
 | Three-object separation, independent lifecycles | CA18, CA19 (merge/validation is not adoption) | §3.1, R09 | A3 |
-| Immutable history, supersession ancestry | CA06, CA17, CA22 | §3.1 "immutable history", §3.3 non-forgetting | A3, A6 (GCR-owned) |
-| Authenticated policy and approvals | CA18, CA20, CA23 | §3.5 threat model (section 3.3 duplicate-numbered heading in the plan), R09 | A4 |
+| Immutable history, supersession ancestry | CA06, CA17, CA22 | §3.1 "immutable history", §3.3-binding non-forgetting | A3, A6 (GCR-owned) |
+| Authenticated policy and approvals | CA18, CA20, CA23 | §3.3-threat-model (the second heading numbered 3.3; duplicate-numbered heading in the plan), R09 | A4 |
 | Versioning, boundary compatibility | CA12, CA15, CA21 | R08 (successor schema distinct from S03), §7 | A4 |
-| Fail closed without inventing policy; stale/unknown not approval | CA05 | §3.3, R10 | A5 |
+| Fail closed without inventing policy; stale/unknown not approval | CA05 | §3.3-binding, R10 | A5 |
 | Revocation, expiry, delegated scope | CA20 | §3.1 selection, R09 | A3 |
-| Committed effects not reversed by config rollback | CA22 | §3.3 | A5 |
+| Committed effects not reversed by config rollback | CA22 | §3.3-binding | A5 |
 | No label promotion | CA16 | §6 gates | n/a |
 Plan sections: R08 (successor contract, status, effective time, selection pin), R09 (three lifecycles, anti-rollback, revocation), R10 (activation, effect-time boundary), R16 (cross-domain). Not mapped: R11-R15, R17-R18 beyond dependency.
 
 ## 5. Decisions raised
 | ID | Decision | Owner | Blocking consequence | PR #17 overlap |
 |---|---|---|---|---|
-| A-01 | Adopt the three-machine split and the allowed/prohibited transition sets (3.2-3.4) as normative, or amend | Operator / OCS Architect | R08 schema `status`/event fields and R09 build cannot start; Lane B/C/D cannot freeze interfaces | V3, V1 |
-| A-02 | Record `status` in successor format: absent, author-intent only, or event-derived | Operator / OCS Architect | Successor schema cannot be written | D3, V3 |
-| A-03 | Selection granularity: per operation vs per consumer profile; one-effective-per-scope rule and conflict handling | OCS Architect | Selection key and conflict rule undefined; Lane C wiring blocked | V5, V1 |
-| A-04 | Independent-review level for record approval and selection approval of Tier-1 families; approver roster and independence rule | Operator / Independent qualifier | Approved/effective cannot be reached legitimately for any Tier-1 family | D13, D2 |
+| A-01 | Three-machine split: **RULED (Architect ruling, not operator-approved)** as the normative successor architectural division. Remaining: adopt or amend the allowed/prohibited transition sets (3.2-3.4) and event vocabulary | OCS Architect | Transition tables and event vocabulary cannot freeze; R08 schema event fields and R09 build cannot start | V3, V1 |
+| A-02 | Record `status` in successor format: **RULED (Architect ruling, not operator-approved)** event-derived, no authoritative mutable in-record `active`. Remaining: storage representation and whether any author-intent field exists | OCS Architect | Successor schema cannot be written until representation is set (R08/R09) | D3 (ruled), V3 |
+| A-03 | Selection-scope key and one-effective-per-scope rule and conflict handling (participation is per operation: settled by v1.2, 08 R-05) | OCS Architect | Selection key and conflict rule undefined; Lane C wiring blocked | V5, V1 |
+| A-04 | Independent-review level for record approval and selection approval of Tier-1 families; approver roster and independence rule (D13 ruling: an independent Tier 1 qualification owner is mandatory before activation and is not yet designated) | Operator / Independent qualifier | Approved/effective cannot be reached legitimately for any Tier-1 family | D13, D2 |
 | A-05 | Perpetual selections (no `valid_until`) permitted? Default absent interval | Operator | Effective-time rule cannot be finalised | PR #17 05 open (a) |
 | A-06 | Effect of a pinned record becoming `withdrawn` or `superseded` on an `effective` selection (refuse activation vs selector-decides) | OCS Architect with GCR owner | Revocation semantics and Lane D revalidation inputs undefined | none |
 | A-07 | Whether the legacy bridge (3.6 item 4) is wanted at all, or `s03-v1` stays S04-only | Operator | Only affects migration; no blocking elsewhere | D3 |
-| A-08 | Mandatory vs optional activation profile existence | Operator | Held/refused semantics for mandatory cannot be specified; frozen S04 stays optional overlay | D7, V5, V6 |
+| A-08 | Mandatory vs optional activation profile existence (D7 ruling: a mandatory profile is permitted as a design capability, not authorized for activation; required-policy failure must not fall back to a broader caller policy) | Operator | Held/refused semantics for mandatory cannot be specified; frozen S04 stays optional overlay | D7, V5, V6 |
 | A-09 | Builder confirmation of F3 (status in digest makes in-place supersession impossible) | Builder-routine | Justification of C2 rests on an unexecuted inference | none |
 | A-10 | Retention/archival and erasure authority (who may archive, legal hold) | Operator | `archived` semantics incomplete | V7 |
 
-Dependencies on open S02/PR #17 classifications: any family-specific selection or record approval depends on D1 (the 32 unresolved S02 rows, including W8-091, W3-063, W9-027, W8-014, W6-042 and the 60-versus-300 relationship) being classified; this lane's state machines are family-independent but no family record may reach `approved` while its D1 rows are open. D2 (authentication choice) gates every authenticated transition; this lane assumes only the Lane B interface.
+Dependencies on open S02/PR #17 classifications (merged source evidence with provisional classifications; D1 and D6 remain open, D5 is unresolved by Architect ruling): any family-specific selection or record approval depends on D1 (the 32 unresolved S02 rows, including W8-091, W3-063, W9-027, W8-014, W6-042 and the 60-versus-300 relationship) being classified; this lane's state machines are family-independent but no family record may reach `approved` while its D1 rows are open. D2 (authentication choice) gates every authenticated transition; this lane assumes only the Lane B interface.
 
 ## 6. Risks and unresolved constraints
 - The machines are candidates; the ISS review lists them only as "candidate contract requirements", and the ISS S04 fixture itself is a hardcoded synthetic selection (envelope review, mapping table). Nothing here is observed in an implementation beyond the frozen S03/S04 fields in F1-F9.

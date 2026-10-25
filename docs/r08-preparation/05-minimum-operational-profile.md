@@ -11,12 +11,12 @@ Purpose: propose the smallest credible operational profile (v1.2 §3.4) that wou
 | Registry repo `main` (read from the repository checkout) | `eb850c8d303961d099a123534121aeac280b242b` (verified by rev-parse) |
 | Plan v1.2 §1, §2, §3.1-3.4, R07-R11, §7; crosswalk A1-A10 | blobs `32319775...`, `a53a5b31...` (not re-hashed here; paths as brief) |
 | `docs/s03-contract.md`, `s04-implementation.md`, `trust-limitations.md`, `s02-inventory.md` §3-§7, `s06-next-family-recommendation.md`, `source-provenance.md` | at `eb850c8` |
-| PR #17 `docs/registry-schema-analysis/` 04, 06, 08 (D1-D13, V1-V9), 09 | head `bdfb2b7268690d9406cc1de257dc6feede0fdb5a` |
+| PR #17 `docs/registry-schema-analysis/` 04, 06, 08 (D1-D13, V1-V9, Architect R07 rulings), 09 | read at head `bdfb2b72...`; merged to `main` as `e3f5bbc3...` (PR #13 merged as `e20504df...`). Status: **MERGED SOURCE EVIDENCE, WITH PROVISIONAL CLASSIFICATIONS**; proposals and classifications are not adopted requirements |
 | Execution Runtime clone | `c5e97e87dd239c821b1b4a406a55dcd03c5bc61f` (rev-parse verified). `engine/safe_executor.py` blob at clone head is `2fc880dae37eac76e5074533435740ce0684209d`, equal to the S01/S03 pin at `ec728da6` (also stated in source-provenance.md line 14) |
 | Control Plane clone | `7a4bcd40b3b49e61ff3c294dcca53b52f460b22c`; grep only for `LocalExecutionPolicy` |
 | Constitution | `1c2e920f...`, CA14, CA18, CA05 and the Tier table read in `ENGINEERING_CONSTITUTION.md` |
 
-Not inspected: `COG-REG-SHARED-ADD-01` (unavailable; cited only through plan v1.2 and crosswalk); PR #13; PR #17 docs 02, 03, 05, 07 beyond what 04/06/08/09 state; GCR review documents; other lanes' outputs; the full S05 raw evidence; Control Plane `bounded.py`/`freshness.py`/`runtime_authority.py` internals; the older Control Plane pin `0a41faa9`. The S01/S02 Runtime pin `ec728da6` was not fetched; the equality of the safe_executor blob rests on source-provenance.md plus the identical blob at the clone head.
+Not inspected: `COG-REG-SHARED-ADD-01` (unavailable; cited only through plan v1.2 and crosswalk); PR #13 content; PR #17 docs 02, 03, 05, 07 beyond what 04/06/08/09 state; GCR review documents; other lanes' outputs; the full S05 raw evidence; Control Plane `bounded.py`/`freshness.py`/`runtime_authority.py` internals; the older Control Plane pin `0a41faa9`. The S01/S02 Runtime pin `ec728da6` was not fetched; the equality of the safe_executor blob rests on source-provenance.md plus the identical blob at the clone head.
 
 ## 2. Findings from source
 
@@ -76,7 +76,23 @@ Honest reading: the *registry functions* are exercised by the path (selection, a
 
 ### 3.3 Recommendation (not a decision)
 
-**[PROPOSAL]** Smallest complete profile: **Option 1 families, but with the complete operational path** (required-participation successor consumer, authenticated selection, activation with epoch and revalidation, revocation, negative battery, Runtime wiring in the safe emulator, independent qualification). Reasons: F1a is the plan's candidate floor; the S05 machinery exists; a larger family set exercises no further lifecycle function; the real gaps in "operational" are in the path (finding 10, findings 3 and 5), not family count.
+**[PROPOSAL, matches Architect recommendation]** The OCS Architect recommends Option 1 (F1a: `allowed_units`, `allowed_actions`, `allowed_adapters`) as the initial MSOP candidate, because it is the smallest family set with an existing bounded evaluator and differential-development evidence. A working registry is defined by the COMPLETE governed lifecycle, not three policy fields. The candidate must include all fourteen elements below; omitting any means the profile is not the recommended candidate.
+
+| # | Required element | # | Required element |
+|---|---|---|---|
+| 1 | Authenticated selection | 8 | Explicit deny-all |
+| 2 | Versioned successor contract | 9 | Selection revocation |
+| 3 | Registered and checked evaluator | 10 | Effective-policy binding |
+| 4 | Independent record and selection approval | 11 | Commit-boundary revalidation |
+| 5 | Consumer-owned activation | 12 | Negative evidence |
+| 6 | Required-participation operation class | 13 | Independent qualification |
+| 7 | Optional-participation operation class | 14 | Synthetic/emulator-only execution |
+
+Participation is selected per operation (settled by v1.2). For a required operation, missing or invalid policy never reverts to the potentially broader caller policy. The optional class keeps the frozen S04 behavior, labelled "overlay not applied". F1b is the preferred first additional extension after the foundational path works (PR #17 D11 ruling: an architectural priority, not permission to implement or activate).
+
+**State and adoption gate:** this is an architectural recommendation. **The operator has NOT adopted the MSOP; no activation is authorized.** Owners: OCS Architect (profile specification), Operator (MSOP adoption), independent qualifier (acceptance evidence; not yet designated, see 06 F-01). Remaining adoption gate: operator adoption of an exact profile after R07/R08 (v1.2 section 3.4), with the open decisions in section 5 ruled.
+
+**Deny-all and refusal distinctions (Architect E-03 design requirement; five cases with distinct observable outcomes).** (1) A valid empty permissible set means deny all values for that one policy dimension. (2) An absent field means what the typed family contract says. (3) An invalid or unrecognized record refuses. (4) A missing required selection must not fall back to a broader caller policy. (5) An optional overlay refusal keeps the documented frozen S04 behavior (caller policy unchanged, not denial). Deny-all is not expressed by a fabricated target, a sentinel permission or an invalid schema, and no universal deny-all interpretation across families is authorized. Frozen S03 still refuses empty lists (finding 10); the successor contract is R08 work. Reasons: F1a is the plan's candidate floor; the S05 machinery exists; a larger family set exercises no further lifecycle function; the real gaps in "operational" are in the path (finding 10, findings 3 and 5), not family count.
 
 Option 2 is the cheapest **additive** step (S06 recommendation; PR #17 09 row 3; D11), and is reasonable if the operator wants institution/authority-domain scope exercised in the first profile. It should be chosen on that ground, not on the ground that it adds registry functions. Option 3 is not the smallest: include F4 or F5 only if the operator requires the Control Plane to be a registry consumer in the MSOP; both are blocked by open classifications. The required-participation profile cannot be built by reusing frozen S04 (finding 10).
 
@@ -96,15 +112,15 @@ No implicit `latest`; no activation from merge, status, digest or repository pre
 
 ## 4. Constitutional and v1.2 mapping
 
-CA18 (version, authenticate, review policy; protect invariants; fail closed on missing/unsupported records; independent review proportionate), CA14 (least privilege, bounded environment, enabled-path security review), CA05 (missing/stale prerequisites must not become approval). Tier 1 row (authority, admission) applies to F1, F4, F5, F6 (s02 §3). Plan mapping: §3.4 (MSOP), §3.1 (three objects), §3.2 (deny-all, participation), §3.3 (binding), R07 gate (operator adopts migration profile), R08 (contract and profile discovery), R09-R10 (selection, mandatory/optional integration), R11 (each family separately authorized and qualified), R17. Crosswalk: A9 (candidate, not adoption), A10, A3, A5, A7, A8.
+CA18 (version, authenticate, review policy; protect invariants; fail closed on missing/unsupported records; independent review proportionate), CA14 (least privilege, bounded environment, enabled-path security review), CA05 (missing/stale prerequisites must not become approval). Tier 1 row (authority, admission) applies to F1, F4, F5, F6 (s02 §3). Plan mapping: §3.4 (MSOP), §3.1 (three objects), §3.2 (deny-all, participation), §3.3-binding (binding), R07 gate (operator adopts migration profile), R08 (contract and profile discovery), R09-R10 (selection, mandatory/optional integration), R11 (each family separately authorized and qualified), R17. Crosswalk: A9 (candidate, not adoption), A10, A3, A5, A7, A8.
 
 ## 5. Decisions raised
 
 | ID | Decision | Owner | Blocking consequence | PR #17 overlap |
 |---|---|---|---|---|
-| E-01 | Adopt Option 1, 2 or 3 as the candidate MSOP | Operator | R08 contract scope and R09-R11 sequencing cannot be fixed; no operational claim is possible | D11, V6 |
-| E-02 | Is a **required-participation** profile in the MSOP (and for which operation classes)? | Operator | Without it the MSOP can only be an optional overlay, so a refusal leaves a broader caller policy and "fully working" item 2 is not met | D7, V5 |
-| E-03 | Deny-all expression and empty-record semantics in the successor contract | Operator / OCS Architect | Required profile cannot be specified; S03 refuses empty lists | V4 |
+| E-01 | Adopt the candidate MSOP. Architect recommends Option 1 (F1a) with the complete governed lifecycle (3.3); operator has not adopted it. Owners: OCS Architect (specification), Operator (adoption), independent qualifier (acceptance evidence) | Operator | R08 contract scope and R09-R11 sequencing cannot be fixed; no operational claim is possible | D11, V6 |
+| E-02 | Which operation classes are required vs optional in the MSOP (participation per operation is settled by v1.2; a mandatory profile is a permitted design capability under the D7 ruling, not authorized for activation; required-policy failure must not fall back to a broader caller policy) | Operator | Without it the MSOP can only be an optional overlay, so a refusal leaves a broader caller policy and "fully working" item 2 is not met | D7, V5 |
+| E-03 | Successor-contract expression of the five distinct cases in 3.3 (Architect design requirement accepted; final vocabulary is R08 work) | OCS Architect | Required profile cannot be specified; S03 refuses empty lists | V4 |
 | E-04 | Is Control Plane a required registry consumer in the MSOP? (If yes, F4 or F5 enter and are blocked) | Operator / OCS Architect | If yes: blocked on W6-042, 60-versus-300 (F4) or W8-014 (F5) | D1 |
 | E-05 | Named Runtime construction site and owner approval to add a registry hook | OCS Architect / Runtime owner | No real consumer integration; the profile remains standalone | none |
 | E-06 | Execution environment declared as safe-emulator (synthetic SQLite) only | Operator | Otherwise the profile cannot honestly be called supported; no production path exists | none |

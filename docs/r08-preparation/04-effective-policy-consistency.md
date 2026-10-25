@@ -5,12 +5,13 @@ Purpose: define a candidate policy-consistency tuple and the changed-condition b
 Architectural preparation only. Candidate models, not normative. No implementation, approval, activation or qualification.
 
 ## 1. Sources and revisions examined
-- Registry repo `eb850c8` (rev-parse verified). Plan v1.2 §3.3 "Atomic effective-policy binding and non-forgetting" and §3.2 floors bullet; crosswalk rows A5, A6 (`PROJECT_PLAN-v1.2-REVIEW-CROSSWALK.md`).
+- Registry repo `eb850c8` (rev-parse verified). Plan v1.2 §3.3-binding "Atomic effective-policy binding and non-forgetting" and §3.2 floors bullet; crosswalk rows A5, A6 (`PROJECT_PLAN-v1.2-REVIEW-CROSSWALK.md`).
 - ISS review `gcr-registry-transaction-binding.md` (PR #12 head `547b9052`; it cites v1.2 PR #16 head `100aa407` and ISS main `f6723d54`; reference only).
 - Control Plane clone head `7a4bcd40`: `local_authority_effect.py`, `runtime_authority.py`, `freshness.py`, `schemas/runtime_authority_reasons_0_1.json` / `_0_2.json`. Runtime clone head `c5e97e87`: `engine/local_authority_effect.py`, `atomic_local_control_plane_executor.py`, `effective_grant.py`, `local_authority_effect_recovery.py`.
 - S01/S02 pins fetched and compared: Runtime `ec728da6`, Control Plane `0a41faa9`. Differences relevant here: Runtime head adds terminal approval revocation (`authority_approval_revocations_v1`, `_approval_revoked`, checked at provisioning and at commit); Control Plane head differs from the pin by one small change in `local_authority_effect.py` (10 lines, content not analysed). All other cited behavior I saw only at the clone heads. Assume nothing about the pin beyond the diff checked.
 - Constitution `1c2e920f` text read: CA03, CA05, CA06, CA07, CA12, CA16, CA18, CA20, CA21, CA22, plus the CA table intro. No formal adoption inferred.
-- PR #13 `unresolved.md` rows W8-091, W3-063, W9-027; PR #17 §08 D1–D13 (read, not restated).
+- PR #13 `unresolved.md` rows W8-091, W3-063, W9-027; PR #17 §08 D1–D13 (read, not restated). Both PRs are now merged (PR #13 `e20504df8d2c8ddf8b3944c0dabb0dcf5f1009b6`, PR #17 `e3f5bbc32f957a10822a15a1b642e48c63d428e9`): **MERGED SOURCE EVIDENCE, WITH PROVISIONAL CLASSIFICATIONS**; not adopted requirements.
+- Baselines kept separate (Architect LD-06): HISTORICAL = S01/S02 pins; CURRENT CANDIDATE = Runtime `c5e97e87dd239c821b1b4a406a55dcd03c5bc61f`, Control Plane `7a4bcd40b3b49e61ff3c294dcca53b52f460b22c` (re-verified). No integration baseline is selected; R10 selects one; see `10-source-revision-reconciliation-and-review-closure.md`.
 - NOT inspected: COG-REG-SHARED-ADD-01 (unavailable); `revocation_closeout.py` internals beyond its header; Control Plane `dedupe.py`/`merge.py` semantic bodies; the Control Plane decision/approval resolution path beyond claim materialization; any registry-consumer code path (registry S04 overlay) for effect-time use; GCR/ISS Core code (access-limited); the older Control Plane pin diff beyond stat.
 
 ## 2. Findings from source
@@ -26,7 +27,7 @@ Architectural preparation only. Candidate models, not normative. No implementati
 10. [DEV-TESTED, not re-run by this lane] Control Plane `freshness.py` cites `tests/test_freshness.py` for the 2x age window. Not otherwise verified; no tests were executed.
 11. [EXISTING] S04 registry consumer is an optional overlay; a refused overlay returns caller policy unchanged (brief; frozen). It has no effect-time path. Not established: any existing registry-to-effect-boundary binding. [EXISTING] ISS review itself states S04's `policy_reference` has no authenticated selection epoch, revocation check or atomic binding.
 
-## 3. OCS-owned versus GCR-owned (v1.2 §3.3, A5/A6, ISS transaction-binding)
+## 3. OCS-owned versus GCR-owned (v1.2 §3.3-binding, A5/A6, ISS transaction-binding)
 | Item | OCS | GCR | Registry |
 |---|---|---|---|
 | Effect-time recheck of grant, approval, revocation, evidence, freshness, budget, dedupe | Owns (component code; plan §3.2 keeps these in component code) | No | None |
@@ -35,7 +36,7 @@ Architectural preparation only. Candidate models, not normative. No implementati
 | Exact selection, record, evaluator identity as data | Consumes via adapter | Consumes via adapter | Supplies and custodies (once defined by Lanes A, B) |
 | Same authorized selection bound to admission and commit | Must bind in its own transaction | Must bind in its own transaction | Cannot do it for either |
 | Cross-domain atomicity | Not claimed | Not claimed | Not claimed |
-OCS must not reuse GCR cognitive admission as a grant, and a registry selection is not an OCS execution grant (plan §3.3; ISS table row "Cross-system OCS effect"). A5 scope clarification: no global atomic commit; ISS S04 pin does not qualify transaction-time revalidation. A6 legal erasure/retention is a later explicit domain ruling; this lane does not decide it.
+OCS must not reuse GCR cognitive admission as a grant, and a registry selection is not an OCS execution grant (plan §3.3-binding; ISS table row "Cross-system OCS effect"). A5 scope clarification: no global atomic commit; ISS S04 pin does not qualify transaction-time revalidation. A6 legal erasure/retention is a later explicit domain ruling; this lane does not decide it.
 
 ## 4. Candidate design [PROPOSAL]
 ### 4.1 Policy-consistency tuple (candidate, OCS-domain view)
@@ -54,21 +55,33 @@ OCS must not reuse GCR cognitive admission as a grant, and a registry selection 
 | 11 | `evidence_commitment` | Commitment over members 1-10 as recorded, written with the effect |
 The tuple is two distinct things: (a) an **admission-time pin** frozen with the claim, and (b) a **commit-time observation** written by the destination under its lock. Equality of (a) and (b) members 1-6 is checked at commit; member 9 is re-read, not copied.
 
-### 4.2 Binding point without a competing check
-- Pre-existing check order stays; no second validator. [PROPOSAL] Bind the registry members as an additional exact-match term inside the existing claim: i.e. extend the claim's `policy_state` projection (today `{ref, version, status}`) with selection id/epoch, record id/version/digest and evaluator identity, committed by the existing `policy_state_commitment`, and extend the destination's authoritative `authority_policies_v1` row and `_validate_claim_state` policy loop to compare them under `BEGIN IMMEDIATE`. The selection-writer would be a trusted authority writer like `set_policy_state`. This reuses the existing atomic path; the registry supplies data and the OCS destination decides.
-- **Open binding gap (selection expiry):** a selection can expire between evaluation and commit without changing its epoch, digests or the policy row, so identity equality alone does not enforce document 01 §3.4's commit-time validity requirement. Closing it needs either a lock-held validity check against trusted time in the destination, or constraining the claim's validity interval to the authenticated selection interval. Neither exists; this is registered as an unresolved gap (new decision LD-09), not solved here.
+### 4.2 Binding point without a competing check (amended; F1 guarantee UNQUALIFIED)
+- A registry selection is **not an OCS execution grant** (Architect C-03/LD-01). The earlier proposal to extend the claim's grant-derived `policy_state` row with selection fields is withdrawn as a preferred design: the grant policy row is grant authority, and modelling a selection as a grant policy merely because that path revalidates atomically would blur two authorities.
+- Required instead (R10, OCS Architect with Runtime and Control Plane owners): an explicit integration design that keeps six things distinct: A selection authentication, B effective policy evaluation, C OCS grant authorization, D pre-commit policy applicability, E effect commitment, F evidence recording (ownership table: document 03 section 4.1). It must show **either** re-evaluation of the effective policy within a supported atomic boundary, **or** an independently defensible binding protocol that prevents a policy change from widening the executable operation between check and effect.
+- **UNQUALIFIED:** `LocalExecutionPolicy.check` runs before the atomic claim transaction (`atomic_local_control_plane_executor.py:69`; transaction at `local_authority_effect.py:782`, revision `c5e97e87`). Selection identifiers compared at commit would detect a changed identity; they would not by themselves establish that every F1 restriction was atomically revalidated. Until the design above exists, the F1 authority-to-effect guarantee is UNQUALIFIED. An evidence-only reference does not prove the selected policy remained authorized at commit, and a recorded policy digest does not prove atomic evaluation.
+- Candidate tuple members 1-6 of 4.1 remain the exact-match data a future binding would compare; where they would be compared is the open design (LD-01).
 - [PROPOSAL] Record the commit-time policy and approval state commitment in the authority receipt (today only the grant state commitment is recorded, finding 3) so evidence shows what was actually checked.
-- Alternative not recommended: a separate registry check before dispatch. It would be a competing check with a window (finding 8) and would risk being read as authorization. If used at all it is advisory pre-screening only.
-- Dependency: the claim, destination schema and receipt are Control Plane/Runtime contracts. Any change needs OCS Architect approval and a successor profile; it is not authorized here.
+- **Open binding gap (selection validity):** selection validity at initial admission is insufficient if it changes before effect commitment. A selection can expire between evaluation and commit without changing its epoch, digests or any policy row, so identity equality alone does not enforce document 01 section 3.4's commit-time validity requirement. Closing it needs a lock-held validity check against trusted time in the destination, or constraining the claim's validity interval to the authenticated selection interval. Neither exists; registered as LD-09, not solved here.
+- Not recommended: a separate registry check before dispatch (a competing check with a window, finding 8, at risk of being read as authorization); a second OCS authority engine. Any claim, destination schema or receipt change belongs to the Control Plane/Runtime owners and needs a successor profile; not authorized here.
 
-### 4.3 Term definitions (candidate)
-| Term | Definition | Existing mapping (do not treat as approved) |
-|---|---|---|
-| REFUSE | Pre-effect, deterministic, final for this operation instance: no effect, no claim consumed, recorded with a closed reason code. A new attempt needs a new independently evaluated operation/claim. | `denied` result; `current_authority_rejected` / `local_policy_rejected`; reason codes `policy_*`, `grant_*`, etc. |
-| DENY | An authoritative negative decision on the merits by the owning domain (policy evaluated and not permitting; revoked or withdrawn authority). A subset of REFUSE with negative evidence. Distinct from an optional overlay's refusal returning caller policy, which is NOT denial. | `grant_revoked`, `policy_superseded`, `approval_not_active`; the `authority_hold` failure class is named hold but is mapped to DENY/HOLD per cause: unresolved |
-| HOLD | No effect and no final decision because a required fact is unknown, unreadable or unresolvable now; the operation stays pending and may be re-evaluated only as a new evaluation under the same or newer pin; never converts to permit by timeout or fallback. For an in-doubt effect (possible commit), HOLD means reconcile first. | `policy_status_unknown`, `status_unreadable`, `context_unknown_requires_hold`, `check_overdue`; reconcile `hold`; `unknown` result |
-| RETRY | A new transaction started under a freshly resolved pin, with a new attempt identity and new evaluation, after REFUSE/HOLD cleared. Never a replay of the old decision, never automatic for an in-doubt effect. | Existing `retry_eligible: False` on unknown outcomes; retry rules depend on W3-063/W9-027 |
-Mandatory profile: HOLD/REFUSE, no permissive fallback (plan §3.3). Optional profile: truthful "no overlay applied" record, per approved participation only. Mapping of REFUSE vs DENY vs HOLD onto the existing `failure_class` values is not settled by source; the destination's free-text errors need a mapping decision. No new reason codes are proposed as approved; any selection/epoch/evaluator code requires the separately versioned vocabulary process (plan §3.2; D8).
+### 4.3 Outcome semantics and crosswalk to existing components (controlling candidate for documents 03, 06)
+
+**Conceptual outcomes** (Architect LD-02; candidate wording, independent of any component's codes):
+- **REFUSE:** a registry input, selection, authentication, composition or evaluator contract cannot be accepted.
+- **DENY:** a valid, applicable policy prohibits the requested action.
+- **HOLD:** execution cannot safely proceed because authority, evidence, required policy or current applicability is unavailable or unresolved.
+- **RETRY:** a new, independently evaluated attempt may be made after a transient or changed condition. RETRY is never permission to reuse a stale approval, selection, evidence or authorization, is never automatic for an in-doubt effect, and needs a new attempt identity.
+
+**Crosswalk to existing component classes** (descriptive of source at `c5e97e87` / `7a4bcd40`; not a new vocabulary, not approved, and component-specific distinctions are preserved):
+
+| Conceptual | Runtime (local / atomic executor) | Control Plane | S04 overlay (frozen) |
+|---|---|---|---|
+| REFUSE | Registry-side input rejection has no Runtime code today; construction refusals (`ValueError` without policy) | Reason codes for unknown/unadopted status (`policy_status_unknown`, `policy_binding_mismatch`) apply to grant policy refs, not registry inputs | any refusal: caller policy unchanged, `overlay_applied False` ("not applied", NOT denial) |
+| DENY | `denied` with `failure_class="policy_denial"`, `reason_code="local_policy_rejected"` when `LocalExecutionPolicy.check` rejects | `deny` outcome is declared, emitted only by one adapter (document 06 finding 9) | not applicable |
+| HOLD | `denied` + `authority_hold` + `current_authority_rejected` on commit-time `PermissionError` (name says hold, outcome field says denied: mapping unsettled); `unknown` with reconciliation when commit is in doubt; reconcile `hold` with `retry_eligible: False` | `hold` with reason codes (`policy_status_unknown`, `status_unreadable`, `policy_stale_or_changed`, `context_unknown_requires_hold`) and `EffectTimeRefusal` rows | not applicable (optional profile never holds) |
+| RETRY | `retry_eligible: False` on unknown outcomes; retry rules depend on W3-063 and W9-027 (open) | new decision under freshly resolved inputs; dedupe rules open | not applicable |
+
+Rules: an uncertain authority state is not classified as ordinary policy DENY where the existing component requires HOLD or another bounded refusal; commit-time `PermissionError` free text is not a closed reason code; mapping REFUSE/DENY/HOLD/RETRY onto these classes is decision LD-02 for the OCS Architect with the Runtime and Control Plane owners (R10, qualified in R17); no universal reason vocabulary and no change to existing Runtime or Control Plane outcomes is proposed; any selection/epoch/evaluator reason code needs the separately versioned vocabulary process (D8; R07 ruling keeps 0.1 and 0.2 distinct). Mandatory profile: merged R07 ruling D7 permits it as a design capability, not for activation; required-policy failure must not fall back to a broader caller policy. Optional profile: truthful "overlay not applied" record only.
 
 ### 4.4 Prohibited behaviors
 - Treating a matching record digest, PR merge, record status or repository presence as current authorization.
@@ -81,7 +94,7 @@ Mandatory profile: HOLD/REFUSE, no permissive fallback (plan §3.3). Optional pr
 ## 5. Race / changed-condition table [PROPOSAL, built on findings]
 | Condition | Detection point | Required behavior | Evidence recorded | Remains unproven |
 |---|---|---|---|---|
-| Mid-execution selection withdrawal | Commit-time policy row compare in destination (4.2); [EXISTING] only for `policy_state` status/version | REFUSE/DENY before commit (mandatory); if effect already committed, no rollback claim (CA22): record as completed-before-withdrawal | Failure record with closed code; receipt with commit-time commitment | Withdrawal ordering vs commit across the registry store and effect DB; selection withdrawal feed to destination is not built |
+| Mid-execution selection withdrawal | Commit-time applicability check (design open, 4.2; F1 UNQUALIFIED); [EXISTING] only for grant-policy `policy_state` status/version | REFUSE/DENY before commit (mandatory); if effect already committed, no rollback claim (CA22): record as completed-before-withdrawal | Failure record with closed code; receipt with commit-time commitment | Withdrawal ordering vs commit across the registry store and effect DB; selection withdrawal feed to destination is not built |
 | Selection expires mid-flight (interval ends between evaluation and commit; epoch and digests unchanged) | Not detected by identity comparison; needs a lock-held validity check or interval-constrained claim (4.2 gap) | REFUSE before commit if the check exists; otherwise not detected and must be stated, not assumed | Expected interval end, trusted `checked_at` | Trusted time source (F-06); no such check exists |
 | Concurrent selection update (epoch bump) | Epoch inequality at commit | REFUSE; RETRY only as new operation under new pin | Old pin, observed epoch, refusal | Epoch semantics (Lane A); who writes the destination row |
 | Revoked grant | [EXISTING] grant row + retained revoked set under lock | DENY (`grant_revoked` class codes) | [EXISTING] failure record; receipt only on success | Cross-host revocation propagation; holder-inventory scope |
@@ -96,14 +109,14 @@ Mandatory profile: HOLD/REFUSE, no permissive fallback (plan §3.3). Optional pr
 | Duplicate / retried operation | [EXISTING] attempt-id uniqueness, claim consumption, operation-identity guard (opt-in) | REFUSE duplicate; RETRY only per definition | Attempt rows | W3-063 (key-forgetting TTL) and W9-027 (applied/unresolved definitions) open; effect cap origin W8-091 open |
 
 ## 6. Constitutional and v1.2 mapping
-- Plan: R09/R10/R16 (§3.3 binding, crosswalk A5); R07/R08 MSOP (§3.4); A6 non-forgetting; floors in component code (§3.2). Constitution: CA05 (fail closed without inventing policy: no invented codes), CA07 (bind to exact source and governing context), CA12/CA21 (mandatory floors and boundary semantics), CA18 (authenticated governance policy), CA20 (scoped delegation, revocation), CA22 (rollback is not reversal of committed effect), CA06, CA16 (no label promotion).
+- Plan: R09/R10/R16 (§3.3-binding, crosswalk A5); R07/R08 MSOP (§3.4); A6 non-forgetting; floors in component code (§3.2). Constitution: CA05 (fail closed without inventing policy: no invented codes), CA07 (bind to exact source and governing context), CA12/CA21 (mandatory floors and boundary semantics), CA18 (authenticated governance policy), CA20 (scoped delegation, revocation), CA22 (rollback is not reversal of committed effect), CA06, CA16 (no label promotion).
 
 ## 7. Decisions raised
 | ID | Decision | Owner | Blocking consequence | PR #17 overlap |
 |---|---|---|---|---|
-| LD-01 | Whether to extend the OCS claim/destination policy row (4.2) or define a separate binding | OCS Architect | No effect-time registry binding can exist; plan R10 only describable | D7, V-series (not restated) |
-| LD-02 | Mapping of REFUSE/DENY/HOLD/RETRY to existing `failure_class` and reason codes; whether commit-time errors move from free text to closed codes | OCS Architect | Evidence cannot be machine-compared; no new code may be assumed | D8 |
-| LD-03 | Mandatory vs optional participation for the F1 effect profile | Operator | Fail-closed behavior cannot be claimed | D7 |
+| LD-01 | **Architect: amended.** Selection is not a grant; design a separate applicability binding with re-evaluation in an atomic boundary or a no-widening binding protocol; F1 guarantee UNQUALIFIED until then | OCS Architect with Runtime and Control Plane owners (R10) | No effect-time registry binding can exist; F1 stays UNQUALIFIED | D7, V2 |
+| LD-02 | **Architect: accepted with amendments.** Conceptual outcomes separate from component mapping (4.3); no universal vocabulary | OCS Architect / Runtime and Control Plane owners (R10; qualified R17) | Evidence cannot be machine-compared; no new code may be assumed | D8 |
+| LD-03 | Mandatory vs optional participation for the F1 effect profile (participation is per operation, v1.2; D7 permits mandatory as design capability, not activation) | Operator | Fail-closed behavior cannot be claimed | D7 |
 | LD-04 | Selection withdrawal propagation to the destination's authority table (writer, trust, ordering) | OCS Architect, Operator | Withdrawal detection point has no source | D2 |
 | LD-05 | Receipt content: add policy/approval state commitment and selection tuple | OCS Architect | Evidence cannot show what was checked | none |
 | LD-06 | Compatibility of terminal approval revocation with S01 pin consumers | Operator | Pin-vs-head behavior differs | none |
@@ -117,6 +130,7 @@ Mandatory profile: HOLD/REFUSE, no permissive fallback (plan §3.3). Optional pr
 - Lane C: integration points where the Control Plane/Runtime adapters obtain the tuple and where the OCS authority writer receives selection state.
 
 ## 9. Risks and unresolved constraints
+- F1 authority-to-effect guarantee: UNQUALIFIED (4.2).
 - Decision IDs in this document are written `LD-nn` so they cannot be confused with PR #17 D1-D13.
 - Binding limit for F1 (integration note): the registry-derived `LocalExecutionPolicy` values are evaluated by `policy.check` before the claim, outside the atomic transaction (lane C 03 §3.4). A tuple member compared at commit detects a changed selection/record/evaluator identity; it does not re-evaluate the narrowed allow-lists inside the transaction, and it exists only if the selection is modelled as a policy row the destination reads (03 C-03). Neither is a source fact today.
 - The effect boundary today does not know the registry; every "bind" here is a proposal needing OCS source change and approval.

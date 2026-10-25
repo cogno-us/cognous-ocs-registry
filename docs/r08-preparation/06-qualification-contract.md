@@ -9,11 +9,11 @@ Architectural preparation only. Candidate models, not normative. No implementati
 | Source | Revision | Used for |
 |---|---|---|
 | Registry repo `main` | `eb850c8d303961d099a123534121aeac280b242b` (rev-parse confirmed) | S03 contract and tests, S04 consumer and tests, S05 spec, report, `tests/s05_expectations.json`, `docs/trust-limitations.md` |
-| Plan v1.2, crosswalk | blobs `32319775…`, `a53a5b31…` | R09, R10, R17, section 3.3/3.4, gates G2–G6, A10 |
+| Plan v1.2, crosswalk | blobs `32319775…`, `a53a5b31…` | R09, R10, R17, section 3.3-binding/3.4, gates G2–G6, A10 |
 | Constitution | `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b` (rev-parse confirmed, text read) | EP7, CA04, CA05, CA16, CA18, CA23, "How the articles work together" section 4, risk tiers, evidence discipline |
 | `cognous-stack-qualification` | `998d39c5ba1c9d537be8289f7658f2e9cde6cbba` | README, `docs/execution-contract.md`, `docs/refusal-test-template.md`, `docs/release-gate/pre-registration.md`, `docs/adversarial-test-plan.md`, suite layout |
 | ISS review qualification plan | PR #12 head `547b9052…`, `gcr-registry-qualification-plan.md` | Q01–Q15 GCR scenarios, ISSBench V2 ownership |
-| PR #17 `registry-schema-analysis/` | head `bdfb2b72…` | `07-schema-qualification-plan.md` (successor validation scenarios), `08` D1–D13, V1–V9 |
+| PR #17 `registry-schema-analysis/` | head `bdfb2b72…`; merged to `main` as `e3f5bbc3…` (PR #13 as `e20504df…`): **MERGED SOURCE EVIDENCE, WITH PROVISIONAL CLASSIFICATIONS**, not adopted requirements | `07-schema-qualification-plan.md` (successor validation scenarios), `08` D1–D13, V1–V9 |
 | Control Plane clone | `7a4bcd40…` (head; S01/S02 pin was `0a41faa9…`, not diffed) | `docs/runtime-authority-profile.md`, `EffectTimeRefusal` in `bounded.py` |
 
 Not inspected: COG-REG-SHARED-ADD-01 (unavailable; cited only through plan v1.2 and the crosswalk); the effect-boundary definitions of REFUSE/HOLD/DENY/RETRY were taken from document 04 after integration (this lane first drafted working definitions, since replaced); ISSBench V2 repository itself (only the ISS review's description of it); Runtime head `c5e97e87…` effect path; the Control Plane diff between the g8-r10 pin and head; GitHub Actions evidence of any run.
@@ -51,7 +51,7 @@ Not inspected: COG-REG-SHARED-ADD-01 (unavailable; cited only through plan v1.2 
 
 ### 4.1 Outcome vocabulary
 
-REFUSE, DENY, HOLD and RETRY are used exactly as defined in `04-effective-policy-consistency.md` section 4.3 (candidate, pending decision LD-02). In particular RETRY is a new transaction under a freshly resolved pin with a new attempt identity, never a replay and never automatic for an in-doubt effect. Under the optional profile the outcome of every record, selection and activation row below is "overlay not applied, caller policy stands" (frozen S04), recorded as such and never as DENY. Outcomes marked "mandatory" are [PROPOSAL] and depend on an approved successor contract and consumer. Cell values below that say "HOLD or RETRY" mean HOLD, with RETRY only as defined in 04 section 4.3.
+REFUSE, DENY, HOLD and RETRY are the conceptual outcomes defined in `04-effective-policy-consistency.md` section 4.3, which keeps them separate from existing component failure-class and reason-code mappings (Architect LD-02 ruling; the 04 rewrite is owned by another workstream, and matrix cells here must be reconciled to it). Qualification expectations name the conceptual outcome and the component mapping separately. In particular RETRY is a new transaction under a freshly resolved pin with a new attempt identity, never a replay and never automatic for an in-doubt effect. Under the optional profile the outcome of every record, selection and activation row below is "overlay not applied, caller policy stands" (frozen S04), recorded as such and never as DENY. Outcomes marked "mandatory" are [PROPOSAL] and depend on an approved successor contract and consumer. Cell values below that say "HOLD or RETRY" mean HOLD, with RETRY only as defined in 04 section 4.3.
 
 ### 4.2 Reuse, not a new system
 
@@ -112,7 +112,7 @@ Read in the Constitution at `1c2e920f…`: EP7 (separate contribution, inspectio
 ## 8. Before Tier 1 families can be activated: what a qualifier needs
 
 [PROPOSAL] checklist; each item is a precondition, not something this document grants.
-1. A designated independent qualifier (person or organisation) for OCS-side Tier 1 registry families, distinct from the builder and from Copilot, with recorded independence from authors. Operator decision (PR #17 D13, still open). Without it S05 limits carry over and G4 cannot be met.
+1. A designated independent Tier 1 qualification lead for OCS-side registry families. **Required; owner not yet designated; the operator designates** (Architect F-01 ruling; PR #17 D13 ruling: mandatory before activation). The lead is distinct from the builder and from Copilot, with recorded independence from authors, and: independently owns expected outcomes; approves the test oracle; checks source and evaluator pins; executes or supervises qualification; preserves negative findings; reports limitations; issues a bounded verdict. The builder cannot self-certify Tier 1 readiness. `cognous-stack-qualification` is the preferred OCS infrastructure but is not itself an independent qualification authority; no new organization or repository is needed merely to name a lead. Without a lead, S05 limits carry over and G4 cannot be met.
 2. For GCR implementation profiles, ISSBench V2's owner designated as qualifier for the GCR side, as in A10 (the ISS plan names ISSBench V2; its repository was not inspected).
 3. An approved MSOP (v1.2 section 3.4; PR #17 V6) naming rule families, evaluator/build pins, consumers, optional-or-mandatory per operation, selection and custody mechanism, tenant scope and excluded capabilities. Rows QM-09 and QM-04 cannot be specified without it.
 4. A successor contract and authenticated selection custody (R09) in a form that can be attacked; today only a byte pin exists.
@@ -125,7 +125,7 @@ Read in the Constitution at `1c2e920f…`: EP7 (separate contribution, inspectio
 
 | ID | Decision | Owner | Blocking consequence | PR #17 overlap |
 |---|---|---|---|---|
-| F-01 | Designate the independent qualifier for OCS Tier 1 registry families (identity, independence from builder and Copilot, scope) | Operator | G4 sign-off, R17 verdict, any `[QUALIFIED]` label, activation of any Tier 1 family | D13 (cross-reference, not restated) |
+| F-01 | Designate the independent Tier 1 qualification lead (REQUIRED, not yet designated; duties in section 8 item 1; phase R11/R17, before any operational acceptance) | Operator | G4 sign-off, R17 verdict, any `[QUALIFIED]` label, activation of any Tier 1 family | D13 (cross-reference, not restated) |
 | F-02 | Confirm ISSBench V2 as the GCR-side qualifier and whether OCS and GCR rows run under one coordinator with separate oracles | GCR owner, Operator | R15, G5, cross-domain claims | V7; ISS plan |
 | F-03 | Approve REFUSE/HOLD/DENY/RETRY definitions (Lane D) and confirm the Control Plane `hold` convention for required profiles | OCS Architect | QM expected outcomes cannot freeze; row expectations for QM-06, 07, 09, 15–21 | V5 |
 | F-04 | Rule on whether builder-authored S05 expectations may be re-approved by the qualifier or must be re-derived | Independent qualifier | Reuse of S05 R/E/X cases as independent evidence | none |

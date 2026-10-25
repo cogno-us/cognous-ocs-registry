@@ -6,27 +6,27 @@ Architectural preparation only. Candidate models, not normative. No implementati
 
 ## 1. Sources and revisions examined
 
-Registry `main` `eb850c8d303961d099a123534121aeac280b242b`; plan v1.2 blob `32319775...`; crosswalk blob `a53a5b31...`; documents 01-08 of this directory; PR #13 head `2a2fb9c6...` and PR #17 head `bdfb2b72...` as provisional inputs; Constitution `1c2e920f...`. Control Plane/Runtime revisions and the ISS review pin are listed in 08 section 1. COG-REG-SHARED-ADD-01 was not available and was not inspected. No tests were run for this PR.
+Registry `main` `e3f5bbc32f957a10822a15a1b642e48c63d428e9` (documents first drafted against `eb850c8d303961d099a123534121aeac280b242b`); plan v1.2 blob `32319775...`; crosswalk blob `a53a5b31...`; documents 01-08 of this directory; PR #13 (merge `e20504df...`) and PR #17 (merge `e3f5bbc3...`) as MERGED SOURCE EVIDENCE, WITH PROVISIONAL CLASSIFICATIONS; the Architect disposition of PR #18 (08 section 3a); Constitution `1c2e920f...`. Control Plane/Runtime historical and current revisions are kept separate (10). COG-REG-SHARED-ADD-01: text and digest not established in this repository (11); not inspected. No tests were run for the amendment revision.
 
 ## 2. Readiness verdict
 
-**Not ready for implementation.** The architecture is specified well enough to take to operator and OCS Architect rulings (08 section 9); it is not specified well enough, and does not have the authority, to build. Reasons, each traceable to a document:
+**Precise verdict: NOT READY FOR IMPLEMENTATION; READY FOR ARCHITECTURAL REVIEW.** No R08 or R09 implementation, family migration, activation, pin approval or production integration is authorized. The F1 authority-to-effect guarantee is UNQUALIFIED. The first increment below is a candidate that may begin only after the operator separately authorizes it and the R08 contract decisions are complete. The architecture is specified well enough to take to operator and OCS Architect rulings (08 section 9); it is not specified well enough, and does not have the authority, to build. Reasons, each traceable to a document:
 
 | Area | State | Why not ready |
 |---|---|---|
-| Successor contract and lifecycles (01) | Candidate state machines and ownership table | A-01, A-02, E-03, E-09 unruled; plan R08 gate (operator approves contract version and scope) not passed |
-| Authentication and custody (02) | Candidate trust model; existing primitives identified; no new infrastructure demonstrated | B-01, B-02, B-04 unruled; no trust root, no enrolled issuer, no approved pin (T8) |
-| Consumer integration (03) | Existing boundaries located with file:line; candidate interfaces I1-I4 | No call site for the consumer exists; host integrator unnamed (C-01); Runtime/Control Plane not authorized to change |
-| Effective-policy consistency (04) | Candidate tuple and race table | Needs a successor profile at the OCS destination (LD-01, LD-05); F1 binding limit (08 R-06) |
-| Minimum operational profile (05) | Three options compared; Option 1 path recommended as a proposal | Operator has not adopted an MSOP (E-01); mandatory profile unauthorized (C-02, G-07) |
-| Qualification (06) | 22-row matrix and qualifier preconditions | No independent qualifier designated (F-01/D13); ten matrix rows have no existing coverage |
-| GCR boundary (07) | Shared candidates, matrix N-01..N-17, GCR-owner questions | GCR-owner rulings absent; the addendum text is unavailable (G-09) |
+| Successor contract and lifecycles (01) | Candidate state machines and ownership table | A-01, A-02 and E-03 ruled architecturally, implementation contract and E-09 still open; plan R08 gate (operator approves contract version and scope) not passed |
+| Authentication and custody (02) | Candidate trust model; existing primitives identified; no new infrastructure demonstrated | B-01 and B-04 ruled in direction; B-02 not adopted; fitness assessment of ODES/BitRep/Control Plane facilities not done; no trust root, no enrolled issuer, no approved pin (T8) |
+| Consumer integration (03) | Existing boundaries located with file:line; candidate interfaces I1-I4 | No call site for the consumer exists; production host owner deferred to the operator (C-01); emulator profile needs a named synthetic adapter; Runtime/Control Plane not authorized to change |
+| Effective-policy consistency (04) | Candidate tuple and race table; selection is not a grant (Architect) | Needs an integration design for F1 (check occurs before the atomic transaction: UNQUALIFIED); LD-01, LD-05, LD-09; Runtime/Control Plane owners |
+| Minimum operational profile (05) | Three options compared; Option 1 path recommended as a proposal | Option 1 (F1a) recommended by the Architect; operator has not adopted an MSOP (E-01); mandatory profile permitted as a design capability, activation unauthorized (D7) |
+| Qualification (06) | 22-row matrix and qualifier preconditions | Independent qualification lead required but not designated (F-01/D13); ten matrix rows have no existing coverage |
+| GCR boundary (07) | Shared candidates, matrix N-01..N-17, GCR-owner questions | GCR-owner rulings absent; addendum text and digest not established in the repository (G-09; 11) |
 
 ## 3. Preconditions by phase
 
 | Phase | Must be true before implementation starts |
 |---|---|
-| R07 | PR #13 and PR #17 adjudicated by their owners; D1, D10 ruled; operator adopts a migration profile |
+| R07 | Merged inventory classifications adjudicated by their owners (D1, D5, D6, D12 open); addendum custody (D10); operator adopts a migration profile |
 | R08 | Operator approves successor contract version and scope; GCR Architect preliminary disposition; lifecycle, status and deny-all rulings (A-01, A-02, E-03, E-09); MSOP candidate adopted (E-01) |
 | R09 | B-01..B-04, B-12 ruled; trust root and issuer enrollment procedure exist; independent security reviewer named; lifecycle approver roster (A-04) |
 | R10 | C-01, C-03, LD-01, LD-02, LD-06 ruled; Runtime/Control Plane owners approve any hook or profile change; mandatory behavior only with an approved successor contract and independently qualified consumer; production path inactive |
@@ -35,7 +35,7 @@ Registry `main` `eb850c8d303961d099a123534121aeac280b242b`; plan v1.2 blob `3231
 
 ## 4. Recommended first implementation increment (proposal, after R07/R08 approval)
 
-[PROPOSAL] Smallest increment that proves a piece of the path without touching OCS components or activating anything: **a registry-repository-only successor-contract validator and selection-statement verifier for the F1a three-field family, as pure functions of operator-held inputs, with deny-all and unknown-composition refusal, and no Runtime or Control Plane wiring, no activation and no pin approval.** Its oracle and expected results would be authored by the designated independent qualifier before the candidate runs (F-01), reusing the S05 machinery only where the qualifier re-approves expectations (F-04). It would exercise QM-01, QM-02 (partially), QM-05, QM-08, QM-11, QM-13 and QM-14 of 06 and leave QM-04, QM-06, QM-07, QM-09, QM-12, QM-15..QM-22 to later increments. It depends on B-01 and B-10 for the verification primitive and dependency footprint. This is a recommendation for the operator's consideration only; no increment is authorized by this PR.
+[PROPOSAL] Smallest increment that proves a piece of the path without touching OCS components or activating anything: **an Architect-accepted candidate only: a registry-repository-only successor-contract validator and selection-statement verifier for the F1a three-field family, as pure functions of operator-held inputs, with deny-all and unknown-composition refusal, and no Runtime or Control Plane wiring, no activation and no pin approval.** Its oracle and expected results would be authored by the designated independent qualifier before the candidate runs (F-01), reusing the S05 machinery only where the qualifier re-approves expectations (F-04). It would exercise QM-01, QM-02 (partially), QM-05, QM-08, QM-11, QM-13 and QM-14 of 06 and leave QM-04, QM-06, QM-07, QM-09, QM-12, QM-15..QM-22 to later increments. It depends on B-01 and B-10 for the verification primitive and dependency footprint. It must not begin until the operator separately authorizes it and the R08 contract decisions are complete, and a validator-only increment must not be described as a fully operational registry. No increment is authorized by this PR.
 
 ## 5. Acceptance-criteria self-check (what this PR does and does not establish)
 
@@ -59,8 +59,8 @@ Registry `main` `eb850c8d303961d099a123534121aeac280b242b`; plan v1.2 blob `3231
 - Same-host file or database access can bypass Python modules (Runtime `docs/execution-boundary.md`); a signed selection does not defend a compromised host (02, 04).
 - Loaded-code integrity (T5) is unaddressed unless B-09 is approved.
 - Effect-time identity binding records what was checked; only the lock-held recheck over rows the destination reads establishes authority, and only within one SQLite database (04).
-- Pin-versus-head divergence in Runtime/Control Plane behavior (08 R-09, LD-06).
-- The ISS review was written against a pre-merge v1.2 text (08 R-08).
+- Pin-versus-head divergence in Runtime/Control Plane behavior (08 R-09, LD-06, 10); no integration baseline selected.
+- The ISS review was written against a pre-merge v1.2 text; merged v1.2 controls (08 R-08).
 - Independence is a property of named actors; the existing qualification repository concedes it cannot establish independence from inside the repository (06).
 - No evidence in this PR is [QUALIFIED], [APPROVED] or [PRODUCTION].
 
