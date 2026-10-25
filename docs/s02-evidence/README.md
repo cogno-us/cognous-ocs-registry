@@ -1,0 +1,3 @@
+# S02 worker evidence (raw, unverified except where docs/s02-inventory.md says otherwise)
+
+Raw per-worker inventory tables W1 to W9 (620 rows), produced by builder-coordinated Claude workers with disjoint file ownership against exact pins (Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, Control Plane `0a41faa972699f7ec3063967a14cd9bdd3e67d27`). Preserved as evidence (Constitution CA06); not independently reviewed. Row classes and risk tiers are worker-assigned and provisional; several workers did not read the Constitution text. The integrated, builder-verified view is `docs/s02-inventory.md`. Nothing here is qualification.
