@@ -56,3 +56,52 @@ Family dispatch table and `r08-v2` five-set payload; integer-second and capped-m
 6. **`r08-v2` preserves `r08-v1` behaviour** (strict superset; golden outputs byte-identical) and all 46 registry outcomes require safe mappings (REFUSE, DENY, HOLD or RETRY), enforced by a completeness test.
 7. **Emulator host belongs to the registry, not the qualification repo**, so the independent oracle never tests its own fixture.
 8. **Durable selection state needs custody and anti-rollback qualification**; it is never seeded from a claim.
+
+## Schema-readiness for policy on/off management (acceptance criterion for future Ergonomics integration)
+
+Status: documentation-level requirement. It adds **no UI, no V1 field, no per-field toggle and no operator decision**; the approved eight fields and atomic Route B scope are unchanged. It makes sure the typed contracts already planned can later back a management surface (`cognous-open-control-stack-ergonomics`) without a second authorization mechanism. Verified against `registry_successor/` at `258a165`: `r08-v1` has no activation and no withdrawal vocabulary (record `status` is deliberately absent; `operationally_authorized` is always `False`; only the frozen legacy `r08-s03` record has `status`).
+
+### The four distinctions: owner, field, and what is already there
+
+| Distinction | Owner | Typed field and closed values | Status today |
+|---|---|---|---|
+| SELECTED / NOT_SELECTED (per scope: tenant, institution, authority domain, operation, family) | Selection issuer, signed in the `r08-v2` selection statement | Selected = a verified, in-window, head-of-chain selection with `disposition = select`. Not selected = none verified for the scope (`selection_missing`) or the head is `disposition = withdraw` (`selection_withdrawn`) | Positive selection exists (`selection.py` statement). **Withdrawal is missing: smallest additive change below (A1)** |
+| REQUIRED / OPTIONAL | Selection statement and the caller, per operation | `participation` in `{required, optional}` (`common.PARTICIPATION`); mismatch is `participation_mismatch`; decision kinds `applied`, `applied_deny_all`, `overlay_not_applied` (optional only, caller unchanged), `required_policy_unavailable` (required only, never the caller policy). Consumer ratchet `scope_required` (never cleared by selection or UI) | **Present. No change.** |
+| ACTIVE / INACTIVE | Enforcing component only (ADR-REG-TR01); never stored in the registry | Activation-state row per scope key with closed `activation_state` in `{active, withdrawn, revoked}`; no row = not activated; closed log `entry_type` in `{activate, withdraw, revoke, sync}` in the hash-chained activation log | Activation is planned (`EXT-S4-0`, `EXT-S4-2`) but the **state vocabulary is unspecified: smallest additive change below (A2)** |
+| ENABLED / DISABLED (future UI) | Presentation only | **No stored field.** A pure mapping from the derived `policy_state` below | Absent by design; mapping fixed here (A3) |
+
+### Distinct lifecycle states (disabled, absent, revoked, expired, superseded)
+
+| State | Where it comes from | Distinguishing code or field |
+|---|---|---|
+| absent / not selected | no verified selection for the scope | `selection_missing` (registry); no activation row |
+| selected, not activated | verified selection, no consumer activation row | no row; the guard refuses with the consumer's activation-unavailable code and never evaluates the selection |
+| active | row `activation_state = active`, in window, epoch equals the row and is at or above the high-water | none (success path; identity recorded in evidence) |
+| withdrawn (the "disabled" state) | authenticated `disposition = withdraw` selection at a strictly higher epoch, applied by the consumer | `selection_withdrawn` (registry), `activation_state = withdrawn` (consumer) |
+| revoked | terminal revocation entry for `(selection_id, epoch)`; never resurrected by reactivation or lineage | `selection_revoked`, `issuer_key_revoked`; `activation_state = revoked` mirrors the terminal table |
+| expired / not yet valid | `effective.valid_until` / `valid_from` against the lock-time clock | `selection_expired`, `selection_not_yet_effective`, `trust_snapshot_expired` |
+| superseded | a higher epoch exists for the scope; derived, never stored | `selection_epoch_stale`, `selection_conflict`, `selection_supersession_invalid` |
+| unknown | state unreadable, restored from an older copy, or publication unacknowledged (DT-04) | fail closed; never rendered as active |
+
+### Derived read model: `policy_state`
+
+`policy_state` is a closed enum **computed on read and never stored, never accepted as input and never authoritative**: `not_selected`, `selected_not_activated`, `active`, `withdrawn`, `revoked`, `expired`, `not_yet_valid`, `superseded`, `unknown`. Precedence when several apply: `unknown`, `revoked`, `withdrawn`, `superseded`, `expired` / `not_yet_valid`, `active`. Each value carries the closed reason code from the table above. A conformance function (pure, in the `EXT-S1-8` kit) defines it once so that every consumer and the UI derive the same value.
+
+### Smallest additive changes (no new booleans, no per-field toggle)
+
+- **A1 (selection withdrawal), owner `EXT-S1-1` ADR, implemented in `EXT-S1-2`/`S1-5`:** the new `r08-v2` selection statement carries a closed `disposition` in `{select, withdraw}`. A `withdraw` statement must name a prior selection (`supersedes` required and strictly lower epoch), carries no record pin, and signs under the same `r08-v2` domain. It resolves to the new code `selection_withdrawn`, whose decision is the ordinary one for the participation: `overlay_not_applied` for optional (caller policy unchanged) and `required_policy_unavailable` for required (refuse or hold, never the caller policy, never success). `CODES_V2` is therefore the 46 `r08-v1` codes plus the additions the ADR enumerates: `trust_snapshot_version_stale` and `selection_withdrawn`. `r08-v1` bytes and behaviour are untouched (additive successor, R8).
+- **A2 (activation vocabulary), owner `EXT-S4-0` ADR, implemented in `EXT-S4-2`:** the activation-state row carries `activation_state` in `{active, withdrawn, revoked}` and the activation log carries `entry_type` in `{activate, withdraw, revoke, sync}`. A transition is written only by the existing `activate_selection` or `sync` writers from an authenticated selection, withdrawal or revocation; there is **no local-only writer and no UI-writable column**. Withdrawal or activation at an epoch not strictly greater than the row is refused; reactivation of a revoked epoch is refused. The ADR also reconciles the table names to one set and records the high-water table (the plan names high-water state in `EXT-S1-8` and the residual risks).
+- **A3 (presentation mapping), owner `EXT-S4-0` ADR (doc only):** ENABLED = `active`. DISABLED = `withdrawn` or `not_selected`. Revoked, expired, superseded, not-yet-valid and unknown render with their own reason and are never shown as a plain toggle state. For a **required** scope a withdrawn, revoked or expired policy is shown as "REQUIRED, UNAVAILABLE: operations refuse", never as "disabled".
+- **Not changed:** `participation` stays the only required/optional source; `EffectivePolicyIdentity` stays immutable and carries no state; `scope_required` stays a ratchet; no new family; `max_amount` has no slot.
+
+### Acceptance criteria (documentation-level; checked by `EXT-S1-1`, `EXT-S4-0` and the QG-05, 06, 08, 09, 12 batteries)
+
+1. Selection, participation and activation are three separate typed fields with closed values; no duplicate boolean carries the same meaning.
+2. Absent, withdrawn, revoked, expired and superseded each have a distinct code or derivation (table above); none collapses into another or into success.
+3. A UI toggle is a request, not a write: ENABLE and DISABLE are submitted as signed, versioned selection or withdrawal statements by the authorized issuer, then applied by the consumer. No UI action changes `activation_state`, `participation` or `scope_required` directly.
+4. A toggle can never bypass required-policy enforcement: a required scope that becomes withdrawn, revoked, expired or unavailable refuses; it is never a way to run with the caller policy.
+5. Code-owned guardrails (evaluator order and reasons, floors, `safe_executor.py` blob `2fc880da`, approval binding) are not toggleable and are not represented in any state.
+6. Activation and anti-rollback stay consumer-owned; the registry holds no activation state and issues no grant or effect authority.
+7. Every transition is attributable and recorded: an authenticated statement (issuer key, selection id, epoch, supersedes), a hash-chained log entry, and the effective-policy identity in evidence. Reversal is only a new, strictly higher-epoch authenticated statement; nothing is edited in place.
+8. A transition cannot silently widen authority. Composition stays `min(caller, registry)`, so no state can exceed the caller's own policy or a code bound. Relaxing from a previously narrowed registry state (for example withdrawing an optional narrowing) is possible only through an authenticated higher-epoch statement, is recorded as such, and is visible in evidence as `overlay_not_applied`.
+9. Tests that must exist (predeclared in `S5-1`): withdrawn versus absent versus revoked versus expired versus superseded each produce their own code for required and optional participation; a withdraw statement without `supersedes`, at a lower or equal epoch, or with a record pin is refused; a revoked epoch is not resurrected by a later `activate`; no code path writes `activation_state` without an authenticated statement; `policy_state` precedence cases; a required scope never returns the caller policy under any state.
