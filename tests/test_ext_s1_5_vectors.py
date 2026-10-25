@@ -38,7 +38,10 @@ MAX_DEPTH = 8
 RANGES = {
     "record_version": (1, 2147483647),           # SOURCE_JUSTIFIED: record.py 1 <= v <= MAX_INT; s03-contract 1..2147483647
     "selection_epoch": (1, 2147483647),          # SOURCE_JUSTIFIED: selection.py _epoch_ok 1 <= v <= MAX_INT
-    "trust_snapshot_version": (1, 2147483647),   # OPEN_ITEM_BOUNDED: verify.py requires int >= 1 and states no maximum
+    # COMPONENT_OWNER_DERIVED (Architect ruling N-1): NO source states a ceiling (verify.py:82 is a floor only, canonical_bytes writes unbounded
+    # ints, the durable high-water and guard checks are floors only), so the strict bound the representation supports is the canonical-JSON
+    # safe integer range 2**53 - 1. It is deliberately NOT the 2**31 - 1 domain of record_version/selection_epoch or of the ages.
+    "trust_snapshot_version": (1, 9007199254740991),
 }
 AGE_RANGES = {                                   # RULED (OQ-1): technical representation ceiling, not an operational setting
     "registry": (1, 2147483647),                 # AGE_MIN = 1 adopted for registry input
@@ -298,6 +301,21 @@ def project_scope(statement_scope):
     return {k: statement_scope[k] for k in SCOPE_KEYS}
 
 
+def projection_effect(participation, activation_state, determination):
+    """Ruling N-5 reference rules for a scope whose projection was refused (binding creation is refused for EVERY participation).
+    The projection refusal is never an authorization: no branch yields overlay_not_applied or an ACCEPT by itself."""
+    if participation == "required":
+        out = "UNKNOWN_FAIL_CLOSED" if activation_state == "indeterminate" else "REFUSE"
+        return {"effect_outcome": out, "decision_kind": "required_policy_unavailable", "fallback_permitted": False, "fallback_evidence": None}
+    assert participation == "optional"
+    if activation_state == "indeterminate":
+        return {"effect_outcome": "UNKNOWN_FAIL_CLOSED", "decision_kind": None, "fallback_permitted": False, "fallback_evidence": None}
+    if determination == "authenticated" and activation_state == "permits_optional":
+        return {"effect_outcome": "optional_fallback_via_determination", "decision_kind": None, "fallback_permitted": True,
+                "fallback_evidence": {"kind": "absence_or_withdrawal", "projection_refusal_code": "field_invalid"}}
+    return {"effect_outcome": "REFUSE", "decision_kind": None, "fallback_permitted": False, "fallback_evidence": None}
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Scope key (OQ-5)
 # ----------------------------------------------------------------------------------------------------------------------
@@ -350,6 +368,21 @@ FAMILIES = {  # contract section 2 table: family id, table tag, payload shape
     "f4-control-plane-age-bounds": {"version": "v2", "kind": "ints", "keys": ("status_max_age_seconds", "approval_max_age_seconds")},
     "f5-action-class-age-bounds": {"version": "v2", "kind": "classmap", "keys": ("class_status_max_age_seconds",)},
 }
+
+
+REGISTERED_CONTRACT_VERSIONS = {  # contract section 2 table is registered for contract_version r08-v2 only
+    "f1a-local-execution-allowlist": ("r08-v2",), "f1ab-local-execution-allowlist": ("r08-v2",),
+    "f4-control-plane-age-bounds": ("r08-v2",), "f5-action-class-age-bounds": ("r08-v2",)}
+
+
+def registered_family_version(family, contract_version):
+    """Ruling N-3: family_version is LOOKED UP from the registered family table keyed by the authenticated record's family id and
+    contract_version. It is never a parameter, a payload member or a caller choice anywhere in this module."""
+    if not isinstance(family, str) or family not in FAMILIES:
+        raise Refuse("family_unsupported", "family")
+    if contract_version not in REGISTERED_CONTRACT_VERSIONS[family]:
+        raise Refuse("contract_unsupported", "contract_version")
+    return FAMILIES[family]["version"]
 
 
 def _strict_int(v):
@@ -409,18 +442,39 @@ def deny_all_dimensions(family, payload):
     return sorted(k for k, v in payload.items() if v == [])
 
 
-def effective_preimage(family, payload):
+def effective_preimage(family, payload, contract_version=CONTRACT_VERSION):
+    version = registered_family_version(family, contract_version)  # derived, never supplied
     validate_effective_payload(family, payload)
-    return {"effective_policy_profile": EFFECTIVE_PROFILE, "contract_version": CONTRACT_VERSION, "family": family,
-            "family_version": FAMILIES[family]["version"], "deny_all": deny_all_dimensions(family, payload), "effective": payload}
+    return {"effective_policy_profile": EFFECTIVE_PROFILE, "contract_version": contract_version, "family": family,
+            "family_version": version, "deny_all": deny_all_dimensions(family, payload), "effective": payload}
 
 
 def effective_digest_of_preimage(pre):
     return "sha256:" + sha_hex(EFFECTIVE_PREFIX + canon(pre))
 
 
-def effective_policy_digest(family, payload):
-    return effective_digest_of_preimage(effective_preimage(family, payload))
+def effective_policy_digest(family, payload, contract_version=CONTRACT_VERSION):
+    return effective_digest_of_preimage(effective_preimage(family, payload, contract_version))
+
+
+def validate_effective_inputs(doc):
+    """The ONLY consumer-facing input of the effective digest: {family, contract_version, effective}, where family and contract_version come
+    from the authenticated record. Any family_version member is a refusal (ruling N-3): member set first (missing, then unknown), then the
+    registered lookup (family, then contract_version), then the effective payload. Returns the derived preimage."""
+    top = ("contract_version", "effective", "family")
+    if not isinstance(doc, dict):
+        raise Refuse("field_type_invalid")
+    missing = sorted(set(top) - set(doc))
+    if missing:
+        raise Refuse("field_missing", missing[0])
+    unknown = sorted(set(doc) - set(top))
+    if unknown:
+        raise Refuse("field_unknown", unknown[0])
+    if not isinstance(doc["family"], str):
+        raise Refuse("field_type_invalid", "family")
+    if not isinstance(doc["contract_version"], str):
+        raise Refuse("field_type_invalid", "contract_version")
+    return effective_preimage(doc["family"], doc["effective"], doc["contract_version"])
 
 
 def validate_preimage(doc):
@@ -439,7 +493,7 @@ def validate_preimage(doc):
     if doc["contract_version"] != CONTRACT_VERSION:
         raise Refuse("field_invalid", "contract_version")
     validate_effective_payload(doc["family"], doc["effective"])
-    if doc["family_version"] != FAMILIES[doc["family"]]["version"]:
+    if doc["family_version"] != registered_family_version(doc["family"], doc["contract_version"]):  # compared with the registered tag, never trusted
         raise Refuse("field_invalid", "family_version")
     if doc["deny_all"] != deny_all_dimensions(doc["family"], doc["effective"]):
         raise Refuse("field_invalid", "deny_all")
@@ -717,6 +771,42 @@ def test_effective_payload_digests_use_the_domain_separated_preimage():
     assert (info.value.code, info.value.member) == ("field_missing", "allowed_units")
 
 
+def test_family_version_is_looked_up_from_the_registered_table_and_is_never_an_input():
+    """Ruling N-3. family_version comes from the registered, authenticated family contract (keyed by family id and contract_version). No
+    function of the identity API takes it; a caller- or payload-supplied family_version is refused; an unregistered family or contract
+    version is refused."""
+    import inspect
+    for fn in (effective_preimage, effective_policy_digest, validate_effective_payload, validate_effective_inputs, compose, registered_family_version):
+        assert "family_version" not in inspect.signature(fn).parameters, fn.__name__
+    ep = V["profile"]["effective_policy"]
+    assert ep["input_members"] == ["contract_version", "effective", "family"] and ep["preimage_members_derived"] == ["family_version"]
+    assert "family_version" not in ep["input_members"] and ep["registered_contract_versions"] == ["r08-v2"]
+    by_id = {e["id"]: e for e in V["effective_payloads"]}
+    valid = refused = 0
+    for vec in V["effective_inputs"]:
+        exp = vec["expected"]
+        if exp["result"] == "valid":
+            pre = validate_effective_inputs(load(vec["input_json"]))
+            assert pre["family_version"] == exp["derived_family_version"] == FAMILIES[pre["family"]]["version"], vec["id"]
+            assert effective_digest_of_preimage(pre) == exp["effective_policy_digest"] == by_id[exp["equals"]]["expected"]["effective_policy_digest"], vec["id"]
+            assert "family_version" not in load(vec["input_json"]), vec["id"]
+            valid += 1
+        else:
+            with pytest.raises(Refuse) as info:
+                validate_effective_inputs(load(vec["input_json"]))
+            assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
+            assert exp["code"] in _outcome_codes(), vec["id"]
+            refused += 1
+    assert valid == 4 and refused >= 9
+    # every refusal that supplies a family_version (whatever its value, even the registered one) is field_unknown at that member
+    supplied = [v for v in V["effective_inputs"] if "family_version" in load(v["input_json"]) or "family_version" in load(v["input_json"]).get("effective", {})]
+    assert len(supplied) >= 5 and all(v["expected"] == {"result": "refuse", "code": "field_unknown", "member": "family_version"} for v in supplied)
+    assert {"family_unsupported", "contract_unsupported"} <= {v["expected"].get("code") for v in V["effective_inputs"]}
+    # the registered tag is a pure function of (family, contract_version): all four registered families, one tag each
+    assert {f: registered_family_version(f, "r08-v2") for f in FAMILIES} == {"f1a-local-execution-allowlist": "v1", "f1ab-local-execution-allowlist": "v2",
+                                                                              "f4-control-plane-age-bounds": "v2", "f5-action-class-age-bounds": "v2"}
+
+
 def test_effective_policy_controls_and_invalid_inputs():
     base = next(e for e in V["effective_payloads"] if e["id"] == "EP-001")
     for c in V["effective_policy_controls"]:
@@ -819,7 +909,7 @@ def test_outcome_map_is_the_48_code_map_and_no_new_codes_are_used():
     assert used <= set(codes)
     expected_used = {v["expected"]["code"] for v in V["invalid"]} | {g["expected"]["code"] for g in V["guard_digest_checks"] if "code" in g["expected"]} \
         | {t["expected"]["code"] for t in V["trust_snapshots_invalid"]}
-    for key in ("integer_boundary", "effective_integer_boundary", "effective_payloads_invalid", "effective_preimage_invalid", "scope_keys_invalid"):
+    for key in ("integer_boundary", "effective_integer_boundary", "effective_payloads_invalid", "effective_preimage_invalid", "scope_keys_invalid", "effective_inputs"):
         expected_used |= {x["expected"]["code"] for x in V[key] if x["expected"]["result"] == "refuse"}
     expected_used |= {x["expected"]["code"] for x in V["scope_projection"] if x["expected"]["result"] == "refuse"}
     assert used == expected_used
@@ -836,13 +926,18 @@ def _section(text, start, end_regex):
 def test_contract_section_pins():
     """Pin the exact contract and ADR sections the spec depends on. A change to any of them requires re-reviewing the spec and vectors."""
     pins = V["pins"]
-    texts = {"contract": (ROOT / pins["contract_file"]).read_text(encoding="utf-8"), "adr": (ROOT / pins["adr_file"]).read_text(encoding="utf-8")}
-    assert len(pins["enforced_section_hashes"]) >= 8
+    texts = {"contract": (ROOT / pins["contract_file"]).read_text(encoding="utf-8"), "adr": (ROOT / pins["adr_file"]).read_text(encoding="utf-8"),
+             "readme": (ROOT / pins["readme_file"]).read_text(encoding="utf-8")}  # ruling N-6: the README must exist; absence is a failure
+    assert len(pins["enforced_section_hashes"]) >= 9 and "readme:## Verdicts (ruling R1)" in pins["enforced_section_hashes"]
     for name, pin in pins["enforced_section_hashes"].items():
         which = name.split(":", 1)[0]
         section = _section(texts[which], pin["start"], pin["end_regex"])
         got = hashlib.sha256(section.rstrip().encode("utf-8")).hexdigest()
         assert got == pin["sha256"], "pinned section changed: %s (re-review docs/ext-implementation/ext-s1-5-*.md and the vectors)" % name
+    # N-6: the four-verdict table itself is enforced (the section hash above covers it); the four names are asserted as table rows too
+    verdict_section = _section(texts["readme"], "## Verdicts (ruling R1)", r"^## ")
+    for verdict in VERDICT_CLASSES:
+        assert re.search(r"^\| `%s` \|" % verdict, verdict_section, re.M), verdict
     # anchors the spec quotes verbatim
     c = texts["contract"]
     for anchor in ("## 4. Canonical policy binding (D-14, D-15)", "### 4.1 Serialization and digest", "### 4.2 Two states of the object",
@@ -852,10 +947,12 @@ def test_contract_section_pins():
 
 def test_spec_document_exists_and_references_the_pins():
     spec = (ROOT / V["spec"]).read_text(encoding="utf-8")
-    for heading in ("Consumers and handoff", "Open questions for Architect", "proposed additive codes (not in CODES_V2)"):
+    for heading in ("Consumers and handoff", "Open questions for Architect", "Additive codes ruled required (not yet in CODES_V2)"):
         assert heading.lower() in spec.lower()
-    for oq in ("OQ-1", "OQ-2", "OQ-3", "OQ-4", "OQ-5"):
+    for oq in ("OQ-1", "OQ-2", "OQ-3", "OQ-4", "OQ-5", "N-1", "N-3", "N-4", "N-5", "N-6"):
         assert oq in spec
+    assert "handled by the docs-only amendment PR" in spec and "overlay_not_applied" in spec
+    assert "never yields `overlay_not_applied`" in spec and "component-owner-derived" in spec.lower()
     for domain in ("ocs-reg/r08-v2/effective-policy", "ocs-reg/r08-v2/scope-key", "ocs-scope-key/1", "ocs-effective-policy/1"):
         assert domain in spec, domain
     for field, rng in V["profile"]["integer_ranges"].items():
@@ -885,15 +982,18 @@ def test_integer_ranges_are_explicit_per_field_and_independent():
         assert ranges[field]["max"] == AGE_RANGES["effective"][1] == AGE_RANGES["registry"][1] == AGE_RANGES["caller"][1] == 2147483647
         assert {k: AGE_RANGES[k][0] for k in AGE_RANGES} == ranges[field]["role_min"] == {"registry": 1, "caller": 0, "effective": 0}
         assert ranges[field]["status"] == "ARCHITECT_RULED"
-    # statuses are honest: two are source-justified, the snapshot version is an explicit open item, the generation counter is reserved
+    # statuses are honest: two are source-justified, the snapshot version is component-owner-derived (N-1), the generation counter is reserved
     assert ranges["record_version"]["status"] == ranges["selection_epoch"]["status"] == "SOURCE_JUSTIFIED"
-    assert ranges["trust_snapshot_version"]["status"] == "OPEN_ITEM_BOUNDED"
+    assert ranges["trust_snapshot_version"]["status"] == "COMPONENT_OWNER_DERIVED"  # N-1: no source ceiling; bound derived from the representation
     gen = ranges["policy_generation"]
     assert gen["status"] == "RESERVED" and (gen["min"], gen["max"]) == RESERVED_POLICY_GENERATION
     assert "policy_generation" not in V["profile"]["members"] and "policy_generation" not in V["profile"]["integer_members"]
     assert not any("policy_generation" in v.get("input_json", "") for v in V["valid"] + V["invalid"])
     # the epoch and age domains are different entries and the generation domain is wider than both (never assumed equal)
     assert gen["max"] > RANGES["selection_epoch"][1]
+    snap = ranges["trust_snapshot_version"]
+    assert snap["max"] == RANGES["trust_snapshot_version"][1] == 9007199254740991 != RANGES["selection_epoch"][1]
+    assert "status_max_age_seconds" in snap["independent_of"] and "selection_epoch" in snap["independent_of"]
     assert V["profile"]["integer_members"] == list(INT_MEMBERS)
     # source ties (reads text only, imports nothing): the two source-justified bounds are the Registry's own
     common = (ROOT / "registry_successor" / "common.py").read_text(encoding="utf-8")
@@ -901,6 +1001,39 @@ def test_integer_ranges_are_explicit_per_field_and_independent():
     assert "1 <= value <= c.MAX_INT" in (ROOT / "registry_successor" / "record.py").read_text(encoding="utf-8")
     assert "1 <= value <= c.MAX_INT" in (ROOT / "registry_successor" / "selection.py").read_text(encoding="utf-8")
     assert "trust.version < 1" in (ROOT / "registry_successor" / "verify.py").read_text(encoding="utf-8")  # snapshot version: floor only, no ceiling
+
+
+def test_trust_snapshot_version_bound_is_tied_to_source_text_never_imports():
+    """Ruling N-1: the claim 'no source ceiling for the trust snapshot version, so the bound is the canonical-JSON safe integer range' is tied
+    to the source TEXT (read, never imported). The evidence entries recorded in the vector file must each occur in their file; the snapshot
+    code paths must contain no MAX_INT, MAX_VERSION, 2**31 or 2**53 ceiling; MAX_INT must be used only by record.py and selection.py."""
+    snap = V["profile"]["integer_ranges"]["trust_snapshot_version"]
+    assert snap["status"] == "COMPONENT_OWNER_DERIVED" and (snap["min"], snap["max"]) == RANGES["trust_snapshot_version"]
+    assert snap["max"] == 2**53 - 1  # the largest integer exact in every JSON implementation
+    assert len(snap["source_evidence"]) >= 6
+    for ev in snap["source_evidence"]:
+        text = (ROOT / ev["file"]).read_text(encoding="utf-8")
+        assert ev["text"] in text, ("source evidence text not found", ev["file"], ev["text"])
+        assert isinstance(ev["line"], int) and ev["line"] >= 1 and ev["shows"]
+    verify = (ROOT / "registry_successor" / "verify.py").read_text(encoding="utf-8")
+    body = verify[verify.index("def _normalize_trust"):]
+    body = body[:body.index("\ndef ", 10)]
+    assert "trust.version < 1" in body
+    for ceiling in ("MAX_INT", "MAX_VERSION", "2**31", "2**53", "2147483647", "9007199254740991"):
+        assert ceiling not in body, ("a snapshot-version ceiling appeared in the verifier: re-derive the bound", ceiling)
+    scanned = [p for pkg in ("registry_successor", "registry_consumer") for p in sorted((ROOT / pkg).glob("*.py"))] + [ROOT / "registry_conformance" / "highwater.py"]
+    users = set()
+    for path in scanned:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if "snapshot" in line.lower() and any(t in line for t in ("MAX_INT", "MAX_VERSION", "2**31", "2**53", "2147483647")):
+                pytest.fail("snapshot line with a ceiling in %s: %s" % (path.name, line))
+            if "MAX_INT" in line or "MAX_VERSION" in line:
+                users.add(path.name)
+    assert users <= {"common.py", "record.py", "selection.py", "consumer.py"}, users
+    common_text = (ROOT / "registry_successor" / "common.py").read_text(encoding="utf-8")
+    assert 'json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)' in common_text  # unbounded Python ints
+    hw = (ROOT / "registry_conformance" / "highwater.py").read_text(encoding="utf-8")
+    assert 'fl["snapshot_version"] < 0' in hw and 'b["trust_snapshot_version"] >= 1' in hw
 
 
 def test_integer_boundary_vectors_cover_every_integer_field():
@@ -929,7 +1062,11 @@ def test_integer_boundary_vectors_cover_every_integer_field():
     for field, cases in seen.items():
         assert required <= cases, (field, required - cases)
     # the three fields reach their maximum independently: a vector where only one is at its maximum is valid for each
-    assert len({v["expected"]["binding_digest"] for v in V["integer_boundary"] if v["expected"]["result"] == "valid"}) == 6
+    assert len({v["expected"]["binding_digest"] for v in V["integer_boundary"] if v["expected"]["result"] == "valid"}) == 7
+    # trust_snapshot_version is NOT in the 2**31 - 1 domain: 2147483648 is valid for it and refused for the two source-bounded counters
+    extra = next(v for v in V["integer_boundary"] if v["id"] == "IB-trust_snapshot_version-int32-max-plus-1")
+    assert extra["literal"] == "2147483648" and extra["expected"]["result"] == "valid"
+    assert next(v for v in V["integer_boundary"] if v["id"] == "IB-selection_epoch-max-plus-1")["literal"] == "2147483648"
 
 
 def test_effective_integer_boundary_vectors_per_age_field_and_role():
@@ -964,6 +1101,10 @@ def test_effective_integer_boundary_vectors_per_age_field_and_role():
 def test_scope_projection_is_identity_or_refusal_never_normalization():
     codes = _outcome_codes()
     assert V["profile"]["scope_projection"]["error"] == {"code": "field_invalid", "layer": "shape", "stage": "projection"}
+    rule = V["profile"]["scope_projection"]["decision"]  # ruling N-5: no overlay_not_applied shortcut anywhere
+    assert "never yields overlay_not_applied" in rule["never"] and "refused for every participation" in rule["binding_creation"]
+    assert "overlay_not_applied" not in rule["required"] + rule["optional"]
+    assert "authenticated" in rule["optional"] and "absence or withdrawal" in rule["optional"] and "original projection refusal code" in rule["optional"]
     kinds = {v["category"] for v in V["scope_projection"]}
     assert {"ascii", "unicode", "ascii-out-of-grammar"} <= kinds
     assert any(v["expected"]["result"] == "projected" for v in V["scope_projection"])
@@ -982,7 +1123,8 @@ def test_scope_projection_is_identity_or_refusal_never_normalization():
                 project_scope(scope)
             assert (info.value.code, info.value.member) == (exp["code"], exp["member"]), vec["id"]
             assert exp["code"] in codes and exp["layer"] == "shape" and exp["stage"] == "projection" and exp["binding_created"] is False
-            assert exp["decision_required"] == "required_policy_unavailable" and exp["decision_optional"] == "overlay_not_applied"
+            assert "decision_optional" not in exp and "decision_required" not in exp, vec["id"]
+            assert exp["projection_refusal_code"] == "field_invalid" and exp["yields_overlay_not_applied"] is False and exp["yields_accept"] is False, vec["id"]
             # a binding built by hand around that scope is refused by the binding validator too (the two layers agree)
             doc = load(next(v for v in V["valid"] if v["id"] == "BV-001")["input_json"])
             doc["scope"] = scope
@@ -1006,6 +1148,47 @@ def test_scope_projection_is_identity_or_refusal_never_normalization():
     # sorted-path first failing member is reported when several scope members are bad
     multi = next(v for v in V["scope_projection"] if v["id"] == "PJ-019")
     assert multi["expected"]["member"] == "scope.authority_domain"
+
+
+def test_unprojectable_scope_effects_never_authorize_and_never_yield_overlay_not_applied():
+    """Ruling N-5. Binding creation is refused for every participation; required refuses (HOLD only if state is indeterminate); optional
+    falls back ONLY through the authenticated optional-state determination when the activation state permits it, and the fallback carries
+    the original projection refusal code as an absence or withdrawal evidence record. Nothing yields overlay_not_applied or ACCEPT."""
+    rows = V["scope_projection_effects"]
+    assert {(r["participation"], r["activation_state"], r["optional_determination"]) for r in rows} >= {
+        ("required", "known", "n/a"), ("required", "indeterminate", "n/a"), ("optional", "permits_optional", "authenticated"),
+        ("optional", "forbids_fallback", "authenticated"), ("optional", "permits_optional", "not_authenticated"), ("optional", "indeterminate", "authenticated")}
+    fallbacks = 0
+    for r in rows:
+        exp = r["expected"]
+        want = projection_effect(r["participation"], r["activation_state"], r["optional_determination"])
+        assert {k: exp[k] for k in want} == want, r["id"]
+        assert exp["binding_created"] is False and exp["projection_verdict"] == "REFUSE", r["id"]
+        assert exp["yields_overlay_not_applied"] is False and exp["yields_accept"] is False, r["id"]
+        assert "overlay_not_applied" not in json.dumps(exp).replace("yields_overlay_not_applied", ""), r["id"]
+        assert exp["effect_outcome"] in ("REFUSE", "UNKNOWN_FAIL_CLOSED", "optional_fallback_via_determination"), r["id"]
+        if r["participation"] == "required":
+            assert exp["effect_outcome"] != "optional_fallback_via_determination" and exp["fallback_permitted"] is False
+        if exp["fallback_permitted"]:
+            fallbacks += 1
+            assert r["participation"] == "optional" and r["activation_state"] == "permits_optional" and r["optional_determination"] == "authenticated"
+            assert exp["fallback_evidence"] == {"kind": "absence_or_withdrawal", "projection_refusal_code": "field_invalid"}
+        else:
+            assert exp["fallback_evidence"] is None
+    assert fallbacks == 1
+    # exhaustive: over every combination only (optional, permits, authenticated) can fall back, and nothing ever ACCEPTs
+    for part in ("required", "optional"):
+        for st in ("known", "permits_optional", "forbids_fallback", "indeterminate"):
+            for det in ("authenticated", "not_authenticated", "n/a"):
+                out = projection_effect(part, st, det)
+                assert out["effect_outcome"] != "ACCEPT" and out["decision_kind"] != "overlay_not_applied"
+                assert out["fallback_permitted"] is ((part, st, det) == ("optional", "permits_optional", "authenticated"))
+    # no vector, mapping row or evidence entry anywhere uses overlay_not_applied as a projection verdict
+    for vec in V["scope_projection"]:
+        assert "overlay_not_applied" not in json.dumps(vec["expected"]).replace("yields_overlay_not_applied", ""), vec["id"]
+    row = next(r for r in V["defect_mapping"] if r["id"] == "MP-field_invalid-projection")
+    assert "overlay_not_applied" not in json.dumps(row).replace("Never overlay_not_applied", "") and "projection_refusal_code" in row["evidence_fields"]
+    assert "projection_refusal_code" in V["evidence_field_vocabulary"]
 
 
 def test_scope_key_unambiguous_versioned_and_domain_separated():
@@ -1079,8 +1262,8 @@ def test_scope_key_unambiguous_versioned_and_domain_separated():
 def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdict_classes_apart():
     codes = _outcome_codes()
     assert tuple(V["profile"]["verdict_classes"]) == VERDICT_CLASSES
-    prop = V["proposed_additive_codes"]
-    assert prop["status"] == "PROPOSED_NOT_IN_CODES_V2"
+    prop = V["ruled_additive_codes"]
+    assert prop["status"] == "RULED_REQUIRED_NOT_YET_IN_CODES_V2" and "proposed_additive_codes" not in V  # ruling N-4
     proposed = {c["code"]: c for c in prop["codes"]}
     assert set(proposed).isdisjoint(codes), "a proposed code must never repurpose or shadow an existing CODES_V2 entry"
     assert len(codes) == 48
@@ -1095,13 +1278,14 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
             assert cls is None and r["decision_kind"] in ("applied_deny_all", "evaluator_denied"), r["id"]
             continue
         assert cls in VERDICT_CLASSES, r["id"]
-        if r.get("proposed_additive_code"):
+        assert "proposed_additive_code" not in r, r["id"]
+        if r.get("ruled_additive_code"):
             assert code in proposed and proposed[code]["verdict_class"] == cls, r["id"]
         else:
             assert code in codes, ("no existing CODES_V2 entry named", r["id"], code)
         by_code.setdefault(code, set()).add(cls)
     # the proposal list is exactly the proposed codes that rows use
-    assert set(proposed) == {r["registry_code"] for r in V["defect_mapping"] if r.get("proposed_additive_code")}
+    assert set(proposed) == {r["registry_code"] for r in V["defect_mapping"] if r.get("ruled_additive_code")}
     # a cause code names one class (the single documented dual-class code is trust_snapshot_expired, mapped here only in its guard form)
     assert all(len(v) == 1 for v in by_code.values()), {k: v for k, v in by_code.items() if len(v) > 1}
     stale = {c for c, v in by_code.items() if v == {"REFUSE_STALE"}}
@@ -1124,11 +1308,12 @@ def test_defect_mapping_uses_only_codes_v2_plus_marked_proposals_and_keeps_verdi
     for c in V["outcome_map"]["codes_used_by_this_file"]:
         assert c in mapped or c == "trust_snapshot_invalid", c
     # the vocabulary matches the merged conformance kit when that README is present in this checkout (branch predates PR #28)
+    # the vocabulary is the one in the merged conformance README, whose verdict section is an ENFORCED pin (test_contract_section_pins; ruling N-6)
     readme = ROOT / "docs" / "conformance" / "README.md"
-    if readme.exists():
-        text = readme.read_text(encoding="utf-8")
-        for v in VERDICT_CLASSES:
-            assert "`%s`" % v in text, v
+    assert readme.exists(), "docs/conformance/README.md (PR #28) must be present: the four-verdict vocabulary is pinned"
+    text = readme.read_text(encoding="utf-8")
+    for v in VERDICT_CLASSES:
+        assert "`%s`" % v in text, v
 
 
 _JS = r"""
@@ -1172,6 +1357,24 @@ for (const x of V.effective_payloads) {
   if (x.inputs) out[x.id + ':compose'] = ser(compose(x.family, x.inputs.registry, x.inputs.caller)) === ser(x.payload);
 }
 for (const x of V.effective_integer_boundary) if (x.expected.result === 'valid' && x.role === 'effective') out[x.id] = effOut(x.family, JSON.parse(x.payload_json));
+// N-3: family_version is derived from the registered table, never an input. Same member-set, lookup, then payload order as the Python reference.
+function effInput(doc) {
+  const top = ['contract_version', 'effective', 'family'];
+  if (doc === null || typeof doc !== 'object' || Array.isArray(doc)) return ['refuse', 'field_type_invalid', null];
+  const miss = top.filter(k => !(k in doc)).sort(cmp); if (miss.length) return ['refuse', 'field_missing', miss[0]];
+  const unk = Object.keys(doc).filter(k => !top.includes(k)).sort(cmp); if (unk.length) return ['refuse', 'field_unknown', unk[0]];
+  if (typeof doc.family !== 'string') return ['refuse', 'field_type_invalid', 'family'];
+  if (typeof doc.contract_version !== 'string') return ['refuse', 'field_type_invalid', 'contract_version'];
+  if (!(doc.family in FAM)) return ['refuse', 'family_unsupported', 'family'];
+  if (!V.profile.effective_policy.registered_contract_versions.includes(doc.contract_version)) return ['refuse', 'contract_unsupported', 'contract_version'];
+  const extra = Object.keys(doc.effective).filter(k => !FAM[doc.family].keys.includes(k)).sort(cmp);
+  if (extra.length) return ['refuse', 'field_unknown', extra[0]];
+  return ['valid'].concat(effOut(doc.family, doc.effective));
+}
+for (const x of V.effective_inputs) out[x.id] = effInput(JSON.parse(x.input_json));
+const PE = (part, st, det) => part === 'required' ? (st === 'indeterminate' ? 'UNKNOWN_FAIL_CLOSED' : 'REFUSE')
+  : st === 'indeterminate' ? 'UNKNOWN_FAIL_CLOSED' : (det === 'authenticated' && st === 'permits_optional') ? 'optional_fallback_via_determination' : 'REFUSE';
+for (const x of V.scope_projection_effects) out[x.id] = PE(x.participation, x.activation_state, x.optional_determination);
 for (const x of V.effective_policy_controls) { const c = Buffer.from(ser(JSON.parse(x.preimage_canonical_ascii)), 'ascii'); out[x.id] = [c.toString('hex'), 'sha256:' + sha(Buffer.concat([preEff, c]))]; }
 for (const x of V.trust_snapshots) { const c = Buffer.from(ser(x.expected_normalized || JSON.parse(x.normalized_json)), 'ascii'); out[x.id] = [c.toString('hex'), 'sha256:' + sha(c)]; }
 const skOut = o => { const c = Buffer.from(ser(o), 'ascii'); return [c.toString('hex'), 'sha256:' + sha(Buffer.concat([preSk, c]))]; };
@@ -1200,6 +1403,7 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
     js.write_text(_JS, encoding="utf-8")
     res = subprocess.run(["node", str(js), str(p)], capture_output=True, text=True, timeout=60, check=True)
     got = json.loads(res.stdout)
+    by_ep = {e["id"]: e for e in V["effective_payloads"]}
     n = 0
     for vec in V["valid"]:
         assert got[vec["id"]] == [vec["expected"]["canonical_bytes_hex"], vec["expected"]["binding_digest"]], vec["id"]
@@ -1233,5 +1437,17 @@ def test_non_python_reference_agrees_byte_for_byte(tmp_path):
         exp = pj["expected"]
         want = ["projected", None] if exp["result"] == "projected" else ["refuse", exp["member"]]
         assert got[pj["id"]] == want, pj["id"]
+        n += 1
+    for ei in V["effective_inputs"]:
+        exp = ei["expected"]
+        want = ["valid", exp["canonical_bytes_hex"] if "canonical_bytes_hex" in exp else None, exp["effective_policy_digest"]] if exp["result"] == "valid" else ["refuse", exp["code"], exp["member"]]
+        if exp["result"] == "valid":
+            assert got[ei["id"]][0] == "valid" and got[ei["id"]][2] == exp["effective_policy_digest"], ei["id"]
+            assert got[ei["id"]][1] == by_ep[exp["equals"]]["expected"]["preimage_canonical_bytes_hex"], ei["id"]
+        else:
+            assert got[ei["id"]] == want, ei["id"]
+        n += 1
+    for se in V["scope_projection_effects"]:
+        assert got[se["id"]] == se["expected"]["effect_outcome"], se["id"]
         n += 1
     assert n >= 80

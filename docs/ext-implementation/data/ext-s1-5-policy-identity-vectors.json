@@ -1,7 +1,7 @@
 {
  "schema": "ocs-ext-s1-5-policy-identity-vectors/1",
  "status": "BUILDER_TESTED",
- "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5 (2026-10-25).",
+ "status_note": "Builder-authored and builder-tested against an independent in-test reference serializer and one non-Python (Node.js) implementation. NOT independently qualified; no Runtime or Control Plane implementation has been run against it. Contract preparation only: no source change. Incorporates Architect rulings OQ-1 to OQ-5 and Batch-4 rulings N-1, N-3, N-4, N-5, N-6 (2026-10-25).",
  "spec": "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md",
  "pins": {
   "contract_file": "docs/r08-v2-contract.md",
@@ -49,10 +49,18 @@
     "start": "**D-02 ",
     "end_regex": "^\\*\\*D-03 ",
     "sha256": "55e9f022b539fa2df20038a86e5b119dac8de72b95687710b6dcb9bf629468ee"
+   },
+   "readme:## Verdicts (ruling R1)": {
+    "start": "## Verdicts (ruling R1)",
+    "end_regex": "^## ",
+    "sha256": "b81f56f843f06dfe4ec1ab63e8587fcf51acb0d471153a8976d1b14392ba1fa2"
    }
   },
   "outcome_map_file": "docs/p1-extraction-plan/data/ld02-outcome-map.json",
-  "outcome_map_sha256": "dcb14ec1067ccf3218949de57312040dad9df926b134a67f2826e3f0c37d535c"
+  "outcome_map_sha256": "dcb14ec1067ccf3218949de57312040dad9df926b134a67f2826e3f0c37d535c",
+  "readme_file": "docs/conformance/README.md",
+  "readme_git_blob_informational": "ec03cd26fab0b2f5a7421484ec3f5d065a932454",
+  "readme_sha256_informational": "ffa04af23daf9baa4369261627932da16321c9f9ab1e2fd970444b336aae175f"
  },
  "profile": {
   "binding_profile": "ocs-policy-binding/1",
@@ -136,10 +144,56 @@
    "trust_snapshot_version": {
     "domain": "binding",
     "min": 1,
-    "max": 2147483647,
-    "status": "OPEN_ITEM_BOUNDED",
-    "source": "registry_successor/verify.py (TrustSnapshot.version must be an int >= 1; no maximum is stated anywhere in the Registry)",
-    "rationale": "no source states an upper bound; a bounded strict domain is fixed for interoperability (JSON numbers beyond 2^53 are not exact in every language) and the value is marked an open item for the owner of the snapshot floor"
+    "max": 9007199254740991,
+    "status": "COMPONENT_OWNER_DERIVED",
+    "source": "registry_successor/verify.py:82 (strict int >= 1, no ceiling); registry_successor/common.py:102 (canonical_bytes writes unbounded Python ints); registry_conformance/highwater.py:187,442 (durable high-water and guard validation are floors only); registry_consumer/consumer.py:45 (MAX_VERSION applies to the record version only)",
+    "rationale": "no source states a ceiling for the snapshot version, so the Architect ruling N-1 gives no source-justified bound and none is borrowed from record_version, selection_epoch or the age domain (2147483647). The strict bound the representation supports is the canonical-JSON safe integer range: the claim-carried binding is canonical JSON consumed by non-Python implementations, and 9007199254740991 (2**53 - 1) is the largest integer exact in every JSON implementation (RFC 8259 section 6, RFC 7493). Component-owner-derived: it narrows nothing the verifier accepts below it and refuses only values no interoperable implementation can carry exactly. A snapshot version above 2147483647 is valid here because the Registry verifier accepts it.",
+    "source_evidence": [
+     {
+      "file": "registry_successor/verify.py",
+      "line": 82,
+      "text": "not c.is_int(trust.version) or trust.version < 1",
+      "shows": "the verifier accepts any strict int >= 1 for TrustSnapshot.version; no MAX_INT or other ceiling is applied (MAX_INT is applied only to record_version and selection epoch)"
+     },
+     {
+      "file": "registry_successor/common.py",
+      "line": 28,
+      "text": "MAX_INT = 2**31 - 1",
+      "shows": "the 2**31-1 constant is used by record.py:40 and selection.py:62 for record_version and epoch only; no snapshot code references it"
+     },
+     {
+      "file": "registry_successor/common.py",
+      "line": 102,
+      "text": "json.dumps(value, sort_keys=True, separators=(\",\", \":\"), ensure_ascii=True)",
+      "shows": "canonical_bytes writes a Python int as arbitrary-precision base-10 digits: the Registry serializer itself has no integer ceiling"
+     },
+     {
+      "file": "registry_conformance/highwater.py",
+      "line": 187,
+      "text": "fl[\"snapshot_version\"] < 0",
+      "shows": "the durable snapshot high-water (floors.snapshot_version) is validated as a strict int with a floor only; no ceiling; the claim-carried binding requires >= 1 (line 442)"
+     },
+     {
+      "file": "registry_conformance/highwater.py",
+      "line": 442,
+      "text": "b[\"trust_snapshot_version\"] >= 1",
+      "shows": "the guard's binding validation of the snapshot version is a floor only"
+     },
+     {
+      "file": "registry_consumer/consumer.py",
+      "line": 45,
+      "text": "MAX_VERSION = 2**31 - 1",
+      "shows": "the consumer's only integer ceiling is for the record version (line 193); it stores and compares no snapshot version"
+     }
+    ],
+    "independent_of": [
+     "record_version",
+     "selection_epoch",
+     "status_max_age_seconds",
+     "approval_max_age_seconds",
+     "class_status_max_age_seconds",
+     "policy_generation"
+    ]
    },
    "status_max_age_seconds": {
     "domain": "effective-policy",
@@ -247,7 +301,24 @@
     "caller": 0,
     "effective": 0
    },
-   "age_max": 2147483647
+   "age_max": 2147483647,
+   "family_version_source": "registered family table (contract section 2), keyed by the authenticated record's family id and contract_version; derived, never an input",
+   "registered_contract_versions": [
+    "r08-v2"
+   ],
+   "input_members": [
+    "contract_version",
+    "effective",
+    "family"
+   ],
+   "preimage_members_derived": [
+    "family_version"
+   ],
+   "input_order": [
+    "member set: missing, then unknown (a family_version member is unknown at every depth)",
+    "registered lookup: family, then contract_version",
+    "effective payload validation"
+   ]
   },
   "scope_key": {
    "profile": "ocs-scope-key/1",
@@ -299,8 +370,10 @@
     "stage": "projection"
    },
    "decision": {
-    "required": "required_policy_unavailable",
-    "optional": "overlay_not_applied"
+    "binding_creation": "refused for every participation (field_invalid, stage projection)",
+    "required": "REFUSE (invalidity established; decision kind required_policy_unavailable); UNKNOWN_FAIL_CLOSED (HOLD) only if the consumer's authoritative state is indeterminate; never the caller policy",
+    "optional": "the projection refusal is never itself an authorization or a fallback; the consumer may fall back only through its authenticated, authorized optional-state determination (contract 4.3 and 7.4, EXT-S4-2) when the durable activation state permits it, and the fallback is recorded as an explicit absence or withdrawal evidence record carrying the original projection refusal code",
+    "never": "an unprojectable scope never yields overlay_not_applied or any ACCEPT by itself"
    }
   },
   "verdict_classes": [
@@ -508,6 +581,7 @@
    }
   ],
   "codes_used_by_this_file": [
+   "contract_unsupported",
    "digest_mismatch",
    "family_unsupported",
    "field_invalid",
@@ -613,7 +687,7 @@
   },
   {
    "id": "BV-008",
-   "description": "Integer upper boundaries: record_version and selection_epoch at 2147483647 (per-field ranges, OQ-1)",
+   "description": "Integer upper boundaries: record_version and selection_epoch at their maximum 2147483647; trust_snapshot_version 2147483647 (valid; its own maximum is 9007199254740991, see integer_boundary)",
    "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2147483647, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 2147483647, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 2147483647, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
    "expected": {
     "result": "valid",
@@ -3605,21 +3679,35 @@
    "id": "IB-trust_snapshot_version-max",
    "field": "trust_snapshot_version",
    "case": "max",
-   "literal": "2147483647",
-   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 2147483647, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "literal": "9007199254740991",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 9007199254740991, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
    "expected": {
     "result": "valid",
-    "canonical_bytes_hex": "7b2261637469766174696f6e5f726566223a227368613235363a37663563633339376633613735643765623136376635346437616161633962376230616130613433633738333061313265313731376333396131666634633261222c2262696e64696e675f70726f66696c65223a226f63732d706f6c6963792d62696e64696e672f31222c22636f6e73756d65725f6964223a2272756e74696d652d656d756c61746f72222c226566666563746976655f706f6c6963795f646967657374223a227368613235363a30663531623935646463353261353162373865373138653436636361343262396530643030303734303434333930346331333738646132646238323831393762222c2266616d696c79223a22663161622d6c6f63616c2d657865637574696f6e2d616c6c6f776c697374222c226f7065726174696f6e223a226f702d7472616e73666572222c227265636f72645f646967657374223a227368613235363a61396463643730653731366366363831646338653162656364353965626434386566666634646136393564666162663762363838373335373965366534306538222c227265636f72645f6964223a227265632d6578616d706c652d66316162222c227265636f72645f76657273696f6e223a322c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f646967657374223a227368613235363a30373034313362663162383738353963636634343762313833616262323662343837313834656331643333656635326463343764656136346163393330626533222c2273656c656374696f6e5f65706f6368223a332c2273656c656374696f6e5f6964223a2273656c2d6578616d706c652d66316162222c2274727573745f736e617073686f745f66696e6765727072696e74223a227368613235363a37613863313066613631616561633534323335393262636234333765323638373532333836313463313665663961306238633035366236313030663561656665222c2274727573745f736e617073686f745f76657273696f6e223a323134373438333634377d",
-    "canonical_ascii": "{\"activation_ref\":\"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\",\"binding_profile\":\"ocs-policy-binding/1\",\"consumer_id\":\"runtime-emulator\",\"effective_policy_digest\":\"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\",\"family\":\"f1ab-local-execution-allowlist\",\"operation\":\"op-transfer\",\"record_digest\":\"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\",\"record_id\":\"rec-example-f1ab\",\"record_version\":2,\"scope\":{\"authority_domain\":\"domain-a\",\"institution\":\"inst-a\",\"tenant\":\"tenant-a\"},\"selection_digest\":\"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\",\"selection_epoch\":3,\"selection_id\":\"sel-example-f1ab\",\"trust_snapshot_fingerprint\":\"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\",\"trust_snapshot_version\":2147483647}",
-    "binding_digest": "sha256:f7164d167eb82fd29fa0c6c24109ccb071271883a5fe906fe314b7b98cf95d79"
+    "canonical_bytes_hex": "7b2261637469766174696f6e5f726566223a227368613235363a37663563633339376633613735643765623136376635346437616161633962376230616130613433633738333061313265313731376333396131666634633261222c2262696e64696e675f70726f66696c65223a226f63732d706f6c6963792d62696e64696e672f31222c22636f6e73756d65725f6964223a2272756e74696d652d656d756c61746f72222c226566666563746976655f706f6c6963795f646967657374223a227368613235363a30663531623935646463353261353162373865373138653436636361343262396530643030303734303434333930346331333738646132646238323831393762222c2266616d696c79223a22663161622d6c6f63616c2d657865637574696f6e2d616c6c6f776c697374222c226f7065726174696f6e223a226f702d7472616e73666572222c227265636f72645f646967657374223a227368613235363a61396463643730653731366366363831646338653162656364353965626434386566666634646136393564666162663762363838373335373965366534306538222c227265636f72645f6964223a227265632d6578616d706c652d66316162222c227265636f72645f76657273696f6e223a322c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f646967657374223a227368613235363a30373034313362663162383738353963636634343762313833616262323662343837313834656331643333656635326463343764656136346163393330626533222c2273656c656374696f6e5f65706f6368223a332c2273656c656374696f6e5f6964223a2273656c2d6578616d706c652d66316162222c2274727573745f736e617073686f745f66696e6765727072696e74223a227368613235363a37613863313066613631616561633534323335393262636234333765323638373532333836313463313665663961306238633035366236313030663561656665222c2274727573745f736e617073686f745f76657273696f6e223a393030373139393235343734303939317d",
+    "canonical_ascii": "{\"activation_ref\":\"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\",\"binding_profile\":\"ocs-policy-binding/1\",\"consumer_id\":\"runtime-emulator\",\"effective_policy_digest\":\"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\",\"family\":\"f1ab-local-execution-allowlist\",\"operation\":\"op-transfer\",\"record_digest\":\"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\",\"record_id\":\"rec-example-f1ab\",\"record_version\":2,\"scope\":{\"authority_domain\":\"domain-a\",\"institution\":\"inst-a\",\"tenant\":\"tenant-a\"},\"selection_digest\":\"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\",\"selection_epoch\":3,\"selection_id\":\"sel-example-f1ab\",\"trust_snapshot_fingerprint\":\"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\",\"trust_snapshot_version\":9007199254740991}",
+    "binding_digest": "sha256:ae91da4dacab05552693c9aa1f09e0ed162b4e972993eb8d78fec9c463d4316c"
    }
+  },
+  {
+   "id": "IB-trust_snapshot_version-int32-max-plus-1",
+   "field": "trust_snapshot_version",
+   "case": "int32-max-plus-1",
+   "literal": "2147483648",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 2147483648, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "expected": {
+    "result": "valid",
+    "canonical_bytes_hex": "7b2261637469766174696f6e5f726566223a227368613235363a37663563633339376633613735643765623136376635346437616161633962376230616130613433633738333061313265313731376333396131666634633261222c2262696e64696e675f70726f66696c65223a226f63732d706f6c6963792d62696e64696e672f31222c22636f6e73756d65725f6964223a2272756e74696d652d656d756c61746f72222c226566666563746976655f706f6c6963795f646967657374223a227368613235363a30663531623935646463353261353162373865373138653436636361343262396530643030303734303434333930346331333738646132646238323831393762222c2266616d696c79223a22663161622d6c6f63616c2d657865637574696f6e2d616c6c6f776c697374222c226f7065726174696f6e223a226f702d7472616e73666572222c227265636f72645f646967657374223a227368613235363a61396463643730653731366366363831646338653162656364353965626434386566666634646136393564666162663762363838373335373965366534306538222c227265636f72645f6964223a227265632d6578616d706c652d66316162222c227265636f72645f76657273696f6e223a322c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f646967657374223a227368613235363a30373034313362663162383738353963636634343762313833616262323662343837313834656331643333656635326463343764656136346163393330626533222c2273656c656374696f6e5f65706f6368223a332c2273656c656374696f6e5f6964223a2273656c2d6578616d706c652d66316162222c2274727573745f736e617073686f745f66696e6765727072696e74223a227368613235363a37613863313066613631616561633534323335393262636234333765323638373532333836313463313665663961306238633035366236313030663561656665222c2274727573745f736e617073686f745f76657273696f6e223a323134373438333634387d",
+    "canonical_ascii": "{\"activation_ref\":\"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\",\"binding_profile\":\"ocs-policy-binding/1\",\"consumer_id\":\"runtime-emulator\",\"effective_policy_digest\":\"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\",\"family\":\"f1ab-local-execution-allowlist\",\"operation\":\"op-transfer\",\"record_digest\":\"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\",\"record_id\":\"rec-example-f1ab\",\"record_version\":2,\"scope\":{\"authority_domain\":\"domain-a\",\"institution\":\"inst-a\",\"tenant\":\"tenant-a\"},\"selection_digest\":\"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\",\"selection_epoch\":3,\"selection_id\":\"sel-example-f1ab\",\"trust_snapshot_fingerprint\":\"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\",\"trust_snapshot_version\":2147483648}",
+    "binding_digest": "sha256:e51eedc6ff8a5640c549eb690ecd7fa1d6afaa0024651d66c4e92af223a09dd1"
+   },
+   "description": "2147483648 is valid for trust_snapshot_version: its range is not the record_version/selection_epoch domain"
   },
   {
    "id": "IB-trust_snapshot_version-max-plus-1",
    "field": "trust_snapshot_version",
    "case": "max-plus-1",
-   "literal": "2147483648",
-   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 2147483648, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
+   "literal": "9007199254740992",
+   "input_json": "{\"binding_profile\": \"ocs-policy-binding/1\", \"record_id\": \"rec-example-f1ab\", \"record_version\": 2, \"record_digest\": \"sha256:a9dcd70e716cf681dc8e1becd59ebd48efff4da695dfabf7b68873579e6e40e8\", \"selection_id\": \"sel-example-f1ab\", \"selection_epoch\": 3, \"selection_digest\": \"sha256:070413bf1b87859ccf447b183abb26b487184ec1d33ef52dc47dea64ac930be3\", \"family\": \"f1ab-local-execution-allowlist\", \"consumer_id\": \"runtime-emulator\", \"scope\": {\"tenant\": \"tenant-a\", \"institution\": \"inst-a\", \"authority_domain\": \"domain-a\"}, \"operation\": \"op-transfer\", \"effective_policy_digest\": \"sha256:0f51b95ddc52a51b78e718e46cca42b9e0d000740443904c1378da2db828197b\", \"activation_ref\": \"sha256:7f5cc397f3a75d7eb167f54d7aaac9b7b0aa0a43c7830a12e1717c39a1ff4c2a\", \"trust_snapshot_version\": 9007199254740992, \"trust_snapshot_fingerprint\": \"sha256:7a8c10fa61aeac5423592bcb437e26875238614c16ef9a0b8c056b6100f5aefe\"}",
    "expected": {
     "result": "refuse",
     "code": "field_invalid",
@@ -4944,9 +5032,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -4970,9 +5060,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -4996,9 +5088,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.institution",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5022,9 +5116,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.authority_domain",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5048,9 +5144,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5074,9 +5172,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5100,9 +5200,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.institution",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5126,9 +5228,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5152,9 +5256,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5178,9 +5284,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.authority_domain",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5204,9 +5312,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5230,9 +5340,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.institution",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5256,9 +5368,11 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.authority_domain",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   },
   {
@@ -5282,42 +5396,17 @@
     "layer": "shape",
     "stage": "projection",
     "member": "scope.tenant",
-    "decision_required": "required_policy_unavailable",
-    "decision_optional": "overlay_not_applied",
-    "binding_created": false
+    "binding_created": false,
+    "projection_refusal_code": "field_invalid",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effects_set": "scope_projection_effects"
    }
   }
  ],
  "scope_projection_notes": [
   "original statement scope bytes stay in the signed statement and are committed by selection_digest (a binding member); no separate provenance digest is defined"
  ],
- "proposed_additive_codes": {
-  "status": "PROPOSED_NOT_IN_CODES_V2",
-  "note": "None of these is added by this work. Names are the kit-local names of docs/conformance/README.md (PR #28), which states they are conformance vocabulary and not additions to CODES_V2. Adding any of them to the closed map needs an ADR D-02 amendment.",
-  "codes": [
-   {
-    "code": "not_activated",
-    "proposed_layer": "selection",
-    "verdict_class": "REFUSE",
-    "retry": "fresh_statement_required",
-    "needed_for": "guard 7.4 line 2: no state row for the scope key; no existing code names 'never activated here'"
-   },
-   {
-    "code": "policy_identity_mismatch",
-    "proposed_layer": "identity",
-    "verdict_class": "REFUSE",
-    "retry": "never_same_input",
-    "needed_for": "guard 7.4 lines 2 and 3: a claim member (scope key, selection_id, selection_digest, record triple, activation_ref) differs from the durable row; the failing member travels as structured evidence field `member`, so one code does not collapse the causes"
-   },
-   {
-    "code": "store_unknown",
-    "proposed_layer": "trust",
-    "verdict_class": "UNKNOWN_FAIL_CLOSED",
-    "retry": "after_authoritative_state_available",
-    "needed_for": "guard 7.4 preamble: authoritative state unavailable, lost or indeterminate; HOLD, never success. The kit's finer causes (state_lost, state_malformed, state_older_than_anchor, anchor_head_mismatch, state_log_mismatch, log_chain_broken) are sub-causes carried in evidence field `unknown_cause`"
-   }
-  ]
- },
  "evidence_field_vocabulary": [
   "registry_code",
   "layer",
@@ -5345,7 +5434,8 @@
   "expected_range",
   "observed_value_class",
   "original_selection_digest",
-  "effective_policy_digest"
+  "effective_policy_digest",
+  "projection_refusal_code"
  ],
  "defect_mapping": [
   {
@@ -5542,7 +5632,7 @@
    "defect": "signed statement scope token that cannot be projected into the ASCII grammar",
    "verdict_class": "REFUSE",
    "registry_code": "field_invalid",
-   "decision_kind": "required_policy_unavailable (required) or overlay_not_applied (optional)",
+   "decision_kind": "required_policy_unavailable (required); none for optional (the projection refusal is not an authorization or fallback)",
    "retry": "fresh_statement_required",
    "evidence_fields": [
     "registry_code",
@@ -5551,10 +5641,11 @@
     "decision_kind",
     "stage",
     "member",
-    "original_selection_digest"
+    "original_selection_digest",
+    "projection_refusal_code"
    ],
    "source": "spec 5.6",
-   "note": "stage is `projection`; the original statement stays verified; no binding is created and no policy applied for a required scope; an optional scope applies none and keeps the caller policy with applied=false"
+   "note": "stage is `projection`; the original statement stays verified; no binding is created for any participation. Required: REFUSE (UNKNOWN_FAIL_CLOSED only if consumer state is indeterminate), never the caller policy. Optional: no fallback by itself; any fallback is the consumer authenticated optional-state determination (contract 4.3, 7.4; EXT-S4-2) permitted by the durable activation state, recorded as an absence or withdrawal evidence record carrying projection_refusal_code=field_invalid. Never overlay_not_applied or ACCEPT by itself."
   },
   {
    "id": "MP-digest_mismatch",
@@ -5576,9 +5667,26 @@
   },
   {
    "id": "MP-family_unsupported",
-   "defect": "family or family_version not registered in the dispatch table (effective digest)",
+   "defect": "family not registered in the dispatch table (effective digest); family_version is derived from that table and is never an input",
    "verdict_class": "REFUSE",
    "registry_code": "family_unsupported",
+   "decision_kind": "refused",
+   "retry": "never_same_input",
+   "evidence_fields": [
+    "registry_code",
+    "layer",
+    "participation",
+    "decision_kind",
+    "stage",
+    "member"
+   ],
+   "source": "spec 6"
+  },
+  {
+   "id": "MP-contract_unsupported",
+   "defect": "registered family under a contract_version not registered for it (family_version lookup, ruling N-3)",
+   "verdict_class": "REFUSE",
+   "registry_code": "contract_unsupported",
    "decision_kind": "refused",
    "retry": "never_same_input",
    "evidence_fields": [
@@ -5841,7 +5949,7 @@
     "unknown_cause"
    ],
    "source": "contract 7.4 preamble; kit UNKNOWN_FAIL_CLOSED (HOLD)",
-   "proposed_additive_code": true
+   "ruled_additive_code": true
   },
   {
    "id": "MP-not_activated",
@@ -5860,7 +5968,7 @@
     "selection_id"
    ],
    "source": "contract 7.4 line 2; kit REFUSE",
-   "proposed_additive_code": true
+   "ruled_additive_code": true
   },
   {
    "id": "MP-policy_identity_mismatch",
@@ -5885,7 +5993,7 @@
     "activation_ref"
    ],
    "source": "contract 7.4 lines 2 and 3; kit REFUSE",
-   "proposed_additive_code": true
+   "ruled_additive_code": true
   },
   {
    "id": "MP-deny_all",
@@ -5924,6 +6032,282 @@
    ],
    "source": "contract 2 (evaluator binding)",
    "note": "owned by the enforcing component's evaluator; no Registry code and no Registry verdict class; never relabelled as a Registry refusal"
+  }
+ ],
+ "scope_projection_effects": [
+  {
+   "id": "SPE-001",
+   "participation": "required",
+   "activation_state": "known",
+   "optional_determination": "n/a",
+   "projection_refusal_code": "field_invalid",
+   "description": "required scope, consumer state known: invalidity established -> REFUSE, never the caller policy",
+   "expected": {
+    "binding_created": false,
+    "projection_verdict": "REFUSE",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effect_outcome": "REFUSE",
+    "decision_kind": "required_policy_unavailable",
+    "fallback_permitted": false,
+    "fallback_evidence": null
+   }
+  },
+  {
+   "id": "SPE-002",
+   "participation": "required",
+   "activation_state": "indeterminate",
+   "optional_determination": "n/a",
+   "projection_refusal_code": "field_invalid",
+   "description": "required scope, consumer authoritative state indeterminate -> UNKNOWN_FAIL_CLOSED (HOLD), never a fallback",
+   "expected": {
+    "binding_created": false,
+    "projection_verdict": "REFUSE",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "decision_kind": "required_policy_unavailable",
+    "fallback_permitted": false,
+    "fallback_evidence": null
+   }
+  },
+  {
+   "id": "SPE-003",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "authenticated",
+   "projection_refusal_code": "field_invalid",
+   "description": "optional scope, authenticated authorized determination and the durable activation state permits optional participation: fallback permitted ONLY through that determination, recorded as an explicit absence or withdrawal evidence record carrying the original projection refusal code",
+   "expected": {
+    "binding_created": false,
+    "projection_verdict": "REFUSE",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effect_outcome": "optional_fallback_via_determination",
+    "decision_kind": null,
+    "fallback_permitted": true,
+    "fallback_evidence": {
+     "kind": "absence_or_withdrawal",
+     "projection_refusal_code": "field_invalid"
+    }
+   }
+  },
+  {
+   "id": "SPE-004",
+   "participation": "optional",
+   "activation_state": "forbids_fallback",
+   "optional_determination": "authenticated",
+   "projection_refusal_code": "field_invalid",
+   "description": "optional scope but the durable activation state does not permit absence (an activation or a required ratchet exists) -> REFUSE, no fallback",
+   "expected": {
+    "binding_created": false,
+    "projection_verdict": "REFUSE",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effect_outcome": "REFUSE",
+    "decision_kind": null,
+    "fallback_permitted": false,
+    "fallback_evidence": null
+   }
+  },
+  {
+   "id": "SPE-005",
+   "participation": "optional",
+   "activation_state": "permits_optional",
+   "optional_determination": "not_authenticated",
+   "projection_refusal_code": "field_invalid",
+   "description": "optional scope without an authenticated optional-state determination -> REFUSE, no fallback",
+   "expected": {
+    "binding_created": false,
+    "projection_verdict": "REFUSE",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effect_outcome": "REFUSE",
+    "decision_kind": null,
+    "fallback_permitted": false,
+    "fallback_evidence": null
+   }
+  },
+  {
+   "id": "SPE-006",
+   "participation": "optional",
+   "activation_state": "indeterminate",
+   "optional_determination": "authenticated",
+   "projection_refusal_code": "field_invalid",
+   "description": "optional scope, durable state indeterminate -> UNKNOWN_FAIL_CLOSED (HOLD), no fallback",
+   "expected": {
+    "binding_created": false,
+    "projection_verdict": "REFUSE",
+    "yields_overlay_not_applied": false,
+    "yields_accept": false,
+    "effect_outcome": "UNKNOWN_FAIL_CLOSED",
+    "decision_kind": null,
+    "fallback_permitted": false,
+    "fallback_evidence": null
+   }
+  }
+ ],
+ "ruled_additive_codes": {
+  "status": "RULED_REQUIRED_NOT_YET_IN_CODES_V2",
+  "note": "Architect ruling N-4: the three semantic distinctions are REQUIRED and enter the versioned v2 reason registry through an explicit additive amendment, written separately as a docs-only amendment PR. Until that amendment merges and a re-pinned outcome map exists, this work emits none of them as registry_code, keeps them disjoint from the 48 CODES_V2 entries, leaves the closed v1 vocabulary unchanged, and overloads no existing code. Names are the kit-local names of docs/conformance/README.md.",
+  "codes": [
+   {
+    "code": "not_activated",
+    "proposed_layer": "selection",
+    "verdict_class": "REFUSE",
+    "retry": "fresh_statement_required",
+    "needed_for": "guard 7.4 line 2: no state row for the scope key; no existing code names 'never activated here'"
+   },
+   {
+    "code": "policy_identity_mismatch",
+    "proposed_layer": "identity",
+    "verdict_class": "REFUSE",
+    "retry": "never_same_input",
+    "needed_for": "guard 7.4 lines 2 and 3: a claim member (scope key, selection_id, selection_digest, record triple, activation_ref) differs from the durable row; the failing member travels as structured evidence field `member`, so one code does not collapse the causes"
+   },
+   {
+    "code": "store_unknown",
+    "proposed_layer": "trust",
+    "verdict_class": "UNKNOWN_FAIL_CLOSED",
+    "retry": "after_authoritative_state_available",
+    "needed_for": "guard 7.4 preamble: authoritative state unavailable, lost or indeterminate; HOLD, never success. The kit's finer causes (state_lost, state_malformed, state_older_than_anchor, anchor_head_mismatch, state_log_mismatch, log_chain_broken) are sub-causes carried in evidence field `unknown_cause`"
+   }
+  ]
+ },
+ "effective_inputs": [
+  {
+   "id": "EFV-001",
+   "description": "derived family_version: input carries family, contract_version and effective only; equals EP-001",
+   "input_json": "{\"family\": \"f1ab-local-execution-allowlist\", \"contract_version\": \"r08-v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "valid",
+    "derived_family_version": "v2",
+    "equals": "EP-001",
+    "effective_policy_digest": "sha256:d38925d9f3daf876c7d7bb9bf74947b3b11da83c363b9c3de795b3595688649f"
+   }
+  },
+  {
+   "id": "EFV-002",
+   "description": "derived family_version: input carries family, contract_version and effective only; equals EP-003",
+   "input_json": "{\"family\": \"f4-control-plane-age-bounds\", \"contract_version\": \"r08-v2\", \"effective\": {\"status_max_age_seconds\": 60, \"approval_max_age_seconds\": 300}}",
+   "expected": {
+    "result": "valid",
+    "derived_family_version": "v2",
+    "equals": "EP-003",
+    "effective_policy_digest": "sha256:fe02c0987eed7c36958e28b2202567d3240db8e361f66d8b2c4c0e654ae13a1f"
+   }
+  },
+  {
+   "id": "EFV-003",
+   "description": "derived family_version: input carries family, contract_version and effective only; equals EP-005",
+   "input_json": "{\"family\": \"f5-action-class-age-bounds\", \"contract_version\": \"r08-v2\", \"effective\": {\"class_status_max_age_seconds\": {\"class-b\": 90, \"class-a\": 30}}}",
+   "expected": {
+    "result": "valid",
+    "derived_family_version": "v2",
+    "equals": "EP-005",
+    "effective_policy_digest": "sha256:8d7070bcf78c48b7a2e7261ab708852b152fc3567c0de11c3b8d5b6d4af0dc5c"
+   }
+  },
+  {
+   "id": "EFV-004",
+   "description": "derived family_version: input carries family, contract_version and effective only; equals EP-014",
+   "input_json": "{\"family\": \"f1a-local-execution-allowlist\", \"contract_version\": \"r08-v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"]}}",
+   "expected": {
+    "result": "valid",
+    "derived_family_version": "v1",
+    "equals": "EP-014",
+    "effective_policy_digest": "sha256:46707ffe436f417a19561853ccb05e7323903e041c889bfffebc744d3bb1f7de"
+   }
+  },
+  {
+   "id": "EFV-011",
+   "description": "caller supplies a family_version different from the registered tag (v1 for f1ab): refused, never selects a family version",
+   "input_json": "{\"family\": \"f1ab-local-execution-allowlist\", \"contract_version\": \"r08-v2\", \"family_version\": \"v1\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "member": "family_version"
+   }
+  },
+  {
+   "id": "EFV-012",
+   "description": "caller supplies the registered tag itself: still refused (family_version is never an input)",
+   "input_json": "{\"family\": \"f1ab-local-execution-allowlist\", \"contract_version\": \"r08-v2\", \"family_version\": \"v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "member": "family_version"
+   }
+  },
+  {
+   "id": "EFV-013",
+   "description": "family_version supplied as null",
+   "input_json": "{\"family\": \"f1ab-local-execution-allowlist\", \"contract_version\": \"r08-v2\", \"family_version\": null, \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "member": "family_version"
+   }
+  },
+  {
+   "id": "EFV-014",
+   "description": "family_version smuggled inside the effective payload",
+   "input_json": "{\"family\": \"f1ab-local-execution-allowlist\", \"contract_version\": \"r08-v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"], \"family_version\": \"v1\"}}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "member": "family_version"
+   }
+  },
+  {
+   "id": "EFV-015",
+   "description": "unregistered family",
+   "input_json": "{\"family\": \"f9-unknown\", \"contract_version\": \"r08-v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "family_unsupported",
+    "member": "family"
+   }
+  },
+  {
+   "id": "EFV-016",
+   "description": "registered family under a contract_version not registered for it (r08-v1)",
+   "input_json": "{\"family\": \"f1ab-local-execution-allowlist\", \"contract_version\": \"r08-v1\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "contract_unsupported",
+    "member": "contract_version"
+   }
+  },
+  {
+   "id": "EFV-017",
+   "description": "unregistered family with a supplied family_version: member-set check precedes the registered lookup",
+   "input_json": "{\"family\": \"f9-unknown\", \"contract_version\": \"r08-v2\", \"family_version\": \"v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_unknown",
+    "member": "family_version"
+   }
+  },
+  {
+   "id": "EFV-018",
+   "description": "family missing",
+   "input_json": "{\"contract_version\": \"r08-v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_missing",
+    "member": "family"
+   }
+  },
+  {
+   "id": "EFV-019",
+   "description": "family not a string",
+   "input_json": "{\"family\": 7, \"contract_version\": \"r08-v2\", \"effective\": {\"allowed_actions\": [\"transfer\", \"view\"], \"allowed_adapters\": [\"adapter-a\"], \"allowed_units\": [\"eur\", \"usd\"], \"allowed_institutions\": [\"inst-a\"], \"allowed_authority_domains\": [\"domain-a\"]}}",
+   "expected": {
+    "result": "refuse",
+    "code": "field_type_invalid",
+    "member": "family"
+   }
   }
  ]
 }
