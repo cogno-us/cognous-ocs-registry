@@ -683,6 +683,7 @@ POLICY_IDENTITY_MEMBER_VALUES = ("scope_key", "selection_id", "selection_epoch",
 # Comparison order for the FIRST differing member: `selection_id` precedes `scope_key` because the scope-key digest includes `selection_id` (spec 5.7), so a
 # `selection_id` difference would otherwise always be reported as `scope_key`. PROPOSED and local to this pure helper; the guard order stays with EXT-S4-2.
 _COMPARE_ORDER = ("selection_id", "scope_key", "selection_epoch", "selection_digest", "record_id", "record_version", "record_digest", "activation_ref")
+_ROW_IDENTITY = ("selection_id", "scope_key")  # compared BEFORE any epoch: an epoch is meaningful only against the row of the same scope key and selection id
 _ROW_INT_PATHS = frozenset(("selection_epoch", "record_version"))
 _ROW_ID_PATHS = frozenset(("selection_id", "record_id"))
 _ROW_DIGEST_PATHS = frozenset(("scope_key", "selection_digest", "record_digest", "activation_ref"))
@@ -714,10 +715,14 @@ def compare_binding_identity(binding: Any, authoritative: Any) -> str:
     already holds. The binding is validated first (syntax, version and every member), so a malformed binding is refused with its own code.
       * `authoritative` that is not exactly the eight values in their grammar: `store_unknown` (UNKNOWN_FAIL_CLOSED): an unusable row is indeterminate state,
         never a fallback and never a match. No member is skipped because it is missing.
-      * a claim epoch BEHIND the row: `selection_epoch_stale` (REFUSE_STALE, evidence `selection_epoch`, `high_water_epoch`); it takes precedence over any
-        other differing member, as in the kit.
-      * otherwise the FIRST differing member in `_COMPARE_ORDER` (`selection_id` first, then `scope_key`, ...; a claim epoch AHEAD of the row included): `policy_identity_mismatch`
-        (REFUSE) with `member` naming it. The claim's `effective_policy_digest` is never compared with durable state (contract 7.4: it is caller-dependent).
+      * ROW IDENTITY FIRST: epochs are comparable only within one scope key and one selection id, so `selection_id` and then `scope_key` are compared before
+        any epoch. A claim whose `selection_id` or `scope_key` differs from the row is NOT this row's claim: it is `policy_identity_mismatch` (REFUSE, `member`
+        naming it), whatever its epoch (review S-1). This reconciles with the kit, which resolves the row BY SCOPE KEY (the conformance kit `highwater.py:980`)
+        and only then compares the epoch (stale return at `highwater.py:997-998`, other members at `:999-1001`): a claim for another scope never reaches a row of this one.
+      * then, for the SAME scope key and selection id, a claim epoch BEHIND the row: `selection_epoch_stale` (REFUSE_STALE, evidence `selection_epoch`,
+        `high_water_epoch`); it takes precedence over the remaining members (a definitively stale epoch is never a generic identity mismatch).
+      * otherwise the FIRST differing member in `_COMPARE_ORDER` (`selection_epoch` AHEAD of the row, `selection_digest`, the record triple, `activation_ref`):
+        `policy_identity_mismatch` (REFUSE). The claim's `effective_policy_digest` is never compared with durable state (contract 7.4: it is caller-dependent).
     Returns the recomputed binding digest when every member matches."""
     b = validate_binding(binding)
     if not _authoritative_row_ok(authoritative):
@@ -725,6 +730,9 @@ def compare_binding_identity(binding: Any, authoritative: Any) -> str:
     row = authoritative
     claim = {"scope_key": scope_key_digest(scope_key_from_binding(b))}
     claim.update({k: b[k] for k in POLICY_IDENTITY_MEMBER_VALUES if k != "scope_key"})
+    for k in _ROW_IDENTITY:
+        if claim[k] != row[k]:
+            _refuse("policy_identity_mismatch", k)
     if claim["selection_epoch"] < row["selection_epoch"]:
         _refuse("selection_epoch_stale", "selection_epoch", evidence={"selection_epoch": claim["selection_epoch"], "high_water_epoch": row["selection_epoch"]})
     for k in _COMPARE_ORDER:
@@ -738,7 +746,9 @@ def verify_carried_binding_digest(binding: dict, carried: Any, authoritative: An
     carried digest's format (`field_invalid`), (3) when `authoritative` (the consumer-owned durable row, `compare_binding_identity`) is given, the authoritative
     identity and context are compared (`store_unknown`, `selection_epoch_stale`, `policy_identity_mismatch`), and only then (4) the carried digest is compared
     with the recomputed value (`digest_mismatch`, evidence carried and recomputed). WITHOUT `authoritative` this is a digest-integrity check only: it verifies
-    no identity and no context, and a caller that needs the identity guarantee MUST pass the row (the guard, EXT-S4-2, is the consumer)."""
+    no identity and no context, and a caller that needs the identity guarantee MUST pass the row (the guard, EXT-S4-2, is the consumer).
+    WARNING: `authoritative=None` is NOT an identity verification. A matching digest proves only that the binding is internally consistent; it never shows that the
+    binding names the activated policy, scope or epoch. Do not use the None form as a guard."""
     recomputed = checked_binding_digest(binding)
     if not (type(carried) is str and _ascii_match(_DIGEST, carried)):
         _refuse("field_invalid", evidence={"observed_value_class": _value_class(carried)})

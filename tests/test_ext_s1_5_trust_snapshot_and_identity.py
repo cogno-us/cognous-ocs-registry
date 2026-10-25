@@ -346,6 +346,54 @@ def test_a_claim_epoch_behind_the_row_is_stale_ahead_is_a_mismatch_and_stale_tak
     assert _refusal(m.compare_binding_identity, b, both).code == "selection_epoch_stale"  # a definitively stale epoch is never a generic identity mismatch
 
 
+def test_epochs_of_a_different_row_are_not_comparable_so_cross_row_claims_are_mismatches_never_stale():
+    """Review S-1: a claim for another selection id or scope key is not this row's claim, so its epoch (higher or lower) never makes it stale."""
+    b = _binding()
+    for edit_row in ({"selection_id": "sel-other"}, {"scope_key": DIGEST_A}, {"selection_id": "sel-other", "scope_key": DIGEST_A}):
+        for delta in (-1, +1, +10):
+            row = _row(b, **edit_row, selection_epoch=b["selection_epoch"] + delta)
+            e = _refusal(m.compare_binding_identity, b, row)
+            assert e.code == "policy_identity_mismatch", (edit_row, delta)
+            assert e.member == ("selection_id" if "selection_id" in edit_row else "scope_key")
+            assert m.mapping_row_for(e).verdict_class == "REFUSE"
+    # the same claim against its OWN row (same scope key and selection id) with a higher row epoch is still definitively stale
+    own = _row(b, selection_epoch=b["selection_epoch"] + 1)
+    e = _refusal(m.compare_binding_identity, b, own)
+    assert e.code == "selection_epoch_stale" and m.mapping_row_for(e).verdict_class == "REFUSE_STALE"
+    # a claim from a moved selection id carrying a LOWER epoch than the row is a mismatch too (the mismatch is the cause, not the epoch)
+    moved = {**b, "selection_id": "sel-moved", "selection_epoch": 1}
+    assert _refusal(m.compare_binding_identity, moved, _row(b, selection_epoch=5)).code == "policy_identity_mismatch"
+    # and through the ordered digest check
+    assert _refusal(m.verify_carried_binding_digest, b, m.checked_binding_digest(b), _row(b, selection_id="sel-other", selection_epoch=b["selection_epoch"] + 1)).code == "policy_identity_mismatch"
+
+
+def test_a_48_code_consumer_fails_closed_on_each_revision_2_code():
+    """Amendment 1 6.7(d), simulated: a consumer holding only the revision-1 table (`CODES_V2`, 48) that receives a revision-2 code treats it as UNMAPPED, which
+    is a refusal (never success, never an optional fallback, never remapped by text). The real consumer is outside this package; this is its stated rule."""
+    from registry_successor.v2_codes import CODES_V2, CODES_V2_REV2
+
+    def rev1_consumer(participation, registry_code):
+        if registry_code in CODES_V2:  # known: its own mapping applies (not simulated)
+            return "known"
+        return "REFUSE_UNMAPPED"  # unknown to a 48-code table: fail closed, whatever the participation, no remap, no fallback
+
+    for code in ("not_activated", "policy_identity_mismatch", "store_unknown"):
+        assert code in CODES_V2_REV2 and code not in CODES_V2
+        for participation in ("required", "optional"):
+            assert rev1_consumer(participation, code) == "REFUSE_UNMAPPED", (code, participation)
+    # the Registry's own revision-1 mapping surface agrees: the 48-code outcome map and the revision-1 table know none of the three
+    import json
+    base = json.loads((ROOT / "docs/p1-extraction-plan/data/ld02-outcome-map.json").read_text(encoding="utf-8"))["codes"]
+    assert not {"not_activated", "policy_identity_mismatch", "store_unknown"} & set(base) and len(base) == 48
+    # and the v1 decision path never lets one through as a success or an optional overlay
+    from registry_successor import decision
+    from types import SimpleNamespace
+    for code in ("not_activated", "policy_identity_mismatch", "store_unknown"):
+        for participation in ("required", "optional"):
+            d = decision._decide_verified(participation, {}, None, SimpleNamespace(ok=False, code=code))
+            assert d.code == "selection_missing" and d.operationally_authorized is False and d.kind != "applied"
+
+
 def _bad_rows():
     b = _binding()
     good = _row(b)
