@@ -37,4 +37,4 @@ This directory answers one question: *which parts of the historical rule invento
 4. Monotonic non-widening composition is definable per scalar or set field when the stricter direction is ruled. It is **not** definable as one shared algebra, and for F7 (cross-field ordering across two components), F4 (clocks and observation authority) and F5 (profile toggles) it is only definable under rulings that have not been made.
 5. Most consequential gaps: no authenticated selection, activation or pin exists; the 32 S02 classifications are unresolved; the `COG-REG-SHARED-ADD-01` source was not available to this analysis; no ISS architecture source was available, so no ISS family payload is proposed.
 
-Nothing here approves, activates or enforces anything. The successor schema is a proposal for architectural review.
+The Architect's R07 rulings are recorded in 08; they are design guidance and authorize no implementation. Nothing here approves, activates or enforces anything. The successor schema is a proposal for architectural review.

@@ -47,7 +47,7 @@ Result: F7 is a multi-field profile spanning two components, not one value. Clas
 
 `dedupe.unresolved_effects` treats any closeout as closing an effect. `dedupe.applied_under_other_effect` counts only closeouts whose `observed_state` is `applied` or `partial`, although its docstring says "any attempt with a closeout". `merge.attempt_outcomes` counts only `applied` or `partial` as applied, so an attempt with an `absent` closeout is resolved in one module and unresolved in the other.
 
-Result: the difference is confirmed, along with a docstring/code mismatch. Intent is not determinable from code. UNRESOLVED; needs an architectural ruling.
+Result: the difference in the two modules' definitions and a docstring/code mismatch are source-read observations. This analysis does not characterize them as a proven runtime defect: no supported execution path that exposes the divergence was traced, and intent is not determinable from code. UNRESOLVED; D12 (08) remains open.
 
 ### W8-014 authority-profile toggles [V]
 

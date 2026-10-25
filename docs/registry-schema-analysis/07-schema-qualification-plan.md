@@ -88,7 +88,7 @@ For W2c-1 to W2c-4 the three host codes are distinct and are raised by `check_cl
 | # | Scenario | Input | Expected |
 |---|---|---|---|
 | O1 | Any refusal under the optional profile | | caller policy unchanged; "overlay not applied", not "denied" |
-| O2 | Any refusal under the mandatory profile | | consumer denies; this profile is not authorized today |
+| O2 | Any refusal under the mandatory profile | | consumer denies; permitted as an architectural design capability (D7 ruling), not authorized for activation; required-policy failure must not fall back to a broader caller policy |
 | O3 | Empty effective set | intersection empty | deny-all for that field; cannot be authored as a record (non-empty lists) |
 | O4 | Expiry under the optional profile | | reverts to the caller's possibly broader policy (T7 by time); documented limit |
 | T1 | S03/S04 compatibility | existing S03 and S04 cases | same results as on `main`; no existing test changes |

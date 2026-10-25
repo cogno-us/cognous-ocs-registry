@@ -51,7 +51,7 @@ A represented directly. B representable with a bounded extension. C needs a new 
 | Lifecycle | mandatory logic stays in code | Registry may not alter a transition |
 | ISS cognitive policies | do not assume OCS operators apply | No ISS architecture source was available; no mapping is asserted (08) |
 
-No universal rules algebra is proposed. Each row above is a separate, local rule that a family chooses and an Architect rules on.
+**Architect ruling D4:** there is no universal monotonic direction, and composition is never inferred from numerical type alone. Each scalar needs explicit units, ordering, applicable floor or ceiling, direction of tightening, interaction with code-owned invariants and a deterministic unsupported-case outcome; the rows above are patterns to be instantiated per family, not defaults. No universal rules algebra is proposed. Each row above is a separate, local rule that a family chooses and an Architect rules on.
 
 ## 4. Where non-widening composition is not definable
 

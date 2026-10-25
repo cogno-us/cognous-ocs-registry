@@ -41,7 +41,7 @@ Rules:
 | (no time window) | n/a | Time windows live in the selection (`valid_from`, `valid_until`), not in the record, so a record cannot state its own activity period | none |
 | `supersedes` | yes | null, or id, version, digest of the immediately preceding version | same |
 
-Deliberately absent: signatures or key identifiers (an authentication scheme is a separate decision, 08 D2); an `approved`, `active` or `mandatory` flag; any expression, predicate or script field (no general-purpose policy interpretation); any grant-bearing field; any reference to an ISS authority.
+Deliberately absent: signatures or key identifiers (Architect ruling D2: operational selection requires authenticated authority and pin-only integrity is insufficient as a general authorization mechanism; the trust root, signing and custody mechanism are R09 design and operator approval, 08 D2); an `approved`, `active` or `mandatory` flag; any expression, predicate or script field (no general-purpose policy interpretation); any grant-bearing field; any reference to an ISS authority.
 
 Open point: S03 includes `status` (`proposed`, `active`, `superseded`, `withdrawn`) inside the record, so a record states its own activity. In the successor, activity is a property of SELECTION and ACTIVATION. The record would keep only author intent (`proposed`, `withdrawn`); `active` and `superseded` would remain meaningful only for `s03-v1` records, whose frozen gate (non-`active` records are refused) is preserved unchanged. This is a design question for the Architect (08 D3).
 
@@ -60,7 +60,7 @@ The manifest digest is compared to a pin supplied by trusted invocation, never r
 
 ## 4. ACTIVATION (not stored in the registry)
 
-Host configuration: the pin, a trusted clock (new), the trusted evaluator source and evaluator registry (the registry is new; records and selections never register evaluators), and a **per-consumer profile** that is either *optional overlay* (a refusal means the overlay is not applied and the caller policy stands, T7) or *mandatory* (a refusal makes the consumer deny). Mandatory is a different, unauthorized profile today. The profile is chosen by the host, not by a record.
+Host configuration: the pin, a trusted clock (new), the trusted evaluator source and evaluator registry (the registry is new; records and selections never register evaluators), and a **per-consumer profile** that is either *optional overlay* (a refusal means the overlay is not applied and the caller policy stands, T7) or *mandatory* (a refusal makes the consumer deny). Mandatory participation is permitted as an architectural design capability (Architect ruling D7) but is not authorized for activation; required-policy failure must never fall back to a broader caller policy. The profile is chosen by the host, not by a record.
 
 ## 5. GCR and OCS (written as "ISS" before v1.2; terminology below follows v1.2: GCR is the architectural role, ISS V6 its current reference implementation)
 
