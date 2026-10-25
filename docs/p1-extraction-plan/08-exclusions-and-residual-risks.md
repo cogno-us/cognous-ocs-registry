@@ -45,6 +45,7 @@ Status: planning only. Exclusions are stated as customer capability that is not 
 |---|---|---|
 | `max_amount` (RT-F1c-01) | DEFERRED by operator decision (Option B); no task, no reserved slot in V1 | Separate authorization; D6 ruling that the caller's value stays authoritative; numeric encoding (`{unit, scale, value}` rounded down to binary64); single-unit rule; QG-02 activated |
 | F1d target scope, F6 permissions, F7 dedupe/TTL, F3 operational timeouts, F8 tool lists, F11 redaction, remaining F4/F5 rows | Outside the V1 profile | Separate authorization, ruling of the open decision named in the manifest, and a gate |
+| Management UI (ENABLED/DISABLED) | Not built; the readiness mapping and acceptance criteria are fixed in [04](04-component-ownership-and-adapter-matrix.md); a toggle is a request for a signed, versioned selection or withdrawal, never a write | Ergonomics integration after V1, under the same required-policy and code-owned-invariant rules |
 | Route A commit-time protection | Outside V1 (atomic Route B only) | Operator decision and a redesign not covered by this plan |
 
 ## What would be a material surprise

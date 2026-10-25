@@ -106,7 +106,10 @@
       "lock-time clock domain",
       "mandatory profile: unavailable registry does not fall back to caller",
       "clock_tolerance_seconds not weakened",
-      "60-vs-300 relationship neither assumed nor resolved"
+      "60-vs-300 relationship neither assumed nor resolved",
+      "validly signed outage extension above the registry-narrowed value: effective ceiling stays min(caller, registry)",
+      "extension base computed from the caller value instead of the narrowed value is refused (mutation leg: compute extension on the caller value)",
+      "extension beyond the field's code-owned bound, unsigned, forged, expired, replayed, other-scope, or on a different field is refused with a typed extension-invalid cause and zero effects"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; direction ruled (per-scalar min, Architect rulings in doc 10): not a blocker; remaining prerequisites are the implementation PRs EXT-S1-4, EXT-S3-2, EXT-S3-3 and the independent-lead restriction",
     "sprint": "S5-3",
@@ -135,7 +138,9 @@
       "irreversible class never raised by extension",
       "effective profile == profile hashed into approval_commitment (CP-F5-12)",
       "relaxing toggles (on_unreadable, allow_synthetic_resolver) unreachable from registry",
-      "class bounds 5 and 120 old vs new"
+      "class bounds 5 and 120 old vs new",
+      "approval under P1 then narrowing withdrawn: P0 does not revive the approval; approval hashing the caller profile is refused",
+      "positive control: an approval bound to the narrowed profile P1 passes"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; W8-014 and D4 are ruled (doc 10): not blockers; remaining prerequisites are EXT-S3-3, EXT-S3-4 and the independent-lead restriction",
     "sprint": "S5-3",
@@ -171,7 +176,15 @@
       "selection altered after activation",
       "real Ed25519 verifier behaviour after R09",
       "QS13 re-adjudicated and frozen by the independent lead",
-      "participation-mismatch case (no case exists)"
+      "participation-mismatch case (no case exists)",
+      "equal, older and swapped epoch (between check and commit) refused; claim epoch below the Runtime high-water refused",
+      "conflict (higher epoch without supersession) and stale-epoch remain distinct typed causes, never collapsed",
+      "restore of a selection store older than a revocation or higher epoch fails closed until re-baselined; lost high-water state fails closed",
+      "half-completed activation rolls back without partial selection becoming effective; reactivating a restored revoked record is refused",
+      "withdrawn, absent, revoked, expired and superseded each produce their own code for required and optional participation (schema-readiness A1/A2)",
+      "a withdraw statement without supersedes, at an equal or lower epoch, or carrying a record pin is refused; withdrawal never lowers the high-water",
+      "no code path writes activation_state without an authenticated selection, withdrawal or revocation (no local-only or UI-writable writer)",
+      "policy_state precedence cases (unknown, revoked, withdrawn, superseded, expired, active) derive identically in every consumer"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; lead (not builder) owns real-key trust snapshot fixtures",
     "sprint": "S5-4",
@@ -197,7 +210,12 @@
     "new_tests_needed": [
       "Runtime/Control-Plane-level required-profile tests: unavailable, invalid, stale, revoked, expired, no trust root, no verifier, malformed caller each yield typed refusal and zero effects",
       "optional mode caller unchanged and not a denial",
-      "detector for bounded_tolerance toggle (GAP-G4-05)"
+      "detector for bounded_tolerance toggle (GAP-G4-05)",
+      "completeness: every code in CODES (r08-v1) and, for r08-v2, trust_snapshot_version_stale maps to a typed refusal, and the test fails on any unmapped code",
+      "each mapped code keeps detail.registry_code; overloaded codes keep their subcause text distinguishable",
+      "verifier failure and malformed caller policy on a required profile: no dispatch, no fallback to the caller policy",
+      "falling back to the caller per failure class, or deleting a code from the map, must make its case fail (mutation leg)",
+      "a required scope that is withdrawn, revoked, expired or unavailable never returns the caller policy and never succeeds; optional returns overlay_not_applied with the caller policy unchanged"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
     "sprint": "S5-4",
@@ -259,7 +277,12 @@
       "interval boundaries at commit with lock-time clock",
       "reactivation or lineage cannot resurrect",
       "queued job and retry after revocation",
-      "stale cache"
+      "stale cache",
+      "selection revoked in Runtime-held state while the claim-carried binding still verifies is refused at commit",
+      "revocation present only in a below-floor trust snapshot is refused and not ignored",
+      "reactivation, lineage or a higher epoch cannot resurrect a revoked selection after a Runtime-state restore",
+      "use of the check-time clock instead of the lock-time clock, or dropping the expiry comparison, must make the boundary case fail (mutation leg)",
+      "a revoked epoch is not resurrected by a later activate; activation_state revoked mirrors the terminal revocation table"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
     "sprint": "S5-4",
@@ -288,7 +311,14 @@
       "selection identity bound and revalidated under lock",
       "lost-ack reconcile preserves original policy identity",
       "crash at each transaction stage",
-      "repeated runs with raw logs for race tests"
+      "repeated runs with raw logs for race tests",
+      "executor-supplied identity string with no claim-carried binding is refused at the commit boundary (an executor-supplied string alone is not authority), zero effect rows, claim not consumed, budget unchanged",
+      "registry unreachable during the effect transaction: outcome identical to registry reachable, and a network sentinel records no socket opened inside the transaction",
+      "same selection id with a broader profile digest, swapped trust-snapshot fingerprint, or swapped record digest after verification is refused under the lock",
+      "same selection id with a different digest between check and commit is refused",
+      "if the effect transaction takes the lock first the effect stands with its original policy identity and the change governs the next operation only",
+      "lost acknowledgement followed by revocation: outcome stays unresolved, is not retry-eligible, and original identity is preserved",
+      "each under-lock comparison (claim id, policy identity, record and selection id, epoch) removed in turn must make its case fail (mutation leg)"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; single runs do not qualify a race; lead retains repeated raw output",
     "sprint": "S5-4",
@@ -313,7 +343,9 @@
       "CP-allowed vs RT-narrowed and the reverse",
       "registry value consumed by one component only refuses",
       "profile snapshot hash agrees both sides",
-      "broken trust root, altered record/evaluator, stale caches"
+      "broken trust root, altered record/evaluator, stale caches",
+      "grant valid with approval bound to another profile or lineage, grant revoked or expired with approval valid, and the reverse: each refused",
+      "Control Plane and Runtime profile disagreement never takes the broader side"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
     "sprint": "S5-4",
@@ -379,7 +411,10 @@
       "confused deputy between families",
       "dropped-field refusals",
       "mutation leg per refusal family",
-      "loaded-code replacement (LIM-1) disclosed not claimed"
+      "loaded-code replacement (LIM-1) disclosed not claimed",
+      "r08-v2 additivity: v2-only fields refused by v1 loaders; no silent upgrade of a v1 document",
+      "signing-domain separation: a v1 signature never verifies a v2 statement and the reverse",
+      "mutation leg for each NX control: disable exactly one refusal check and the case must fail"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
     "sprint": "S5-5",
@@ -420,7 +455,8 @@
       "rerun at exact pins with preserved statuses",
       "declare the 11 Runtime known-limit tests (owner action before the run)",
       "MVP oracle row for a LocalExecutionPolicy denial (GAP-G4-09)",
-      "frozen-artifact blob checks rerun"
+      "frozen-artifact blob checks rerun",
+      "r08-v1 golden regression: existing r08 tests, S05 expectations, golden codes and frozen artefacts are byte-identical after r08-v2 lands, never edited to obtain a pass"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family",
     "sprint": "S6-2",
@@ -441,7 +477,8 @@
       "designation record naming the lead and independence statement",
       "freeze commit with expectation digest and candidate SHA",
       "execution record with raw logs and SHA256SUMS",
-      "evidence review by separate party or recorded not performed"
+      "evidence review by separate party or recorded not performed",
+      "key and snapshot custody (no operational trust root in V1) recorded as 'not performed', never a gate or PASS"
     ],
     "independence_requirement": "Independent oracle author (not builder, architect or Copilot) writes expectations from contract/manifest/source before implementation results; expectations, exact candidate pins and spec digest frozen in a dated qualification-repo commit before execution; independent lead executes or supervises at exact pins; synthetic-only; amendments dated, never to obtain a pass; mutation leg per refusal family; verdict only by designated lead; builder-side inspection never counts toward independence; Copilot is code review only (comment-only, not approval)",
     "sprint": "S5-1/S5-6/S6-4",

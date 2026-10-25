@@ -26,6 +26,8 @@ Reconciled figures (merged inventory): 696 canonical scenarios and 162 suite-loc
 | 8 | [`08-exclusions-and-residual-risks.md`](08-exclusions-and-residual-risks.md) | Exclusions as lost customer capability, residual risks |
 | 9 | [`09-operator-scope-decision.md`](09-operator-scope-decision.md) | The operator scope decision (approved: Option B, Route B only) in plain language |
 | 10 | [`10-architect-rulings-and-repin.md`](10-architect-rulings-and-repin.md) | Architect rulings in force, re-pin record, inventory reconciliation, seven errata, EXT PR sequence summary |
+| 11 | [`11-ext-pr-execution-cards.md`](11-ext-pr-execution-cards.md) | Eight-element execution card for every EXT PR |
+| — | [`data/ld02-outcome-map.json`](data/ld02-outcome-map.json) | LD-02 outcome map (46 `r08-v1` codes plus v2-only additions) |
 | — | [`data/qualification-gate-matrix.json`](data/qualification-gate-matrix.json) | Machine-readable gate matrix (14 gates) |
 
 ## Source revisions (exact)

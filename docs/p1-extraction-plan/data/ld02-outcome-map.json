@@ -1,0 +1,3061 @@
+{
+ "meta": {
+  "ruling": "R10 / LD-02",
+  "status": "VETTED PROPOSAL (not ratified; ratification remains the EXT-S1-1 / EXT-S4-0 ADR). Nothing implemented, nothing run. Vetted against registry_successor/decision.py, common.py, verify.py, selection.py at registry head and Runtime c5e97e87.",
+  "registry_pin": "d61ef729",
+  "runtime_pin": "c5e97e87",
+  "control_plane_pin": "7a4bcd40",
+  "code_count": 47,
+  "codes_source": "registry_successor/common.py CODES",
+  "route": "Route B atomic only; Route A excluded from the registry-mediated effect-time guarantee",
+  "detail_schema": "ocs-registry-failure-detail/1",
+  "detail_schema_fields": [
+   "schema",
+   "registry_code",
+   "layer",
+   "participation",
+   "decision_kind",
+   "stage",
+   "registry_detail_text",
+   "checked_at",
+   "layers",
+   "selection_id",
+   "epoch",
+   "selection_digest",
+   "record_id",
+   "record_version",
+   "record_digest",
+   "evaluator_id",
+   "trust_snapshot_id",
+   "trust_snapshot_version",
+   "retry_class",
+   "specific"
+  ],
+  "runtime_reason_codes_introduced": [
+   "registry_binding_rejected",
+   "registry_contract_unsupported",
+   "registry_deny_all",
+   "registry_input_rejected",
+   "registry_policy_unavailable"
+  ],
+  "runtime_failure_classes_used": [
+   "authority_hold",
+   "capability_unavailable",
+   "malformed_input",
+   "policy_denial"
+  ],
+  "open_questions_ref": "laneH.md section 7",
+  "code_count_note": "46 r08-v1 codes (registry_successor/common.py CODES, verified) plus trust_snapshot_version_stale (r08-v2 only). Mapped items: 47 codes; decision kinds applied, applied_deny_all, overlay_not_applied, refused (registry kind name required_policy_unavailable). Reconciliation: the 46 r08-v1 CODES are all mapped (completeness required); v2-only additions are trust_snapshot_version_stale and selection_withdrawn (both in_CODES false until EXT-S1-2 declares CODES_V2).",
+  "vetting": {
+   "base_codes_verified": "46 keys equal set(registry_successor.common.CODES) exactly (checked programmatically); one extra key trust_snapshot_version_stale is r08-v2 only and absent from CODES",
+   "completeness_test_rule": "r08-v1 completeness test iterates CODES (46). The r08-v2 completeness test iterates CODES plus trust_snapshot_version_stale (47). The v2 code must not be added to CODES until EXT-S1-2.",
+   "criteria": [
+    "manufactures authorization",
+    "treats required-policy failure as success",
+    "erases a negative cause",
+    "invents unsupported component behaviour",
+    "changes evaluator semantics"
+   ],
+   "result": "No entry changed a required-path disposition (all 47 required: denied, no policy, no caller fallback, no dispatch, can_authorize_action false). Changes are limited to cause preservation, unratified Control Plane and commit-time behaviour, evaluator reason-text claims."
+  },
+  "runtime_reason_codes_introduced_note": "Runtime failure_records_v1 constrains failure_class (CHECK) and stage; reason_code is free TEXT, so the five new reason strings and detail JSON are storable without a schema change. They still need new gate code (not existing)."
+ },
+ "decision_kinds": {
+  "applied": {
+   "conceptual_outcome": "NOT_A_REFUSAL (narrowed policy)",
+   "registry_kind": "applied",
+   "exists_today": "decision.py returns kind applied with effective F1a sets (allowed_actions, allowed_adapters, allowed_units) only",
+   "planned_not_existing": "F1b institution/domain, F4 and F5 narrowing and any Control Plane consumption are EXT-S1-3/S1-4/S2-2/S3 plans, not behaviour; this map does not describe them as done",
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "effective = caller INTERSECT record, a subset of both; operationally_authorized is always False; grant, approval, claim and commit check still decide."
+  },
+  "applied_deny_all": {
+   "conceptual_outcome": "DENY",
+   "registry_kind": "applied_deny_all",
+   "runtime": {
+    "status": "denied",
+    "attempted": false,
+    "failure_class": "policy_denial",
+    "reason_code": "registry_deny_all",
+    "stage": "pre_dispatch",
+    "detail": "registry_code null; decision_kind applied_deny_all; deny_all_fields; selection and record identity (detail schema ocs-registry-failure-detail/1)"
+   },
+   "convention_not_evaluator": "Gate-side convention (doc 04 decision 4, ruling 16): the gate denies before any LocalExecutionPolicy is built. LocalExecutionPolicy accepts empty frozensets; if one were built, check() would deny with its own text (e.g. 'local unit restriction'), after any earlier failing check. registry_deny_all therefore differs in reason text and check order from the evaluator. engine/safe_executor.py is not edited and its semantics are not claimed reproduced.",
+   "qg01_rule": "The QG-01 old/new differential for a deny-all case compares disposition only (denied, no effect, claim not consumed, budget unchanged). Reason-text and first-failing-check equality are never asserted for deny-all.",
+   "control_plane": "UNDECIDED (OPEN-Q6); BLOCKED until the ADR. No CP outcome is asserted.",
+   "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+   "occurs_at": "gate_and_commit_planned",
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "An empty dimension permits nothing; a restriction cannot authorize."
+  },
+  "overlay_not_applied": {
+   "conceptual_outcome": "NOT_APPLIED",
+   "registry_kind": "overlay_not_applied",
+   "participation": "optional operations only",
+   "is_denial": false,
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "The host's own caller policy is returned unchanged (decision.py returns the normalized caller, or the raw caller if malformed); the registry contributed nothing; authorization stays with the OCS grant path.",
+   "disclosure": "For optional operations any refusal, including revoked, expired or invalid-signature selections, leaves the caller policy, which may be wider than a previously applied narrowing. This is frozen S04 semantics: evidence must carry registry_code and applied=false and must never be reported as enforcement or as protection."
+  },
+  "refused": {
+   "conceptual_outcome": "per code REFUSE or HOLD",
+   "registry_kind": "required_policy_unavailable",
+   "participation": "required operations only",
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "effective is None, the caller policy is never returned, no dispatch (decision.py _refusal).",
+   "cause_rule": "Every refused result carries detail.registry_code. Distinct codes may share a Runtime reason_code or failure_class only because that cause field exists; a path that cannot carry it is BLOCKED, not mapped."
+  }
+ },
+ "codes": {
+  "input_not_text": {
+   "code": "input_not_text",
+   "verification_layer": "parse",
+   "registry_meaning": "input is not a str or cannot be encoded as UTF-8",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "input_kind (type name only), no content",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "input_too_large": {
+   "code": "input_too_large",
+   "verification_layer": "parse",
+   "registry_meaning": "encoded input exceeds MAX_DOCUMENT_BYTES",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "encoded_length, limit",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "json_malformed": {
+   "code": "json_malformed",
+   "verification_layer": "parse",
+   "registry_meaning": "not valid JSON",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "input_sha256, input_length (no content)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "json_duplicate_key": {
+   "code": "json_duplicate_key",
+   "verification_layer": "parse",
+   "registry_meaning": "an object repeats a key",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "input_sha256, input_length",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "json_nesting_too_deep": {
+   "code": "json_nesting_too_deep",
+   "verification_layer": "parse",
+   "registry_meaning": "nesting exceeds MAX_DEPTH",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "input_sha256, depth limit",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also emitted by common.py for a recursion fault (line ~173); detail text distinguishes.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text",
+     "detail.artifact"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "json_number_unsupported": {
+   "code": "json_number_unsupported",
+   "verification_layer": "parse",
+   "registry_meaning": "a float or non-finite number is present",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "input_sha256",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "contract_unsupported": {
+   "code": "contract_unsupported",
+   "verification_layer": "contract",
+   "registry_meaning": "contract_version is not r08-v1",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "capability_unavailable",
+    "reason_code": "registry_contract_unsupported",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_UNTIL_CAPABILITY_OR_CONTRACT_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": null,
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "observed contract_version",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Applies to record or selection envelope; detail.artifact names which.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "kind_unsupported": {
+   "code": "kind_unsupported",
+   "verification_layer": "contract",
+   "registry_meaning": "kind is not the expected document kind",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "observed kind, artifact",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Wrong document kind is an input defect, not a missing capability.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "family_unsupported": {
+   "code": "family_unsupported",
+   "verification_layer": "contract",
+   "registry_meaning": "family is not f1a-local-execution-allowlist",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "capability_unavailable",
+    "reason_code": "registry_contract_unsupported",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_UNTIL_CAPABILITY_OR_CONTRACT_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": null,
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "observed family, artifact",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also used by verify.py record_binding for selection-vs-record family difference; detail text must be kept.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "CHANGED",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory",
+     "single capability_unavailable mapping erased the selection/record family-mismatch cause and gave it a capability retry class; split by subcause"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   },
+   "sub_dispositions": [
+    {
+     "subcause": "record or selection family is not f1a",
+     "gate": {
+      "failure_class": "capability_unavailable",
+      "reason_code": "registry_contract_unsupported",
+      "retry_class": "NO_RETRY_UNTIL_CAPABILITY_OR_CONTRACT_CHANGES"
+     }
+    },
+    {
+     "subcause": "selection family differs from record family (verify.py:160)",
+     "gate": {
+      "failure_class": "malformed_input",
+      "reason_code": "registry_binding_rejected",
+      "retry_class": "RETRY_AFTER_CORRECTION"
+     }
+    }
+   ]
+  },
+  "field_unknown": {
+   "code": "field_unknown",
+   "verification_layer": "shape",
+   "registry_meaning": "an unknown field is present",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "field name (registry-controlled string only if token-valid), artifact",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "field_missing": {
+   "code": "field_missing",
+   "verification_layer": "shape",
+   "registry_meaning": "a required field is absent",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "field name, artifact",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Absent F1a field is neither allow nor deny.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "field_type_invalid": {
+   "code": "field_type_invalid",
+   "verification_layer": "shape",
+   "registry_meaning": "a field has the wrong type",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "field name, artifact",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also emitted for \"document is not an object\" and \"unexpected structure\".",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "field_invalid": {
+   "code": "field_invalid",
+   "verification_layer": "shape",
+   "registry_meaning": "a field violates its value constraints",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "field name, artifact",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also emitted by verify.py as internal-verification-error fallback; see collapsed-cause audit C-02.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "digest_mismatch": {
+   "code": "digest_mismatch",
+   "verification_layer": "integrity",
+   "registry_meaning": "a recorded digest does not match the canonical content",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_binding_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "which digest (statement|payload|record), expected and observed digest values",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "At commit: enforced-policy digest vs bound digest (R10 Option B) is reported with this code; destination text must carry it.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "evaluator_unsupported": {
+   "code": "evaluator_unsupported",
+   "verification_layer": "identity",
+   "registry_meaning": "evaluator id or binding is not the registered F1a evaluator",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "capability_unavailable",
+    "reason_code": "registry_contract_unsupported",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_UNTIL_CAPABILITY_OR_CONTRACT_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": null,
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "observed evaluator_id and binding",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "evaluator_mismatch": {
+   "code": "evaluator_mismatch",
+   "verification_layer": "identity",
+   "registry_meaning": "evaluator identity or build differs between selection and record or expectation",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_binding_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection evaluator build vs record evaluator build (ids, source digests)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Commit-time analogue only if the claim-carried binding includes evaluator build (laneD item 4).",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "record_identity_mismatch": {
+   "code": "record_identity_mismatch",
+   "verification_layer": "identity",
+   "registry_meaning": "selection pins a different record id or version",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_binding_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "pinned vs observed record_id and record_version",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also emitted when the verification report has no passing record binding (decision.py) and for no passing binding; detail text kept.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "record_digest_mismatch": {
+   "code": "record_digest_mismatch",
+   "verification_layer": "identity",
+   "registry_meaning": "selection pins a different record digest",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_binding_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "pinned vs observed record_digest",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "supersession_invalid": {
+   "code": "supersession_invalid",
+   "verification_layer": "identity",
+   "registry_meaning": "record supersession reference is invalid",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_binding_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "record_id, record_version, supersedes reference (ids and digests)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Record-level; selection-level is selection_supersession_invalid.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "selection_missing": {
+   "code": "selection_missing",
+   "verification_layer": "selection",
+   "registry_meaning": "no selection was supplied or none is effective",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_missing",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_id if known; reason text",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Registry overloads this code (audit C-01). At commit: authoritative row absent or unreadable.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "selection_epoch_stale": {
+   "code": "selection_epoch_stale",
+   "verification_layer": "selection",
+   "registry_meaning": "epoch is below the trusted floor for this selection id",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_stale_or_changed",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_id, epoch, trusted floor (or row epoch at commit)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "OPEN-Q12: doc 04 section 5 race table says REFUSE for an epoch bump; laneD and R10 crosswalk say HOLD. Cell kept HOLD pending Architect.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   },
+   "open_question": "OPEN-Q12 (HOLD vs REFUSE) unresolved; both are denied-no-effect, so no criterion fails; ratification pending Architect"
+  },
+  "lineage_authority_unavailable": {
+   "code": "lineage_authority_unavailable",
+   "verification_layer": "selection",
+   "registry_meaning": "authenticated, attributable supersession lineage requires R09 infrastructure that does not exist; the structural resolver is non-authorizing",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_status_unknown",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_id, epoch",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Always returned by resolve_authoritative; decision path never consults the resolver, so reachable only through an adapter that calls it.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "verified: decision.py never calls the resolver"
+    ]
+   },
+   "reachable_in_decision_path": false
+  },
+  "selection_conflict": {
+   "code": "selection_conflict",
+   "verification_layer": "selection",
+   "registry_meaning": "two effective selections conflict without explicit supersession",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "authority_conflict_unresolved",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_ids and epochs in conflict",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also the internal fallback in selection.py (line ~245); detail \"internal\".",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "selection_supersession_invalid": {
+   "code": "selection_supersession_invalid",
+   "verification_layer": "selection",
+   "registry_meaning": "supersession reference or decision reference is invalid",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_binding_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_id, epoch, supersedes reference",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Covers malformed supersedes object and invalid decision_ref (contract 3a).",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "participation_mismatch": {
+   "code": "participation_mismatch",
+   "verification_layer": "selection",
+   "registry_meaning": "selection participation differs from the consumer's operation class",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "authority_requirement_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "operation participation vs selection participation",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also emitted when the operation participation value itself is not required|optional (treated as required). Optional-operation path: overlay_not_applied (OPEN-Q8).",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "CHANGED",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory",
+     "optional column was stated unconditionally; invalid participation can never be optional"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   },
+   "sub_dispositions": [
+    {
+     "subcause": "operation participation value not required|optional",
+     "rule": "treated as required; optional column does not apply; never overlay_not_applied"
+    },
+    {
+     "subcause": "signed selection participation != operation participation",
+     "rule": "required operation: refused; optional operation: overlay_not_applied"
+    }
+   ]
+  },
+  "trust_snapshot_missing": {
+   "code": "trust_snapshot_missing",
+   "verification_layer": "trust",
+   "registry_meaning": "no trust snapshot was supplied",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_status_unknown",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "none",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "trust_snapshot_invalid": {
+   "code": "trust_snapshot_invalid",
+   "verification_layer": "trust",
+   "registry_meaning": "trust snapshot is malformed",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_status_unknown",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "none (never the snapshot content)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "trust_snapshot_expired": {
+   "code": "trust_snapshot_expired",
+   "verification_layer": "trust",
+   "registry_meaning": "trust snapshot is past valid_until",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_status_stale_or_future",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "snapshot_id, version, valid_until, now",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "OPEN-Q4: commit-time only if the destination binds to a trust snapshot; today it would not.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "time_unavailable": {
+   "code": "time_unavailable",
+   "verification_layer": "trust",
+   "registry_meaning": "no trusted current time was supplied",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "evaluation_time_missing",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "which layer (trust|time|resolve)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Emitted at three sites. At commit: trusted clock under lock unavailable.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "verifier_unavailable": {
+   "code": "verifier_unavailable",
+   "verification_layer": "authenticity",
+   "registry_meaning": "no signature verifier is available; digest match is not authentication",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "evidence_verifier_unavailable",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "none",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Default state: the package supplies no verifier; digest match is not authentication.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "signature_missing": {
+   "code": "signature_missing",
+   "verification_layer": "authenticity",
+   "registry_meaning": "the statement carries no signature",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "evidence_signature_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_id, epoch",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "signature_algorithm_unsupported": {
+   "code": "signature_algorithm_unsupported",
+   "verification_layer": "authenticity",
+   "registry_meaning": "signature algorithm is not supported",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "evidence_signature_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "algorithms present (alg strings)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Placed with HOLD (authority cannot be established) not UNSUP (OPEN-Q1 note).",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "issuer_untrusted": {
+   "code": "issuer_untrusted",
+   "verification_layer": "authenticity",
+   "registry_meaning": "no trusted issuer holds the signing key id",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "evidence_producer_untrusted",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "key_id (public identifier only)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "issuer_key_revoked": {
+   "code": "issuer_key_revoked",
+   "verification_layer": "authenticity",
+   "registry_meaning": "the signing key id is revoked in the trust snapshot",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "evidence_producer_untrusted",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "key_id, trust snapshot id",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Commit-time revocation of the key surfaces only as a not-current row; see audit C-09.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   },
+   "commit_time_cause_loss": "Key revocation observed at commit would surface only as a not-current row (audit C-09); disclosed limit, never reported as issuer_key_revoked."
+  },
+  "signature_invalid": {
+   "code": "signature_invalid",
+   "verification_layer": "authenticity",
+   "registry_meaning": "signature does not verify",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "evidence_signature_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "key_id; never signature bytes",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also base64-undecodable signature and signing-input build failure.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "issuer_not_authorized": {
+   "code": "issuer_not_authorized",
+   "verification_layer": "authority",
+   "registry_meaning": "issuer holds no authority for this exact consumer, scope and operation",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "issuer_mandate_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "issuer_id, key_id, wanted grant tuple (consumer, scope, operation)",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Registry authority grant is selection-signer authority, not an OCS grant.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "selection_consumer_mismatch": {
+   "code": "selection_consumer_mismatch",
+   "verification_layer": "scope",
+   "registry_meaning": "selection names a different consumer",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection consumer_id vs expected",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "selection_scope_mismatch": {
+   "code": "selection_scope_mismatch",
+   "verification_layer": "scope",
+   "registry_meaning": "tenant, institution or authority domain differs",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "tenant_context_mismatch | institution_mismatch | authority_domain_mismatch (depends on dimension)",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "differing dimension name(s), selection vs expected values",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "One code covers three dimensions and \"expected context missing\"; detail.dimension required (audit C-05).",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text",
+     "detail.dimension"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "selection_operation_mismatch": {
+   "code": "selection_operation_mismatch",
+   "verification_layer": "scope",
+   "registry_meaning": "selection names a different operation",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_binding_mismatch",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection operation vs expected",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "selection_not_yet_effective": {
+   "code": "selection_not_yet_effective",
+   "verification_layer": "time",
+   "registry_meaning": "now is before valid_from",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_status_stale_or_future",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "now, valid_from",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Commit-time only with clock skew or a claim bound before valid_from.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "selection_expired": {
+   "code": "selection_expired",
+   "verification_layer": "time",
+   "registry_meaning": "now is at or after valid_until",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_status_stale_or_future",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "now, valid_until",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also emitted for an invalid effective interval (audit C-03). At commit this is the R10 lock-held expiry check.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "selection_revoked": {
+   "code": "selection_revoked",
+   "verification_layer": "revocation",
+   "registry_meaning": "selection id and epoch are revoked in the trust snapshot",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_WITHOUT_NEW_AUTHORITY_ARTIFACT",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_stale_or_changed",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_id, epoch, trust snapshot id or row status",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Committed effect is never rolled back (CA22); receipt checked_at shows ordering.",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "commit-time block marked planned and cause-gated (was asserted as an existing path)",
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "composition_family_unsupported": {
+   "code": "composition_family_unsupported",
+   "verification_layer": "composition",
+   "registry_meaning": "family is not composable",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "capability_unavailable",
+    "reason_code": "registry_contract_unsupported",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_UNTIL_CAPABILITY_OR_CONTRACT_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": null,
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "record family",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "composition_operator_unsupported": {
+   "code": "composition_operator_unsupported",
+   "verification_layer": "composition",
+   "registry_meaning": "operator is not intersection",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "capability_unavailable",
+    "reason_code": "registry_contract_unsupported",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "NO_RETRY_UNTIL_CAPABILITY_OR_CONTRACT_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": null,
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "requested operator",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   }
+  },
+  "composition_caller_invalid": {
+   "code": "composition_caller_invalid",
+   "verification_layer": "composition",
+   "registry_meaning": "caller policy fields are malformed",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement",
+    "caller_note": "Caller policy is returned as given and may be malformed; it is not validated by the overlay and LocalExecutionPolicy.__post_init__ still decides."
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "which caller field (names only), never caller values",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Defect is in the host-supplied caller policy, not in registry artifacts: detail.artifact=\"caller_policy\".",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "CHANGED",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "optional caller_policy_returned annotated: returned unvalidated"
+    ]
+   }
+  },
+  "composition_record_invalid": {
+   "code": "composition_record_invalid",
+   "verification_layer": "composition",
+   "registry_meaning": "record is not a valid F1a record",
+   "conceptual_outcome_required": "REFUSE",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "malformed_input",
+    "reason_code": "registry_input_rejected",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_AFTER_CORRECTION",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "required_input_set_invalid",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "record_id if known; reason text",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "Also \"no record supplied\", \"record body is missing\", and defensive \"unexpected input\" (audit C-04).",
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_WITH_ANNOTATIONS",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate",
+     "overloaded code: subcause evidence made mandatory"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   }
+  },
+  "trust_snapshot_version_stale": {
+   "code": "trust_snapshot_version_stale",
+   "verification_layer": "trust",
+   "registry_meaning": "r08-v2 only: trust snapshot version is below the enforcer-supplied floor (older snapshot, revocation-rollback defence)",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": false
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_status_stale_or_future",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_only",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "snapshot id, snapshot version, enforcer floor",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "OPEN-Q4: commit-time only if the destination binds to a trust snapshot; today it would not.",
+   "v2_only": true,
+   "vet": {
+    "decision_kind_note": "refused (required) / overlay_not_applied (optional)",
+    "verdict": "ADOPTED_AS_V2_ONLY",
+    "changes": [
+     "Control Plane block marked unratified, nearest reason demoted to non-binding candidate"
+    ]
+   },
+   "status": "PROPOSED_NOT_IMPLEMENTED",
+   "in_CODES": false
+  },
+  "selection_withdrawn": {
+   "code": "selection_withdrawn",
+   "verification_layer": "selection",
+   "registry_meaning": "the head of the selection chain for the scope is an authenticated disposition=withdraw statement (schema-readiness A1); v2-only",
+   "conceptual_outcome_required": "HOLD",
+   "required_behavior": {
+    "decision_kind": "required_policy_unavailable",
+    "policy_returned": null,
+    "caller_policy_returned": false,
+    "dispatch": "none; no policy constructed; no execute_claim_atomic call"
+   },
+   "optional_behavior": {
+    "conceptual_outcome": "NOT_APPLIED",
+    "decision_kind": "overlay_not_applied",
+    "caller_policy_returned": true,
+    "is_denial": false,
+    "evidence": "overlay marker applied=false plus registry_code; no failure_class; never reported as enforcement"
+   },
+   "runtime_route_b_gate": {
+    "status": "denied",
+    "attempted": false,
+    "stage": "pre_dispatch",
+    "failure_class": "authority_hold",
+    "reason_code": "registry_policy_unavailable",
+    "registry_code_in_detail_field": "detail.registry_code",
+    "retry_class": "RETRY_FRESH_EVAL_IF_CONDITION_CHANGES",
+    "retry_note": "ExecutionResult(denied) carries no retry flag; retry_class lives in detail and is advisory. Any retry is a new attempt under fresh evaluation; never reuse a stale selection, approval or evidence."
+   },
+   "runtime_route_b_commit": {
+    "applicable": "planned_not_existing",
+    "blocked_until": "EXT-S4-0 ADR and EXT-S4-2 guard (no Runtime selection state exists)",
+    "if_built": {
+     "status": "denied",
+     "failure_class": "authority_hold",
+     "reason_code": "current_authority_rejected"
+    },
+    "cause_requirement": "current_authority_rejected is shared with grant, approval and identity failures; a commit-time result is mapped only if the destination PermissionError text carries structured detail with registry_code (OPEN-Q3). Otherwise it is reported as unmapped and the cause loss is disclosed, never as this code."
+   },
+   "control_plane_f4_f5": {
+    "status": "UNRATIFIED_BLOCKED_ON_ADR",
+    "proposed_outcome": "HOLD",
+    "deny_used": false,
+    "candidate_reason_not_adopted": "policy_missing",
+    "reason_adoption": "NOT_ADOPTED: reusing an existing grant, policy or evidence reason for a selection artifact reinterprets it and collapses causes; adoption needs a vocabulary decision (OPEN-Q5).",
+    "cause_carrier_required": "structured field registry_code beside any CP reason; without it the mapping is BLOCKED"
+   },
+   "occurs_at": "gate_and_commit",
+   "evidence_requirement": {
+    "common": "JSON detail schema ocs-registry-failure-detail/1 with registry_code, layer, participation, decision_kind, stage, registry_detail_text, checked_at, layers map from VerificationReport when available",
+    "specific": "selection_id if known; reason text",
+    "never_record": "raw input, signature bytes, caller policy values, trust snapshot content"
+   },
+   "can_authorize_action": false,
+   "can_authorize_action_reason": "A refusal yields no policy (required) or leaves the host-owned caller policy untouched (optional); neither is an authorization. Authorization remains with the OCS grant, approval, claim and commit-time check.",
+   "notes": "PROPOSED_NOT_IMPLEMENTED, in_CODES false; added by the EXT-S1-1 ADR. Same disposition as other required/optional refusals: required refuses, optional overlay_not_applied with the caller policy unchanged. Never success and never an activation.",
+   "vet": {
+    "verdict": "ADDED_AT_RECONCILIATION",
+    "changes": [
+     "new v2-only code for explicit withdrawal; cause kept distinct from selection_missing"
+    ]
+   },
+   "cause_preservation": {
+    "overloaded_code": true,
+    "required_fields": [
+     "detail.registry_code",
+     "detail.registry_detail_text"
+    ],
+    "rule": "Distinct underlying causes share this code; the detail text/subcause is mandatory evidence and a test must show each subcause distinguishable."
+   },
+   "in_CODES": false
+  }
+ }
+}

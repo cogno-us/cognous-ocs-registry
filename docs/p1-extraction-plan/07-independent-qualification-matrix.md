@@ -52,8 +52,19 @@ QG-03 and QG-04 apply to the three operator-approved Control Plane ages; their r
 | Durable negative evidence | Refusals, holds and deny-all persist with exact identity in failure rows | QG-09, QG-11 |
 | Existing evaluator behaviour | Check order, reason texts, `__post_init__`, trusted-context binding, `engine/safe_executor.py` blob `2fc880da` unchanged | QG-01, QG-13 |
 | Atomic Route B effect boundaries | Crash at each transaction stage; lost-ack reconcile preserves identity; repeated runs with raw logs | QG-09 |
+| Executor-supplied identity and registry reachability | An executor-supplied identity string with no claim-carried binding is refused (not authority); registry unreachable inside the transaction behaves identically (network sentinel) | QG-09 |
+| Digest and fingerprint substitution | Same selection id with a broader profile digest, swapped record digest or swapped trust-snapshot fingerprint refused under the lock; commit-first effect keeps its original identity; lost acknowledgement then revocation stays unresolved and not retry-eligible | QG-09, QG-11 |
+| Revocation visibility and clock source | Revoked in Runtime state while the binding still verifies; revocation present only in a below-floor snapshot; revoked record not resurrected after a restore; check-time clock substituted for the lock-time clock (mutation leg) | QG-08 |
+| Epoch cause distinctness and half-activation | Conflict and stale-epoch remain distinct causes; half-completed activation rolls back; restored or lost high-water fails closed | QG-05 |
+| Outcome-map completeness | Every `CODES` entry maps to a typed refusal (46 `r08-v1` codes plus the v2-only additions); `registry_code` kept; no fallback to the caller policy on a required profile; deleting a code from the map fails its case | QG-06 |
+| Grant/approval cross-validity | Grant valid with approval bound to another profile, and the reverse; a Control Plane and Runtime profile disagreement never takes the broader side | QG-10 |
+| Outage extension and approval revival | A validly signed outage extension never exceeds `min(caller, registry)` (extension-base mutation leg; needs the `EXT-S3-4` change); withdrawing narrowing does not revive a P0 approval and a P1 approval passes (positive control) | QG-03, QG-04 |
+| Policy on/off states | Withdrawn, absent, revoked, expired and superseded each give their own code for required and optional; withdraw without `supersedes`, at an equal or lower epoch, or with a record pin refused; no `activation_state` write without an authenticated statement; required scope never returns the caller policy ([04](04-component-ownership-and-adapter-matrix.md), schema-readiness) | QG-05, QG-06, QG-08 |
+| v1 regression and v2 additivity | `r08-v1` goldens, tests and frozen artefacts byte-identical after `r08-v2`; v2-only fields refused by v1; a v1 signature never verifies a v2 statement and the reverse | QG-12, QG-13 |
 
-A mutation leg applies to each refusal family (disable one refusal check; the case must fail).
+A mutation leg applies to each refusal family (disable one refusal check; the case must fail). Cases are planning text only: all are NOT_RUN, and effect-boundary cases have nothing to execute until `EXT-S4-2` and `EXT-S4-4` exist.
+
+**Gate count stays 14.** An alternative draft proposed QG-15 (r08-v1 golden/additivity) and QG-16 (durability, restore, rollback, custody). Neither is an independent acceptance obligation: QG-15 is a regression plus a negative (QG-13, QG-12), and QG-16 is restore fence and crash testing already owned by QG-05, QG-08 and QG-09; key and snapshot custody is operator-gated (no operational trust root in V1) and is recorded under QG-14 as "not performed", never as a gate. QG-02 stays INACTIVE.
 
 ## Independence given GAP-G4-13 (no independent qualification owner is designated)
 

@@ -45,3 +45,5 @@ Nothing in this section is built or tested yet: the only verifier today is the `
 | Operational trust root, key ceremony, production host, GCR consumer | No operational authenticated selection; the emulator proves nothing about production | Operator-gated; release, publication and production on HOLD |
 
 These are not automatically permanent exclusions. The typed-adapter architecture (one adapter per owner, field manifest, `min` composition) extends to any of them without redesign once its ruling exists.
+
+Policy on/off management (selected, required, active, and the future ENABLED/DISABLED presentation) is specified as a schema-readiness requirement in [04](04-component-ownership-and-adapter-matrix.md); V1 builds no UI and adds no toggle.
