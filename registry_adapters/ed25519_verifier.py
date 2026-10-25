@@ -5,9 +5,18 @@ Fail closed: it returns True only for a valid signature from an acceptable key a
 including malformed input and any backend error. It holds no key, no trust root and no policy; the signing domain
 (`ocs-reg/r08-v*/selection\\n`) is part of the `message` the caller supplies and is not added or removed here.
 
-Strictness beyond RFC 8032 section 5.1.7 (which only requires the cofactor-less or cofactored equation): the adapter
-refuses S >= L (non-canonical S), a public key or R that is not a canonical point encoding (y >= p), and a public key
-of small order (including the identity), which would otherwise let a degenerate key verify arbitrary messages.
+Verifier: PyNaCl (libsodium), the only runtime dependency. This module contains NO curve arithmetic, NO point
+decompression and NO byte-level re-implementation of any check: every cryptographic decision is made by libsodium.
+
+Verification policy (named in docs/adapters/ed25519.md), as enforced by exactly two libsodium calls:
+  1. `crypto_core_ed25519_is_valid_point(public_key)`: canonical encoding (y < p), decodable, on the curve, not
+     small-order (this includes the identity), and in the prime-order subgroup. A public key that is not valid refuses.
+  2. `crypto_sign_open(signature || message, public_key)` (libsodium `crypto_sign_verify_detached`): S < L,
+     R of small order (including the identity) refused, and the cofactorless equation checked by comparing the
+     canonical re-encoding of [S]B - [h]A with the R bytes (so a non-canonical R can never match).
+Both facts about libsodium were verified by test against the pinned version (tests/test_adapter_ed25519.py), not assumed;
+as a second guard `Ed25519Verifier()` runs a small known-answer self-test and refuses to construct (raises
+`Ed25519Unavailable`) if the loaded backend does not show these semantics.
 Synthetic keys only; nothing here is an operational trust root (GAP-G3-07 is not closed).
 """
 from typing import Optional
@@ -15,73 +24,71 @@ from typing import Optional
 __all__ = ["Ed25519Unavailable", "Ed25519Verifier", "load_verifier_or_none", "ALG"]
 
 ALG = "ed25519"
-_P = 2 ** 255 - 19
-_L = 2 ** 252 + 27742317777372353535851937790883648493
-_D = (-121665 * pow(121666, _P - 2, _P)) % _P
-_I = pow(2, (_P - 1) // 4, _P)
+
+# Known-answer self-test data (public, synthetic; regenerated and cross-checked against an independent oracle by the tests).
+_KAT_PK = bytes.fromhex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")  # RFC 8032 section 7.1 TEST 1
+_KAT_SIG = bytes.fromhex("e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b")
+_KAT_L = 2 ** 252 + 27742317777372353535851937790883648493
+_KAT_SIG_S_PLUS_L = _KAT_SIG[:32] + (int.from_bytes(_KAT_SIG[32:], "little") + _KAT_L).to_bytes(32, "little")
+_KAT_IDENTITY = bytes([1]) + bytes(31)
+_KAT_KEYHOLDER_R_IDENTITY = (  # valid cofactorless equation, honest key, R = identity: libsodium must refuse (small-order R)
+    bytes.fromhex("77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13"), b"ocs-ed25519-kat/r-identity",
+    bytes.fromhex("01000000000000000000000000000000000000000000000000000000000000009541ba746d17310ec7963522bac5c30565e96856a1694c5870130d710d03f70c"))
+_KAT_MIXED_ORDER = (  # libsodium's signature check alone ACCEPTS this; the public-key check must refuse (torsion component)
+    bytes.fromhex("f057f97f0c3a16026415c2cc59a582ea9b3865730611e410270aafac6dcdc92f"), b"ocs-ed25519-kat/mixed-order/0",
+    bytes.fromhex("0e9ec3aa5c0cfedb9db06594a9ad933ffc16a912708de73646e8ed6411ff7393b00b1ecaf05a231db443e83110699483b6df81c2c4a3b44767a0ff5db0bbbb08"))
 
 
 class Ed25519Unavailable(RuntimeError):
-    """The pinned Ed25519 backend (`cryptography`) cannot be imported. Explicit; never a silent pass."""
+    """The pinned Ed25519 backend (PyNaCl/libsodium) cannot be used. Explicit; never a silent pass."""
 
 
 def _load_backend():
     try:
-        from cryptography.exceptions import InvalidSignature
-        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-    except Exception as exc:  # ImportError or a broken native module: both mean unavailable
-        raise Ed25519Unavailable("the 'cryptography' package is not available; install requirements-ed25519.lock.txt") from exc
-    return Ed25519PublicKey, InvalidSignature
-
-
-def _decode_point(enc: bytes) -> Optional[tuple]:
-    """Canonical decode of a 32-byte Edwards point (extended-free affine); None if not canonical or not on the curve."""
-    y = int.from_bytes(enc, "little")
-    sign = y >> 255
-    y &= (1 << 255) - 1
-    if y >= _P:
-        return None
-    u, v = (y * y - 1) % _P, (_D * y * y + 1) % _P
-    x2 = u * pow(v, _P - 2, _P) % _P
-    x = pow(x2, (_P + 3) // 8, _P)
-    if (x * x - x2) % _P:
-        x = x * _I % _P
-    if (x * x - x2) % _P:
-        return None
-    if x == 0 and sign:
-        return None
-    if x & 1 != sign:
-        x = _P - x
-    return (x, y)
-
-
-def _add(a: tuple, b: tuple) -> tuple:
-    (x1, y1), (x2, y2) = a, b
-    t = _D * x1 * x2 * y1 * y2 % _P
-    return ((x1 * y2 + x2 * y1) * pow(1 + t, _P - 2, _P) % _P, (y1 * y2 + x1 * x2) * pow(1 - t, _P - 2, _P) % _P)
-
-
-def _small_order(point: tuple) -> bool:
-    """True if 8*P is the identity, i.e. the order of P divides 8 (small-order or identity)."""
-    for _ in range(3):
-        point = _add(point, point)
-    return point == (0, 1)
-
-
-def _acceptable(public_key: bytes, signature: bytes) -> bool:
-    point = _decode_point(public_key)
-    if point is None or _small_order(point):
-        return False
-    if int.from_bytes(signature[32:], "little") >= _L:
-        return False
-    return _decode_point(signature[:32]) is not None
+        import nacl.bindings as bindings
+        if not bindings.has_crypto_core_ed25519:  # libsodium built without the ed25519 point API
+            raise ImportError("libsodium ed25519 core API not available")
+        return bindings.crypto_core_ed25519_is_valid_point, bindings.crypto_sign_open
+    except Exception as exc:  # ImportError, AttributeError or a broken native module: all mean unavailable
+        raise Ed25519Unavailable("the 'pynacl' package is not usable; install requirements-ed25519.lock.txt") from exc
 
 
 class Ed25519Verifier:
-    """Construct once; raises `Ed25519Unavailable` if the backend is absent. `verify` never raises."""
+    """Construct once; raises `Ed25519Unavailable` if the backend is absent or fails its self-test. `verify` never raises."""
 
     def __init__(self) -> None:
-        self._public_key_cls, self._invalid = _load_backend()
+        self._is_valid_point, self._sign_open = _load_backend()
+        if not self._self_test():
+            raise Ed25519Unavailable("the Ed25519 backend failed its known-answer self-test; refusing to verify")
+
+    def acceptable_public_key(self, public_key: bytes) -> bool:
+        """True only for a public key that passes the key policy of rule 1 (exactly the check `verify` applies). Never raises."""
+        try:
+            return type(public_key) is bytes and len(public_key) == 32 and bool(self._is_valid_point(public_key))
+        except Exception:
+            return False
+
+    def _check(self, public_key: bytes, message: bytes, signature: bytes) -> bool:
+        if not self._is_valid_point(public_key):  # library: canonical, on-curve, non-small-order, prime-order subgroup
+            return False
+        self._sign_open(signature + message, public_key)  # library: raises on any failure (S >= L, small-order R, equation)
+        return True
+
+    def _self_test(self) -> bool:
+        r_pk, r_msg, r_sig = _KAT_KEYHOLDER_R_IDENTITY
+        m_pk, m_msg, m_sig = _KAT_MIXED_ORDER
+        refused = ((_KAT_PK, b"", _KAT_SIG_S_PLUS_L), (_KAT_IDENTITY, b"any message", _KAT_IDENTITY + bytes(32)),
+                   (r_pk, r_msg, r_sig), (m_pk, m_msg, m_sig))
+        try:
+            return self._accepts(_KAT_PK, b"", _KAT_SIG) and not any(self._accepts(*case) for case in refused)
+        except Exception:
+            return False
+
+    def _accepts(self, public_key: bytes, message: bytes, signature: bytes) -> bool:
+        try:
+            return self._check(public_key, message, signature) is True
+        except Exception:  # BadSignatureError, ValueError, backend faults: all fail closed
+            return False
 
     def verify(self, alg: str, public_key: bytes, message: bytes, signature: bytes) -> bool:
         try:
@@ -91,16 +98,13 @@ class Ed25519Verifier:
                 return False
             if len(public_key) != 32 or len(signature) != 64:
                 return False
-            if not _acceptable(public_key, signature):
-                return False
-            self._public_key_cls.from_public_bytes(public_key).verify(signature, message)
-            return True
-        except Exception:  # InvalidSignature, ValueError, backend faults: all fail closed
+            return self._accepts(public_key, message, signature)
+        except Exception:
             return False
 
 
 def load_verifier_or_none() -> Optional[Ed25519Verifier]:
-    """Convenience for callers: the verifier, or None when the backend is absent.
+    """Convenience for callers: the verifier, or None when the backend is absent or fails its self-test.
 
     Passing None to the core makes the authenticity layer refuse `verifier_unavailable`; the core never treats an
     absent verifier as a pass.

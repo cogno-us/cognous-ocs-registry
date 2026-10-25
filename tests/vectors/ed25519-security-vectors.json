@@ -1,0 +1,1821 @@
+{
+ "keyholder_r_identity_rows": [
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d30",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000001cbeae529a15baebcf4e9cb5eac4338f87f0bda187423ed7e7f393896a2ead03",
+   "why": "honest key, R = identity (identity), S = h*a: lax equation holds"
+  },
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d31",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000a6b9b7501ebac51241f8f443c8d784d2db39efe3b9687414ef2a7b5a9ba88308",
+   "why": "honest key, R = identity (identity), S = h*a: lax equation holds"
+  },
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d30",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fc82b01bbeef6f26878fb8396c194e5765ad76b5cb4223820a1067cb50200880d",
+   "why": "honest key, R = identity (alias y=p+1 sign=0), S = h*a: lax equation holds"
+  },
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d31",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f63d8d41196437333b8d46e49eb970046462122ea6440d89b3705b2dc8cd8cd02",
+   "why": "honest key, R = identity (alias y=p+1 sign=0), S = h*a: lax equation holds"
+  },
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d30",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff320d5d9b1b70970b072a36ddf8d42531e158c61b19538093958b74302d2ad60e",
+   "why": "honest key, R = identity (alias y=p+1 sign=1), S = h*a: lax equation holds"
+  },
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d31",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffab9660ede2e3b84c8fc0bd17db963eaac4d16bad315967623ed051813899f00d",
+   "why": "honest key, R = identity (alias y=p+1 sign=1), S = h*a: lax equation holds"
+  },
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d30",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "010000000000000000000000000000000000000000000000000000000000008084f9c25786886b898943ed5c146433c2cd8ec7d6cd55be807b6ecdd942b6d405",
+   "why": "honest key, R = identity (x=0 sign=1), S = h*a: lax equation holds"
+  },
+  {
+   "msg": "6b6579686f6c6465722d522d6964656e746974792d31",
+   "pk": "77c79cec2531b518dda1fa1e91d159fcd080286eb4859ec3ccbae1cf042abb13",
+   "sig": "010000000000000000000000000000000000000000000000000000000000008051df7f72272646f8bb16a8b221717d6a3846cc12f3cbbcf4c8d1aef5b02a150b",
+   "why": "honest key, R = identity (x=0 sign=1), S = h*a: lax equation holds"
+  }
+ ],
+ "label": "SYNTHETIC-TEST-ONLY",
+ "mixed_order_key_rows": [
+  {
+   "msg": "6d697865642d6f726465722f342f30",
+   "pk": "6b8b0d4e755651a3c3cdce6b5ee0a22ca9fedfb004e5fd9df34df1e118cebfa4",
+   "sig": "60bd23509ce0f81e73a23fdb8f0a8aa8a0f158b0feb69315a1da2b993385bfdb310d14dc64f024f3dc4a3afbd6da54a1eadd80b0287d6dca464cdd0b16914408",
+   "torsion_order": 4,
+   "why": "mixed-order key (valid key + torsion point of order 4); cofactorless equation holds"
+  },
+  {
+   "msg": "6d697865642d6f726465722f342f38",
+   "pk": "8274f2b18aa9ae5c3c323194a11f5dd35601204ffb1a02620cb20e1ee731405b",
+   "sig": "6bdba328250158a9278c18c14637da694a445aae026a007fb7e889335ac93c792685880debb427911132c39cd9a6817b3755adc62b6057cb2c2b0a6d676e6c04",
+   "torsion_order": 4,
+   "why": "mixed-order key (valid key + torsion point of order 4); cofactorless equation holds"
+  },
+  {
+   "msg": "6d697865642d6f726465722f322f3131",
+   "pk": "76386313dace4ae7225e05e16e2ea6032f7fd7914b7a613c33451e30fbd544ec",
+   "sig": "0546174741beef1aab1971f8ad44521f1b7669def50cdba24031c9eadd941939ae3dcd0380d53685fdb5b782b224d56fd3e1d828903e4760635c850a0f9d1105",
+   "torsion_order": 2,
+   "why": "mixed-order key (valid key + torsion point of order 2); cofactorless equation holds"
+  },
+  {
+   "msg": "6d697865642d6f726465722f382f36",
+   "pk": "f057f97f0c3a16026415c2cc59a582ea9b3865730611e410270aafac6dcdc92f",
+   "sig": "046ac986ae3a88d27134cd6c8684d82f372dd1857ed4d17a675fe257f9cc65de5d66bd9ed40f29cdbebd1996a30a852174226f348f2331a0314831a604f43900",
+   "torsion_order": 8,
+   "why": "mixed-order key (valid key + torsion point of order 8); cofactorless equation holds"
+  },
+  {
+   "msg": "6d697865642d6f726465722f382f33",
+   "pk": "852dcb6744903bf6145fe3556082b0cbd7a19afae3de82eba0a7daa87537a5db",
+   "sig": "513ace345d29262f7aef835964746306abff6cdce2f668ea430da86a58b3c2955269a92ffd40b94c485dab7f100fd9c14e766dd6549e71601ee8365dd6f57909",
+   "torsion_order": 8,
+   "why": "mixed-order key (valid key + torsion point of order 8); cofactorless equation holds"
+  },
+  {
+   "msg": "6d697865642d6f726465722f382f32",
+   "pk": "68d23498bb6fc409eba01caa9f7d4f34285e65051c217d145f5825578ac85a24",
+   "sig": "7dff8452002b2d812b6aa7676a3776dbc5a5f6f65a130616fbcaf853355354435bf4132eb66d6a81953be5fe635a15c582f846b3cc4652472aca0f6f2c373909",
+   "torsion_order": 8,
+   "why": "mixed-order key (valid key + torsion point of order 8); cofactorless equation holds"
+  },
+  {
+   "msg": "6d697865642d6f726465722f382f3131",
+   "pk": "fda70680f3c5e9fd9bea3d33a65a7d1564c79a8cf9ee1befd8f55053923236d0",
+   "sig": "4b1eef8584515bc6cef6de4c3c49b3e1cb45493e796048bd1a552cf60bdcb3ad2590464c7cb62e1c4148ff4e4628a2f6ae3cd2caa1bc66c286ccc6fca48fde00",
+   "torsion_order": 8,
+   "why": "mixed-order key (valid key + torsion point of order 8); cofactorless equation holds"
+  }
+ ],
+ "note": "Generated by tests/vectors/generate_ed25519_security_vectors.py with the plain-Python oracle tests/ed25519_oracle.py. Every row is a signature for which a verifier WITHOUT the registry policy checks accepts (lax decoding, cofactorless equation); the registry policy must refuse every row. No key here is operational.",
+ "s_values": {
+  "0": "0",
+  "1": "1",
+  "2^256-1": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+  "L": "7237005577332262213973186563042994240857116359379907606001950938285454250989",
+  "L+1": "7237005577332262213973186563042994240857116359379907606001950938285454250990",
+  "L-1": "7237005577332262213973186563042994240857116359379907606001950938285454250988"
+ },
+ "small_order_and_alias_encodings": [
+  {
+   "hex": "0000000000000000000000000000000000000000000000000000000000000000",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "0000000000000000000000000000000000000000000000000000000000000080",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "0100000000000000000000000000000000000000000000000000000000000000",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "0100000000000000000000000000000000000000000000000000000000000080",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "canonical-or-sign-variant"
+  },
+  {
+   "hex": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=0)"
+  },
+  {
+   "hex": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=0)"
+  },
+  {
+   "hex": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=1)"
+  },
+  {
+   "hex": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=1)"
+  },
+  {
+   "hex": "efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=2)"
+  },
+  {
+   "hex": "efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=2)"
+  },
+  {
+   "hex": "f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=3)"
+  },
+  {
+   "hex": "f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=3)"
+  },
+  {
+   "hex": "f1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=4)"
+  },
+  {
+   "hex": "f1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=4)"
+  },
+  {
+   "hex": "f2ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=5)"
+  },
+  {
+   "hex": "f2ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=5)"
+  },
+  {
+   "hex": "f3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=6)"
+  },
+  {
+   "hex": "f3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=6)"
+  },
+  {
+   "hex": "f4ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=7)"
+  },
+  {
+   "hex": "f4ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=7)"
+  },
+  {
+   "hex": "f5ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=8)"
+  },
+  {
+   "hex": "f5ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=8)"
+  },
+  {
+   "hex": "f6ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=9)"
+  },
+  {
+   "hex": "f6ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=9)"
+  },
+  {
+   "hex": "f7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=10)"
+  },
+  {
+   "hex": "f7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=10)"
+  },
+  {
+   "hex": "f8ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=11)"
+  },
+  {
+   "hex": "f8ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=11)"
+  },
+  {
+   "hex": "f9ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=12)"
+  },
+  {
+   "hex": "f9ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=12)"
+  },
+  {
+   "hex": "faffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=13)"
+  },
+  {
+   "hex": "faffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=13)"
+  },
+  {
+   "hex": "fbffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=14)"
+  },
+  {
+   "hex": "fbffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=14)"
+  },
+  {
+   "hex": "fcffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=15)"
+  },
+  {
+   "hex": "fcffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=15)"
+  },
+  {
+   "hex": "fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=16)"
+  },
+  {
+   "hex": "fdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=16)"
+  },
+  {
+   "hex": "feffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=17)"
+  },
+  {
+   "hex": "feffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=17)"
+  },
+  {
+   "hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "label": "alias y+p (y=18)"
+  },
+  {
+   "hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "label": "alias y+p (y=18)"
+  }
+ ],
+ "small_order_key_equation_rows": [
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "0",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "L",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "0",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "L",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc050000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037aedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "0",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=0)",
+   "S": "L",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "alias y+p (y=0)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "alias y+p (y=0)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "00000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0000000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "alias y+p (y=0)",
+   "S": "0",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "R": "alias y+p (y=0)",
+   "S": "L",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000000edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "01000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "canonical-or-sign-variant",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "0100000000000000000000000000000000000000000000000000000000000080edd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "0",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "R": "alias y+p (y=1)",
+   "S": "L",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffedd3f55c1a631258d69cf7a2def9de1400000000000000000000000000000010",
+   "why": "small-order key; lax cofactorless equation holds"
+  }
+ ],
+ "small_order_key_rb_rows": [
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "d4b4f5784868c3020403246717ec169ff79e26608ea126a1ab69ee77d1b167120300000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=3)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000000",
+   "sig": "edc876d6831fd2105d0b4389ca2e283166469289146e2ce06faefe98b22548df0500000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=5)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "2f1132ca61ab38dff00f2fea3228f24c6c71d58085b80e47e19515cb27e8d0470400000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=4)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "0000000000000000000000000000000000000000000000000000000000000080",
+   "sig": "d4b4f5784868c3020403246717ec169ff79e26608ea126a1ab69ee77d1b167120300000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=3)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000000",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "0100000000000000000000000000000000000000000000000000000000000080",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+   "sig": "b4b937fca95b2f1e93e41e62fc3c78818ff38a66096fad6e7973e5c90006d3210800000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=8)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "2f1132ca61ab38dff00f2fea3228f24c6c71d58085b80e47e19515cb27e8d0470400000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=4)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85",
+   "sig": "c0f1225584444ec730446e231390781ffdd2f256e9fcbeb2f40dddc2c2233d7f0900000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=9)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "b862409fb5c4c4123df2abf7462b88f041ad36dd6864ce872fd5472be363c5b10700000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=7)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+   "sig": "2c7be86ab07488ba43e8e03d85a67625cfbf98c8544de4c877241b7aaafc7fe30a00000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=10)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "9e286d335160c6ff6ea5d8c7c5d506ae35ccf8f4dde523f3e55a97b716d128661500000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=21)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa",
+   "sig": "2f1132ca61ab38dff00f2fea3228f24c6c71d58085b80e47e19515cb27e8d0470400000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=4)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "d4b4f5784868c3020403246717ec169ff79e26608ea126a1ab69ee77d1b167120300000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=3)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "c0f1225584444ec730446e231390781ffdd2f256e9fcbeb2f40dddc2c2233d7f0900000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=9)"
+  },
+  {
+   "A": "canonical-or-sign-variant",
+   "msg": "6d",
+   "pk": "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "2f1132ca61ab38dff00f2fea3228f24c6c71d58085b80e47e19515cb27e8d0470400000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=4)"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "f47e49f9d07ad2c1606b4d94067c41f9777d4ffda709b71da1d88628fce34d850600000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=6)"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "msg": "",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "c9a3f86aae465f0e56513864510f3997561fa2c9e85ea21dc2292309f3cd60220200000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=2)"
+  },
+  {
+   "A": "alias y+p (y=0)",
+   "msg": "6d",
+   "pk": "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "801f40eaaee1ef8723279a28b2cf4037b889dad222604678748b53ed0db0db920d00000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=13)"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "msg": "",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  },
+  {
+   "A": "alias y+p (y=1)",
+   "msg": "6d",
+   "pk": "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+   "sig": "58666666666666666666666666666666666666666666666666666666666666660100000000000000000000000000000000000000000000000000000000000000",
+   "why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=1)"
+  }
+ ]
+}
