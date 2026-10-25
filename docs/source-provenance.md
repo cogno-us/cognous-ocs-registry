@@ -4,9 +4,9 @@ Written 2026-10-24 by the S01 implementation worker, revised once after builder-
 
 VERIFIED = read from the named source by REST, or run in this session. REPORTED = stated in a source document I did not re-run.
 
-## 1. Selected baseline (a proposal, not a confirmed determination)
+## 1. Selected baseline (operator-selected under D1; not an original release, not independently qualified)
 
-The proposed S01 baseline candidate is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release), reduced to one component: Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, files `engine/__init__.py` and `engine/safe_executor.py`. **It needs operator confirmation.** Reasons for selecting it:
+The S01 baseline, explicitly selected by the operator on 2026-10-24 (decision D1, `docs/decisions/2026-10-24-operator-decisions-D1-D5.md`), is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release), reduced to one component: Execution Runtime `ec728da6dc301a664b331ac8986afd6e850a1273`, files `engine/__init__.py` and `engine/safe_executor.py`. The operator selected it as the authoritative historical reference for the registry migration program; it is not described here as the original OCS release, a published release or an independently qualified baseline. The embedded `CONTROL_PLANE_COMMIT` mismatch noted in section 2 is preserved unmodified (D2). Reasons the builder identified for the choice:
 
 1. The hub labels this tuple "v0.1": annotated tag `review-v0.1-g8-r10-20261022` (hub tag object `00c915d3...`, peeled commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`), and the register titled "Known issues register: v0.1 public review release (candidate g8-r10)". The tag message says it is a review marker, not a version or release; contracts stay `0.1.0-draft`. The tag exists in 14 repositories: the 11 lock repositories plus hub, qualification and ergonomics (`prp`, `research_intelligence`, `tfa` have no tag).
 2. The hub's MVP definition says "Components at the existing g8-r10 tuple, unchanged on main (pre-F3 text, superseded in part: ...)". "pre-F3" describes that text, so `g8-r10` precedes the F3 repairs. Read by REST at hub main `51c579a3208149922649a31a6eb041106a4121c3` (`docs/mvp-recovery/mvp-definition.md`, line 9); that file does not exist at the tuple commit `a2d9396c`.

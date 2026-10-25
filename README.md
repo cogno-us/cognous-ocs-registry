@@ -12,6 +12,14 @@ This is not a new OCS implementation program. It does not reconstruct the stack,
 
 Static plan OCS-REG-PLAN v1.1: https://github.com/cogno-us/cognous-ocs-registry/blob/s01-baseline/docs/plans/PROJECT_PLAN-v1.1.md. Engineering Constitution (exact pin): https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md.
 
+## Licensing
+
+Newly authored material: Apache-2.0 (`LICENSE`); imported material keeps its own notices. See [LICENSING.md](LICENSING.md).
+
+## Operator decisions
+
+D1–D5 of 2026-10-24: [docs/decisions/2026-10-24-operator-decisions-D1-D5.md](docs/decisions/2026-10-24-operator-decisions-D1-D5.md).
+
 ## Currently authorized sprint
 
 **S01 only**: propose and reproduce a bounded historical OCS v0.1 behavioural baseline candidate (minimality not established) for registry migration. After S01 the next authorized action is none until the operator authorizes one. The live state is in [docs/sprint-status.md](docs/sprint-status.md), the only live status document.
@@ -25,17 +33,17 @@ Static plan OCS-REG-PLAN v1.1: https://github.com/cogno-us/cognous-ocs-registry/
 - It adds no real payment, network, subprocess or production-credential effect. The only destination is synthetic SQLite.
 - It does not claim that the baseline is qualified. See "Unqualified" in [docs/source-provenance.md](docs/source-provenance.md).
 
-## Historical source baseline (proposed, exact)
+## Historical source baseline (operator-selected, exact)
 
 **Scope caveat:** this baseline is a first, narrow slice (the Runtime's local policy only). Control Plane scanners, mandatory-check manifests, reason codes and the policy gate sit outside it. Candidate files for later sprints, not imported: Runtime `engine/effective_grant.py`, `engine/permissions.py` (+json), `engine/action_schema.py`; Control Plane `policy_gate.py` and `reason_vocabulary.py` (names inferred, not read).
 
-The proposed S01 baseline is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release; hub tag `review-v0.1-g8-r10-20261022`, hub commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`, component lock SHA-256 `dcd3ab9e4e737c7e50f4bc38c2439438f156da64c9eb1e46725f477973da59ff`). From that tuple only one component's source is imported, in two files:
+The S01 baseline, explicitly selected by the operator in D1 (a review marker, not an original or published release and not independently qualified), is the hub's "v0.1 public review" tuple `g8-r10` (a review marker, not a version or release; hub tag `review-v0.1-g8-r10-20261022`, hub commit `a2d9396c1e2022ac36ae4db58dcc2f2e14161b7c`, component lock SHA-256 `dcd3ab9e4e737c7e50f4bc38c2439438f156da64c9eb1e46725f477973da59ff`). From that tuple only one component's source is imported, in two files:
 
 | Component | Repository | Revision | Imported |
 |---|---|---|---|
 | Execution Runtime (`moltbot_safe`) | `cogno-us/cognous-execution-runtime` | `ec728da6dc301a664b331ac8986afd6e850a1273` | `engine/__init__.py`, `engine/safe_executor.py`, with `engine/LICENSE`, `LICENSE`, `LICENSE-APACHE-2.0`, `NOTICE` |
 
-Imported files are byte-identical to that revision; a test checks their Git blob ids. It needs operator confirmation. Why this baseline, how it differs from the bounded V1 reference candidates and from the October 2026 MVP tuple, and everything else, is in [docs/source-provenance.md](docs/source-provenance.md). The architecture is in [docs/architecture.md](docs/architecture.md).
+Imported files are byte-identical to that revision; a test checks their Git blob ids. Why this baseline, how it differs from the bounded V1 reference candidates and from the October 2026 MVP tuple, and everything else, is in [docs/source-provenance.md](docs/source-provenance.md). The architecture is in [docs/architecture.md](docs/architecture.md).
 
 ## Relationship to the existing OCS components
 
