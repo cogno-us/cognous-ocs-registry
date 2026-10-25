@@ -69,9 +69,10 @@ def test_ci_runs_the_cctv_corpus_through_the_real_backend():
 def test_cctv_files_are_the_recorded_upstream_files():
     assert hashlib.sha256(RAW).hexdigest() == "b38e84caf3e7e89170ff520292dbeae421b0a794c27408ce5ce973018fe3d7f9"
     assert hashlib.sha256(RAW).hexdigest() in SOURCE and hashlib.sha256(README_RAW).hexdigest() in SOURCE
-    # provenance and redistribution terms (resolved): exact upstream commit, preserved BSD-3-Clause LICENSE, attribution NOTICE
+    # provenance (resolved) and licence scope (author confirmation NOT obtained, stated plainly): exact upstream commit, preserved BSD-3-Clause LICENSE, attribution NOTICE
     assert UPSTREAM_COMMIT in SOURCE and "https://github.com/C2SP/CCTV" in SOURCE
     assert "License: BSD-3-Clause" in SOURCE and "not established" not in SOURCE
+    assert "was NOT obtained" in SOURCE and "was NOT obtained" in (CCTV_DIR / "NOTICE").read_text()
     license_raw = (CCTV_DIR / "LICENSE").read_bytes()
     assert hashlib.sha256(license_raw).hexdigest() == LICENSE_SHA256 and LICENSE_SHA256 in SOURCE
     assert license_raw.startswith(b"Copyright 2019 Google LLC\nCopyright 2022 Filippo Valsorda\n")

@@ -17,12 +17,11 @@
   three conditions: retain the copyright notice, conditions and disclaimer in source redistributions; reproduce them in binary redistributions;
   no use of the name of Google LLC or its contributors to endorse or promote derived products without written permission).
   The license file sits in the same directory as the vectors and the sibling `ed25519vectors.go` states "governed by a BSD-style license that can be found in the LICENSE file".
-  Redistribution of the vectors in this repository is permitted on these terms, which this PR meets: the unmodified `LICENSE` is kept next to
-  the vectors (this directory), and `NOTICE` in this directory carries the attribution. This imported license is preserved and is NOT replaced by
+  The unmodified `LICENSE` is kept next to the vectors (this directory) and `NOTICE` carries the attribution. This imported license is preserved and is NOT replaced by
   this repository's Apache-2.0; Apache-2.0 applies only to Cognous-authored material.
-- Caveats for the Architect (not legal advice): the upstream top-level README names no license, the LICENSE is directory-scoped to `ed25519/`, and its
-  text speaks of "source and binary forms" without naming data files. The reading that it covers the JSON in the same directory is the natural one, but it was not
-  confirmed with the upstream authors.
+- **Licensing status, stated plainly:** upstream author confirmation that the BSD-3-Clause directory licence applies at file level to the vectors was NOT obtained.
+  The file sits inside the licensed `ed25519/` directory and its notices are retained here. The upstream top-level README names no license, and the LICENSE text speaks of
+  "source and binary forms" without naming data files. This is not legal advice; the Architect decides whether that scope is acceptable (fallback: docs/adapters/ed25519.md).
 - Content: 914 vectors, fields `number`, `key` (hex), `sig` (hex), `msg` (UTF-8 text), `flags`. Flags used upstream:
   `low_order_A`, `low_order_R`, `low_order_component_A`, `low_order_component_R`, `low_order_residue`, `non_canonical_A`,
   `non_canonical_R`, `reencoded_k`. Exactly one vector (number 305) has no flags.

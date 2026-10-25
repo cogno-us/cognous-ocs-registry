@@ -4,6 +4,6 @@ This directory redistributes, unmodified, files from the C2SP Community Cryptogr
   Copyright 2019 Google LLC
   Copyright 2022 Filippo Valsorda
 
-They are licensed under the BSD 3-Clause License; the unmodified license text is in the file LICENSE in this directory.
-Redistribution is subject to the conditions stated there. The names of Google LLC and its contributors are not used to endorse or promote this project.
+They sit inside the upstream ed25519/ directory, which carries the BSD 3-Clause License; the unmodified license text is in the file LICENSE in this directory.
+Upstream author confirmation that this directory licence applies at file level to the vectors was NOT obtained. This is not legal advice. The names of Google LLC and its contributors are not used to endorse or promote this project.
 Provenance and checksums: SOURCE.md.
