@@ -10,7 +10,7 @@ Contents (all new):
 |---|---|
 | `registry_conformance/highwater.py` | pure `advance(state, observation) -> (new_state, verdict)`, pure derived `policy_state(...)`, `empty_state()`, `verify_state()` |
 | `registry_conformance/__init__.py` | strict vector validator (`validate_vector_set`, `MalformedVector`) and pure vector runner (`run_vector`, `run_vector_set`) |
-| `registry_conformance/vectors/*.json` | 77 language-neutral vectors in 9 files, all `SYNTHETIC-TEST-ONLY` |
+| `registry_conformance/vectors/*.json` | 85 language-neutral vectors in 10 files, all `SYNTHETIC-TEST-ONLY` |
 | `tests/test_conformance_kit.py` | developer tests, malformed-vector refusals, in-suite mutation checks, randomized monotonicity invariants |
 
 ## Boundaries (what the kit never does)
@@ -26,7 +26,7 @@ Contents (all new):
 
 ## State model (a conformance model, not a physical schema)
 
-`empty_state()` returns a plain JSON-compatible dict: `rows` per scope key (seven-field key of contract section 7), a hash-chained `log` (`entry_type` in `activate`, `withdraw`, `revoke`, `sync`; the vocabulary is not extended), `evidence` (negative evidence stream), `scope_required` ratchet, `floors` (per-scope high-water, revoked pairs, revoked key ids, snapshot version, `min_epochs`; monotone), `snapshot`, `external` floor, `anchor` (log-head anchor) and `store` (`known` or `unknown`). `activation_ref` is the entry hash of the `activate` entry. Physical names belong to EXT-S4-0.
+`empty_state()` returns a plain JSON-compatible dict: `rows` per scope key (seven-field key of contract section 7), a hash-chained `log` (`entry_type` in `activate`, `withdraw`, `revoke`, `sync`; the vocabulary is not extended), `evidence` (negative evidence stream), `scope_required` ratchet, `floors` (per-scope high-water, revoked pairs, the subset of revoked pairs a snapshot listed explicitly, revoked key ids, snapshot version, `min_epochs`; monotone), `snapshot`, `external` floor, `anchor` (log-head anchor) and `store` (`known` or `unknown`). `activation_ref` is the entry hash of the `activate` entry. State integrity is verified by replaying the log: every row field, the persisted revoked sets, revoked keys, `min_epochs`, snapshot record, ratchet and high-water must agree with the log, and **each** trusted anchor (the state's own and any supplied external one) must match the log prefix; anything else is `UNKNOWN_FAIL_CLOSED`. Physical names belong to EXT-S4-0.
 
 `anchor` stands for the log-head anchor that contract 8.3 requires to be held **outside** the store. In the kit it travels in the state value for convenience; an observation may carry `external_anchor`, which wins when its `log_head` is at least the state's. A host must persist the anchor externally and pass it in.
 
@@ -45,7 +45,7 @@ Contents (all new):
 Each file is `{schema: "ocs-conformance-vectors/1", label: "SYNTHETIC-TEST-ONLY", scope_base, defaults, vectors[]}`. A vector has `id`, `title`, `cites`, `scopes` (labels merged over `scope_base`) and ordered `steps`:
 
 - `advance`: `obs` (a kit observation; labels resolved, `defaults[kind]` merged under it unless `raw`) and `expect` (`verdict`, `code`, optional `applied`, `fallback_reason`);
-- `policy_state`, `check` (log length, evidence count, rows, high-water, revoked pairs, ratchet, store), `save` and `swap_to` (state replaced by an older or forked copy: the custody event), `tear` (torn write: `state_ahead_of_log`, `log_ahead_of_state`, `log_entry_corrupted`), and `concurrent` (every serial permutation must give the stated accepted count and an allowed final row map: the expectation is explicit serialization by the host).
+- `policy_state`, `check` (log length, evidence count, rows, high-water, revoked pairs, ratchet, store), `save` and `swap_to` (state replaced by an older or forked copy: the custody event), `tear` (torn write or tampering: `state_ahead_of_log`, `log_ahead_of_state`, `log_entry_corrupted`, `row_validity_extended`, `row_issuer_changed`, `revoked_set_truncated`, `ratchet_cleared`), and `concurrent` (every serial permutation must give the stated accepted count and an allowed final row map: the expectation is explicit serialization by the host).
 
 Value macros resolved against the current state: `{"$row": {"scope", "field"}}` (for example `activation_ref`), `{"$anchor": ...}`, `{"$saved": name}`, `{"$saved_anchor": name}`.
 

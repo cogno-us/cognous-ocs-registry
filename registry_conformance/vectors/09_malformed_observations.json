@@ -397,11 +397,135 @@
      "raw": true
     },
     {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "issuer_key_id": "key-1\n"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "trailing newline identifier"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881\n"
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "trailing newline digest"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": null,
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "null revoked_selections"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": null
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "null min_epochs"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": null,
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "null revoked_key_ids"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": "",
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "string revoked_key_ids"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": {},
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE",
+      "code": "observation_malformed"
+     },
+     "note": "object revoked_selections"
+    },
+    {
      "op": "check",
      "expect": {
       "log_length": 0,
       "store": "known",
-      "evidence_count": 21
+      "evidence_count": 28
      }
     }
    ]

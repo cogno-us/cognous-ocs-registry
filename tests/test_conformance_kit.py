@@ -29,10 +29,10 @@ ALL = [(name, doc, v) for name, doc in DOCS.items() for v in doc["vectors"]]
 
 
 def test_vector_corpus_shape():
-    assert len(DOCS) >= 9
+    assert len(DOCS) >= 10
     ids = [v["id"] for _, _, v in ALL]
     assert len(ids) == len(set(ids))
-    assert len(ids) >= 70
+    assert len(ids) >= 80
     for d in DOCS.values():
         kit.validate_vector_set(d)
         assert d["label"] == "SYNTHETIC-TEST-ONLY"
@@ -41,6 +41,11 @@ def test_vector_corpus_shape():
 @pytest.mark.parametrize("name,doc,vector", ALL, ids=[v["id"] for _, _, v in ALL])
 def test_vector(name, doc, vector):
     assert kit.run_vector(doc, vector) == []
+
+
+def test_identifier_and_digest_validation_is_full_match():
+    assert hw._ident("key-1") and not hw._ident("key-1\n") and not hw._ident("")
+    assert hw._sha("sha256:" + "a" * 64) and not hw._sha("sha256:" + "a" * 64 + "\n")
 
 
 def test_verdict_vocabulary_is_closed():
@@ -91,6 +96,15 @@ MALFORMED = {
         {"op": "concurrent", "observations": [{"kind": "read"}], "expect": {"accepted_count": 1, "allowed_final": [{}]}}),
     "bad_check_key": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"enabled": True}}),
     "defaults_bad_kind": lambda d: d["defaults"].update(grant={"now": 1}),
+    "check_unknown_label_row_absent": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"row_absent": ["typo"]}}),
+    "check_unknown_label_row": lambda d: d["vectors"][0]["steps"].append(
+        {"op": "check", "expect": {"row": {"typo": {"activation_state": "active", "epoch": 1}}}}),
+    "check_unknown_label_high_water": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"high_water": {"typo": 1}}}),
+    "check_unknown_label_ratchet": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"scope_required": ["typo"]}}),
+    "check_wrong_container": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"row_absent": "A"}}),
+    "check_log_length_not_int": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"log_length": "1"}}),
+    "check_bad_store": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"store": "maybe"}}),
+    "check_bad_revoked_pair": lambda d: d["vectors"][0]["steps"].append({"op": "check", "expect": {"revoked": [["sel-a"]]}}),
 }
 
 

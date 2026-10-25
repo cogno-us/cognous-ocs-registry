@@ -88,11 +88,11 @@ def _is_int(x):
 
 
 def _ident(x):
-    return isinstance(x, str) and _IDENT.match(x) is not None
+    return isinstance(x, str) and _IDENT.fullmatch(x) is not None
 
 
 def _sha(x):
-    return isinstance(x, str) and _SHA.match(x) is not None
+    return isinstance(x, str) and _SHA.fullmatch(x) is not None
 
 
 def _canon(obj):
@@ -136,6 +136,7 @@ def empty_state():
             "high_water": {},
             "revoked": [],
             "revoked_keys": [],
+            "snapshot_revoked": [],
             "snapshot_version": 0,
             "min_epochs": {},
         },
@@ -151,7 +152,7 @@ _STATE_KEYS = {
     "schema", "store", "unknown_reason", "rows", "log", "evidence", "rebaselines",
     "scope_required", "floors", "snapshot", "external", "anchor",
 }
-_FLOOR_KEYS = {"high_water", "revoked", "revoked_keys", "snapshot_version", "min_epochs"}
+_FLOOR_KEYS = {"high_water", "revoked", "revoked_keys", "snapshot_revoked", "snapshot_version", "min_epochs"}
 _ROW_KEYS = {
     "activation_state", "epoch", "selection_digest", "participation", "valid_from",
     "valid_until", "issuer_key_id", "record", "activation_ref", "high_water_epoch",
@@ -175,11 +176,11 @@ def _shape_problem(st):
             return True
         if not isinstance(fl["high_water"], dict) or not isinstance(fl["min_epochs"], dict):
             return True
-        if not isinstance(fl["revoked"], list) or not isinstance(fl["revoked_keys"], list):
+        if not isinstance(fl["revoked"], list) or not isinstance(fl["revoked_keys"], list) or not isinstance(fl["snapshot_revoked"], list):
             return True
         if not _is_int(fl["snapshot_version"]) or fl["snapshot_version"] < 0:
             return True
-        for pair in fl["revoked"]:
+        for pair in fl["revoked"] + fl["snapshot_revoked"]:
             if not (isinstance(pair, list) and len(pair) == 2 and isinstance(pair[0], str) and _is_int(pair[1])):
                 return True
         for k, row in st["rows"].items():
@@ -211,11 +212,23 @@ def _shape_problem(st):
 
 
 def _replay(st):
-    """Rebuild the expected rows and revoked set from the log, or None if broken."""
+    """Rebuild the expected state facts from the log, or None if the log is broken."""
+    try:
+        return _replay_unsafe(st)
+    except (KeyError, TypeError, ValueError, IndexError, AttributeError):
+        return None
+
+
+def _replay_unsafe(st):
     rows = {}
     revoked = set()
+    explicit = set()
+    keys = set()
+    required = set()
+    min_epochs = {}
+    last_sync = None
     prev = None
-    for i, e in enumerate(st["log"]):
+    for e in st["log"]:
         if e.get("prev_hash") != prev or e.get("entry_hash") != _entry_hash(e):
             return None
         prev = e["entry_hash"]
@@ -224,13 +237,18 @@ def _replay(st):
         if t == "activate":
             rows[k] = {
                 "activation_state": "active", "epoch": e["epoch"], "selection_digest": e["selection_digest"],
-                "activation_ref": e["entry_hash"],
+                "activation_ref": e["entry_hash"], "participation": e["participation"],
+                "valid_from": e["valid_from"], "valid_until": e["valid_until"],
+                "issuer_key_id": e["issuer_key_id"], "record": e["record"],
             }
+            if e["scope_required"]:
+                required.add(k)
         elif t == "withdraw":
             r = rows.get(k)
             if r is None:
                 return None
-            rows[k] = {**r, "activation_state": "withdrawn", "epoch": e["epoch"], "selection_digest": e["selection_digest"]}
+            rows[k] = {**r, "activation_state": "withdrawn", "epoch": e["epoch"], "selection_digest": e["selection_digest"],
+                       "participation": e["participation"], "issuer_key_id": e["issuer_key_id"]}
         elif t == "revoke":
             sel = _scope_from_key(k)["selection_id"]
             revoked.add((sel, e["epoch"]))
@@ -238,60 +256,91 @@ def _replay(st):
             if r is not None and r["epoch"] == e["epoch"]:
                 rows[k] = {**r, "activation_state": "revoked"}
         elif t == "sync":
-            for pair in e.get("revoked_selections", []):
+            for pair in e["revoked_selections"]:
+                explicit.add((pair[0], pair[1]))
                 revoked.add((pair[0], pair[1]))
-    return rows, revoked
+            keys.update(e["revoked_key_ids"])
+            for sel, floor in e["min_epochs"]:
+                if floor > min_epochs.get(sel, 0):
+                    min_epochs[sel] = floor
+            last_sync = e
+    return {"rows": rows, "revoked": revoked, "explicit": explicit, "keys": keys, "required": required,
+            "min_epochs": min_epochs, "last_sync": last_sync}
 
 
-def _effective_anchor(st, ext):
-    a = st["anchor"]
-    if ext is not None and ext["log_head"] >= a["log_head"]:
-        return ext
-    return a
+def _anchor_problem(st, a):
+    n = len(st["log"])
+    if n < a["log_head"]:
+        return "state_older_than_anchor"
+    if a["log_head"] == 0:
+        return "anchor_head_mismatch" if a["head_hash"] is not None else None
+    if st["log"][a["log_head"] - 1]["entry_hash"] != a["head_hash"]:
+        return "anchor_head_mismatch"
+    return None
 
 
 def _regress_problem(st):
     fl = st["floors"]
-    for k, hw in fl["high_water"].items():
+    for k, hwm in fl["high_water"].items():
         row = st["rows"].get(k)
-        if (row["epoch"] if row else 0) < hw:
+        if (row["epoch"] if row else 0) < hwm:
             return "state_behind_floor"
     rep = _replay(st)
     if rep is None:
         return "log_chain_broken"
-    _, revoked = rep
     for pair in fl["revoked"]:
-        if (pair[0], pair[1]) not in revoked:
+        if (pair[0], pair[1]) not in rep["revoked"]:
             return "state_behind_floor"
     return None
 
 
-def _state_problem(st, ext_anchor=None, check_anchor=True):
+def _state_problem(st, ext_anchor=None, check_anchor=True, extra_anchors=()):
+    """None, or the code that makes ``st`` suspect. ``ext_anchor`` may be one anchor or a list."""
     if _shape_problem(st):
         return "state_malformed"
     rep = _replay(st)
     if rep is None:
         return "log_chain_broken"
-    rows, _ = rep
-    if set(rows) != set(st["rows"]):
+    fl = st["floors"]
+    if set(rep["rows"]) != set(st["rows"]):
         return "state_log_mismatch"
-    for k, exp in rows.items():
+    for k, exp in rep["rows"].items():
         row = st["rows"][k]
         for f, v in exp.items():
             if row[f] != v:
                 return "state_log_mismatch"
-        if row["high_water_epoch"] != row["epoch"]:
+        if row["high_water_epoch"] != row["epoch"] or fl["high_water"].get(k, 0) < row["epoch"]:
+            return "state_log_mismatch"
+    # persisted sets must contain everything the log recorded (grow-only; an incomplete write fails closed)
+    if not rep["revoked"] <= {(p[0], p[1]) for p in fl["revoked"]}:
+        return "state_log_mismatch"
+    if not rep["explicit"] <= {(p[0], p[1]) for p in fl["snapshot_revoked"]}:
+        return "state_log_mismatch"
+    if not rep["keys"] <= set(fl["revoked_keys"]):
+        return "state_log_mismatch"
+    if any(fl["min_epochs"].get(sel, 0) < floor for sel, floor in rep["min_epochs"].items()):
+        return "state_log_mismatch"
+    if not all(st["scope_required"].get(k) for k in rep["required"]):
+        return "state_log_mismatch"
+    ls = rep["last_sync"]
+    if ls is not None and fl["snapshot_version"] < ls["snapshot_version"]:
+        return "state_log_mismatch"
+    snap = st["snapshot"]
+    if snap is not None:
+        if ls is None or snap != {"version": ls["snapshot_version"], "fingerprint": ls["fingerprint"], "valid_until": ls["valid_until"]}:
+            return "state_log_mismatch"
+        if snap["version"] != fl["snapshot_version"]:
             return "state_log_mismatch"
     if check_anchor:
-        a = _effective_anchor(st, ext_anchor)
-        n = len(st["log"])
-        if n < a["log_head"]:
-            return "state_older_than_anchor"
-        if a["log_head"] == 0:
-            if a["head_hash"] is not None:
-                return "anchor_head_mismatch"
-        elif st["log"][a["log_head"] - 1]["entry_hash"] != a["head_hash"]:
-            return "anchor_head_mismatch"
+        anchors = [st["anchor"]] + list(extra_anchors)
+        if isinstance(ext_anchor, list):
+            anchors.extend(ext_anchor)
+        elif ext_anchor is not None:
+            anchors.append(ext_anchor)
+        for a in anchors:
+            prob = _anchor_problem(st, a)
+            if prob:
+                return prob
     return _regress_problem(st)
 
 
@@ -345,6 +394,9 @@ def _check_snapshot(s):
         raise _Malformed("snapshot")
     if not (_is_int(s["version"]) and s["version"] >= 1 and _sha(s["fingerprint"]) and _is_int(s["valid_until"])):
         raise _Malformed("snapshot")
+    for f in ("revoked_selections", "min_epochs", "revoked_key_ids"):
+        if not isinstance(s[f], list):
+            raise _Malformed("snapshot collection type")
     for pair in s["revoked_selections"]:
         if not (isinstance(pair, list) and len(pair) == 2 and _ident(pair[0]) and _is_int(pair[1]) and pair[1] >= 1):
             raise _Malformed("snapshot")
@@ -618,7 +670,8 @@ def _do_withdraw(st, o):
         "timestamp": o["now"], "participation": o["participation"],
     })
     st["rows"][key] = {**row, "activation_state": "withdrawn", "epoch": o["epoch"], "selection_digest": o["selection_digest"],
-                       "participation": o["participation"], "high_water_epoch": o["epoch"]}
+                       "participation": o["participation"], "issuer_key_id": o["issuer_key_id"],
+                       "high_water_epoch": o["epoch"]}
     _bump(st["floors"]["high_water"], key, o["epoch"])
     return st, _verdict(ACCEPT, "withdrawn")
 
@@ -643,7 +696,8 @@ def _do_sync(st, o):
     if s["version"] < st["external"]["min_trust_snapshot_version"] or s["version"] < fl["snapshot_version"]:
         return _refuse(st, o, REFUSE_STALE, "trust_snapshot_version_stale")
     revoked_in = {tuple(p) for p in s["revoked_selections"]}
-    if not {tuple(p) for p in fl["revoked"]} <= revoked_in or not set(fl["revoked_keys"]) <= set(s["revoked_key_ids"]):
+    # omission is judged against pairs earlier snapshots listed explicitly; locally derived key revocations are retained, not required
+    if not {tuple(p) for p in fl["snapshot_revoked"]} <= revoked_in or not set(fl["revoked_keys"]) <= set(s["revoked_key_ids"]):
         return _refuse(st, o, REFUSE_STALE, "trust_snapshot_revocation_omitted")
     for sel, floor in fl["min_epochs"].items():
         if dict((p[0], p[1]) for p in s["min_epochs"]).get(sel, 0) < floor:
@@ -664,6 +718,8 @@ def _do_sync(st, o):
     for p in s["revoked_selections"]:
         if list(p) not in fl["revoked"]:
             fl["revoked"].append(list(p))
+        if list(p) not in fl["snapshot_revoked"]:
+            fl["snapshot_revoked"].append(list(p))
     for k in s["revoked_key_ids"]:
         if k not in fl["revoked_keys"]:
             fl["revoked_keys"].append(k)
@@ -702,6 +758,9 @@ def _merge_floors(a, b):
     for p in b["revoked"]:
         if p not in out["revoked"]:
             out["revoked"].append(p)
+    for p in b["snapshot_revoked"]:
+        if p not in out["snapshot_revoked"]:
+            out["snapshot_revoked"].append(p)
     for k in b["revoked_keys"]:
         if k not in out["revoked_keys"]:
             out["revoked_keys"].append(k)
@@ -716,8 +775,8 @@ def _do_lose_state(st, o):
     new["store"] = "unknown"
     new["unknown_reason"] = "state_lost"
     new["anchor"] = copy.deepcopy(st["anchor"]) if not _shape_problem(st) else new["anchor"]
-    if o.get("external_anchor") is not None:
-        new["anchor"] = _effective_anchor(new, o["external_anchor"])
+    if o.get("external_anchor") is not None and o["external_anchor"]["log_head"] >= new["anchor"]["log_head"]:
+        new["anchor"] = copy.deepcopy(o["external_anchor"])
     if not _shape_problem(st):
         new["evidence"] = copy.deepcopy(st["evidence"])
     return _refuse(new, o, UNKNOWN_FAIL_CLOSED, "state_lost")
@@ -738,15 +797,22 @@ def _do_restore(st, o):
             new["external"]["min_trust_snapshot_version"], cur["external"]["min_trust_snapshot_version"])
         new["evidence"] = copy.deepcopy(cur["evidence"])
         new["rebaselines"] = copy.deepcopy(cur["rebaselines"])
-        new["anchor"] = copy.deepcopy(cur["anchor"]) if cur["anchor"]["log_head"] >= new["anchor"]["log_head"] else new["anchor"]
+    anchors = [copy.deepcopy(o["backup"]["anchor"])]
+    if ok_cur:
+        anchors.append(copy.deepcopy(cur["anchor"]))
     if o.get("external_anchor") is not None:
-        new["anchor"] = _effective_anchor(new, o["external_anchor"])
+        anchors.append(copy.deepcopy(o["external_anchor"]))
+    top = max(anchors, key=lambda a: a["log_head"])
+    new["anchor"] = top
+    if new["snapshot"] is not None and new["snapshot"]["version"] < new["floors"]["snapshot_version"]:
+        # the restored support record is older than the retained snapshot high-water: no current support until a newer sync
+        new["snapshot"] = None
     if lost:
         # lost state is unknown, never zero; an older copy does not repair it (needs external re-provisioning)
         new["store"] = "unknown"
         new["unknown_reason"] = "state_lost"
         return _refuse(new, o, UNKNOWN_FAIL_CLOSED, "state_lost")
-    problem = _state_problem(new)
+    problem = _state_problem(new, extra_anchors=anchors)
     if problem is None and new["store"] == "known":
         return new, _verdict(ACCEPT, "restore_consistent")
     new["store"] = "unknown"

@@ -35,7 +35,8 @@ _STEP_KEYS = {
     "concurrent": ({"op", "observations", "expect"}, {"note"}),
     "check": ({"op", "expect"}, {"note"}),
 }
-_TEARS = ("state_ahead_of_log", "log_ahead_of_state", "log_entry_corrupted")
+_TEARS = ("state_ahead_of_log", "log_ahead_of_state", "log_entry_corrupted", "row_validity_extended",
+          "row_issuer_changed", "revoked_set_truncated", "ratchet_cleared")
 _ALLOWED_EXPECT_ADVANCE = {"verdict", "code", "applied", "fallback_reason"}
 _ALLOWED_VERDICT_KEYS = {"verdict", "code", "applied", "fallback", "fallback_reason", "activation_ref"}
 _CHECK_KEYS = {"log_length", "evidence_count", "store", "row", "row_absent", "high_water", "revoked", "scope_required", "rebaselines"}
@@ -140,9 +141,37 @@ def _validate_step(s, scopes):
             if not isinstance(fin, dict) or not all(k in scopes and isinstance(m, dict) and set(m) == {"activation_state", "epoch"} for k, m in fin.items()):
                 _bad("allowed_final entry")
     elif op == "check":
-        e = s["expect"]
-        if not isinstance(e, dict) or not e or set(e) - _CHECK_KEYS:
-            _bad("check expect")
+        _validate_check(s["expect"], scopes)
+
+
+def _validate_check(e, scopes):
+    if not isinstance(e, dict) or not e or set(e) - _CHECK_KEYS:
+        _bad("check expect")
+    for k in ("log_length", "evidence_count", "rebaselines"):
+        if k in e and not (_is_int(e[k]) and e[k] >= 0):
+            _bad("check %s must be a non-negative int" % k)
+    if "store" in e and e["store"] not in ("known", "unknown"):
+        _bad("check store")
+    for k in ("row", "high_water"):
+        if k in e:
+            if not isinstance(e[k], dict) or not e[k]:
+                _bad("check %s must be a non-empty object" % k)
+            for label, want in e[k].items():
+                if label not in scopes:
+                    _bad("check %s: unknown scope label %r" % (k, label))
+                if k == "row" and not (isinstance(want, dict) and set(want) == {"activation_state", "epoch"}):
+                    _bad("check row entry")
+                if k == "high_water" and not _is_int(want):
+                    _bad("check high_water entry")
+    for k in ("row_absent", "scope_required"):
+        if k in e:
+            if not isinstance(e[k], list) or not e[k] or not all(isinstance(x, str) and x in scopes for x in e[k]):
+                _bad("check %s: scope labels must exist" % k)
+    if "revoked" in e:
+        r = e["revoked"]
+        if not isinstance(r, list) or not r or not all(
+                isinstance(p, list) and len(p) == 2 and isinstance(p[0], str) and _is_int(p[1]) for p in r):
+            _bad("check revoked")
 
 
 def _validate_expect_verdict(e):
@@ -292,8 +321,17 @@ def _tear(state, step, scopes, base):
         if kind == "state_ahead_of_log":
             st["rows"][key]["epoch"] += 1
             st["rows"][key]["high_water_epoch"] += 1
-        else:
+        elif kind == "log_ahead_of_state":
             del st["rows"][key]
+        elif kind == "row_validity_extended":
+            st["rows"][key]["valid_until"] += 5000
+        elif kind == "row_issuer_changed":
+            st["rows"][key]["issuer_key_id"] = "key-other"
+        elif kind == "revoked_set_truncated":
+            st["floors"]["revoked"] = []
+            st["floors"]["snapshot_revoked"] = []
+        elif kind == "ratchet_cleared":
+            st["scope_required"].pop(key, None)
     return st
 
 

@@ -1312,6 +1312,322 @@
      }
     }
    ]
+  },
+  {
+   "id": "RC-15-custody-longer-divergent-fork",
+   "title": "A longer divergent log cannot hide a mismatching external anchor: every trusted anchor is checked, not only the longest",
+   "cites": [
+    "contract 8.3 log-head anchor",
+    "ADR D-24 custody"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "save",
+     "name": "base"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:0e645890f4ed1deefeb6492f411e07cc09196a1f134d9541842e70d4ea2914f4",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "save",
+     "name": "main"
+    },
+    {
+     "op": "swap_to",
+     "name": "base"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 2,
+      "selection_digest": "sha256:5d4a0d60f32dead5e64a9a55a667c9b0a8a2c8b6d4a94def52eb8d203cf3ab89",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 1,
+       "statement_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 3,
+      "selection_digest": "sha256:73ef5b7ed8f4641f634eae85fb6abd10bf32a1f0b2ec1e76fba11c06336d96bb",
+      "supersedes": {
+       "selection_id": "sel-a",
+       "epoch": 2,
+       "statement_digest": "sha256:5d4a0d60f32dead5e64a9a55a667c9b0a8a2c8b6d4a94def52eb8d203cf3ab89"
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "read",
+      "external_anchor": {
+       "$saved_anchor": "main"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "anchor_head_mismatch"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "restore",
+      "backup": {
+       "$saved": "main"
+      },
+      "external_anchor": {
+       "$saved_anchor": "main"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_older_than_anchor"
+     }
+    }
+   ]
+  },
+  {
+   "id": "RC-16-restored-snapshot-cannot-bypass-expiry",
+   "title": "A restored older snapshot record is invalidated: after re-baseline the retained newer (expired) high-water yields HOLD, not the old record's validity",
+   "cites": [
+    "contract 7.4 line 7",
+    "contract 8.3",
+    "ADR D-24"
+   ],
+   "scopes": {
+    "A": {
+     "selection_id": "sel-a"
+    }
+   },
+   "steps": [
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "select",
+      "scope": "A",
+      "epoch": 1,
+      "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+      "participation": "required"
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "activated"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 1,
+       "fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80",
+       "valid_until": 5000,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "save",
+     "name": "bk"
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 250,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "restore",
+      "backup": {
+       "$saved": "bk"
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "state_older_than_anchor"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "rebaseline",
+      "authorized": true,
+      "decision_ref": "op-5",
+      "now": 300
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "rebaselined"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "claim": {
+       "scope": "A",
+       "binding": {
+        "selection_epoch": 1,
+        "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+        "record": {
+         "record_id": "rec-1",
+         "record_version": 1,
+         "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+        },
+        "activation_ref": {
+         "$row": {
+          "scope": "A",
+          "field": "activation_ref"
+         }
+        },
+        "trust_snapshot_version": 1,
+        "trust_snapshot_fingerprint": "sha256:9f2460b56367bc4e5050aec0c5fb6c516f06dc5e924e14a89d52d47ee2911b80"
+       }
+      }
+     },
+     "expect": {
+      "verdict": "UNKNOWN_FAIL_CLOSED",
+      "code": "trust_snapshot_missing"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 2,
+       "fingerprint": "sha256:a5962db575d432970548077b7efc150f87e877157d12dbaea47f45c4e3329211",
+       "valid_until": 900,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "REFUSE_STALE",
+      "code": "trust_snapshot_version_stale"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "sync",
+      "snapshot": {
+       "version": 3,
+       "fingerprint": "sha256:2c26640759cebfd3cc0f53d21f4e3cd6dbed474d7784b513824d817a04a4dd40",
+       "valid_until": 900,
+       "revoked_selections": [],
+       "revoked_key_ids": [],
+       "min_epochs": []
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "synced"
+     }
+    },
+    {
+     "op": "advance",
+     "obs": {
+      "kind": "guard",
+      "claim": {
+       "scope": "A",
+       "binding": {
+        "selection_epoch": 1,
+        "selection_digest": "sha256:aa4aadbdb3913d8d1b3fe4329dc64ee059c492453b5562a5adfb750f0a776624",
+        "record": {
+         "record_id": "rec-1",
+         "record_version": 1,
+         "record_digest": "sha256:a7c73f631276b8ba8eeacf43c2bccc197228de7bafc24210f8a2215924e7c051"
+        },
+        "activation_ref": {
+         "$row": {
+          "scope": "A",
+          "field": "activation_ref"
+         }
+        },
+        "trust_snapshot_version": 3,
+        "trust_snapshot_fingerprint": "sha256:2c26640759cebfd3cc0f53d21f4e3cd6dbed474d7784b513824d817a04a4dd40"
+       }
+      }
+     },
+     "expect": {
+      "verdict": "ACCEPT",
+      "code": "guard_pass",
+      "applied": true
+     }
+    }
+   ]
   }
  ]
 }
