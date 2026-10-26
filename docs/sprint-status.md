@@ -1,5 +1,7 @@
 # Sprint status (the only live status document)
 
+**ACTIVE PLAN (2026-10-26):** [v1.5 working-Registry-first](plans/PROJECT_PLAN-v1.5.md), [operator adoption](decisions/2026-10-26-operator-adoption-plan-v1.5.md). Prior v1.4/G0/S01 details below are **historical**. Registry S01 [PR #41](https://github.com/cogno-us/cognous-ocs-registry/pull/41) is **MERGED**, commit `d1dedf79dfb82a25acdcd590c7d39830fa74ef17`. **Next planned increment V01 — non-effecting Registry→Runtime F1a narrowing demonstration — NOT YET AUTHORIZED.** All V01–V09 require separate sprint authorization. No integrated Runtime policy flow is currently established. Tier 1 NOT STARTED; Ed25519 security review OPEN; release/publication/production HOLD.
+
 **Current program (2026-10-26):** Operator-approved [static plan v1.4](plans/PROJECT_PLAN-v1.4.md), [adoption decision](decisions/2026-10-26-operator-adoption-plan-v1.4.md). **G0 planning/profile freeze ONLY authorized**; no implementation S01–S09 authorized. Historical v1.3 closeout: [program reconciliation](closeout/program-closeout-2026-10-26.md); historical S01–S06, R08 and EXT evidence below remains unchanged. **EXT-S4 implementation NOT AUTHORIZED. Tier 1 NOT STARTED. Release, publication and production HOLD.**
 
 Updated 2026-10-26 (program closeout reconciliation; Registry main `a3f2daff`; S01-S06 and R08 history preserved below; superseded "current action" text is marked HISTORICAL). Non-authorizing, builder-side. Release, publication and production are on HOLD.
