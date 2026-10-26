@@ -1,0 +1,110 @@
+"""Generator for tests/vectors/ed25519-security-vectors.json (SYNTHETIC-TEST-ONLY). Not collected by pytest.
+
+Usage:  python -I tests/vectors/generate_ed25519_security_vectors.py [--check]
+Everything is derived with tests/ed25519_oracle.py (plain-Python RFC 8032 arithmetic), independently of PyNaCl and of
+cryptography; the stored rows are then verified against that oracle by the tests (and re-derived in full when
+OCS_ED25519_FULL_CORPUS=1). Rows are public test data; the seeds are the synthetic keys of ed25519-synthetic.json.
+"""
+import itertools
+import json
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))
+import ed25519_oracle as o  # noqa: E402
+
+P, L = o.p, o.L
+S_VALUES = {"0": 0, "1": 1, "L-1": L - 1, "L": L, "L+1": L + 1, "2^256-1": 2 ** 256 - 1}
+MESSAGES = (b"", b"m")
+ORDER8_Y = ("c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a", "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05")
+
+
+def enc(y, sign=0):
+    return (y | (sign << 255)).to_bytes(32, "little")
+
+
+def small_order_and_alias_encodings():
+    """The 8 canonical small-order points, the x=0/sign=1 variants, and every y+p alias (y in 0..18, both signs): 48 encodings."""
+    out = {}
+    for y in (0, 1, P - 1) + tuple(int.from_bytes(bytes.fromhex(h), "little") & (2 ** 255 - 1) for h in ORDER8_Y):
+        for s in (0, 1):
+            out[enc(y, s)] = "canonical-or-sign-variant"
+    for y in range(19):
+        for s in (0, 1):
+            out[enc(y + P, s)] = "alias y+p (y=%d)" % y
+    return sorted(out.items())
+
+
+def build():
+    vec = json.load(open(os.path.join(HERE, "ed25519-synthetic.json")))
+    seeds = {k: bytes.fromhex(v["seed_hex"]) for k, v in vec["synthetic_keys"].items()}
+    encs = small_order_and_alias_encodings()
+    rows = []
+    for (A, la), (R, lr) in itertools.product(encs, encs):
+        for sn, sv in S_VALUES.items():
+            for m in MESSAGES:
+                sig = R + sv.to_bytes(32, "little")
+                if o.raw_equation(A, m, sig):
+                    rows.append({"why": "small-order key; lax cofactorless equation holds", "A": la, "R": lr, "S": sn,
+                                 "pk": A.hex(), "msg": m.hex(), "sig": sig.hex()})
+    # R = [s]B (canonical, NOT small-order): for the identity key A the equation reduces to [S]B = R, so (R = [s]B, S = s) verifies
+    # for EVERY message; for the other small-order keys it holds for the messages with h = 0 mod ord(A) (grinding s).
+    rb_rows = []
+    for A, la in encs:
+        if int.from_bytes(A, "little") & (2 ** 255 - 1) >= P and la not in ("alias y+p (y=0)", "alias y+p (y=1)"):
+            continue  # other y+p aliases are not small-order encodings
+        for m in (b"", b"m"):
+            for sv in range(1, 400):
+                sig = o.compress(o.mul(sv, o.G)) + sv.to_bytes(32, "little")
+                if o.raw_equation(A, m, sig):
+                    rb_rows.append({"why": "small-order key, R = [s]B (not small-order), S = s: lax cofactorless equation holds (s=%d)" % sv,
+                                    "A": la, "pk": A.hex(), "msg": m.hex(), "sig": sig.hex()})
+                    break
+    seed = seeds["A"]
+    a, _ = o.secret_expand(seed)
+    pk = o.pubkey(seed)
+    keyholder = []
+    for name, R in (("identity", enc(1)), ("alias y=p+1 sign=0", enc(1 + P)), ("alias y=p+1 sign=1", enc(1 + P, 1)), ("x=0 sign=1", enc(1, 1))):
+        for m in (b"keyholder-R-identity-0", b"keyholder-R-identity-1"):
+            keyholder.append({"why": "honest key, R = identity (%s), S = h*a: lax equation holds" % name, "pk": pk.hex(), "msg": m.hex(),
+                              "sig": (R + ((o._h(R, pk, m) * a) % L).to_bytes(32, "little")).hex()})
+    torsion = []
+    tors = []
+    for y in (0, 1, P - 1) + tuple(int.from_bytes(bytes.fromhex(h), "little") & (2 ** 255 - 1) for h in ORDER8_Y):
+        for s in (0, 1):
+            T = o.decompress(enc(y, s))
+            if T is not None and o.is_small_order(T) and not o.eq(T, o.ZERO) and all(not o.eq(T, U) for U in tors):
+                tors.append(T)
+    assert len(tors) == 7, len(tors)
+    for T in tors:
+        order = next(k for k in (2, 4, 8) if o.eq(o.mul(k, T), o.ZERO))
+        Am = o.compress(o.add(o.mul(a, o.G), T))
+        for i in range(400):
+            m = b"mixed-order/%d/%d" % (order, i)
+            r = o._h(b"r", seed, m)
+            R = o.compress(o.mul(r, o.G))
+            sig = R + ((r + o._h(R, Am, m) * a) % L).to_bytes(32, "little")
+            if o.raw_equation(Am, m, sig):
+                torsion.append({"why": "mixed-order key (valid key + torsion point of order %d); cofactorless equation holds" % order,
+                                "torsion_order": order, "pk": Am.hex(), "msg": m.hex(), "sig": sig.hex()})
+                break
+        else:
+            raise SystemExit("no signature found for torsion order %d" % order)
+    return {"label": "SYNTHETIC-TEST-ONLY",
+            "note": "Generated by tests/vectors/generate_ed25519_security_vectors.py with the plain-Python oracle tests/ed25519_oracle.py. "
+                    "Every row is a signature for which a verifier WITHOUT the registry policy checks accepts (lax decoding, "
+                    "cofactorless equation); the registry policy must refuse every row. No key here is operational.",
+            "small_order_and_alias_encodings": [{"hex": e.hex(), "label": lab} for e, lab in encs],
+            "s_values": {k: str(v) for k, v in S_VALUES.items()},
+            "small_order_key_equation_rows": rows, "small_order_key_rb_rows": rb_rows, "keyholder_r_identity_rows": keyholder, "mixed_order_key_rows": torsion}
+
+
+if __name__ == "__main__":
+    doc = build()
+    text = json.dumps(doc, indent=1, sort_keys=True) + "\n"
+    path = os.path.join(HERE, "ed25519-security-vectors.json")
+    if "--check" in sys.argv:
+        sys.exit(0 if open(path).read() == text else "stored vectors differ from regenerated vectors")
+    open(path, "w").write(text)
+    print({k: len(v) for k, v in doc.items() if isinstance(v, list)})
