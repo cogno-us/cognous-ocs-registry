@@ -22,7 +22,9 @@ ROOT = Path(__file__).resolve().parent.parent
 PKG = ROOT / "registry_successor"
 NEW = ("not_activated", "policy_identity_mismatch", "store_unknown")
 V2_ONLY = ("selection_withdrawn", "trust_snapshot_version_stale")
-V1_MODULES = ("common.py", "record.py", "selection.py", "verify.py", "compose.py", "families.py")
+# S01: verify.py is deliberately NOT listed. It now emits the two v2-only codes, in exactly two named places and only in v2 mode
+# (see test_verify_py_names_the_v2_only_codes_only_in_their_two_v2_sites below); the v1 vocabulary `common.CODES` still excludes them.
+V1_MODULES = ("common.py", "record.py", "selection.py", "compose.py", "families.py")
 
 
 def _string_constants(path):
@@ -35,6 +37,19 @@ def test_v1_modules_never_mention_a_revision_2_or_v2_only_code(name):
     for code in NEW + V2_ONLY:
         assert code not in consts, (name, code)
         assert not re.search(r"\b%s\b" % code, (PKG / name).read_text(encoding="utf-8")), (name, code)
+
+
+def test_verify_py_names_the_v2_only_codes_only_in_their_two_v2_sites():
+    tree = ast.parse((PKG / "verify.py").read_text(encoding="utf-8"))
+    sites = {}
+    for fn in (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)):
+        for k in ast.walk(fn):
+            if isinstance(k, ast.Constant) and k.value in V2_ONLY:
+                sites.setdefault(k.value, set()).add(fn.name)
+    assert sites == {"trust_snapshot_version_stale": {"_floor_outcome"}, "selection_withdrawn": {"_verify"}}, sites
+    assert not set(V2_ONLY) & set(c.CODES) and not set(NEW) & set(c.CODES)  # the r08-v1 vocabulary is untouched
+    for code in NEW:
+        assert not re.search(r"\b%s\b" % code, (PKG / "verify.py").read_text(encoding="utf-8")), code
 
 
 def test_decision_py_names_the_revision_2_codes_only_in_its_one_explicit_tuple():

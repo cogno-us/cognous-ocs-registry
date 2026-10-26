@@ -25,7 +25,7 @@ from registry_adapters import ed25519_verifier as ev
 from registry_successor import common as c
 from registry_successor import key_admission as ka
 from registry_successor import verify as v
-from registry_successor.selection import signing_input
+from r08_support import signing_input_v2 as signing_input  # S01: r08-v2 signs under its own domain
 
 try:
     import nacl.bindings as nb
@@ -51,9 +51,9 @@ def _trust(pub, alg="ed25519"):
     return v.TrustSnapshot("snapshot-1", 1, "2026-10-27T00:00:00Z", (v.IssuerEntry("key-test-1", "issuer-test-1", alg, pub, (GRANT,)),))
 
 
-def _sel(sig_bytes, statement=None):
-    statement = statement or r.make_statement()
-    env = {"statement": statement, "statement_digest": c.digest(statement),
+def _sel(sig_bytes, statement=None, v2=True):
+    statement = statement or (r.make_statement_v2() if v2 else r.make_statement())
+    env = {**({"contract_version": V2} if v2 else {}), "statement": statement, "statement_digest": c.digest(statement),
            "signatures": [{"alg": "ed25519", "key_id": "key-test-1", "signature": base64.b64encode(sig_bytes).decode("ascii")}]}
     return Sel(True, None, "", env, env["statement"], env["statement_digest"], env["signatures"])
 
@@ -126,7 +126,7 @@ def test_passing_the_one_argument_method_to_the_core_refuses_every_key_fail_clos
     seed = bytes.fromhex(SYN["synthetic_keys"]["A"]["seed_hex"])
     pk = oracle.pubkey(seed)
     wrong = ka.compose_key_admission(adapter.acceptable_public_key)
-    rep = v.verify_selection(_sel(oracle.sign(seed, signing_input(r.make_statement()))), CTX, _trust(pk), adapter, r.NOW,
+    rep = v.verify_selection(_sel(oracle.sign(seed, signing_input(r.make_statement_v2()))), CTX, _trust(pk), adapter, r.NOW,
                              key_admission=wrong, contract_version=V2)
     assert rep.ok is False and rep.code == "trust_snapshot_invalid" and rep.detail_cause == "policy_refused"
 
@@ -136,7 +136,7 @@ def test_honest_signature_is_authenticated_on_the_mandatory_path_with_and_withou
     for name in ("A", "B"):
         seed = bytes.fromhex(SYN["synthetic_keys"][name]["seed_hex"])
         pk = oracle.pubkey(seed)
-        sel = _sel(oracle.sign(seed, signing_input(r.make_statement())))
+        sel = _sel(oracle.sign(seed, signing_input(r.make_statement_v2())))
         for policy in (None, adapter.key_admission, ka.compose_key_admission(adapter.key_admission)):
             rep = v.verify_selection(sel, CTX, _trust(pk), adapter, r.NOW, key_admission=policy, contract_version=V2)
             assert rep.ok is True and rep.authenticated is True and rep.operationally_authorized is False, (name, policy)
@@ -146,12 +146,12 @@ def test_honest_signature_is_authenticated_on_the_mandatory_path_with_and_withou
 def test_callback_cannot_relax_builtin_admission_and_omission_does_not_skip_it(adapter):
     seed = bytes.fromhex(SYN["synthetic_keys"]["A"]["seed_hex"])
     for bad in (ka_identity(), bytes(32), (2 ** 255 - 19).to_bytes(32, "little"), bytes(31)):
-        sel = _sel(oracle.sign(seed, signing_input(r.make_statement())))
+        sel = _sel(oracle.sign(seed, signing_input(r.make_statement_v2())))
         for policy in (None, lambda alg, pk: True, ka.compose_key_admission(lambda a, k: True)):
             rep = v.verify_selection(sel, CTX, _trust(bad), adapter, r.NOW, key_admission=policy, contract_version=V2)
             assert rep.ok is False and rep.code == "trust_snapshot_invalid" and rep.detail_cause in BUILTIN_CAUSES, bad.hex()
     for contract in ("r08-v2", None, "R08-V1", "r08-v1 ", 2):  # only the exact legacy string skips (core tests own this table)
-        rep = v.verify_selection(_sel(bytes(64)), CTX, _trust(ka_identity()), adapter, r.NOW, contract_version=contract)
+        rep = v.verify_selection(_sel(bytes(64), v2=(contract == "r08-v2")), CTX, _trust(ka_identity()), adapter, r.NOW, contract_version=contract)
         assert rep.code == "trust_snapshot_invalid" and rep.detail_cause == "key_small_order"
 
 
@@ -192,8 +192,8 @@ def _mixed_order_key_and_signature(seed, message_for):
 @needs_backend
 def test_mixed_order_key_pinned_libsodium_signature_check_accepts_but_each_registry_layer_refuses(adapter):
     seed = bytes.fromhex(SYN["synthetic_keys"]["A"]["seed_hex"])
-    n, pk, sig = _mixed_order_key_and_signature(seed, lambda n: signing_input(r.make_statement(epoch=n)))
-    msg, statement = signing_input(r.make_statement(epoch=n)), r.make_statement(epoch=n)
+    n, pk, sig = _mixed_order_key_and_signature(seed, lambda n: signing_input(r.make_statement_v2(epoch=n)))
+    msg, statement = signing_input(r.make_statement_v2(epoch=n)), r.make_statement_v2(epoch=n)
     point = oracle.decompress(pk)
     assert not oracle.is_small_order(point) and not oracle.in_prime_order_subgroup(point)  # genuinely mixed order
     assert ka.inspect_ed25519_key(pk) is None  # built-in admission (#34) does NOT see it: canonical, not in the small-order y set
@@ -295,7 +295,7 @@ def test_strict_verification_vectors_through_the_mandatory_path(adapter):
 def test_real_message_malleation_and_noncanonical_signature_text_are_refused_through_the_core(adapter):
     seed = bytes.fromhex(SYN["synthetic_keys"]["A"]["seed_hex"])
     pk = oracle.pubkey(seed)
-    st = r.make_statement()
+    st = r.make_statement_v2()
     sig = oracle.sign(seed, signing_input(st))
     s_plus_l = sig[:32] + (int.from_bytes(sig[32:], "little") + oracle.L).to_bytes(32, "little")
     assert _run(_sel(sig, st), pk, adapter, adapter_obj=adapter).ok is True

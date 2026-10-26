@@ -88,8 +88,16 @@ def _key_probe(mod):
     assert mod.compose_key_admission(lambda a, k: (_ for _ in ()).throw(RuntimeError()))("e", b"k") is False
 
 
+_V1_DOMAIN, _V2_DOMAIN = b"ocs-reg/r08-v1/selection\n", b"ocs-reg/r08-v2/selection\n"
+
+
 class _V64:
+    """Probe-only double. S01: it maps the r08-v2 signing domain onto the v1 one so ONE canonical signature text drives both paths;
+    signing-domain separation itself is covered by tests/test_s01_withdrawal_floor_signing.py (this double is not cryptography)."""
+
     def verify(self, alg, public_key, message, signature):
+        if message.startswith(_V2_DOMAIN):
+            message = _V1_DOMAIN + message[len(_V2_DOMAIN):]
         return alg == "ed25519" and signature == hashlib.sha512(b"sig|" + public_key + b"|" + message).digest()
 
 
@@ -109,10 +117,22 @@ def _verify_probe(mod):
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     base = alphabet.index(canon[-3]) & ~15
 
+    stmt2 = r.make_statement_v2()
+    canon2 = base64.b64encode(hashlib.sha512(b"sig|" + key + b"|" + _V1_DOMAIN + c.canonical_bytes(stmt2)).digest()).decode("ascii")
+    base2 = alphabet.index(canon2[-3]) & ~15
+    odd1 = canon[:-3] + alphabet[base + 1] + "=="
+
     def run(sig_text, public_key, policy, cv="r08-v1", mutate_env=None):
-        env = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
-        env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": sig_text}]
-        sel = selection.parse_selection_envelope(r.dumps(env))
+        if type(cv) is str and cv in ("r08-v2", "malformed"):  # a real r08-v2 selection (v2 statement + parser) for the v2 path
+            # the same canonical / non-canonical TEXTS, re-derived for the v2 statement (the probe double maps the v2 domain to v1)
+            sig_text = canon2 if sig_text == canon else (canon2[:-3] + alphabet[base2 + 1] + "==" if sig_text == odd1 else sig_text)
+            env = r.make_envelope_v2(r.make_statement_v2(), key_id="key-test-1", public_key=b"x", signed=False)
+            env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": sig_text}]
+            sel = r.parse_v2(r.dumps(env))
+        else:
+            env = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+            env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": sig_text}]
+            sel = selection.parse_selection_envelope(r.dumps(env))
         if mutate_env:
             import dataclasses
             sel = dataclasses.replace(sel, envelope={**sel.envelope, **mutate_env})
@@ -149,7 +169,7 @@ def _verify_probe(mod):
         assert v2.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and v2.detail_cause == "key_small_order"
     assert run(bad_sig, bad_key, None, "not-a-version").code == "trust_snapshot_invalid"
     assert run(bad_sig, bad_key, None, None).code == "trust_snapshot_invalid"
-    assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": "r08-v2"}).code == "trust_snapshot_invalid"
+    assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": "r08-v2"}).code == "contract_unsupported"  # S01: cross-version
     assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": "r08-v1"}).ok is True
     assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": collections_UserString("r08-v1")}).code == "trust_snapshot_invalid"
     assert run(bad_sig, bad_key, None, "r08-v1", {"contract_version": None}).code == "trust_snapshot_invalid"
@@ -171,7 +191,7 @@ def _verify_probe(mod):
     for junk, cause in ((b"", "key_length"), (None, "key_type")):
         other = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                                   (mod.IssuerEntry("key-test-1", "issuer-test-1", "future-alg", junk, (grant,)),))
-        selx = selection.parse_selection_envelope(r.dumps(r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)))
+        selx = r.parse_v2(r.dumps(r.make_envelope_v2(r.make_statement_v2(), key_id="key-test-1", public_key=b"x", signed=False)))
         o = mod.verify_selection(selx, ctx, other, _V64(), r.NOW, contract_version="r08-v2")
         assert o.code == "trust_snapshot_invalid" and o.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and o.detail_cause == cause
     mal = run(canon, key, None, "malformed")
@@ -203,9 +223,9 @@ def _verify_probe(mod):
 
     # TOCTOU: admission and verification must use one private snapshot of each entry (mandatory path)
     ident = b"\x01" + b"\x00" * 31
-    ident_sig = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + msg).digest()).decode("ascii")
-    selx = selection.parse_selection_envelope(r.dumps(dict(
-        r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False),
+    ident_sig = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + _V1_DOMAIN + c.canonical_bytes(r.make_statement_v2())).digest()).decode("ascii")
+    selx = r.parse_v2(r.dumps(dict(
+        r.make_envelope_v2(r.make_statement_v2(), key_id="key-test-1", public_key=b"x", signed=False),
         signatures=[{"alg": "ed25519", "key_id": "key-test-1", "signature": ident_sig}])))
     grant2 = mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
 
@@ -261,12 +281,11 @@ def _fields_probe(mod):
     ka = _load("key_admission")
     ctx = c.ExpectedContext("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
     key = bytes.fromhex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")
-    stmt = r.make_statement()
-    from registry_successor.selection import signing_input
-    sig = base64.b64encode(hashlib.sha512(b"sig|" + key + b"|" + signing_input(stmt)).digest()).decode("ascii")
-    env = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+    stmt = r.make_statement_v2()
+    sig = base64.b64encode(hashlib.sha512(b"sig|" + key + b"|" + _V1_DOMAIN + r.signing_input_v2(stmt)[len(_V2_DOMAIN):]).digest()).decode("ascii")
+    env = r.make_envelope_v2(stmt, key_id="key-test-1", public_key=b"x", signed=False)
     env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": sig}]
-    base = selection.parse_selection_envelope(r.dumps(env))
+    base = r.parse_v2(r.dumps(env))
     grant = mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
 
     def run(sel=None, context=ctx, now=r.NOW, record=None, trust_obj_override=None, **over):
@@ -402,9 +421,9 @@ def _fields_probe(mod):
     assert run(now=datetime.datetime(n.year, n.month, n.day, n.hour, n.minute, n.second, tzinfo=FTz())).ok is True and FTz.k == 1
     rec = r.make_record()
     parsed = __import__("registry_successor.record", fromlist=["x"]).validate_record_text(r.dumps(rec))
-    rstmt = r.make_statement(rec, participation="required")
-    renv = r.make_envelope(rstmt, key_id="key-test-1", public_key=key, signed=True)
-    rsel = selection.parse_selection_envelope(r.dumps(renv))
+    rstmt = r.make_statement_v2(rec, participation="required")
+    renv = r.make_envelope_v2(rstmt, key_id="key-test-1", public_key=key, signed=True)
+    rsel = r.parse_v2(r.dumps(renv))
     def rrun(rr):
         t = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                               (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", key, (grant,)),))
@@ -424,10 +443,10 @@ def _fields_probe(mod):
     assert other.detail_stage is None and other.detail_member is None
     # v2 entry point hardwires the version
     ident = b"\x01" + b"\x00" * 31
-    isig0 = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + signing_input(stmt)).digest()).decode("ascii")
-    ienv0 = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+    isig0 = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + _V1_DOMAIN + c.canonical_bytes(stmt)).digest()).decode("ascii")
+    ienv0 = r.make_envelope_v2(stmt, key_id="key-test-1", public_key=b"x", signed=False)
     ienv0["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": isig0}]
-    isel0 = selection.parse_selection_envelope(r.dumps(ienv0))
+    isel0 = r.parse_v2(r.dumps(ienv0))
     it0 = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", ident, (grant,)),))
     for pol in (None, lambda a, k: True):
         assert mod.verify_selection_v2(isel0, ctx, it0, _V64(), r.NOW, None, pol).code == "trust_snapshot_invalid"
@@ -435,10 +454,10 @@ def _fields_probe(mod):
         "key-test-1", "issuer-test-1", "ed25519", key, (grant,)),)), _V64(), r.NOW, None, lambda a, k: False).detail_cause == "policy_refused"
     # L1b
     ident = b"\x01" + b"\x00" * 31
-    isig = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + signing_input(stmt)).digest()).decode("ascii")
-    ienv = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+    isig = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + _V1_DOMAIN + c.canonical_bytes(stmt)).digest()).decode("ascii")
+    ienv = r.make_envelope_v2(stmt, key_id="key-test-1", public_key=b"x", signed=False)
     ienv["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": isig}]
-    isel = selection.parse_selection_envelope(r.dumps(ienv))
+    isel = r.parse_v2(r.dumps(ienv))
     it = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", ident, (grant,)),))
     for ok in (1, "yes", [1]):
         forged = dataclasses.replace(isel, ok=ok, envelope=None)
@@ -456,23 +475,28 @@ def _decision_probe(mod):
     trust = verify_mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                                      (verify_mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", b"public-key-test-1", (grant,)),))
     for part in ("required", "optional"):
-        sel = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), signed=True))
-        legacy = mod.verify_and_decide(part, caller, r.dumps(rec), sel, ctx, trust, r.FakeVerifier(), r.NOW)
+        sel1 = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), signed=True))
+        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), signed=True))
+        legacy = mod.verify_and_decide(part, caller, r.dumps(rec), sel1, ctx, trust, r.FakeVerifier(), r.NOW)
         assert legacy.code is None and not hasattr(legacy, "detail_code")
+        # the legacy entry forwards its contract_version and key_admission: an r08-v1 selection labelled r08-v2 is the wrong contract (S01)
+        assert mod.verify_and_decide(part, caller, r.dumps(rec), sel1, ctx, trust, r.FakeVerifier(), r.NOW,
+                                     contract_version="r08-v2").code == "contract_unsupported"
+        assert mod.verify_and_decide(part, caller, r.dumps(rec), sel1, ctx, trust, r.FakeVerifier(), r.NOW,
+                                     key_admission=lambda a, k: False).code == "trust_snapshot_invalid"
         for policy in (None, lambda a, k: True):
-            d = mod.verify_and_decide(part, caller, r.dumps(rec), sel, ctx, trust, r.FakeVerifier(), r.NOW,
-                                      key_admission=policy, contract_version="r08-v2")
+            d = mod.verify_and_decide_v2(part, caller, r.dumps(rec), sel, ctx, trust, r.FakeVerifier(), r.NOW, key_admission=policy)
             assert d.code == "trust_snapshot_invalid" and d.detail_code == "key_admission_invalid" and d.detail_cause == "key_length"
             assert d.kind == ("required_policy_unavailable" if part == "required" else "overlay_not_applied")
             assert d.operationally_authorized is False
         good = bytes.fromhex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")
         gtrust = verify_mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                                           (verify_mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", good, (grant,)),))
-        gsel = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), public_key=good, signed=True))
-        ok = mod.verify_and_decide(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW, contract_version="r08-v2")
+        gsel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), public_key=good, signed=True))
+        ok = mod.verify_and_decide_v2(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW)
         assert ok.code is None
-        no = mod.verify_and_decide(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW,
-                                   key_admission=lambda a, k: False, contract_version="r08-v2")
+        no = mod.verify_and_decide_v2(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW,
+                                      key_admission=lambda a, k: False)
         assert no.code == "trust_snapshot_invalid" and no.detail_cause == "policy_refused"
 
 MUTANTS = {
@@ -514,7 +538,8 @@ MUTANTS = {
         "canonical_b64_on_legacy_path": [("raw = decode_canonical_base64(text)  # r08-v2 only", "raw = decode_canonical_base64(text) if True else None  # r08-v2 only"),
                                          ("            if canonical_b64:\n", "            if True:\n")],
         "canonical_b64_never": [("            if canonical_b64:\n", "            if False:\n")],
-        "authenticity_not_given_mandatory": [("_authenticity(statement, selection, trust, verifier, mandatory)", "_authenticity(statement, selection, trust, verifier, False)")],
+        "v2_gate_dropped": [("    if wrong_contract and getattr(selection, \"ok\", False) is True:", "    if False and getattr(selection, \"ok\", False) is True:")],
+        "authenticity_not_given_mandatory": [("_authenticity(statement, selection, trust, verifier, mandatory, v2)", "_authenticity(statement, selection, trust, verifier, False, v2)")],
         "entry_not_private_copy": [("        entry = _private_entry(raw)", "        entry = raw if type(raw) is IssuerEntry else None")],
         "exact_entry_type_dropped": [("    if type(entry) is not IssuerEntry:\n        return None\n    key_id", "    key_id")],
         "exact_alg_type_dropped": [("or type(alg) is not str:\n        return None\n    if type(authority)", ":\n        return None\n    if type(authority)")],
@@ -551,12 +576,13 @@ MUTANTS = {
         "min_epochs_key_type_dropped": [("if type(sid) is not str or type(floor)", "if type(floor)")],
         "version_type_dropped": [("    if type(version) is not int or not 1 <= version <= MAX_SNAPSHOT_VERSION:", "    if version < 1:")],
         "version_upper_bound_dropped": [("not 1 <= version <= MAX_SNAPSHOT_VERSION", "version < 1")],
-        "version_upper_bound_off_by_one": [("<= MAX_SNAPSHOT_VERSION", "< MAX_SNAPSHOT_VERSION")],
+        "version_upper_bound_off_by_one": [("not 1 <= version <= MAX_SNAPSHOT_VERSION:  # ingest", "not 1 <= version < MAX_SNAPSHOT_VERSION:  # ingest")],
         "version_bound_too_high": [("MAX_SNAPSHOT_VERSION = 2**53 - 1", "MAX_SNAPSHOT_VERSION = 2**60")],
         "version_ingest_untyped": [("return _IngestRefusal(\"ingest\", \"trust_snapshot_version\")", "return None")],
         "ingest_stage_dropped": [("(DETAIL_TRUST_SNAPSHOT_MALFORMED, None, ingest.stage, ingest.member))", "(DETAIL_TRUST_SNAPSHOT_MALFORMED, None))")],
-        "v2_entry_legacy_version": [("record, key_admission, V2_CONTRACT)", "record, key_admission, LEGACY_CONTRACT)")],
-        "v2_entry_drops_policy": [("record, key_admission, V2_CONTRACT)", "record, None, V2_CONTRACT)")],
+        "v2_entry_not_v2_mode": [("now, record, key_admission, V2_CONTRACT, True,\n", "now, record, key_admission, V2_CONTRACT, False,\n")],
+        "v2_entry_drops_policy": [("now, record, key_admission, V2_CONTRACT, True,\n", "now, record, None, V2_CONTRACT, True,\n")],
+        "v2_domain_dropped": [("v2_sel.signing_input_v2(statement) if v2 else", "sel_mod.signing_input(statement) if v2 else")],
         "snapshot_id_type_dropped": [("    if type(snapshot_id) is not str or not c.valid_token(snapshot_id):", "    if not c.valid_token(snapshot_id):")],
         "valid_until_type_dropped": [("    if type(valid_until) is not str:\n        return None\n", "")],
         "issuers_container_loose": [("_exact_items(issuers_in) if type(issuers_in) in (list, tuple) else None", "_exact_items(issuers_in)")],

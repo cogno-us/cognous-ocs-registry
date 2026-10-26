@@ -83,3 +83,33 @@ class FakeVerifier:
 
     def verify(self, alg, public_key, message, signature):
         return alg == "ed25519" and signature == fake_signature_bytes(public_key, message)
+
+
+# ---- S01 (r08-v2): v2-shaped statement/envelope builders. The v2 statement is the v1 statement plus `disposition`; it is signed
+# ---- under the v2 signing domain. v1 builders above are unchanged (frozen r08-v1 behaviour).
+def make_statement_v2(record=None, **over):
+    disposition = over.pop("disposition", "select")
+    stmt = make_statement(record, **over)
+    stmt["disposition"] = disposition
+    return stmt
+
+
+def signing_input_v2(statement):
+    from registry_successor.v2_selection import signing_input_v2 as _si
+    return _si(statement)
+
+
+def make_envelope_v2(statement=None, key_id="key-test-1", public_key=b"public-key-test-1", signed=True, **over):
+    statement = statement or make_statement_v2()
+    sigs = []
+    if signed:
+        sigs = [{"alg": "ed25519", "key_id": key_id, "signature": fake_signature(public_key, signing_input_v2(statement))}]
+    env = {"contract_version": "r08-v2", "kind": "selection-envelope", "statement": statement,
+           "statement_digest": c.digest(statement), "signatures": sigs}
+    env.update(over)
+    return env
+
+
+def parse_v2(text):
+    from registry_successor.v2_selection import parse_selection_envelope_v2
+    return parse_selection_envelope_v2(text)
