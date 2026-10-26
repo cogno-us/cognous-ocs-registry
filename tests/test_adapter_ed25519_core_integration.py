@@ -318,3 +318,23 @@ WYC_LAYER_COUNTS = {("acceptable", "admission_adapter"): 21, ("acceptable", "adm
                     ("invalid", "verifier"): 63, ("valid", "accepted"): 117}
 SEC_LAYER_COUNTS = {("keyholder_r_identity_rows", "verifier"): 8, ("mixed_order_key_rows", "admission_adapter"): 7,
                     ("small_order_key_equation_rows", "admission_builtin"): 146, ("small_order_key_rb_rows", "admission_builtin"): 28}
+
+
+@needs_backend
+def test_key_admission_fails_closed_on_a_non_exact_str_alg():  # review L2 (PR #26 fresh review)
+    class LyingAlg(str):
+        def __ne__(self, other):
+            return True
+
+        def __eq__(self, other):
+            return False
+
+        __hash__ = str.__hash__
+
+    verifier = ev.Ed25519Verifier()
+    identity_key = bytes([1]) + bytes(31)
+    assert verifier.key_admission(LyingAlg("ed25519"), identity_key) is False
+    assert verifier.key_admission(b"ed25519", identity_key) is False
+    assert verifier.key_admission(None, identity_key) is False
+    assert verifier.key_admission("ed25519", identity_key) is False  # exact str, the identity key is still refused
+    assert verifier.key_admission("other-alg", identity_key) is True  # not judged here, as before

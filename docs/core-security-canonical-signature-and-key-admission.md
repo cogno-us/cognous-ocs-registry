@@ -1,7 +1,7 @@
 # Core verifier hardening: canonical signature text and key admission
 
-Status: SECURITY-HELD. BUILDER_TESTED. AI-reviewed only (not independent cryptographic review, not Tier 1). Not merged until
-Architect security review. Trust-root activation remains held. Authority: Architect Batch 6 ruling 11, separate from PR #26.
+Status: MERGED (PR #34). Assurance record: BUILDER-TESTED. AI-REVIEWED (GitHub Copilot, partial; fresh-context Claude reviews). NOT INDEPENDENTLY SECURITY-ASSESSED. NOT TIER 1 QUALIFIED. No independent human cryptographic review has taken place. Human cryptographic review or an equivalent credible external security assessment remains a prerequisite for production trust-root activation and for any security-qualified release claim (Architect post-#26 ruling, 2026-10-26). Trust-root activation remains held. Authority: Architect Batch 6 ruling 11, separate from PR #26.
+Known limitations carried with this record: the bundled CCTV corpus is licensed at directory level and upstream-author confirmation of file-level applicability was NOT obtained; the adapter was tested on Linux x86-64, CPython 3.11-3.13 only.
 
 ## 1. Canonical base64 signature text
 
@@ -79,7 +79,7 @@ the legacy path keeps its original code and is not given these rules (it is not 
 |---|---|---|
 | TrustSnapshot | `type(x) is TrustSnapshot` | fields read once into locals |
 | .snapshot_id, .valid_until | exact `str` (valid token / strict timestamp) | once |
-| .version | exact `int` (not `bool`, not a subclass), >= 1 | once |
+| .version | exact `int` (not `bool`, not a subclass), `1 <= version <= 2**53 - 1` inclusive (FU-2, below) | once |
 | .issuers | exact `list` or `tuple` | one `tuple()` copy |
 | IssuerEntry | `type(x) is IssuerEntry` | once, rebuilt as a private entry |
 | .key_id, .issuer_id, .alg | exact `str` | once |
@@ -101,7 +101,10 @@ the legacy path keeps its original code and is not given these rules (it is not 
 Accepted limits:
 - **Legacy path is not hardened (M1 residual, stated plainly).** A hand-built selection with an exact-`dict` envelope declaring
   exactly "r08-v1", or with a stateful or lying `ok`, takes the unhardened legacy path whenever the caller passes "r08-v1" or
-  omits `contract_version`. Nothing in this PR protects that call; the v2-only wrapper decision (M1) is what closes it.
+  omits `contract_version` to `verify_selection` / `verify_and_decide`. Those entry points are unchanged (byte-identical legacy
+  behaviour). The M1 decision is resolved by the v2-only entry points (below): every v2 call site must use
+  `verify_selection_v2` / `verify_and_decide_v2`, which cannot reach the legacy path. A caller that deliberately uses the legacy
+  entry point with a hostile object stays outside this hardening.
 - **Half-built objects.** On the mandatory path an `object.__new__` TrustSnapshot or IssuerEntry is a typed
   `trust_snapshot_invalid` / `trust_snapshot_malformed`; a half-built ExpectedContext is `selection_scope_mismatch`. (A half-built
   selection or record object is a structural / record refusal.) Any other unexpected exception still fails closed as the
@@ -111,15 +114,18 @@ classes can still be monkey-patched or mutated through `object.__setattr__`, and
 doing that; a hostile selection object handed to the legacy path (exact `str` "r08-v1" with a falsy-`False` `ok`) is outside
 this hardening by design.
 
-**M1: OPEN ARCHITECT DECISION (not implemented; default unchanged).** `contract_version` defaults to "r08-v1". An envelope that
-declares "r08-v2", or declares any odd, missing or non-exact-`str` version, already forces the mandatory path whatever the argument
-says, so a future v2 parser inherits the gate if its envelopes carry `contract_version`. Residual: a caller that omits the
-argument and hands over an envelope declaring exactly "r08-v1" is treated as legacy, which is correct for a genuine r08-v1
-selection. Today `selection.py` refuses non-r08-v1 envelopes and no code calls the verifier with a v2 selection, so this is not
-reachable now. Changing the default would break the legacy callers and the golden runner. **Decision requested: add, before
-any v2 parser lands, a v2-only wrapper entry point that hardwires `contract_version="r08-v2"` (e.g. `verify_selection_v2` /
-`verify_and_decide_v2`, or a required keyword on a new v2 entry point), and make every v2 call site use it.** No code for it is in
-this PR.
+**M1: RESOLVED (Architect approved) - v2-only entry points.** `verify.verify_selection_v2(selection, context, trust, verifier, now,
+record=None, key_admission=None)` and `decision.verify_and_decide_v2(participation, caller, record_text, selection_text, context,
+trust, verifier, now, key_admission=None)`. They take **no** `contract_version` parameter (and no `**kwargs`), hardwire the exact
+string "r08-v2", and delegate to `verify_selection` / `verify_and_decide`, the single verification and admission implementation:
+no second authority and no second admission path. Consequences, all pinned by tests: no caller can omit or substitute the
+version; no selection, envelope, `ok` value or envelope version (exact "r08-v1", `UserString`, `None`, dict subclass, list) can steer
+the call to the legacy path; there is no implicit downgrade; there is deliberately no dispatcher that maps a version string to an
+entry point, so an unsupported version cannot be requested at all (the legacy entry points and `contract_version` parameter are
+unchanged and still treat any value other than the exact string "r08-v1" as mandatory). The selection TEXT is still parsed by the
+existing r08-v1 envelope parser: this change introduces no v2 parser, and until one exists the v2 entry points are exercised with
+v1-shaped envelopes. Every bypass case from the #34 reviews is re-run through the new entry points (bad keys x callbacks, stateful and
+subclass snapshot objects, hostile envelopes, canonical base64).
 
 A callback can only add refusals on every path, and the built-in check is never disabled by omitting it. No reason code is
 added. Pinned by `test_every_contract_version_but_the_exact_legacy_str_is_mandatory`,
@@ -209,15 +215,27 @@ subgroup-validating check (the PR #26 adapter's `acceptable_public_key`, or equi
 after #34 is approved. Trust-root activation stays held until that is decided and implemented. The contract text should also
 state the canonical base64 spelling explicitly (section 1; this PR does not edit hash-pinned contract files).
 
+## 2c-FU2. Snapshot-version ingest bound (FU-2)
+
+On the mandatory path `_private_trust` checks the snapshot version FIRST, before any other member and therefore before projection,
+admission or authority evaluation: an exact `int` (not `bool`, not a subclass, no float / `str` / `bytes` / `None` / coercion) with
+`1 <= version <= 2**53 - 1` inclusive (`verify.MAX_SNAPSHOT_VERSION`). Anything else refuses `trust_snapshot_invalid` (existing
+reason; no new code). The typed evidence uses the representation of the other typed details: `detail_code =
+"trust_snapshot_malformed"` plus, only for this case, `detail_stage = "ingest"` and `detail_member = "trust_snapshot_version"`
+(fields of `TypedVerificationReport` / `TypedPolicyDecision`). They are diagnostic metadata on the report object; they are not
+part of any digest, statement or fingerprint. Before this change the core accepted any version >= 1 (for example 2**60); the PR #33
+adapter `trust_snapshot_from_verified` already performs its own (correct) ingest check with the same bound, which is left
+untouched and not duplicated (`_normalize_trust` called without the mandatory flag, as the adapter does, is unchanged). The legacy
+r08-v1 path is unchanged: it still accepts a version above 2**53 - 1 (pinned by a test).
+
 ## 2d. Recorded dependencies, follow-ups and non-claims
 
 - **Remaining dependency on #26.** #34 alone does NOT establish strict prime-order Ed25519 key admission. The strict cryptographic
   verifier and subgroup / mixed-order handling are #26's responsibility; `acceptable_public_key` composes after built-in
   admission (through `key_admission`) and can only further restrict.
-- **Contract follow-up.** The hash-pinned r08-v2 contract should state the canonical RFC 4648 section 4 base64 signature
-  spelling explicitly. It is not edited here.
-- **Open Architect decision (M1).** Add a v2-only wrapper entry point hardwiring `contract_version="r08-v2"` before any v2
-  parser lands (section 2.0-pre, "M1: OPEN ARCHITECT DECISION").
+- **M1 resolved.** The v2-only entry points hardwiring `contract_version="r08-v2"` exist (section 2.0-pre, "M1: RESOLVED").
+- **Contract addendum.** The canonical base64 spelling is stated as a versioned addendum, `docs/r08-v2-contract-amendment-2.md`
+  (with golden vectors); the pinned contract text is not edited and is not claimed to contain it.
 - **Not production trust-root qualification.** This PR is builder-tested and AI-reviewed only; it is not independent
   cryptographic review, not Tier 1, and not qualification of any production trust root.
 

@@ -1,0 +1,1484 @@
+{
+ "format": "r08-v2-canonical-base64-vectors/1",
+ "note": "Generated once by a throwaway script that uses the standard-library encoder (not repository code). expect=accept means exactly the canonical spelling of decoded_hex; every reject is a textual representation that r08-v2 refuses, whether or not the stdlib validate=True decoder would accept it (stdlib_validate_decodes).",
+ "vectors": [
+  {
+   "decoded_hex": "69",
+   "expect": "accept",
+   "id": "pos-len1",
+   "stdlib_validate_decodes": true,
+   "text": "aQ==",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "aQ",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "aQ===",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "aQ======",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "aR==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "aS==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "aT==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-04",
+   "stdlib_validate_decodes": true,
+   "text": "aU==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-05",
+   "stdlib_validate_decodes": true,
+   "text": "aV==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-06",
+   "stdlib_validate_decodes": true,
+   "text": "aW==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-07",
+   "stdlib_validate_decodes": true,
+   "text": "aX==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-08",
+   "stdlib_validate_decodes": true,
+   "text": "aY==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-09",
+   "stdlib_validate_decodes": true,
+   "text": "aZ==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-10",
+   "stdlib_validate_decodes": true,
+   "text": "aa==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-11",
+   "stdlib_validate_decodes": true,
+   "text": "ab==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-12",
+   "stdlib_validate_decodes": true,
+   "text": "ac==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-13",
+   "stdlib_validate_decodes": true,
+   "text": "ad==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-14",
+   "stdlib_validate_decodes": true,
+   "text": "ae==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "69",
+   "expect": "reject",
+   "id": "neg-len1-padbits-15",
+   "stdlib_validate_decodes": true,
+   "text": "af==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " aQ==",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "aQ==\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "aQ==\r\n",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "aQ== ",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "aQ=!",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len1-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21Q==",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "decoded_hex": "78d2",
+   "expect": "accept",
+   "id": "pos-len2",
+   "stdlib_validate_decodes": true,
+   "text": "eNI=",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "eNI",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "eNI==",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "eNI=====",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "78d2",
+   "expect": "reject",
+   "id": "neg-len2-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "eNJ=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "78d2",
+   "expect": "reject",
+   "id": "neg-len2-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "eNK=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "78d2",
+   "expect": "reject",
+   "id": "neg-len2-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "eNL=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " eNI=",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "eNI=\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "eNI=\r\n",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "eNI= ",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "eNI!",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len2-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21NI=",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "decodes_to_hex": "78",
+   "expect": "reject",
+   "id": "neg-len2-pad-inside",
+   "stdlib_validate_decodes": true,
+   "text": "eN==",
+   "why": "padding character inside"
+  },
+  {
+   "decoded_hex": "d50109",
+   "expect": "accept",
+   "id": "pos-len3",
+   "stdlib_validate_decodes": true,
+   "text": "1QEJ",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len3-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " 1QEJ",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len3-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "1QEJ\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len3-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "1QEJ\r\n",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len3-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "1QEJ ",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len3-urlsafe-char",
+   "stdlib_validate_decodes": false,
+   "text": "1QE-",
+   "why": "URL-safe or malformed tail"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len3-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "1QE!",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len3-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21QEJ",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "decoded_hex": "4713d4d8",
+   "expect": "accept",
+   "id": "pos-len4",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2A==",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "RxPU2A",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "RxPU2A===",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "RxPU2A======",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2B==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2C==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2D==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-04",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2E==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-05",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2F==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-06",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2G==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-07",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2H==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-08",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2I==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-09",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2J==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-10",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2K==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-11",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2L==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-12",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2M==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-13",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2N==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-14",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2O==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4713d4d8",
+   "expect": "reject",
+   "id": "neg-len4-padbits-15",
+   "stdlib_validate_decodes": true,
+   "text": "RxPU2P==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " RxPU2A==",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "RxPU2A==\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "RxPU\r\n2A==",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "RxPU 2A==",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "RxP!2A==",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21xPU2A==",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len4-pad-inside",
+   "stdlib_validate_decodes": false,
+   "text": "Rx=U2A==",
+   "why": "padding character inside"
+  },
+  {
+   "decoded_hex": "ec2a26e369",
+   "expect": "accept",
+   "id": "pos-len5",
+   "stdlib_validate_decodes": true,
+   "text": "7Com42k=",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "7Com42k",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "7Com42k==",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "7Com42k=====",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "ec2a26e369",
+   "expect": "reject",
+   "id": "neg-len5-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "7Com42l=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "ec2a26e369",
+   "expect": "reject",
+   "id": "neg-len5-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "7Com42m=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "ec2a26e369",
+   "expect": "reject",
+   "id": "neg-len5-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "7Com42n=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " 7Com42k=",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "7Com42k=\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "7Com\r\n42k=",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "7Com 42k=",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "7Co!42k=",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21Com42k=",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len5-pad-inside",
+   "stdlib_validate_decodes": false,
+   "text": "7C=m42k=",
+   "why": "padding character inside"
+  },
+  {
+   "decoded_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "accept",
+   "id": "pos-len31",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA===",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA======",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyB==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyC==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyD==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-04",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyE==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-05",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyF==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-06",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyG==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-07",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyH==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-08",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyI==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-09",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyJ==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-10",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyK==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-11",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyL==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-12",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyM==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-13",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyN==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-14",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyO==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "28864fce28c6d7e9634daf9d6dfd5b52abbdd6d1dabdfae9fe1e4d85db2fc8",
+   "expect": "reject",
+   "id": "neg-len31-padbits-15",
+   "stdlib_validate_decodes": true,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyP==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "KIZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "KIZP\r\nzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "KIZP zijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-urlsafe",
+   "stdlib_validate_decodes": false,
+   "text": "KIZPzijG1-ljTa-dbf1bUqu91tHavfrp_h5NhdsvyA==",
+   "why": "URL-safe alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "KIZ!zijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21IZPzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len31-pad-inside",
+   "stdlib_validate_decodes": false,
+   "text": "KI=PzijG1+ljTa+dbf1bUqu91tHavfrp/h5NhdsvyA==",
+   "why": "padding character inside"
+  },
+  {
+   "decoded_hex": "4f89e03515fa4da621b6c813d89029d7f1412a1f0d93f510e318888eabe6d020",
+   "expect": "accept",
+   "id": "pos-len32",
+   "stdlib_validate_decodes": true,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA==",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=====",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "4f89e03515fa4da621b6c813d89029d7f1412a1f0d93f510e318888eabe6d020",
+   "expect": "reject",
+   "id": "neg-len32-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CB=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4f89e03515fa4da621b6c813d89029d7f1412a1f0d93f510e318888eabe6d020",
+   "expect": "reject",
+   "id": "neg-len32-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CC=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "4f89e03515fa4da621b6c813d89029d7f1412a1f0d93f510e318888eabe6d020",
+   "expect": "reject",
+   "id": "neg-len32-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CD=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "T4ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "T4ng\r\nNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "T4ng NRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-urlsafe",
+   "stdlib_validate_decodes": false,
+   "text": "T4ngNRX6TaYhtsgT2JAp1_FBKh8Nk_UQ4xiIjqvm0CA=",
+   "why": "URL-safe alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "T4n!NRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff214ngNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len32-pad-inside",
+   "stdlib_validate_decodes": false,
+   "text": "T4=gNRX6TaYhtsgT2JAp1/FBKh8Nk/UQ4xiIjqvm0CA=",
+   "why": "padding character inside"
+  },
+  {
+   "decoded_hex": "d8f02817732464ce147c0237467090eaa563d4c7ecc891bf25c2dbe6408beba1e8",
+   "expect": "accept",
+   "id": "pos-len33",
+   "stdlib_validate_decodes": true,
+   "text": "2PAoF3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66Ho",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " 2PAoF3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66Ho",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "2PAoF3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66Ho\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "2PAo\r\nF3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66Ho",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "2PAo F3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66Ho",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-urlsafe",
+   "stdlib_validate_decodes": false,
+   "text": "2PAoF3MkZM4UfAI3RnCQ6qVj1MfsyJG_JcLb5kCL66Ho",
+   "why": "URL-safe alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-urlsafe-char",
+   "stdlib_validate_decodes": false,
+   "text": "2PAoF3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66H-",
+   "why": "URL-safe or malformed tail"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "2PA!F3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66Ho",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len33-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21PAoF3MkZM4UfAI3RnCQ6qVj1MfsyJG/JcLb5kCL66Ho",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "decoded_hex": "83d23cb7ca6e648682be31f2453c87cd8382226182d5be30bccdad654d5430d8374055cd17c475920618fc97ae651db02f16fe3576d99a6489e303cd167187",
+   "expect": "accept",
+   "id": "pos-len63",
+   "stdlib_validate_decodes": true,
+   "text": "g9I8t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnGH",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " g9I8t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnGH",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "g9I8t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnGH\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "g9I8\r\nt8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnGH",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "g9I8 t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnGH",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-urlsafe",
+   "stdlib_validate_decodes": false,
+   "text": "g9I8t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY_JeuZR2wLxb-NXbZmmSJ4wPNFnGH",
+   "why": "URL-safe alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-urlsafe-char",
+   "stdlib_validate_decodes": false,
+   "text": "g9I8t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnG-",
+   "why": "URL-safe or malformed tail"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "g9I!t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnGH",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len63-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff219I8t8puZIaCvjHyRTyHzYOCImGC1b4wvM2tZU1UMNg3QFXNF8R1kgYY/JeuZR2wLxb+NXbZmmSJ4wPNFnGH",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "decoded_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "accept",
+   "id": "pos-len64",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA===",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA======",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygB==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygC==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygD==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-04",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygE==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-05",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygF==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-06",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygG==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-07",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygH==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-08",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygI==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-09",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygJ==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-10",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygK==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-11",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygL==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-12",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygM==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-13",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygN==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-14",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygO==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "794e5a9e3b54d20d5b98e36870a91dbdbf6cb26b38264ca62bacb499671af24f4fd0a0ab3d6f2bb68d586af96eba3eea71bb1cb20ed58770932792166a9d7280",
+   "expect": "reject",
+   "id": "neg-len64-padbits-15",
+   "stdlib_validate_decodes": true,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygP==",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "eU5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "eU5a\r\nnjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "eU5a njtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "eU5!njtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21U5anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len64-pad-inside",
+   "stdlib_validate_decodes": false,
+   "text": "eU=anjtU0g1bmONocKkdvb9ssms4JkymK6y0mWca8k9P0KCrPW8rto1Yavluuj7qcbscsg7Vh3CTJ5IWap1ygA==",
+   "why": "padding character inside"
+  },
+  {
+   "decoded_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
+   "expect": "accept",
+   "id": "pos-len65",
+   "stdlib_validate_decodes": true,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-missing-pad",
+   "stdlib_validate_decodes": false,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q",
+   "why": "padding omitted"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-excess-pad",
+   "stdlib_validate_decodes": false,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q==",
+   "why": "excess padding"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-excess-pad4",
+   "stdlib_validate_decodes": false,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=====",
+   "why": "excess padding"
+  },
+  {
+   "decodes_to_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
+   "expect": "reject",
+   "id": "neg-len65-padbits-01",
+   "stdlib_validate_decodes": true,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9R=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
+   "expect": "reject",
+   "id": "neg-len65-padbits-02",
+   "stdlib_validate_decodes": true,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9S=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "decodes_to_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
+   "expect": "reject",
+   "id": "neg-len65-padbits-03",
+   "stdlib_validate_decodes": true,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9T=",
+   "why": "non-zero pad bits: alternate spelling of identical bytes"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "rZlu\r\njmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "rZlu jmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-urlsafe",
+   "stdlib_validate_decodes": false,
+   "text": "rZlujmP4gc_I-HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q_W4HK1-A_z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "URL-safe alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "rZl!jmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21ZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len65-pad-inside",
+   "stdlib_validate_decodes": false,
+   "text": "rZ=ujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
+   "why": "padding character inside"
+  },
+  {
+   "decoded_hex": "d87959d614917dbcfadbadde79514c1429a9f778b0d2c89867d537d61a4394bf061568a0afb5504a02fd6980e99910af5a7cfa5120b81fcaebf1e96acf9ea4a39f2abb1c5ece2db3533a501225c2836522dd7e1f7cc5fa907bfe4dc46222c51b",
+   "expect": "accept",
+   "id": "pos-len96",
+   "stdlib_validate_decodes": true,
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
+   "why": "canonical RFC 4648 section 4 spelling"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-leading-space",
+   "stdlib_validate_decodes": false,
+   "text": " 2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
+   "why": "whitespace"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-trailing-newline",
+   "stdlib_validate_decodes": false,
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb\n",
+   "why": "whitespace / line break"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-embedded-crlf",
+   "stdlib_validate_decodes": false,
+   "text": "2HlZ\r\n1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
+   "why": "line break inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-embedded-space",
+   "stdlib_validate_decodes": false,
+   "text": "2HlZ 1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
+   "why": "whitespace inside"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-urlsafe",
+   "stdlib_validate_decodes": false,
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv-TcRiIsUb",
+   "why": "URL-safe alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-urlsafe-char",
+   "stdlib_validate_decodes": false,
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsU-",
+   "why": "URL-safe or malformed tail"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-nonalphabet",
+   "stdlib_validate_decodes": false,
+   "text": "2Hl!1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
+   "why": "character outside the alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-fullwidth",
+   "stdlib_validate_decodes": false,
+   "text": "\uff21HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
+   "why": "non-ASCII look-alike character"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-empty-vs-spaces",
+   "stdlib_validate_decodes": false,
+   "text": "   ",
+   "why": "whitespace only"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-nul",
+   "stdlib_validate_decodes": false,
+   "text": "AAAA\u0000",
+   "why": "control character"
+  }
+ ]
+}

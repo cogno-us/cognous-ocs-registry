@@ -5,8 +5,8 @@ Payload: EXACTLY `allowed_actions`, `allowed_adapters`, `allowed_units`, `allowe
 No other key (no amount key, no age key): a sixth key refuses `field_unknown`, an absent key `field_missing` (an absent list is
 never an implicit allow or deny). An empty list is a valid explicit deny-all for that dimension.
 
-List entries: plain `str`, sorted, duplicate-free, at most MAX_ENTRIES, each valid under `common.valid_token` (1..128, no
-control, separator or `*`). Matching is exact-string: no case folding, trimming, normalization or wildcard. Payload entries keep
+List entries: plain `str`, sorted, duplicate-free, at most MAX_ENTRIES, each valid under the frozen Unicode 15.1.0 token rule `v2_token.frozen_token_valid` (1..128, no
+control, separator, unassigned or `*`; no host Unicode database). Matching is exact-string: no case folding, trimming, normalization or wildcard. Payload entries keep
 the section 2 opaque-token rule in all five lists; the V1 ASCII identifier grammar is NOT applied here (Architect: it applies only to
 the canonical policy-binding identifier fields, owned by EXT-S1-5; section 4.1).
 
@@ -22,13 +22,14 @@ from typing import Any, Optional
 
 from registry_successor import common as c
 from registry_successor.compose import CompositionResult
+from registry_successor.v2_token import frozen_token_valid
 
 FAMILY_F1AB = "f1ab-local-execution-allowlist"
 F1AB_FIELDS = ("allowed_actions", "allowed_adapters", "allowed_units", "allowed_institutions", "allowed_authority_domains")
 
 
 def _entry_ok(field: str, item: Any) -> bool:
-    return type(item) is str and c.valid_token(item)
+    return type(item) is str and frozen_token_valid(item)
 
 
 def _list_ok(field: str, value: Any) -> bool:
@@ -63,7 +64,7 @@ def normalize_caller(caller: Any) -> Optional[dict]:
         value = caller[field]
         if type(value) not in (list, tuple, set, frozenset):
             return None
-        if not all(type(item) is str and c.valid_token(item) for item in value):
+        if not all(type(item) is str and frozen_token_valid(item) for item in value):
             return None
         out[field] = tuple(sorted(set(value)))
     return out

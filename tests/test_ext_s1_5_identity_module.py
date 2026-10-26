@@ -914,7 +914,9 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
                                                                           "registry_successor/decision.py", "registry_successor/v2_token_table.py",
                                                                           # PR #34 (core verifier security) owns these; verify.py was removed from the forbidden list above for it
                                                                           "registry_successor/verify.py", "registry_successor/key_admission.py",
-                                                                          "registry_successor/canonical_b64.py"}, diff
+                                                                          "registry_successor/canonical_b64.py",
+                                                                          # P1 follow-up PR (FU-1, Architect final rulings): the r08-v2 family token validation uses the frozen predicate
+                                                                          "registry_successor/v2_token.py", "registry_successor/v2_f1ab.py", "registry_successor/v2_age_bounds.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():
@@ -1458,7 +1460,7 @@ MUTANTS = [
     ("integer range evidence dropped", 'evidence={"expected_range": (lo, hi)})', "evidence={})"),
     ("digest evidence dropped", 'evidence={"carried_digest": carried, "recomputed_digest": recomputed})', "evidence={})"),
     ("observed class dropped", 'evidence={"observed_value_class": _value_class(value)})', "evidence={})"),
-    ("carried digest checked before binding", "    b = validate_binding(binding)  # ONE", "    if not (type(carried) is str and _ascii_match(_DIGEST, carried)):\n        _refuse(\"field_invalid\")\n    b = validate_binding(binding)  # ONE"),
+    ("carried digest format checked after the version", "    if not (type(carried) is str and _ascii_match(_DIGEST, carried)):\n        _refuse(\"field_invalid\", evidence={\"observed_value_class\": _value_class(carried)})\n    b = _validate_binding_values(d)", "    b = _validate_binding_values(d)\n    if not (type(carried) is str and _ascii_match(_DIGEST, carried)):\n        _refuse(\"field_invalid\", evidence={\"observed_value_class\": _value_class(carried)})"),
     ("registered cv type unchecked", "    if type(contract_version) is not str:\n        _type_refusal(\"contract_version\", contract_version)\n    if family not in", "    if family not in"),
     ("registered family type unchecked", "    if type(family) is not str:\n        _type_refusal(\"family\", family)\n    if type(contract_version)", "    if type(contract_version)"),
     ("payload family type unchecked", "    if type(family) is not str:\n        _type_refusal(\"family\", family)\n    if family not in IDENTITY_FAMILIES:\n        _refuse(\"family_unsupported\", \"family\")\n    row =", "    if family not in IDENTITY_FAMILIES:\n        _refuse(\"family_unsupported\", \"family\")\n    row ="),
@@ -1550,6 +1552,7 @@ MUTANTS = [
 # that is not listed, and fails if a listed one is killed (so the list cannot rot).
 EQUIVALENT_OR_UNPINNED: dict = {
     # IDENT and DIGEST use explicit ASCII character ranges, so `isascii()` in front of `fullmatch` is defensive redundancy (the reference has the same guard)
+    "carried digest format checked after the version": "unpinned by the vector oracle (no pinned vector combines a wrong version with a malformed carried digest); killed by tests/test_fu_b_identity_order_and_family_tokens.py",
     "non-ascii identifier accepted": "equivalent: the regex classes are explicit ASCII ranges and fullmatch is used",
 }
 
