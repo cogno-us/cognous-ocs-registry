@@ -269,7 +269,9 @@ def _fields_probe(mod):
     base = selection.parse_selection_envelope(r.dumps(env))
     grant = mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
 
-    def run(sel=None, context=ctx, now=r.NOW, record=None, **over):
+    def run(sel=None, context=ctx, now=r.NOW, record=None, trust_obj_override=None, **over):
+        if trust_obj_override is not None:
+            return mod.verify_selection(sel or base, context, trust_obj_override, _V64(), now, record, contract_version="r08-v2")
         f = dict(snapshot_id="trust-snap-test-1", version=1, valid_until="2026-12-31T00:00:00Z",
                  issuers=(mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", key, (grant,)),))
         f.update(over)
@@ -325,6 +327,42 @@ def _fields_probe(mod):
             pass
         else:
             raise AssertionError(repr(bad))
+    import time
+    cyc = []
+    cyc.append(cyc)
+    shared = []
+    for _ in range(40):
+        shared = [shared, shared]
+    twice = [1]
+    for bad in (cyc, shared, [twice, twice], [0] * mod.MAX_JSON_NODES, {"a": [[[]] * 3]}, {i: 1 for i in (1,)}):
+        t0 = time.monotonic()
+        try:
+            mod._json_copy(bad)
+        except mod._NotSnapshottable:
+            pass
+        else:
+            raise AssertionError("accepted")
+        assert time.monotonic() - t0 < 2
+    deep = []
+    cur = deep
+    for _ in range(40):
+        nxt = []
+        cur.append(nxt)
+        cur = nxt
+    try:
+        mod._json_copy(deep)
+    except mod._NotSnapshottable:
+        pass
+    else:
+        raise AssertionError("depth")
+    assert mod._json_copy([0] * (mod.MAX_JSON_NODES - 2)) == [0] * (mod.MAX_JSON_NODES - 2)
+    assert mod._json_copy({"a": [[1, 2], [3]], "b": {"c": "d"}}) == {"a": [[1, 2], [3]], "b": {"c": "d"}}
+    # half-built objects are a typed malformed snapshot / scope refusal, not an internal error
+    hb = object.__new__(mod.TrustSnapshot)
+    assert run(trust_obj_override=hb).code == "trust_snapshot_invalid"
+    assert mod.verify_selection(base, object.__new__(c.ExpectedContext), mod.TrustSnapshot(
+        "trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", key, (grant,)),)),
+        _V64(), r.NOW, contract_version="r08-v2").code == "selection_scope_mismatch"
     sample = {"a": [1, "x", {"b": None, "c": True}], "d": (1, 2)}
     copied = mod._json_copy(sample)
     assert copied == sample and copied is not sample and copied["a"] is not sample["a"]
@@ -501,12 +539,17 @@ MUTANTS = {
         "context_privatization_dropped": [("        selection, record, context = _private_selection(selection), _private_record(record), _private_context(context)", "        selection, record = _private_selection(selection), _private_record(record)")],
         "now_privatization_dropped": [("        when = _private_now(now)", "        when = _aware(now)")],
         "selection_ok_loose": [("    if ok is not True:\n        return sel_mod.SelectionResult(False, code", "    if not ok:\n        return sel_mod.SelectionResult(False, code")],
-        "json_copy_dict_subclass": [("    if t is dict:", "    if isinstance(value, dict):")],
+        "json_copy_container_subclass": [("    if t is dict or t is list or t is tuple:", "    if isinstance(value, (dict, list, tuple)):")],
+        "json_cycle_check_dropped": [("        if id(value) in state[\"seen\"]:\n            raise _NotSnapshottable()\n", "")],
+        "json_seen_never_recorded": [("        state[\"seen\"].add(id(value))\n", "")],
+        "json_node_budget_dropped": [("    if state[\"nodes\"] > MAX_JSON_NODES or depth > 32:", "    if depth > 32:")],
+        "json_node_budget_off": [("state[\"nodes\"] > MAX_JSON_NODES", "state[\"nodes\"] > MAX_JSON_NODES * 100")],
+        "json_depth_dropped": [("    if state[\"nodes\"] > MAX_JSON_NODES or depth > 32:", "    if state[\"nodes\"] > MAX_JSON_NODES:")],
+        "half_built_trust_not_caught": [("        try:\n            return _private_trust(trust)", "        if True:\n            return _private_trust(trust)"), ("        except Exception:  # e.g. a half-built object: typed as a malformed snapshot, fail closed\n            return None", "")],
         "json_copy_str_subclass": [("    if t is str or t is bool or value is None:", "    if isinstance(value, str) or t is bool or value is None:")],
         "json_copy_int_subclass": [("    if t is int:\n        return int(value)", "    if isinstance(value, int):\n        return value")],
-        "json_copy_list_subclass": [("    if t is list or t is tuple:", "    if isinstance(value, (list, tuple)):")],
         "json_copy_float_allowed": [("    raise _NotSnapshottable()\n\n\ndef _exact_items", "    if t is float:\n        return value\n    raise _NotSnapshottable()\n\n\ndef _exact_items")],
-        "json_key_type_dropped": [("            if type(k) is not str:\n                raise _NotSnapshottable()\n", "")],
+        "json_key_type_dropped": [("                if type(k) is not str:\n                    raise _NotSnapshottable()\n", "")],
         "digest_type_dropped": [("        if type(digest) is not str or type(statement) is not dict", "        if type(statement) is not dict")],
         "record_ok_loose": [("        if getattr(record, \"ok\", False) is not True:\n            return refused", "        if not getattr(record, \"ok\", False):\n            return refused")],
         "record_digest_type_dropped": [("        if type(body) is not dict or type(digest) is not str:", "        if type(body) is not dict:")],

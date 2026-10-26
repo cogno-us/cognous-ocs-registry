@@ -91,14 +91,22 @@ the legacy path keeps its original code and is not given these rules (it is not 
 | .min_epochs | exact `dict`, or exact `list`/`tuple` of exact 2-tuples; key exact `str`, floor exact `int` >= 1, no duplicates | one copy -> `dict` |
 | selection.ok | must be exactly `True` or the selection is a structural refusal | once |
 | selection.code | exact `str` in `CODES`, else `field_invalid` | once |
-| selection.statement, .signatures | deep copy of exact JSON data only: `dict` (exact-`str` keys), `list`, `tuple`, `str`, `int`, `bool`, `None`; floats, subclasses, sets, bytes, other objects refused; depth <= 32; statement must be an exact `dict`, signatures an exact `list`/`tuple` | each node once |
+| selection.statement, .signatures | deep copy of exact JSON data only: `dict` (exact-`str` keys), `list`, `tuple`, `str`, `int`, `bool`, `None`; floats, subclasses, sets, bytes, other objects refused; depth <= 32; a container reached twice (cycle or shared reference) is refused; at most `MAX_JSON_NODES` = 10,000 nodes in total per copy (work is linear and bounded; a parsed document never shares containers and the parser caps are far lower); statement must be an exact `dict`, signatures an exact `list`/`tuple` | each node once |
 | selection.statement_digest | exact `str` | once |
 | selection.envelope | read once, only to choose the path (exact `dict` + exact-`str` "r08-v1" or mandatory) | once |
 | record result `.ok`, `.record`, `.record_digest` | `ok is True`; `record` deep exact-JSON copy that is an exact `dict`; digest exact `str`; otherwise a refused record | once |
 | ExpectedContext | `type(x) is ExpectedContext` with 5 exact `str` members, rebuilt | once |
 | `now` | `type(x) is datetime.datetime`, aware; `utcoffset()` called once, normalised to a plain UTC `datetime` | once |
 
-Accepted limits: the `verifier` and the caller `key_admission` callable are trusted code and are not copied; exact built-in
+Accepted limits:
+- **Legacy path is not hardened (M1 residual, stated plainly).** A hand-built selection with an exact-`dict` envelope declaring
+  exactly "r08-v1", or with a stateful or lying `ok`, takes the unhardened legacy path whenever the caller passes "r08-v1" or
+  omits `contract_version`. Nothing in this PR protects that call; the v2-only wrapper decision (M1) is what closes it.
+- **Half-built objects.** On the mandatory path an `object.__new__` TrustSnapshot or IssuerEntry is a typed
+  `trust_snapshot_invalid` / `trust_snapshot_malformed`; a half-built ExpectedContext is `selection_scope_mismatch`. (A half-built
+  selection or record object is a structural / record refusal.) Any other unexpected exception still fails closed as the
+  existing untyped `field_invalid` "internal verification error".
+- The `verifier` and the caller `key_admission` callable are trusted code and are not copied; exact built-in
 classes can still be monkey-patched or mutated through `object.__setattr__`, and nothing here defends against another thread
 doing that; a hostile selection object handed to the legacy path (exact `str` "r08-v1" with a falsy-`False` `ok`) is outside
 this hardening by design.
@@ -203,9 +211,9 @@ state the canonical base64 spelling explicitly (section 1; this PR does not edit
 
 ## 3. Evidence
 
-- 254 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 99 mutation-suite tests (93 source mutants over
+- 257 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 104 mutation-suite tests (98 source mutants over
   `canonical_b64`, `key_admission`, `verify`, `decision`, all killed, plus probes that pass on unmutated source and one documented
-  equivalent mutant), counted from the actual run on this head; full suite 2225 passed. Coverage: 16 noncanonical spellings
+  equivalent mutant), counted from the actual run on this head; full suite 2233 passed. Coverage: 16 noncanonical spellings
   through the full verifier pipeline (v2 strict, legacy stdlib rule); the 8 small-order encodings, the identity, 38 aliases, wrong
   lengths and types, 42 legitimate keys (RFC 8032 vectors 1 and 2 plus 40 derived by plain integer arithmetic); callback omission,
   `lambda: True` bypass attempts, composed and raising callbacks on the mandatory path; `contract_version` fail-closed values;

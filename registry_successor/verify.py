@@ -132,26 +132,37 @@ class _NotSnapshottable(Exception):
     pass
 
 
-def _json_copy(value: Any, depth: int = 0) -> Any:
+MAX_JSON_NODES = 10000  # total node budget for one private copy; far above any real selection or record (parser caps are lower)
+
+
+def _json_copy(value: Any, depth: int = 0, state: Optional[dict] = None) -> Any:
     """Mandatory path: private deep copy of a JSON-shaped value using EXACT builtin types only (dict with exact-str keys,
     list, tuple, str, int, bool, None). Any subclass, float, set, bytes or other object raises `_NotSnapshottable`, so a
-    stateful or lying object can never reach a later decision. Each node is read once."""
-    if depth > 32:
+    stateful or lying object can never reach a later decision. Each node is read once. Fail closed on resource abuse: a
+    container reached twice (a cycle OR a shared reference, which a parsed document never has) is refused, and the total
+    number of nodes is bounded by MAX_JSON_NODES, so work is linear and bounded."""
+    if state is None:
+        state = {"seen": set(), "nodes": 0}
+    state["nodes"] += 1
+    if state["nodes"] > MAX_JSON_NODES or depth > 32:
         raise _NotSnapshottable()
     t = type(value)
     if t is str or t is bool or value is None:
         return value
     if t is int:
         return int(value)
-    if t is dict:
-        out = {}
-        for k, v in list(value.items()):
-            if type(k) is not str:
-                raise _NotSnapshottable()
-            out[k] = _json_copy(v, depth + 1)
-        return out
-    if t is list or t is tuple:
-        return t(_json_copy(v, depth + 1) for v in list(value))
+    if t is dict or t is list or t is tuple:
+        if id(value) in state["seen"]:
+            raise _NotSnapshottable()
+        state["seen"].add(id(value))
+        if t is dict:
+            out = {}
+            for k, v in list(value.items()):
+                if type(k) is not str:
+                    raise _NotSnapshottable()
+                out[k] = _json_copy(v, depth + 1, state)
+            return out
+        return t(_json_copy(v, depth + 1, state) for v in list(value))
     raise _NotSnapshottable()
 
 
@@ -259,7 +270,10 @@ def _private_context(context: Any) -> Any:
     """Mandatory path: exact ExpectedContext with exact-str members, else None (scope refusal)."""
     if type(context) is not ExpectedContext:
         return None
-    members = (context.consumer_id, context.tenant, context.institution, context.authority_domain, context.operation)
+    try:
+        members = (context.consumer_id, context.tenant, context.institution, context.authority_domain, context.operation)
+    except Exception:  # half-built object
+        return None
     if any(type(m) is not str for m in members):
         return None
     return ExpectedContext(*members)
@@ -283,7 +297,10 @@ def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
     wrong-type public key is NOT a shape error here: it is left for `_admission_failure` so it gets the typed
     key_admission_invalid detail (key_type / key_length). The legacy path is unchanged."""
     if mandatory:
-        return _private_trust(trust)  # exact types, one read per field; the legacy code below is untouched
+        try:
+            return _private_trust(trust)  # exact types, one read per field; the legacy code below is untouched
+        except Exception:  # e.g. a half-built object: typed as a malformed snapshot, fail closed
+            return None
     if not isinstance(trust, TrustSnapshot):
         return None
     if not c.valid_token(trust.snapshot_id) or not c.is_int(trust.version) or trust.version < 1:

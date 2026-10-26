@@ -1035,3 +1035,53 @@ def test_l1b_truthy_non_true_ok_without_an_envelope_is_mandatory_not_legacy():
         genuine_shape = dataclasses.replace(base, ok=ok, envelope=None)
         assert verify._admission_mandatory(genuine_shape, "r08-v1") is (ok is not False)
     assert verify._admission_mandatory(selection.parse_selection_envelope("not json"), "r08-v1") is False
+
+
+# ---------------------------------------------------------------- resource bounds and half-built objects (round 3)
+
+def test_json_copy_refuses_cycles_shared_references_and_over_budget_quickly_but_copies_ordinary_data():
+    import time
+    cyc = []
+    cyc.append(cyc)
+    shared = []
+    for _ in range(40):
+        shared = [shared, shared]
+    twice = [1]
+    for bad in (cyc, shared, [twice, twice], [0] * verify.MAX_JSON_NODES, {"a": [[[]] * 3]}):
+        t0 = time.monotonic()
+        with pytest.raises(verify._NotSnapshottable):
+            verify._json_copy(bad)
+        assert time.monotonic() - t0 < 2
+    ordinary = {"a": [[1, 2], [3]], "b": {"c": "d", "e": None, "f": True}, "g": (1, "x")}
+    out = verify._json_copy(ordinary)
+    assert out == ordinary and out is not ordinary and out["a"] is not ordinary["a"]
+    assert verify._json_copy([0] * (verify.MAX_JSON_NODES - 2)) == [0] * (verify.MAX_JSON_NODES - 2)
+
+
+def test_hostile_selection_content_is_a_structural_refusal_not_a_hang():
+    import dataclasses
+    import time
+    base = _signed_selection(_good_signature_for(LEGIT_KEYS[0]))[1]
+    loop = dict(base.statement)
+    loop["self"] = loop
+    shared = []
+    for _ in range(40):
+        shared = [shared, shared]
+    for stmt in (loop, dict(base.statement, extra=shared), dict(base.statement, extra=[0] * (verify.MAX_JSON_NODES + 1))):
+        t0 = time.monotonic()
+        rep = _v2_run(selection_obj=dataclasses.replace(base, statement=stmt))
+        assert rep.ok is False and rep.layers["structural"] == verify.REFUSE and time.monotonic() - t0 < 2
+
+
+def test_half_built_objects_are_typed_refusals_on_the_mandatory_path():
+    half_trust = object.__new__(verify.TrustSnapshot)
+    rep = verify.verify_selection(_signed_selection(_good_signature_for(LEGIT_KEYS[0]))[1], CTX, half_trust, Sig64Verifier(), r.NOW,
+                                  contract_version=V2)
+    assert rep.code == "trust_snapshot_invalid" and rep.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED
+    half_entry = object.__new__(verify.IssuerEntry)
+    t = verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (half_entry,))
+    rep = verify.verify_selection(_signed_selection(_good_signature_for(LEGIT_KEYS[0]))[1], CTX, t, Sig64Verifier(), r.NOW,
+                                  contract_version=V2)
+    assert rep.code == "trust_snapshot_invalid" and rep.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED
+    rep = _v2_run(context=object.__new__(c.ExpectedContext))
+    assert rep.code == "selection_scope_mismatch"
