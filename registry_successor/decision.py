@@ -76,7 +76,8 @@ def refusal_rev2(participation: Any, code: str, detail: str = "") -> PolicyDecis
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
 
 
-def _decide_verified(participation: Any, caller: Any, record: Any, report: Any, codes: Any = c.CODES) -> PolicyDecision:
+def _decide_verified(participation: Any, caller: Any, record: Any, report: Any, codes: Any = c.CODES,
+                     contract: Any = families.CONTRACT_V1) -> PolicyDecision:
     """INTERNAL. Only verify_and_decide may call this, with objects it produced itself. Not a public interface:
     a caller-supplied report is never authority."""
     try:
@@ -112,7 +113,7 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any, 
         if getattr(report, "bound_record_digest", None) != recomputed:
             return _refusal(participation, caller, "record_digest_mismatch",
                             "the record is not the one the verified selection pinned")
-        result = families.compose(caller, record)
+        result = families.compose_for(contract, caller, record)  # v1: `families.compose`, unchanged; v2: `families.compose_v2`
         if not result.ok:
             return _refusal(participation, caller, result.code, result.detail)
         kind = "applied_deny_all" if result.deny_all else "applied"
@@ -135,6 +136,19 @@ def verify_and_decide(participation: Any, caller: Any, record_text: Any, selecti
     return _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission, contract_version, False)
 
 
+def _validate_record_v2_entry(record_text: Any):
+    """Record validation for the r08-v2 decision entry (V01a). Returns `(RecordResult, contract)`; the contract is the exact version the record
+    declares, and `_decide_verified` composes with that version's table. A document declaring `r08-v2` is validated by
+    `validate_record_text_v2` (family table `FAMILIES_V2`, so `f1ab` is accepted). A document that is not `r08-v2` (`contract_unsupported` there)
+    goes, unchanged, to the existing `r08-v1` validator: records the v2 entry already accepted before V01a (`r08-v1` `f1a`) keep exactly
+    their previous result and composition. Dispatch is on the record's own declared version only, never a retry: an `r08-v2` document is
+    never judged by the v1 validator, and an `r08-v1` document never reaches the v2 family table (so `r08-v1` `f1ab` still refuses)."""
+    rec = record_mod.validate_record_text_v2(record_text)
+    if rec.ok or rec.code != "contract_unsupported":
+        return rec, families.CONTRACT_V2
+    return record_mod.validate_record_text(record_text), families.CONTRACT_V1
+
+
 def _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission, contract_version, v2):
     """The one implementation behind `verify_and_decide` (r08-v1 parser, closed `c.CODES`) and `verify_and_decide_v2` (r08-v2 parser,
     closed `CODES_V2`, `verify_selection_v2`)."""
@@ -147,12 +161,15 @@ def _decide_text(participation, caller, record_text, selection_text, context, tr
         sel = (v2_selection_mod.parse_selection_envelope_v2 if v2 else selection_mod.parse_selection_envelope)(selection_text)
         if not sel.ok:
             return _refusal(participation, caller, sel.code if sel.code in codes else "selection_missing", sel.detail, codes=codes)
-        rec = record_mod.validate_record_text(record_text)
+        if v2:
+            rec, record_contract = _validate_record_v2_entry(record_text)
+        else:
+            rec, record_contract = record_mod.validate_record_text(record_text), families.CONTRACT_V1
         if v2:
             report = verify_mod.verify_selection_v2(sel, context, trust, verifier, now, rec, key_admission)
         else:
             report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec, key_admission, contract_version)
-        return _decide_verified(participation, caller, rec, report, codes)
+        return _decide_verified(participation, caller, rec, report, codes, record_contract)
     except Exception:  # defensive: never an acceptance on unexpected input
         return _refusal(participation if participation in c.PARTICIPATION else "required", caller, "selection_missing", "unexpected input")
 

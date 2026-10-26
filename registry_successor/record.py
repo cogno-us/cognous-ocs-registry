@@ -95,18 +95,18 @@ def _supersession_ok(record: dict) -> bool:
             and c.valid_sha_ref(sup["record_digest"]))
 
 
-def _validate(text: Any) -> RecordResult:
+def _validate(text: Any, version: str = c.CONTRACT_VERSION) -> RecordResult:
     loaded = c.load_document(text)
     if not loaded.ok:
         return _refuse(loaded.code, loaded.detail)
     record = loaded.value
     if not isinstance(record, dict):
         return _refuse("field_type_invalid", "document is not an object")
-    if record.get("contract_version") != c.CONTRACT_VERSION:
+    if record.get("contract_version") != version:
         return _refuse("contract_unsupported")
     if record.get("kind") != "record":
         return _refuse("kind_unsupported")
-    spec = families.lookup(record.get("family"))
+    spec = families.lookup_for(version, record.get("family"))
     if spec is None:
         return _refuse("family_unsupported")
     code = _shape(record, spec)
@@ -128,5 +128,16 @@ def _validate(text: Any) -> RecordResult:
 def validate_record_text(text: Any) -> RecordResult:
     try:
         return _validate(text)
+    except Exception:  # defensive: an unexpected shape error is a refusal, never an acceptance
+        return _refuse("field_type_invalid", "unexpected structure")
+
+
+def validate_record_text_v2(text: Any) -> RecordResult:
+    """The `r08-v2` record validation entry point (V01a). Same checks, order and codes as `validate_record_text`, but the record must carry
+    exactly `contract_version` `r08-v2` and its family is looked up in the `r08-v2` table (`families.FAMILIES_V2`: the v1 families plus
+    `f1ab`, `f4`, `f5`). An `r08-v1` document refuses `contract_unsupported` here, and an `r08-v2` document still refuses at the unchanged
+    v1 entry point. No fallback or implicit upgrade between versions. Pure; never raises."""
+    try:
+        return _validate(text, families.CONTRACT_V2)
     except Exception:  # defensive: an unexpected shape error is a refusal, never an acceptance
         return _refuse("field_type_invalid", "unexpected structure")

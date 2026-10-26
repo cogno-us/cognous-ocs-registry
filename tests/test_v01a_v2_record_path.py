@@ -5,9 +5,9 @@ PREDECLARED ORACLES (committed before any source change; expected outcome at bas
   V1A-01  valid signed f1ab selection + record -> kind `applied`, exact five-set intersection   | baseline: FAIL (composition_record_invalid)
   V1A-02  narrowing: caller units {u-read,u-write}, record units {u-read} -> effective units (u-read,) | baseline: FAIL
   V1A-03  empty record set -> `applied_deny_all`, field listed, never the caller policy         | baseline: FAIL
-  V1A-04  malformed record (missing / unknown / unsorted / non-JSON) -> `required_policy_unavailable`, typed code | baseline: wrong codes
+  V1A-04  malformed record (missing / unknown / unsorted / non-JSON) -> `required_policy_unavailable`; validator returns the typed code, decision returns `composition_record_invalid` (corrected, see below) | baseline: wrong codes
   V1A-05  forged signature / wrong-key signature -> `signature_invalid`, no policy             | baseline: PASS (refusal)
-  V1A-06  record altered after signing -> digest refusal, no policy                            | baseline: refusal (wrong cause)
+  V1A-06  record altered after signing -> validator `digest_mismatch`; decision `composition_record_invalid`; resealed -> `record_digest_mismatch`                            | baseline: refusal (wrong cause)
   V1A-07  authenticated withdrawal -> `selection_withdrawn`, no policy                          | baseline: PASS
   V1A-08  expired selection / expired trust snapshot -> `selection_expired` / `trust_snapshot_expired` | baseline: PASS
   V1A-09  wrong tenant / consumer / operation -> `selection_scope_mismatch` / `selection_consumer_mismatch` / `selection_operation_mismatch` | PASS
@@ -16,6 +16,7 @@ PREDECLARED ORACLES (committed before any source change; expected outcome at bas
   V1A-12  v2 record validator refuses an r08-v1 document, v1 validator refuses an r08-v2 document (no cross acceptance) | guard
   V1A-13  the v2 decision calls the one existing verifier `verify_selection_v2` (no second verifier)  | guard
   V1A-14  `operationally_authorized` is False on every outcome; refusals never return the caller policy under `required` | guard
+  V1A-16  r08-v1 f1a record at the v2 entry keeps its pre-V01a result (applied, three-set); r08-v1 document claiming f1ab still refuses | guard
   V1A-15  optional participation: any refusal leaves `overlay_not_applied` (not an application) | guard
 
 ACTUAL baseline result at `17675ee1` (unchanged source, recorded before the fix): 19 failed, 5 passed. The failing set includes cases the
@@ -131,10 +132,14 @@ def test_v1a_03_empty_set_is_explicit_deny_all():
     (lambda p: p.update(allowed_units="u-read"), "field_type_invalid"),
 ])
 def test_v1a_04_malformed_payload_refuses_with_typed_code(mutate, code):
+    # ORACLE CORRECTION (recorded in the second commit): the predeclared expectation was the typed shape code at the DECISION level. The
+    # frozen r08-v1 behaviour, kept unchanged for v2, reports any invalid record as `composition_record_invalid` at the decision (the
+    # verifier's record_binding layer wins) while the typed shape code is the VALIDATOR's result. Both levels are asserted here.
     pl = payload()
     mutate(pl)
     rec = record(pl)
-    assert_refused(decide(rec=rec, sel=selection_text(rec)), code)
+    assert record_mod.validate_record_text_v2(r.dumps(rec)).code == code
+    assert_refused(decide(rec=rec, sel=selection_text(rec)), "composition_record_invalid")
 
 
 def test_v1a_04_non_json_record_refuses():
@@ -170,7 +175,8 @@ def test_v1a_06_record_altered_after_signing_refuses():
     sel = selection_text(rec)
     tampered = copy.deepcopy(rec)
     tampered["payload"]["allowed_units"] = ["u-read", "u-write"]  # widen without resealing
-    assert_refused(decide(rec=tampered, sel=sel), "digest_mismatch")
+    assert record_mod.validate_record_text_v2(r.dumps(tampered)).code == "digest_mismatch"  # validator-level typed code
+    assert_refused(decide(rec=tampered, sel=sel), "composition_record_invalid")  # decision-level (ORACLE CORRECTION, as for V1A-04)
     resealed = r.seal_record(tampered)  # widen and reseal: no longer the record the signed selection pins
     assert_refused(decide(rec=resealed, sel=sel), "record_digest_mismatch")
 
@@ -232,6 +238,22 @@ def test_v1a_12_validators_do_not_cross_accept():
     assert record_mod.validate_record_text_v2(v2_text).ok is True
     res = record_mod.validate_record_text_v2(v1_text)
     assert res.ok is False and res.code == "contract_unsupported"
+
+
+# ---- V1A-16 legacy records at the v2 entry (compatibility finding recorded in the second commit)
+def test_v1a_16_v1_contract_records_keep_their_existing_v2_entry_behaviour():
+    """Existing tests and callers feed `r08-v1` `f1a` records to verify_and_decide_v2; that stays applied with the three-set composition, and an
+    `r08-v1` document claiming family `f1ab` still refuses (the v2 family table is reachable only by an `r08-v2` document)."""
+    f1a = r.make_record()
+    caller3 = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
+    stmt = r.make_statement_v2(f1a)
+    ad = ev.Ed25519Verifier()
+    sel = r.dumps(s.envelope(stmt, signature=sign(stmt), pub=PK))
+    d = decision.verify_and_decide_v2("required", caller3, r.dumps(f1a), sel, s.CTX, s.trust(pub=PK), ad, r.NOW, ad.key_admission)
+    assert d.kind == "applied" and d.effective["allowed_units"] == ("unit-a",)
+    legacy_f1ab = r.seal_record(dict(r.make_record(), family=f.FAMILY_F1AB, payload=payload()))  # contract_version stays r08-v1
+    d2 = decide(rec=legacy_f1ab, sel=selection_text(legacy_f1ab))
+    assert d2.kind == "required_policy_unavailable" and d2.effective is None
 
 
 # ---- V1A-13 one verifier
