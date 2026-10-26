@@ -781,9 +781,9 @@ def verify_carried_binding_digest(binding: dict, carried: Any, authoritative: An
     (4) when `authoritative` (the consumer-owned durable row) is given: an unusable row is `store_unknown` (UNKNOWN_FAIL_CLOSED, unchanged) and the scope key and
     selection id are compared (`policy_identity_mismatch`); (5) a claim epoch BEHIND the same row is `selection_epoch_stale`; (6) the remaining canonical identity
     members are compared (`policy_identity_mismatch`); (7) only then the validated carried digest is compared with the recomputed value (`digest_mismatch`,
-    evidence carried and recomputed). So a malformed digest on a cross-row, stale, unknown-store or wrong-version claim refuses as claim shape. NOTE (pinned vectors
-    GD-002 and GD-003): a well-formed but incorrect digest stays `digest_mismatch`; the Architect text names `policy_identity_mismatch` for it, which the pinned
-    vectors contradict, so the code is NOT changed here (reported for a ruling). WITHOUT `authoritative` this is a digest-integrity check only: it verifies
+    evidence carried and recomputed). So a malformed digest on a cross-row, stale, unknown-store or wrong-version claim refuses as claim shape. RULED (Architect, post-#26): the frozen
+    GD-002 and GD-003 expectations stand: a well-formed but incorrect carried digest is `digest_mismatch`; `policy_identity_mismatch` applies to authoritative
+    identity-member mismatches only. Historical vectors are not altered to fit code. WITHOUT `authoritative` this is a digest-integrity check only: it verifies
     no identity and no context, and a caller that needs the identity guarantee MUST pass the row (the guard, EXT-S4-2, is the consumer).
     WARNING: `authoritative=None` is NOT an identity verification. A matching digest proves only that the binding is internally consistent; it never shows that the
     binding names the activated policy, scope or epoch. Do not use the None form as a guard."""

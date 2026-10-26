@@ -1,7 +1,7 @@
 # Core verifier hardening: canonical signature text and key admission
 
-Status: SECURITY-HELD. BUILDER_TESTED. AI-reviewed only (not independent cryptographic review, not Tier 1). Not merged until
-Architect security review. Trust-root activation remains held. Authority: Architect Batch 6 ruling 11, separate from PR #26.
+Status: MERGED (PR #34). Assurance record: BUILDER-TESTED. AI-REVIEWED (GitHub Copilot, partial; fresh-context Claude reviews). NOT INDEPENDENTLY SECURITY-ASSESSED. NOT TIER 1 QUALIFIED. No independent human cryptographic review has taken place. Human cryptographic review or an equivalent credible external security assessment remains a prerequisite for production trust-root activation and for any security-qualified release claim (Architect post-#26 ruling, 2026-10-26). Trust-root activation remains held. Authority: Architect Batch 6 ruling 11, separate from PR #26.
+Known limitations carried with this record: the bundled CCTV corpus is licensed at directory level and upstream-author confirmation of file-level applicability was NOT obtained; the adapter was tested on Linux x86-64, CPython 3.11-3.13 only.
 
 ## 1. Canonical base64 signature text
 

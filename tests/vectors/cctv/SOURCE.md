@@ -13,7 +13,7 @@
   | `UPSTREAM-README.md` | `ed25519/README.md` (last changed in `3ec4d716e80597545ed285cf62af3dded3a14f65`, 2024-03-06) | `12889cbe441ce9da56fc65aa00b9d16f02ecdbcb8bb19d706ac35e92380d93d0` |
   | `LICENSE` | `ed25519/LICENSE` (present at `0fb2c3b5...`, unchanged at `main`) | `9fe727c21f00a770a683a4c8491bf24203ec839628bad09b026258c5afc17076` |
   These hashes are asserted by `tests/test_adapter_ed25519_cctv.py`. A later upstream change must be reviewed, never silently accepted.
-- **License: BSD-3-Clause** (SPDX `BSD-3-Clause`; text above is the upstream `ed25519/LICENSE`, "Copyright 2019 Google LLC / Copyright 2022 Filippo Valsorda",
+- **License: BSD-3-Clause** (SPDX `BSD-3-Clause`; the text is the upstream `ed25519/LICENSE`, kept unmodified in `LICENSE` in this directory, "Copyright 2019 Google LLC / Copyright 2022 Filippo Valsorda",
   three conditions: retain the copyright notice, conditions and disclaimer in source redistributions; reproduce them in binary redistributions;
   no use of the name of Google LLC or its contributors to endorse or promote derived products without written permission).
   The license file sits in the same directory as the vectors and the sibling `ed25519vectors.go` states "governed by a BSD-style license that can be found in the LICENSE file".

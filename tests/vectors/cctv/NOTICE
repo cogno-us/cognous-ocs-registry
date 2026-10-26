@@ -1,5 +1,5 @@
 This directory redistributes, unmodified, files from the C2SP Community Cryptography Test Vectors (CCTV):
-  https://github.com/C2SP/CCTV  (directory ed25519/, commit 0fb2c3b5dc50437ce3272abcbec7567dde497047)
+  https://github.com/C2SP/CCTV  (directory ed25519/, commit 0fb2c3b5dc50437ce3272abcbec7567dde497047; UPSTREAM-README.md is from commit 3ec4d716, see SOURCE.md)
 
   Copyright 2019 Google LLC
   Copyright 2022 Filippo Valsorda

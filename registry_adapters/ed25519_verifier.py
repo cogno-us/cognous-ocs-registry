@@ -74,6 +74,8 @@ class Ed25519Verifier:
         built-in admission always runs first and this policy can only further restrict. Only `ed25519` keys are judged here, mirroring
         the core (the core never verifies another algorithm). NOTE: `acceptable_public_key` takes ONE argument and must not be passed
         to the core directly: the core calls policies with two, the call raises, and the core refuses every key (fail closed)."""
+        if type(alg) is not str:  # review L2: a str subclass with a lying __ne__ must not reach the 'not judged here' branch (fail closed)
+            return False
         if alg != ALG:
             return True
         return self.acceptable_public_key(public_key)
