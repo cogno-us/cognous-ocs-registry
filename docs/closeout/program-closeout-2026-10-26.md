@@ -14,7 +14,7 @@ PR numbers are Registry PRs unless a repository is named. Merge SHAs are abbrevi
 | R08-PREP | Selection, lifecycle, activation, custody, effective-policy design | COMPLETE, S | #18 `1324bab1` | None | Closed |
 | R08-S01 | `r08-v1` contract and selection-verification foundation | COMPLETE as a foundation, I+D | #19 `783ff59f` | No activation, key, verifier or Runtime wiring | Superseded by EXT line |
 | P0 (v1.3) | V0.2 contract reconciliation | COMPLETE, S | #20 `ce00520f` (v1.3 adoption), #21 `d61ef729` | None | Closed |
-| P1 plan (v1.3) | Extraction design and execution cards | COMPLETE, S | #22 `d2c472e4`; [p1-extraction-plan](../p1-extraction-plan/README.md) | Plan states a PR sequence; later work deviated (see 4) | Input to v1.4 |
+| P1 plan (v1.3) | Extraction design and execution cards | COMPLETE, S | #22 `d2c472e4`; [p1-extraction-plan](../p1-extraction-plan/README.md) | Later work followed the EXT sequence only in part (see section 4) | Input to v1.4 |
 | EXT-S1-0 | Registry CI | COMPLETE, I+D | #23 | CI is not qualification | Closed |
 | EXT-S1-1 | Canonical V1 contract (D-01..D-31) | COMPLETE, S | #25; Amendment 1 #32 | None | Frozen |
 | EXT-S1-2 | Family-dispatch foundation | COMPLETE, I+D | #27 | None | Closed |
@@ -33,7 +33,7 @@ PR numbers are Registry PRs unless a repository is named. Merge SHAs are abbrevi
 | EXT-S4-0 | Integration and authority contract | COMPLETE as a contract only, S | #37 `a3f2daff`; [ADR](../decisions/2026-10-26-adr-ext-s4-0-integration-contract.md) | Zero code; 27 acceptance rows AR-01..AR-27 unexecuted | Adopted; not implemented |
 | EXT-S4-1 | (Registry-side step) | NOT REQUIRED | ADR sequencing | n/a | n/a |
 | EXT-S4-4, S4-5, S4-2, S4-3 | Claim-carried binding; re-pin; Runtime destination and atomic guard; end-to-end emulator | NOT STARTED, DEFERRED | ADR sequence | All | Not authorized |
-| EXT-S5 | Predeclaration, QG-01..QG-12 qualification gate runs, freeze, gap report (cards S5-1..last) | PARTIAL: preparation only | Stack Qualification #227-#231 (successor assertion 172/164 with substitution negatives; pin file proposed) | Pin not approved; nothing to pin until S4 | Deferred |
+| EXT-S5 | Predeclaration, QG-01..QG-12 qualification gate runs, freeze, gap report (cards S5-1..last) | PARTIAL: preparation only | Stack Qualification #231 (successor assertion 172/164 with substitution negatives; pin file proposed) | Pin not approved; nothing to pin until S4 | Deferred |
 | EXT-S6 | RC pin freeze, full exact-pin run, evidence retention, truthful status report | NOT STARTED | n/a | All | Deferred |
 | Tier 1 independent qualification | Independent review and qualification | NOT STARTED | GAP-G4-13 | Lead, reviewers, scope | Operator decision |
 
@@ -58,7 +58,7 @@ Everything the EXT-S4-0 ADR places in the Runtime (durable state, atomic guard, 
 
 ## 5. Qualification status
 
-All work is BUILDER-TESTED and AI-REVIEWED. NOT INDEPENDENTLY SECURITY-ASSESSED. NOT TIER 1 QUALIFIED. Ed25519 scope is Linux x86-64 CPython 3.11-3.13. Copilot/AI review is technical review, not qualification. Stack Qualification holds only preparation (#227-#231) and no approved pin.
+All work is BUILDER-TESTED and AI-REVIEWED. NOT INDEPENDENTLY SECURITY-ASSESSED. NOT TIER 1 QUALIFIED. Ed25519 scope is Linux x86-64 CPython 3.11-3.13. Copilot/AI review is technical review, not qualification. Stack Qualification holds only preparation (#231) and no approved pin.
 
 ## 6. Verified pins (2026-10-26)
 
