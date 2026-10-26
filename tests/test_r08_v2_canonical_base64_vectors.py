@@ -39,10 +39,16 @@ class AcceptAnyBytes:
 
 
 def _run(text, entry):
-    stmt = r.make_statement()
-    env = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
-    env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": text}]
-    sel = selection.parse_selection_envelope(r.dumps(env))
+    if entry is verify.verify_selection_v2:  # the r08-v2 entry takes a real r08-v2 selection (v2 statement, v2 parser)
+        stmt = r.make_statement_v2()
+        env = r.make_envelope_v2(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+        env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": text}]
+        sel = r.parse_v2(r.dumps(env))
+    else:
+        stmt = r.make_statement()
+        env = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+        env["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": text}]
+        sel = selection.parse_selection_envelope(r.dumps(env))
     assert sel.ok, sel.code
     grant = verify.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
     trust = verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
