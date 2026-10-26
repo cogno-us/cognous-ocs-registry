@@ -777,7 +777,14 @@ def test_core_refuses_wrong_key_tampered_statement_and_foreign_domain(verifier, 
 def test_core_refuses_identity_key_trust_entry_with_the_identity_forgery(verifier):
     env = _signed_envelope(VEC["synthetic_keys"]["A"]["seed_hex"])
     env["signatures"][0]["signature"] = base64.b64encode(IDENTITY_FORGERY_SIGNATURE).decode("ascii")
+    # Since PR #34 an envelope without an exact-str "r08-v1" version takes the MANDATORY admission path: built-in admission refuses the
+    # identity key before any signature is checked.
     rep = _run_core(env, verifier, IDENTITY)
+    assert rep.ok is False and rep.code == "trust_snapshot_invalid" and rep.detail_cause == "key_small_order" and rep.authenticated is False
+    # The adapter alone (frozen legacy r08-v1 path, no admission) still refuses the forgery at signature time: defence in depth.
+    legacy = dict(env, contract_version="r08-v1")
+    sel = Sel(True, None, "", legacy, legacy["statement"], legacy["statement_digest"], legacy["signatures"])
+    rep = v.verify_selection(sel, CTX, _trust(IDENTITY), verifier, NOW, contract_version="r08-v1")
     assert rep.ok is False and rep.code == "signature_invalid" and rep.authenticated is False
 
 

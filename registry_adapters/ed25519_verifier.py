@@ -68,6 +68,16 @@ class Ed25519Verifier:
         except Exception:
             return False
 
+    def key_admission(self, alg, public_key) -> bool:
+        """Key-admission policy in the shape the registry core expects: `(alg, public_key) -> bool` (registry_successor.key_admission,
+        PR #34). Pass it as `key_admission=` (alone or inside `compose_key_admission`) with `contract_version="r08-v2"`. The core's
+        built-in admission always runs first and this policy can only further restrict. Only `ed25519` keys are judged here, mirroring
+        the core (the core never verifies another algorithm). NOTE: `acceptable_public_key` takes ONE argument and must not be passed
+        to the core directly: the core calls policies with two, the call raises, and the core refuses every key (fail closed)."""
+        if alg != ALG:
+            return True
+        return self.acceptable_public_key(public_key)
+
     def _check(self, public_key: bytes, message: bytes, signature: bytes) -> bool:
         if not self._is_valid_point(public_key):  # library: canonical, on-curve, non-small-order, prime-order subgroup
             return False
