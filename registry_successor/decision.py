@@ -8,7 +8,7 @@ Participation is chosen per operation. Kinds:
                                  the mapping to component failure classes is open decision LD-02.
 `operationally_authorized` is always False: technical verification is not operational authorization.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Any, Optional
 
 from registry_successor import common as c
@@ -30,12 +30,44 @@ class PolicyDecision:
     operationally_authorized: bool = False
 
 
-def _refusal(participation: Any, caller: Any, code: str, detail: str = "") -> PolicyDecision:
+@dataclass(frozen=True)
+class TypedPolicyDecision(PolicyDecision):
+    """A refusal that also carries the typed sub-cause of its reason code (not a reason code). Returned only for a refusal
+    whose verification report carried one; all other decisions keep the base class and its frozen serialized shape."""
+    detail_code: Optional[str] = None
+    detail_cause: Optional[str] = None
+
+
+def _refusal(participation: Any, caller: Any, code: str, detail: str = "", typed: Any = None) -> PolicyDecision:
+    base = _plain_refusal(participation, caller, code, detail)
+    if typed is None:
+        return base
+    return TypedPolicyDecision(*(getattr(base, f.name) for f in fields(PolicyDecision)), detail_code=typed[0], detail_cause=typed[1])
+
+
+def _plain_refusal(participation: Any, caller: Any, code: str, detail: str = "") -> PolicyDecision:
     assert code in c.CODES, code
     if participation == "optional":
         normalized = families.lookup(families.V1_DEFAULT_FAMILY).caller_normalizer(caller)
         return PolicyDecision("overlay_not_applied", normalized if normalized is not None else caller, False, (), code,
                               detail or "optional overlay not applied; caller policy unchanged (not denial)", True)
+    return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
+
+
+REV2_CODES = ("not_activated", "policy_identity_mismatch", "store_unknown")  # the three additive codes of `r08-v2-reasons/2` (v2_codes.CODES_V2_REV2)
+
+
+def refusal_rev2(participation: Any, code: str, detail: str = "") -> PolicyDecision:
+    """The explicit revision-2 refusal path (Amendment 1 section 6.7(e) items 1 and 3; Architect Batch 6 rulings 4.7 and N-12). It takes ONLY a revision-2
+    additive code (anything else is a ValueError, a programmer error: revision-1 causes keep going through `_refusal`) and passes the code through UNCHANGED
+    (it is never remapped to an existing code). A revision-2 code is NEVER an optional fallback: none yields `overlay_not_applied` and none returns or
+    leaves the caller policy usable, whatever the participation; `store_unknown` is HOLD (UNKNOWN_FAIL_CLOSED), `not_activated` and `policy_identity_mismatch`
+    are REFUSE, and all three are `required_policy_unavailable` with no policy. A participation that is neither required nor optional is refused as
+    `participation_mismatch` (a revision-1 code), as everywhere else. Technical refusal only: `operationally_authorized` is False."""
+    if type(code) is not str or code not in REV2_CODES:
+        raise ValueError("not a revision-2 additive code")
+    if type(participation) is not str or participation not in c.PARTICIPATION:  # exact str BEFORE membership: a hostile `__eq__` is never called
+        return _refusal("required", None, "participation_mismatch", "operation participation is not required or optional")
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
 
 
@@ -49,7 +81,9 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) 
             return _refusal(participation, caller, "selection_missing")
         if getattr(report, "ok", False) is not True:
             code = getattr(report, "code", None)
-            return _refusal(participation, caller, code if code in c.CODES else "selection_missing")
+            dc, cause = getattr(report, "detail_code", None), getattr(report, "detail_cause", None)
+            typed = (dc, cause if type(cause) is str else None) if type(dc) is str else None
+            return _refusal(participation, caller, code if code in c.CODES else "selection_missing", typed=typed)
         if getattr(report, "participation", None) != participation:
             return _refusal(participation, caller, "participation_mismatch",
                             "the signed selection's participation does not equal the operation class")
@@ -81,12 +115,16 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) 
 
 
 def verify_and_decide(participation: Any, caller: Any, record_text: Any, selection_text: Any, context: Any,
-                      trust: Any, verifier: Any, now: Any) -> PolicyDecision:
+                      trust: Any, verifier: Any, now: Any, key_admission: Any = None,
+                      contract_version: Any = verify_mod.LEGACY_CONTRACT) -> PolicyDecision:
     """The single public verify-and-decide entrypoint. Pure: takes raw record and selection TEXT, parses and verifies both
     internally at one `now`, binds the verified selection to the exact record parsed here, and composes only on success.
     No caller-supplied report, parsed record or timestamped verification result is accepted, so reports cannot be
     fabricated, substituted, replayed (stale), mutated after verification, or paired with a different record.
-    Required operations fail closed (never the caller policy); optional operations leave the caller policy unchanged."""
+    Required operations fail closed (never the caller policy); optional operations leave the caller policy unchanged.
+    `key_admission` is the optional trust-boundary key policy (see `key_admission.py`); it is forwarded unchanged to
+    `verify_selection`. `contract_version` selects the verification path: anything but exactly `r08-v1` makes built-in key
+    admission mandatory (see `verify_selection`); the callback can only add refusals."""
     try:
         if participation not in c.PARTICIPATION:
             return _refusal("required", caller, "participation_mismatch", "operation participation is not required or optional")
@@ -96,7 +134,7 @@ def verify_and_decide(participation: Any, caller: Any, record_text: Any, selecti
         if not sel.ok:
             return _refusal(participation, caller, sel.code if sel.code in c.CODES else "selection_missing", sel.detail)
         rec = record_mod.validate_record_text(record_text)
-        report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec)
+        report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec, key_admission, contract_version)
         return _decide_verified(participation, caller, rec, report)
     except Exception:  # defensive: never an acceptance on unexpected input
         return _refusal(participation if participation in c.PARTICIPATION else "required", caller, "selection_missing", "unexpected input")

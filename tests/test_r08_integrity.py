@@ -58,7 +58,13 @@ def _emitted_codes():
 def test_every_refusal_code_emitted_by_modules_is_in_the_closed_set():
     emitted = _emitted_codes()
     assert emitted, "static scan found nothing"
-    unknown = {item for item in emitted if item[1] not in common.CODES}
+    # Amended narrowly (Architect Batch 6 ruling 4.4): every module is held to the 46 `r08-v1` codes EXCEPT the one registered successor module, which may
+    # also emit the revision-2 vocabulary (`CODES_V2_REV2`: the 48 plus the three additive codes). The two v2-only codes of revision 1 and everything
+    # outside revision 2 stay refused everywhere (tests/test_ext_s1_5_guard_amendment.py holds the negative regressions).
+    from registry_successor.v2_codes import CODES_V2_REV2
+
+    allowed = {"v2_policy_identity.py": set(CODES_V2_REV2) - {"selection_withdrawn", "trust_snapshot_version_stale"}}
+    unknown = {item for item in emitted if item[1] not in allowed.get(item[0], set(common.CODES))}
     assert not unknown, sorted(unknown)
 
 

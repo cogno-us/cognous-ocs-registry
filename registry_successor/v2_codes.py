@@ -8,6 +8,16 @@ exactly two additions. It is DECLARED here by EXT-S1-2 and nothing reaches the n
 
 `common.CODES` (46) is not modified and no `r08-v1` entry point can emit a v2-only code. Read-only: a code is added by a
 contract change, never at run time. Non-authorizing and unqualified.
+
+Revision 2 of this ONE vocabulary (`r08-v2-reasons/2`, symbol `CODES_V2_REV2`; docs/r08-v2-contract-amendment-1.md section 6.4, Architect Batch 6
+ruling 4.7) is `CODES_V2` (revision 1, 48 codes, unchanged and still pinned) followed by exactly three additive codes, in this order:
+
+  not_activated              layer `selection`  REFUSE               known store, no row for the scope key.
+  policy_identity_mismatch   layer `identity`   REFUSE               a claim identity member differs from the durable row (stale epoch is `selection_epoch_stale`).
+  store_unknown              layer `trust`      UNKNOWN_FAIL_CLOSED  the authoritative durable state is unavailable or indeterminate (HOLD; never an optional fallback).
+
+`r08-v2-reasons/2` is documentary only: `contract_version` stays exactly `r08-v2` and no dispatch is keyed on the revision. No `r08-v1` or
+revision-1 entry point can emit a revision-2 code; the revision-2 codes are reached only through the explicit revision-2 paths.
 """
 from types import MappingProxyType
 
@@ -19,3 +29,11 @@ V2_ADDED_CODES = {
 }
 
 CODES_V2 = MappingProxyType({**c.CODES, **V2_ADDED_CODES})
+
+REV2_ADDED_CODES = {
+    "not_activated": ("selection", "the enforcing component's known authoritative durable state has no row for the scope key"),
+    "policy_identity_mismatch": ("identity", "a claim-carried identity member differs from the authoritative durable activation row"),
+    "store_unknown": ("trust", "the enforcing component's authoritative durable state is unavailable, lost, torn, rolled back or otherwise indeterminate"),
+}
+
+CODES_V2_REV2 = MappingProxyType({**CODES_V2, **REV2_ADDED_CODES})
