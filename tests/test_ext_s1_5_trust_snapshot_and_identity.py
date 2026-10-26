@@ -648,7 +648,7 @@ def test_v1_token_validator_and_verifier_are_byte_and_behaviour_unchanged():
     import hashlib, unicodedata
     from registry_successor import common, verify
     assert hashlib.sha256(Path(common.__file__).read_bytes()).hexdigest() == "f87c0f1c51785df32f1ad60b77096258729e45cca6586a696533d63ad28aece2"
-    assert hashlib.sha256(Path(verify.__file__).read_bytes()).hexdigest() == "905610a8438890ce61da27a580be16efd571de10e523f517a0f52cb487d263ce"
+    assert hashlib.sha256(Path(verify.__file__).read_bytes()).hexdigest() == "76d71d6c77b08764a2501fdcbc22f23c4db92dba07e4fc6ac30ab028c9b49146"  # re-pinned by PR #34 (core verifier security): verify.py is intentionally changed there; the r08-v1 behaviour is pinned by the golden replay and the legacy differential
     assert common.valid_token("transf\u00e9rer") and common.valid_token("EP-006") and not common.valid_token("a*") and not common.valid_token("a b") and not common.valid_token("")
     real = unicodedata.category
     unicodedata.category = lambda ch: (_ for _ in ()).throw(AssertionError("host database read"))

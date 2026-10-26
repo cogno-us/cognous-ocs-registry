@@ -209,6 +209,18 @@ subgroup-validating check (the PR #26 adapter's `acceptable_public_key`, or equi
 after #34 is approved. Trust-root activation stays held until that is decided and implemented. The contract text should also
 state the canonical base64 spelling explicitly (section 1; this PR does not edit hash-pinned contract files).
 
+## 2d. Recorded dependencies, follow-ups and non-claims
+
+- **Remaining dependency on #26.** #34 alone does NOT establish strict prime-order Ed25519 key admission. The strict cryptographic
+  verifier and subgroup / mixed-order handling are #26's responsibility; `acceptable_public_key` composes after built-in
+  admission (through `key_admission`) and can only further restrict.
+- **Contract follow-up.** The hash-pinned r08-v2 contract should state the canonical RFC 4648 section 4 base64 signature
+  spelling explicitly. It is not edited here.
+- **Open Architect decision (M1).** Add a v2-only wrapper entry point hardwiring `contract_version="r08-v2"` before any v2
+  parser lands (section 2.0-pre, "M1: OPEN ARCHITECT DECISION").
+- **Not production trust-root qualification.** This PR is builder-tested and AI-reviewed only; it is not independent
+  cryptographic review, not Tier 1, and not qualification of any production trust root.
+
 ## 3. Evidence
 
 - 257 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 104 mutation-suite tests (98 source mutants over

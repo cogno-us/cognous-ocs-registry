@@ -907,11 +907,14 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
         assert "family_version" not in [a.arg for a in fn.args.args + fn.args.kwonlyargs], fn.name
     diff = subprocess.run(["git", "diff", "--name-only", "origin/main...HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.split()
     forbidden = ("registry_successor/common.py", "registry_successor/families.py", "registry_successor/compose.py", "registry_successor/record.py",
-                 "registry_successor/selection.py", "registry_successor/verify.py", "docs/conformance/README.md", "tests/golden", "README.md")
+                 "registry_successor/selection.py", "docs/conformance/README.md", "tests/golden", "README.md")
     assert not [p for p in diff if p.startswith(forbidden)], diff
     # the only successor modules this PR may touch (Amendment 1 section 6.5): the identity module, the one reason registry and the explicit revision-2 path
     assert {p for p in diff if p.startswith("registry_successor/")} <= {"registry_successor/v2_policy_identity.py", "registry_successor/v2_codes.py",
-                                                                          "registry_successor/decision.py", "registry_successor/v2_token_table.py"}, diff
+                                                                          "registry_successor/decision.py", "registry_successor/v2_token_table.py",
+                                                                          # PR #34 (core verifier security) owns these; verify.py was removed from the forbidden list above for it
+                                                                          "registry_successor/verify.py", "registry_successor/key_admission.py",
+                                                                          "registry_successor/canonical_b64.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():
