@@ -413,6 +413,26 @@ def _fields_probe(mod):
     for bad in (dataclasses.replace(parsed, record=DS(parsed.record)), dataclasses.replace(parsed, ok=1),
                 dataclasses.replace(parsed, record_digest=SS(parsed.record_digest))):
         assert rrun(bad).ok is False
+    # FU-2: snapshot-version ingest bound, typed evidence
+    for v_ok in (1, 2**53 - 1):
+        assert run(version=v_ok).ok is True
+    for v_bad in (0, -1, 2**53, 2**60, True, 1.0, "1", None, LInt(1)):
+        rep = run(version=v_bad, snapshot_id="bad id")
+        assert rep.ok is False and rep.code == "trust_snapshot_invalid", v_bad
+        assert (rep.detail_code, rep.detail_stage, rep.detail_member) == ("trust_snapshot_malformed", "ingest", "trust_snapshot_version"), v_bad
+    other = run(snapshot_id="bad id")
+    assert other.detail_stage is None and other.detail_member is None
+    # v2 entry point hardwires the version
+    ident = b"\x01" + b"\x00" * 31
+    isig0 = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + signing_input(stmt)).digest()).decode("ascii")
+    ienv0 = r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False)
+    ienv0["signatures"] = [{"alg": "ed25519", "key_id": "key-test-1", "signature": isig0}]
+    isel0 = selection.parse_selection_envelope(r.dumps(ienv0))
+    it0 = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", ident, (grant,)),))
+    for pol in (None, lambda a, k: True):
+        assert mod.verify_selection_v2(isel0, ctx, it0, _V64(), r.NOW, None, pol).code == "trust_snapshot_invalid"
+    assert mod.verify_selection_v2(base, ctx, mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (mod.IssuerEntry(
+        "key-test-1", "issuer-test-1", "ed25519", key, (grant,)),)), _V64(), r.NOW, None, lambda a, k: False).detail_cause == "policy_refused"
     # L1b
     ident = b"\x01" + b"\x00" * 31
     isig = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + signing_input(stmt)).digest()).decode("ascii")
@@ -529,7 +549,14 @@ MUTANTS = {
         "floor_type_dropped": [("or type(floor) is not int or floor < 1", "or floor < 1")],
         "min_epochs_mapping_allowed": [("    if type(min_epochs) is dict:", "    if isinstance(min_epochs, dict):")],
         "min_epochs_key_type_dropped": [("if type(sid) is not str or type(floor)", "if type(floor)")],
-        "version_type_dropped": [("    if type(version) is not int or version < 1:", "    if version < 1:")],
+        "version_type_dropped": [("    if type(version) is not int or not 1 <= version <= MAX_SNAPSHOT_VERSION:", "    if version < 1:")],
+        "version_upper_bound_dropped": [("not 1 <= version <= MAX_SNAPSHOT_VERSION", "version < 1")],
+        "version_upper_bound_off_by_one": [("<= MAX_SNAPSHOT_VERSION", "< MAX_SNAPSHOT_VERSION")],
+        "version_bound_too_high": [("MAX_SNAPSHOT_VERSION = 2**53 - 1", "MAX_SNAPSHOT_VERSION = 2**60")],
+        "version_ingest_untyped": [("return _IngestRefusal(\"ingest\", \"trust_snapshot_version\")", "return None")],
+        "ingest_stage_dropped": [("(DETAIL_TRUST_SNAPSHOT_MALFORMED, None, ingest.stage, ingest.member))", "(DETAIL_TRUST_SNAPSHOT_MALFORMED, None))")],
+        "v2_entry_legacy_version": [("record, key_admission, V2_CONTRACT)", "record, key_admission, LEGACY_CONTRACT)")],
+        "v2_entry_drops_policy": [("record, key_admission, V2_CONTRACT)", "record, None, V2_CONTRACT)")],
         "snapshot_id_type_dropped": [("    if type(snapshot_id) is not str or not c.valid_token(snapshot_id):", "    if not c.valid_token(snapshot_id):")],
         "valid_until_type_dropped": [("    if type(valid_until) is not str:\n        return None\n", "")],
         "issuers_container_loose": [("_exact_items(issuers_in) if type(issuers_in) in (list, tuple) else None", "_exact_items(issuers_in)")],
@@ -562,8 +589,8 @@ MUTANTS = {
     "decision": (_decision_probe, {
         "contract_version_not_forwarded": [("rec, key_admission, contract_version)", "rec, key_admission)")],
         "key_admission_not_forwarded": [("rec, key_admission, contract_version)", "rec, None, contract_version)")],
-        "typed_detail_dropped": [("typed = (dc, cause if type(cause) is str else None) if type(dc) is str else None", "typed = None")],
-        "typed_cause_dropped": [("typed = (dc, cause if type(cause) is str else None) if type(dc) is str else None", "typed = (dc, None) if type(dc) is str else None")],
+        "typed_detail_dropped": [("                     if type(dc) is str else None)", "                     if False else None)")],
+        "typed_cause_dropped": [("typed = ((dc, cause if type(cause) is str else None) +", "typed = ((dc, None) +")],
     }),
 }
 

@@ -41,7 +41,8 @@ def test_a1_baseline_applies():
 
 def test_a1_no_public_report_taking_interface():
     assert not hasattr(decision, "decide_policy")
-    assert [n for n in dir(decision) if not n.startswith("_") and "decide" in n] == ["verify_and_decide"]
+    # the only public decide entry points take raw TEXT, never a report: the legacy one and the v2-only one (hardwired contract_version, delegates to the first)
+    assert [n for n in dir(decision) if not n.startswith("_") and "decide" in n] == ["verify_and_decide", "verify_and_decide_v2"]
 
 
 @pytest.mark.parametrize("fake", [object(), {"ok": True}, 1, b"x", ["x"]])

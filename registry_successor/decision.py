@@ -36,13 +36,16 @@ class TypedPolicyDecision(PolicyDecision):
     whose verification report carried one; all other decisions keep the base class and its frozen serialized shape."""
     detail_code: Optional[str] = None
     detail_cause: Optional[str] = None
+    detail_stage: Optional[str] = None   # diagnostic metadata only (never in a digest)
+    detail_member: Optional[str] = None
 
 
 def _refusal(participation: Any, caller: Any, code: str, detail: str = "", typed: Any = None) -> PolicyDecision:
     base = _plain_refusal(participation, caller, code, detail)
     if typed is None:
         return base
-    return TypedPolicyDecision(*(getattr(base, f.name) for f in fields(PolicyDecision)), detail_code=typed[0], detail_cause=typed[1])
+    return TypedPolicyDecision(*(getattr(base, f.name) for f in fields(PolicyDecision)), detail_code=typed[0], detail_cause=typed[1],
+                               detail_stage=typed[2] if len(typed) > 2 else None, detail_member=typed[3] if len(typed) > 2 else None)
 
 
 def _plain_refusal(participation: Any, caller: Any, code: str, detail: str = "") -> PolicyDecision:
@@ -82,7 +85,9 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) 
         if getattr(report, "ok", False) is not True:
             code = getattr(report, "code", None)
             dc, cause = getattr(report, "detail_code", None), getattr(report, "detail_cause", None)
-            typed = (dc, cause if type(cause) is str else None) if type(dc) is str else None
+            stage, member = getattr(report, "detail_stage", None), getattr(report, "detail_member", None)
+            typed = ((dc, cause if type(cause) is str else None) + ((stage, member) if type(stage) is str and type(member) is str else ())
+                     if type(dc) is str else None)
             return _refusal(participation, caller, code if code in c.CODES else "selection_missing", typed=typed)
         if getattr(report, "participation", None) != participation:
             return _refusal(participation, caller, "participation_mismatch",
@@ -138,3 +143,12 @@ def verify_and_decide(participation: Any, caller: Any, record_text: Any, selecti
         return _decide_verified(participation, caller, rec, report)
     except Exception:  # defensive: never an acceptance on unexpected input
         return _refusal(participation if participation in c.PARTICIPATION else "required", caller, "selection_missing", "unexpected input")
+
+
+def verify_and_decide_v2(participation: Any, caller: Any, record_text: Any, selection_text: Any, context: Any,
+                         trust: Any, verifier: Any, now: Any, key_admission: Any = None) -> PolicyDecision:
+    """The r08-v2 verify-and-decide entry point: no `contract_version` parameter, hardwired to "r08-v2" (mandatory key
+    admission, canonical base64, exact-type private copies). Delegates to `verify_and_decide`, the single implementation.
+    Selection TEXT is still parsed by the existing r08-v1 envelope parser (no v2 parser exists yet)."""
+    return verify_and_decide(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission,
+                             verify_mod.V2_CONTRACT)

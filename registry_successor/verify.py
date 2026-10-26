@@ -27,7 +27,7 @@ SUPPORTED_ALG = "ed25519"
 
 __all__ = [
     "ExpectedContext", "AuthorityGrant", "IssuerEntry", "TrustSnapshot", "SignatureVerifier", "VerificationReport",
-    "LAYERS", "verify_selection", "TypedVerificationReport",
+    "LAYERS", "verify_selection", "verify_selection_v2", "TypedVerificationReport", "MAX_SNAPSHOT_VERSION",
 ]
 
 
@@ -86,6 +86,8 @@ class TypedVerificationReport(VerificationReport):
     shape is untouched."""
     detail_code: Optional[str] = None    # DETAIL_KEY_ADMISSION_INVALID or DETAIL_TRUST_SNAPSHOT_MALFORMED
     detail_cause: Optional[str] = None   # stable cause label (e.g. key_small_order, key_length, policy_refused)
+    detail_stage: Optional[str] = None   # diagnostic metadata only (e.g. "ingest"); never part of any digest
+    detail_member: Optional[str] = None  # the member the typed detail is about (e.g. "trust_snapshot_version")
 
 
 LEGACY_CONTRACT = "r08-v1"
@@ -126,6 +128,18 @@ def _private_entry(entry: Any) -> Optional[IssuerEntry]:
             return None
         grants.append(AuthorityGrant(*fields))
     return IssuerEntry(key_id, issuer_id, alg, public_key, tuple(grants))
+
+
+MAX_SNAPSHOT_VERSION = 2**53 - 1  # canonical snapshot-version representation bound (N-10(c)): 1 .. 2**53 - 1 inclusive
+
+
+class _IngestRefusal:
+    """Marker returned by `_private_trust` (mandatory path only) when a member is refused at INGESTION, before the snapshot is
+    used in projection or authority evaluation. Diagnostic metadata only: stage and member never enter any canonical digest."""
+    __slots__ = ("stage", "member")
+
+    def __init__(self, stage: str, member: str):
+        self.stage, self.member = stage, member
 
 
 class _NotSnapshottable(Exception):
@@ -173,16 +187,16 @@ def _exact_items(container: Any) -> Optional[tuple]:
     return tuple(container)
 
 
-def _private_trust(trust: Any) -> Optional[dict]:
+def _private_trust(trust: Any):
     """Mandatory path: validate EXACT types and take ONE read of every TrustSnapshot field; everything later uses only the
     returned copy. Same acceptance rules as the legacy normalizer apart from the exact-type requirements."""
     if type(trust) is not TrustSnapshot:
         return None
     snapshot_id, version, valid_until, issuers_in = trust.snapshot_id, trust.version, trust.valid_until, trust.issuers
     revoked_key_ids, revoked_selections, min_epochs = trust.revoked_key_ids, trust.revoked_selections, trust.min_epochs
+    if type(version) is not int or not 1 <= version <= MAX_SNAPSHOT_VERSION:  # ingest bound FIRST: strict int, no bool/float/str/subclass
+        return _IngestRefusal("ingest", "trust_snapshot_version")
     if type(snapshot_id) is not str or not c.valid_token(snapshot_id):
-        return None
-    if type(version) is not int or version < 1:
         return None
     if type(valid_until) is not str:
         return None
@@ -504,9 +518,15 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
             mark("record_binding", *(bad if bad else (None,)))
 
     trust = _normalize_trust(trust_in, mandatory)
+    ingest = trust if isinstance(trust, _IngestRefusal) else None
+    if ingest is not None:
+        trust = None
     admission = None if trust is None else _admission_failure(trust, key_admission, mandatory)
     if trust_in is None:
         mark("trust_snapshot", "trust_snapshot_missing", "no trust snapshot supplied")
+    elif ingest is not None:
+        mark("trust_snapshot", "trust_snapshot_invalid", "trust snapshot is malformed",
+             (DETAIL_TRUST_SNAPSHOT_MALFORMED, None, ingest.stage, ingest.member))
     elif trust is None:
         mark("trust_snapshot", "trust_snapshot_invalid", "trust snapshot is malformed",
              (DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None)  # legacy r08-v1 shape stays byte-frozen
@@ -580,7 +600,10 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
     ok = first is None and required_ok and (record is None or layers["record_binding"] == PASS)
     klass, extra = VerificationReport, {}
     if not ok and first in typed:
-        klass, extra = TypedVerificationReport, {"detail_code": typed[first][0], "detail_cause": typed[first][1]}
+        td = typed[first]
+        klass, extra = TypedVerificationReport, {"detail_code": td[0], "detail_cause": td[1]}
+        if len(td) == 4:
+            extra.update(detail_stage=td[2], detail_member=td[3])
     return klass(
         ok=ok, code=None if ok else codes.get(first, "selection_missing"),
         detail="" if ok else details.get(first, "verification incomplete"),
@@ -590,6 +613,13 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
         **extra,
         bound_record_digest=(statement.get("record") or {}).get("record_digest")
         if statement is not None and layers["record_binding"] == PASS and isinstance(statement.get("record"), dict) else None)
+
+
+def verify_selection_v2(selection, context, trust, verifier, now, record=None, key_admission=None) -> VerificationReport:
+    """The r08-v2 verification entry point. It takes NO `contract_version` parameter and hardwires `V2_CONTRACT`, so a caller
+    can neither omit the version nor substitute one, and nothing in the selection or envelope can steer it to the legacy
+    path. It delegates to `verify_selection`, the single verification and admission implementation: no second authority."""
+    return verify_selection(selection, context, trust, verifier, now, record, key_admission, V2_CONTRACT)
 
 
 def verify_selection(selection, context, trust, verifier, now, record=None, key_admission=None,
