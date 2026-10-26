@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Protocol
 
 from registry_successor import common as c
+from registry_successor import selection as sel_mod
 from registry_successor.canonical_b64 import decode_canonical_base64
 from registry_successor.common import ExpectedContext
 from registry_successor.key_admission import (
@@ -100,7 +101,8 @@ def _admission_mandatory(selection: Any, contract_version: Any) -> bool:
     if type(envelope) is not dict:
         # Fail toward mandatory: a dict subclass, list, or any other object could declare or hide a version. Only a
         # selection that is not ok with NO envelope at all (structurally refused earlier, legacy shape) stays legacy.
-        return envelope is not None or getattr(selection, "ok", False) is True
+        # only a selection whose `ok` is exactly False/absent with no envelope keeps the frozen legacy shape
+        return envelope is not None or getattr(selection, "ok", False) is not False
     declared = envelope.get("contract_version")
     return type(declared) is not str or declared != LEGACY_CONTRACT  # only an exact-str r08-v1 envelope may be legacy
 
@@ -126,14 +128,164 @@ def _private_entry(entry: Any) -> Optional[IssuerEntry]:
     return IssuerEntry(key_id, issuer_id, alg, public_key, tuple(grants))
 
 
+class _NotSnapshottable(Exception):
+    pass
+
+
+def _json_copy(value: Any, depth: int = 0) -> Any:
+    """Mandatory path: private deep copy of a JSON-shaped value using EXACT builtin types only (dict with exact-str keys,
+    list, tuple, str, int, bool, None). Any subclass, float, set, bytes or other object raises `_NotSnapshottable`, so a
+    stateful or lying object can never reach a later decision. Each node is read once."""
+    if depth > 32:
+        raise _NotSnapshottable()
+    t = type(value)
+    if t is str or t is bool or value is None:
+        return value
+    if t is int:
+        return int(value)
+    if t is dict:
+        out = {}
+        for k, v in list(value.items()):
+            if type(k) is not str:
+                raise _NotSnapshottable()
+            out[k] = _json_copy(v, depth + 1)
+        return out
+    if t is list or t is tuple:
+        return t(_json_copy(v, depth + 1) for v in list(value))
+    raise _NotSnapshottable()
+
+
+def _exact_items(container: Any) -> Optional[tuple]:
+    """One read of an exact list/tuple/set/frozenset into an immutable tuple, else None."""
+    if type(container) not in (list, tuple, set, frozenset):
+        return None
+    return tuple(container)
+
+
+def _private_trust(trust: Any) -> Optional[dict]:
+    """Mandatory path: validate EXACT types and take ONE read of every TrustSnapshot field; everything later uses only the
+    returned copy. Same acceptance rules as the legacy normalizer apart from the exact-type requirements."""
+    if type(trust) is not TrustSnapshot:
+        return None
+    snapshot_id, version, valid_until, issuers_in = trust.snapshot_id, trust.version, trust.valid_until, trust.issuers
+    revoked_key_ids, revoked_selections, min_epochs = trust.revoked_key_ids, trust.revoked_selections, trust.min_epochs
+    if type(snapshot_id) is not str or not c.valid_token(snapshot_id):
+        return None
+    if type(version) is not int or version < 1:
+        return None
+    if type(valid_until) is not str:
+        return None
+    valid_until_dt = c.parse_timestamp(valid_until)
+    if valid_until_dt is None:
+        return None
+    entries = _exact_items(issuers_in) if type(issuers_in) in (list, tuple) else None
+    if entries is None:
+        return None
+    issuers: dict = {}
+    for raw in entries:
+        entry = _private_entry(raw)
+        if entry is None or not c.valid_token(entry.key_id) or not c.valid_token(entry.issuer_id) or entry.key_id in issuers:
+            return None
+        if not all(c.valid_token(v) for g in entry.authority for v in
+                   (g.consumer_id, g.tenant, g.institution, g.authority_domain, g.operation)):
+            return None
+        issuers[entry.key_id] = (entry, entry.authority)
+    keys = _exact_items(revoked_key_ids)
+    if keys is None or any(type(k) is not str for k in keys):
+        return None
+    sels = _exact_items(revoked_selections)
+    if sels is None:
+        return None
+    revoked_sel = set()
+    for item in sels:
+        if not (type(item) is tuple and len(item) == 2 and type(item[0]) is str and type(item[1]) is int):
+            return None
+        revoked_sel.add((item[0], int(item[1])))
+    if type(min_epochs) is dict:
+        pairs = tuple(min_epochs.items())
+    elif type(min_epochs) in (list, tuple):
+        pairs = tuple(min_epochs)
+    else:
+        return None
+    floors: dict = {}
+    for item in pairs:
+        if type(item) is not tuple or len(item) != 2:
+            return None
+        sid, floor = item
+        if type(sid) is not str or type(floor) is not int or floor < 1 or sid in floors:
+            return None
+        floors[sid] = int(floor)
+    return {"issuers": issuers, "revoked_keys": frozenset(keys), "revoked_selections": revoked_sel,
+            "floors": floors, "valid_until": valid_until_dt}
+
+
+def _private_selection(selection: Any) -> Any:
+    """Mandatory path: an exact-type deep private copy of the parsed selection (statement, digest, signatures). A selection
+    whose `ok` is not exactly True, or whose content is not exact JSON-shaped data, becomes a structurally refused result."""
+    ok = getattr(selection, "ok", False)
+    code = getattr(selection, "code", None)
+    code = code if type(code) is str and code in c.CODES else None
+    if ok is not True:
+        return sel_mod.SelectionResult(False, code or "field_invalid", "selection is not ok")
+    try:
+        statement = _json_copy(getattr(selection, "statement", None))
+        signatures = _json_copy(getattr(selection, "signatures", None))
+        digest = getattr(selection, "statement_digest", None)
+        if type(digest) is not str or type(statement) is not dict or type(signatures) not in (list, tuple):
+            raise _NotSnapshottable()
+    except Exception:
+        return sel_mod.SelectionResult(False, "field_invalid", "selection content is not exact data")
+    return sel_mod.SelectionResult(True, None, "", None, statement, digest, signatures)
+
+
+def _private_record(record: Any) -> Any:
+    """Mandatory path: exact-type deep private copy of a validated record result, or a refused stand-in."""
+    from types import SimpleNamespace
+    refused = SimpleNamespace(ok=False, record=None, record_digest=None)
+    if record is None:
+        return None
+    try:
+        if getattr(record, "ok", False) is not True:
+            return refused
+        body, digest = _json_copy(getattr(record, "record", None)), getattr(record, "record_digest", None)
+        if type(body) is not dict or type(digest) is not str:
+            return refused
+        return SimpleNamespace(ok=True, record=body, record_digest=digest)
+    except Exception:
+        return refused
+
+
+def _private_context(context: Any) -> Any:
+    """Mandatory path: exact ExpectedContext with exact-str members, else None (scope refusal)."""
+    if type(context) is not ExpectedContext:
+        return None
+    members = (context.consumer_id, context.tenant, context.institution, context.authority_domain, context.operation)
+    if any(type(m) is not str for m in members):
+        return None
+    return ExpectedContext(*members)
+
+
+def _private_now(now: Any) -> Optional[datetime.datetime]:
+    """Mandatory path: exact aware datetime read once, normalized to a plain UTC datetime (no stateful tzinfo)."""
+    if type(now) is not datetime.datetime:
+        return None
+    try:
+        offset = now.utcoffset()
+        if now.tzinfo is None or offset is None:
+            return None
+        return (now.replace(tzinfo=None) - offset).replace(tzinfo=datetime.timezone.utc)
+    except Exception:
+        return None
+
+
 def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
     """Return a normalized view of a well-formed snapshot, or None. On the mandatory-admission path a missing, empty or
     wrong-type public key is NOT a shape error here: it is left for `_admission_failure` so it gets the typed
     key_admission_invalid detail (key_type / key_length). The legacy path is unchanged."""
+    if mandatory:
+        return _private_trust(trust)  # exact types, one read per field; the legacy code below is untouched
     if not isinstance(trust, TrustSnapshot):
         return None
-    if mandatory and type(trust) is not TrustSnapshot:
-        return None  # exact type only on the mandatory path: no subclass with computed attributes
     if not c.valid_token(trust.snapshot_id) or not c.is_int(trust.version) or trust.version < 1:
         return None
     if c.parse_timestamp(trust.valid_until) is None:
@@ -142,13 +294,9 @@ def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
         return None
     issuers: dict = {}
     for entry in trust.issuers:
-        if mandatory:
-            entry = _private_entry(entry)  # ONE validated read of every attribute; later steps use only this copy
-            if entry is None:
-                return None
         if not isinstance(entry, IssuerEntry) or not c.valid_token(entry.key_id) or not c.valid_token(entry.issuer_id):
             return None
-        if not isinstance(entry.alg, str) or (not mandatory and (not isinstance(entry.public_key, bytes) or not entry.public_key)):
+        if not isinstance(entry.alg, str) or (not isinstance(entry.public_key, bytes) or not entry.public_key):
             return None
         if entry.key_id in issuers or not isinstance(entry.authority, (tuple, list)):
             return None
@@ -318,7 +466,12 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
             if typed_detail is not None:
                 typed[layer] = typed_detail
 
-    when = _aware(now)
+    mandatory = _admission_mandatory(selection, contract_version)  # decided ONCE from the caller's original objects
+    if mandatory:  # exact types + one read: every later decision uses these private copies only
+        selection, record, context = _private_selection(selection), _private_record(record), _private_context(context)
+        when = _private_now(now)
+    else:
+        when = _aware(now)
     statement = _statement_view(selection)
     if statement is None:
         given = getattr(selection, "code", None)
@@ -333,7 +486,6 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
             bad = _record_binding(statement, record)
             mark("record_binding", *(bad if bad else (None,)))
 
-    mandatory = _admission_mandatory(selection, contract_version)
     trust = _normalize_trust(trust_in, mandatory)
     admission = None if trust is None else _admission_failure(trust, key_admission, mandatory)
     if trust_in is None:

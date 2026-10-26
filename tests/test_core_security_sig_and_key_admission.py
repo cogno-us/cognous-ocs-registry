@@ -840,3 +840,198 @@ def test_m1_envelope_declared_v2_forces_mandatory_even_when_the_argument_is_omit
     assert verify.verify_selection(forged, CTX, _trust(IDENTITY), Sig64Verifier(), r.NOW).code == "trust_snapshot_invalid"
     # residual risk (documented, not changed): a v2 caller handing over an envelope that DECLARES r08-v1 and omitting the argument is legacy
     assert verify.verify_selection(sel, CTX, _trust(IDENTITY), Sig64Verifier(), r.NOW).ok is True
+
+
+# ---------------------------------------------------------------- systematic exact-type / single-read coverage (round 2)
+
+def _v2_run(*, selection_obj=None, trust_obj=None, context=None, now=None, record=None, **trust_over):
+    """A fully valid r08-v2 verification with one field replaced; returns the report."""
+    key = LEGIT_KEYS[0]
+    sel = selection_obj if selection_obj is not None else _signed_selection(_good_signature_for(key))[1]
+    grant = verify.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+    fields = dict(snapshot_id="trust-snap-test-1", version=1, valid_until="2026-12-31T00:00:00Z",
+                  issuers=(verify.IssuerEntry(KEY, "issuer-test-1", "ed25519", key, (grant,)),))
+    fields.update(trust_over)
+    t = trust_obj if trust_obj is not None else verify.TrustSnapshot(**fields)
+    return verify.verify_selection(sel, context or CTX, t, Sig64Verifier(), now or r.NOW, record, contract_version=V2)
+
+
+class _FlipList(list):
+    """Reports the revoked key on the first pass and nothing on later passes."""
+    n = 0
+
+    def __iter__(self):
+        _FlipList.n += 1
+        return iter([KEY]) if _FlipList.n == 1 else iter([])
+
+
+class _LyingInt(int):
+    def __lt__(self, other):
+        return False
+
+    def __gt__(self, other):
+        return True
+
+    def __ge__(self, other):
+        return False
+
+    def __le__(self, other):
+        return True
+
+
+class _StrSub(str):
+    pass
+
+
+class _TupleSub(tuple):
+    pass
+
+
+def test_baseline_field_probe_is_ok():
+    assert _v2_run().ok is True
+
+
+@pytest.mark.parametrize("over,expected_code", [
+    ({"revoked_key_ids": [KEY]}, "issuer_key_revoked"),
+    ({"revoked_key_ids": (KEY,)}, "issuer_key_revoked"),
+    ({"revoked_key_ids": frozenset({KEY})}, "issuer_key_revoked"),
+    ({"revoked_selections": frozenset({("sel-test-1", 1)})}, None),   # exact containers accepted (code depends on fixture ids)
+    ({"min_epochs": {"sel-test-1": 5}}, "selection_epoch_stale"),
+    ({"min_epochs": (("sel-test-1", 5),)}, "selection_epoch_stale"),
+])
+def test_exact_containers_are_honoured_on_the_mandatory_path(over, expected_code):
+    rep = _v2_run(**over)
+    if expected_code is not None:
+        assert rep.ok is False and rep.code == expected_code
+
+
+def _stateful_cases():
+    flip = _FlipList([KEY])
+    return [
+        ("stateful revoked_key_ids list subclass", {"revoked_key_ids": flip}),
+        ("revoked_key_ids dict", {"revoked_key_ids": {KEY: 1}}),
+        ("revoked_key_ids with str subclass", {"revoked_key_ids": [_StrSub(KEY)]}),
+        ("revoked_key_ids tuple subclass", {"revoked_key_ids": _TupleSub((KEY,))}),
+        ("revoked_selections tuple-subclass item", {"revoked_selections": [_TupleSub(("sel-test-1", 1))]}),
+        ("revoked_selections lying int epoch", {"revoked_selections": [("sel-test-1", _LyingInt(1))]}),
+        ("revoked_selections bool epoch", {"revoked_selections": [("sel-test-1", True)]}),
+        ("min_epochs lying int floor", {"min_epochs": {"sel-test-1": _LyingInt(5)}}),
+        ("min_epochs bool floor", {"min_epochs": {"sel-test-1": True}}),
+        ("min_epochs mapping subclass", {"min_epochs": type("M", (dict,), {})({"sel-test-1": 5})}),
+        ("min_epochs str-subclass key", {"min_epochs": {_StrSub("sel-test-1"): 5}}),
+        ("version lying int", {"version": _LyingInt(1)}),
+        ("version bool", {"version": True}),
+        ("snapshot_id str subclass", {"snapshot_id": _StrSub("trust-snap-test-1")}),
+        ("valid_until str subclass", {"valid_until": _StrSub("2026-12-31T00:00:00Z")}),
+        ("issuers tuple subclass", {"issuers": _TupleSub(())}),
+    ]
+
+
+@pytest.mark.parametrize("label,over", _stateful_cases(), ids=[x[0] for x in _stateful_cases()])
+def test_every_trust_snapshot_field_refuses_subclasses_and_lying_objects_on_the_mandatory_path(label, over):
+    _FlipList.n = 0
+    rep = _v2_run(**over)
+    assert rep.ok is False and rep.code == "trust_snapshot_invalid" and rep.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED, label
+
+
+class _DictSub(dict):
+    pass
+
+
+class _ListSub(list):
+    pass
+
+
+def _selection_cases():
+    base = _signed_selection(_good_signature_for(LEGIT_KEYS[0]))[1]
+    import dataclasses
+
+    def repl(**kw):
+        return dataclasses.replace(base, **kw)
+    stmt = dict(base.statement)
+    flips = {"n": 0}
+
+    class FlipDict(dict):
+        def get(self, k, d=None):
+            flips["n"] += 1
+            return dict.get(self, k, d) if flips["n"] < 3 else "other"
+    return [
+        ("statement dict subclass", repl(statement=_DictSub(stmt))),
+        ("statement stateful get", repl(statement=FlipDict(stmt))),
+        ("statement nested dict subclass", repl(statement=dict(stmt, scope=_DictSub(stmt["scope"])))),
+        ("statement nested str subclass", repl(statement=dict(stmt, operation=_StrSub(stmt["operation"])))),
+        ("statement nested lying int epoch", repl(statement=dict(stmt, epoch=_LyingInt(stmt["epoch"])))),
+        ("statement float", repl(statement=dict(stmt, epoch=1.0))),
+        ("statement_digest str subclass", repl(statement_digest=_StrSub(base.statement_digest))),
+        ("signatures list subclass", repl(signatures=_ListSub(base.signatures))),
+        ("signature entry dict subclass", repl(signatures=[_DictSub(base.signatures[0])])),
+        ("signature text str subclass", repl(signatures=[dict(base.signatures[0], signature=_StrSub(base.signatures[0]["signature"]))])),
+        ("ok is 1", repl(ok=1)),
+        ("ok is 'yes'", repl(ok="yes")),
+        ("ok is a list", repl(ok=[1])),
+    ]
+
+
+@pytest.mark.parametrize("label,sel", _selection_cases(), ids=[x[0] for x in _selection_cases()])
+def test_every_selection_field_must_be_exact_data_on_the_mandatory_path(label, sel):
+    rep = _v2_run(selection_obj=sel)
+    assert rep.ok is False and rep.authenticated is False, label
+    assert rep.layers["structural"] == verify.REFUSE, label
+
+
+def test_context_and_now_and_record_are_exact_typed_single_read_copies_on_the_mandatory_path():
+    import datetime
+
+    class CtxSub(c.ExpectedContext):
+        pass
+
+    class DT(datetime.datetime):
+        pass
+
+    class FlipTz(datetime.tzinfo):
+        n = 0
+
+        def utcoffset(self, dt):
+            FlipTz.n += 1
+            return datetime.timedelta(0) if FlipTz.n == 1 else datetime.timedelta(days=400)
+
+        def dst(self, dt):
+            return None
+
+        def tzname(self, dt):
+            return "x"
+    assert _v2_run(context=CtxSub("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")).code == "selection_scope_mismatch"
+    assert _v2_run(context=c.ExpectedContext(_StrSub("consumer-test"), "tenant-a", "inst-a", "domain-a", "op-test")).code == "selection_scope_mismatch"
+    n = r.NOW
+    sub_now = DT(n.year, n.month, n.day, n.hour, n.minute, n.second, tzinfo=n.tzinfo)
+    assert _v2_run(now=sub_now).code == "time_unavailable"
+    FlipTz.n = 0
+    flip_now = datetime.datetime(n.year, n.month, n.day, n.hour, n.minute, n.second, tzinfo=FlipTz())
+    assert _v2_run(now=flip_now).ok is True      # utcoffset read once (1st value 0) -> same instant as intended
+    assert FlipTz.n == 1
+    # record result: subclass dict / str digest / stateful ok are refused as an invalid record
+    rec = r.make_record()
+    parsed = __import__("registry_successor.record", fromlist=["x"]).validate_record_text(r.dumps(rec))
+    stmt = r.make_statement(rec, participation="required")
+    sel = selection.parse_selection_envelope(r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=LEGIT_KEYS[0], signed=True)))
+    import dataclasses
+    for bad in (dataclasses.replace(parsed, record=_DictSub(parsed.record)), dataclasses.replace(parsed, ok=1),
+                dataclasses.replace(parsed, record_digest=_StrSub(parsed.record_digest))):
+        rep = verify.verify_selection(sel, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW, bad, contract_version=V2)
+        assert rep.ok is False and rep.layers["record_binding"] == verify.REFUSE
+    good = verify.verify_selection(sel, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW, parsed, contract_version=V2)
+    assert good.ok is True and good.layers["record_binding"] == verify.PASS
+
+
+def test_l1b_truthy_non_true_ok_without_an_envelope_is_mandatory_not_legacy():
+    import dataclasses
+    base = _signed_selection(_good_signature_for(IDENTITY))[1]
+    t = _trust(IDENTITY)
+    for ok in (1, "yes", [1], 2.0):
+        forged = dataclasses.replace(base, ok=ok, envelope=None)
+        assert verify._admission_mandatory(forged, "r08-v1") is True, ok
+        assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW).ok is False
+    for ok in (False, None):
+        genuine_shape = dataclasses.replace(base, ok=ok, envelope=None)
+        assert verify._admission_mandatory(genuine_shape, "r08-v1") is (ok is not False)
+    assert verify._admission_mandatory(selection.parse_selection_envelope("not json"), "r08-v1") is False

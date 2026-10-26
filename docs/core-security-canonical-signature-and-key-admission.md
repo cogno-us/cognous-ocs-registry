@@ -62,24 +62,56 @@ and `__class__` tricks are never consulted:
 | `str` subclass or instance with lying `__eq__`/`__str__`/`__class__` | mandatory (type checked first) |
 | exact `str` "r08-v1" with an envelope declaring "r08-v2", or any non-exact-`str` envelope version (missing, `None`, `bytes`, `int`, `UserString`) | mandatory (envelope overrides the argument) |
 | exact `str` "r08-v1" with an envelope that is a `dict` subclass, a list, a `str`, an `int` or any other non-exact-`dict` (selection `ok`) | mandatory (fail toward mandatory) |
-| exact `str` "r08-v1" with a selection that is not `ok` and has NO envelope (structurally refused; frozen legacy shape) | legacy (golden-corpus compatibility only; refused at the structural layer anyway) |
-| exact `str` "r08-v1" with an exact `dict` envelope whose `contract_version` is an exact `str` "r08-v1" | legacy: callback-optional (the only skip for an ok selection) |
+| exact `str` "r08-v1" with a selection whose `ok` is exactly `False` and that has NO envelope (the parser's failure shape; structurally refused) | legacy (golden-corpus compatibility only; refused at the structural layer anyway) |
+| exact `str` "r08-v1", no envelope, `ok` anything else (`None`, `1`, `"yes"`, `[1]`) | mandatory (such a selection would be evaluated, so it must not skip admission) |
+| exact `str` "r08-v1" with an exact `dict` envelope whose `contract_version` is an exact `str` "r08-v1" | legacy: callback-optional (the only skip for a selection that would be evaluated) |
 
-**Single read of trust-snapshot entries (M2).** On the mandatory path `_normalize_trust` accepts only exact `TrustSnapshot`,
-`IssuerEntry`, `AuthorityGrant` and exact-`str` ids/alg, and `_private_entry` takes ONE read of each attribute into a private copy.
-Admission, the caller callback, `verifier.verify` and the authority layer all use that copy, never the live object, so a stateful
-subclass or a `str` subclass with a flipping `__eq__` cannot show admission one key and the verifier another. The public key may
-be any type at that point (classified `key_type`/`key_length` by admission). The legacy path keeps its original normalization.
+**Exact types and a single read for every field the mandatory path reads.** The mandatory decision is taken ONCE from the caller's
+original objects; then `_verify` replaces the selection, record, context and `now` with private copies (`_private_selection`,
+`_private_record`, `_private_context`, `_private_now`) and `_normalize_trust` returns `_private_trust`'s copy. Every later layer
+(admission, the caller callback, `verifier.verify`, authority, scope, time, revocation, epoch, the report) reads only those
+copies. Subclasses, stateful objects and lying `__eq__`/`__lt__`/`__iter__`/`utcoffset` therefore cannot show one value to one
+decision and another to the next. Anything not matching its rule is a typed refusal (`trust_snapshot_invalid` /
+`trust_snapshot_malformed`, `field_invalid`, `selection_scope_mismatch`, `time_unavailable`, `composition_record_invalid`);
+the legacy path keeps its original code and is not given these rules (it is not hardened against hostile objects).
 
-**Residual risk, M1 (analysis; default NOT changed).** `contract_version` defaults to "r08-v1". An envelope that declares
-"r08-v2" (or any non-exact-`str`/odd value) already forces the mandatory path whatever the argument says, so the future v2 parser
-inherits the gate as long as its envelopes carry `contract_version`. Residual: a v2 caller that omits the argument AND passes an
-envelope that declares "r08-v1" (or a parser that drops the member from an `ok` selection, which is mandatory, so only the first
-case) is treated as legacy. Today `selection.py` refuses non-r08-v1 envelopes, so no real r08-v2 envelope exists. Changing the
-default would break every legacy caller and the golden runner, so it is not done. Smallest options for the Architect, both
-non-breaking for the golden corpus: (a) a separate `verify_selection_v2` / `verify_and_decide_v2` wrapper that hardwires
-`contract_version="r08-v2"`, used by every v2 call site; or (b) make `contract_version` a required keyword on a new v2 entry
-point only. No code for either is added in this PR.
+| Object . field | type rule (mandatory path) | read |
+|---|---|---|
+| TrustSnapshot | `type(x) is TrustSnapshot` | fields read once into locals |
+| .snapshot_id, .valid_until | exact `str` (valid token / strict timestamp) | once |
+| .version | exact `int` (not `bool`, not a subclass), >= 1 | once |
+| .issuers | exact `list` or `tuple` | one `tuple()` copy |
+| IssuerEntry | `type(x) is IssuerEntry` | once, rebuilt as a private entry |
+| .key_id, .issuer_id, .alg | exact `str` | once |
+| .public_key | any type is read once; only exact non-empty `bytes` is admitted (`key_type` / `key_length` otherwise, any alg) | once |
+| .authority | exact `list` or `tuple` of exact `AuthorityGrant`, rebuilt as a tuple | once |
+| AuthorityGrant fields (5) | exact `str` each, rebuilt | once |
+| .revoked_key_ids | exact `list`/`tuple`/`set`/`frozenset` of exact `str` | one copy -> `frozenset` |
+| .revoked_selections | exact container of exact 2-`tuple` (exact `str`, exact `int`, not `bool`) | one copy -> `set` |
+| .min_epochs | exact `dict`, or exact `list`/`tuple` of exact 2-tuples; key exact `str`, floor exact `int` >= 1, no duplicates | one copy -> `dict` |
+| selection.ok | must be exactly `True` or the selection is a structural refusal | once |
+| selection.code | exact `str` in `CODES`, else `field_invalid` | once |
+| selection.statement, .signatures | deep copy of exact JSON data only: `dict` (exact-`str` keys), `list`, `tuple`, `str`, `int`, `bool`, `None`; floats, subclasses, sets, bytes, other objects refused; depth <= 32; statement must be an exact `dict`, signatures an exact `list`/`tuple` | each node once |
+| selection.statement_digest | exact `str` | once |
+| selection.envelope | read once, only to choose the path (exact `dict` + exact-`str` "r08-v1" or mandatory) | once |
+| record result `.ok`, `.record`, `.record_digest` | `ok is True`; `record` deep exact-JSON copy that is an exact `dict`; digest exact `str`; otherwise a refused record | once |
+| ExpectedContext | `type(x) is ExpectedContext` with 5 exact `str` members, rebuilt | once |
+| `now` | `type(x) is datetime.datetime`, aware; `utcoffset()` called once, normalised to a plain UTC `datetime` | once |
+
+Accepted limits: the `verifier` and the caller `key_admission` callable are trusted code and are not copied; exact built-in
+classes can still be monkey-patched or mutated through `object.__setattr__`, and nothing here defends against another thread
+doing that; a hostile selection object handed to the legacy path (exact `str` "r08-v1" with a falsy-`False` `ok`) is outside
+this hardening by design.
+
+**M1: OPEN ARCHITECT DECISION (not implemented; default unchanged).** `contract_version` defaults to "r08-v1". An envelope that
+declares "r08-v2", or declares any odd, missing or non-exact-`str` version, already forces the mandatory path whatever the argument
+says, so a future v2 parser inherits the gate if its envelopes carry `contract_version`. Residual: a caller that omits the
+argument and hands over an envelope declaring exactly "r08-v1" is treated as legacy, which is correct for a genuine r08-v1
+selection. Today `selection.py` refuses non-r08-v1 envelopes and no code calls the verifier with a v2 selection, so this is not
+reachable now. Changing the default would break the legacy callers and the golden runner. **Decision requested: add, before
+any v2 parser lands, a v2-only wrapper entry point that hardwires `contract_version="r08-v2"` (e.g. `verify_selection_v2` /
+`verify_and_decide_v2`, or a required keyword on a new v2 entry point), and make every v2 call site use it.** No code for it is in
+this PR.
 
 A callback can only add refusals on every path, and the built-in check is never disabled by omitting it. No reason code is
 added. Pinned by `test_every_contract_version_but_the_exact_legacy_str_is_mandatory`,
@@ -171,13 +203,13 @@ state the canonical base64 spelling explicitly (section 1; this PR does not edit
 
 ## 3. Evidence
 
-- 216 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 67 mutation-suite tests (62 source mutants over
+- 254 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 99 mutation-suite tests (93 source mutants over
   `canonical_b64`, `key_admission`, `verify`, `decision`, all killed, plus probes that pass on unmutated source and one documented
-  equivalent mutant), counted from the actual run on this head; full suite 2155 passed. Coverage: 16 noncanonical spellings
+  equivalent mutant), counted from the actual run on this head; full suite 2225 passed. Coverage: 16 noncanonical spellings
   through the full verifier pipeline (v2 strict, legacy stdlib rule); the 8 small-order encodings, the identity, 38 aliases, wrong
   lengths and types, 42 legitimate keys (RFC 8032 vectors 1 and 2 plus 40 derived by plain integer arithmetic); callback omission,
   `lambda: True` bypass attempts, composed and raising callbacks on the mandatory path; `contract_version` fail-closed values;
-  envelope-declared r08-v2 and non-exact-dict envelopes; stateful-entry and flipping-`alg` TOCTOU probes; valid signatures and
+  envelope-declared r08-v2 and non-exact-dict envelopes; stateful-entry, flipping-`alg`, stateful revoked-list, lying-int floor/epoch/version, statement/signature/record/context/`now` subclass probes (one per row of the field table); valid signatures and
   ordinary callers still applied; negative decisions for required and optional participation; typed-detail distinctness; legacy
   r08-v1 shape unchanged.
 - Limits: no real Ed25519 library is used in these tests; point arithmetic is a test-local transcription; only CPython.
