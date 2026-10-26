@@ -162,6 +162,6 @@ def verify_and_decide_v2(participation: Any, caller: Any, record_text: Any, sele
     """The r08-v2 verify-and-decide entry point: no `contract_version` parameter, hardwired to "r08-v2" (mandatory key
     admission, canonical base64, exact-type private copies). Delegates to `verify_and_decide`, the single implementation.
     Selection TEXT is parsed by the r08-v2 envelope parser (`v2_selection`); refusals use the closed `CODES_V2`. A withdrawal is
-    never an application: it is `required_policy_unavailable` / `overlay_not_applied` with `selection_withdrawn`."""
+    never an application: it is `required_policy_unavailable` / `overlay_not_applied` with the verifier's withdrawal code."""
     return _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission,
                         verify_mod.V2_CONTRACT, True)
