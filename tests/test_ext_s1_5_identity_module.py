@@ -914,7 +914,9 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
                                                                           "registry_successor/decision.py", "registry_successor/v2_token_table.py",
                                                                           # PR #34 (core verifier security) owns these; verify.py was removed from the forbidden list above for it
                                                                           "registry_successor/verify.py", "registry_successor/key_admission.py",
-                                                                          "registry_successor/canonical_b64.py"}, diff
+                                                                          "registry_successor/canonical_b64.py",
+                                                                          # P1 follow-up PR (FU-1, Architect final rulings): the r08-v2 family token validation uses the frozen predicate
+                                                                          "registry_successor/v2_token.py", "registry_successor/v2_f1ab.py", "registry_successor/v2_age_bounds.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():
