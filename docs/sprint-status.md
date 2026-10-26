@@ -1,5 +1,7 @@
 # Sprint status (the only live status document)
 
+**Current program (2026-10-26):** Operator-approved [static plan v1.4](plans/PROJECT_PLAN-v1.4.md), [adoption decision](decisions/2026-10-26-operator-adoption-plan-v1.4.md). **G0 planning/profile freeze ONLY authorized**; no implementation S01–S09 authorized. Historical v1.3 closeout: [program reconciliation](closeout/program-closeout-2026-10-26.md); historical S01–S06, R08 and EXT evidence below remains unchanged. **EXT-S4 implementation NOT AUTHORIZED. Tier 1 NOT STARTED. Release, publication and production HOLD.**
+
 Updated 2026-10-26 (program closeout reconciliation; Registry main `a3f2daff`; S01-S06 and R08 history preserved below; superseded "current action" text is marked HISTORICAL). Non-authorizing, builder-side. Release, publication and production are on HOLD.
 Governing plan since PR #20 (merge `ce00520f91bf3986a08b4d13a1fb062057babc71`): [v1.3](plans/PROJECT_PLAN-v1.3-DRAFT.md) (file name still says DRAFT; its own status line is OPERATOR-APPROVED 2026-10-24, EFFECTIVE UPON MERGE). Plan of record for the S01-S06 rows below: OCS-REG-PLAN v1.1 (https://github.com/cogno-us/cognous-ocs-registry/blob/main/docs/plans/PROJECT_PLAN-v1.1.md), accepted blob `6ece90f6697320fd305d8eb8c1e3a7f2f1f428a2`. Constitution pin: https://github.com/cogno-us/cognous-engineering-constitution/blob/1c2e920f4e58e07a52e8e2408a506cf7dbc1292b/ENGINEERING_CONSTITUTION.md.
 
