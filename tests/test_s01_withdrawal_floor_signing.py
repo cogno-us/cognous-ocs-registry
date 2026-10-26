@@ -180,6 +180,7 @@ def test_wd03_valid_select_decides_applied_at_the_v2_entry():
     pytest.param("unsigned", lambda e: e.update(signatures=[]), "signature_missing", id="WD04a-unsigned"),
     pytest.param("wrong-key-id", lambda e: e["signatures"][0].update(key_id="key-unknown"), "issuer_untrusted", id="WD04b-wrong-key"),
     pytest.param("forged", lambda e: e["signatures"][0].update(signature="AAAA"), "signature_invalid", id="WD04c-forged"),
+    pytest.param("v1-domain", lambda e: e["signatures"][0].update(signature=s.sign_fake(e["statement"], s.V1_DOMAIN)), "signature_invalid", id="WD04d-v1-domain"),
 ])
 def test_wd04_invalid_withdrawal_never_reports_selection_withdrawn(name, mutate, code):
     env = s.envelope(s.withdraw_statement())
@@ -197,8 +198,12 @@ def test_wd05_withdrawal_that_is_expired_revoked_stale_or_out_of_scope_keeps_its
     assert verify2(env, trust=s.trust(min_epochs=(("sel-test-1", 3),))).code == "selection_epoch_stale"
     assert verify2(env, trust=s.trust(revoked_key_ids=frozenset({s.KEY_ID}))).code == "issuer_key_revoked"
     assert verify2(env, ctx=c.ExpectedContext("consumer-test", "tenant-b", "inst-a", "domain-a", "op-test")).code == "selection_scope_mismatch"
-    for rep in (verify2(env, now=late), verify2(env, trust=s.trust(revoked_selections=frozenset({("sel-test-1", 2)})))):
-        assert rep.layers["disposition"] == "not_evaluated" and rep.authenticated is True or rep.authenticated is False
+    wrong_scope = c.ExpectedContext("consumer-test", "tenant-b", "inst-a", "domain-a", "op-test")
+    for rep in (verify2(env, now=late), verify2(env, now=datetime(2026, 10, 24, 23, tzinfo=s.UTC)),
+                verify2(env, trust=s.trust(revoked_selections=frozenset({("sel-test-1", 2)}))),
+                verify2(env, trust=s.trust(min_epochs=(("sel-test-1", 3),))),
+                verify2(env, trust=s.trust(revoked_key_ids=frozenset({s.KEY_ID}))), verify2(env, ctx=wrong_scope)):
+        assert rep.ok is False and rep.code != "selection_withdrawn" and rep.layers["disposition"] == "not_evaluated"
 
 
 @pytest.mark.parametrize("over,code", [
@@ -284,7 +289,7 @@ def test_sf02_external_floor():
     assert (rep.ok, rep.code, rep.layers["trust_snapshot"]) == (False, "trust_snapshot_version_stale", "refuse")
 
 
-@pytest.mark.parametrize("floor", [0, -1, True, False, "1", 1.0, 2 ** 70, [1], None.__class__])
+@pytest.mark.parametrize("floor", [0, -1, True, False, "1", 1.0, 2 ** 70, [1], type(None)])
 def test_sf03_invalid_floor_is_refused_trust_snapshot_invalid(floor):
     rep = verify2(s.envelope(s.select_statement()), min_trust_snapshot_version=floor)
     assert (rep.ok, rep.code) == (False, "trust_snapshot_invalid")
@@ -299,6 +304,17 @@ def test_sf04_last_accepted_snapshot_rules():
     other = s.trust(version=3, revoked_key_ids=frozenset({"key-zzz"}))
     assert verify2(env, trust=other, last_accepted_snapshot=same).code == "trust_snapshot_version_stale"   # equal version, different fingerprint
     assert verify2(env, trust=s.trust(version=2), last_accepted_snapshot=same).code == "trust_snapshot_version_stale"  # older
+    for variant in (s.trust(version=3, revoked_selections=frozenset({("sel-zzz", 1)})), s.trust(version=3, min_epochs=(("sel-zzz", 2),)),
+                    s.trust(version=3, valid_until="2026-10-28T00:00:00Z"),
+                    s.trust(version=3, key_id="key-test-2")):  # equal version, any other member differs: a different snapshot
+        assert fp(variant) != fp(t3)
+        assert verify2(env, trust=variant, last_accepted_snapshot=same).code in ("trust_snapshot_version_stale", "issuer_untrusted")
+    changed = [s.trust(version=3, revoked_selections=frozenset({("sel-zzz", 1)})), s.trust(version=3, min_epochs=(("sel-zzz", 2),)),
+               s.trust(version=3, valid_until="2026-10-28T00:00:00Z")]
+    for variant in changed:  # these still verify the select on their own, so the floor refusal is the only thing that can stop them
+        assert verify2(env, trust=variant).ok is True
+        assert verify2(env, trust=variant, last_accepted_snapshot=same).code == "trust_snapshot_version_stale"
+    assert verify2(env, trust=s.trust(version=3), last_accepted_snapshot=same).ok is True
 
 
 @pytest.mark.parametrize("bad", [(3,), (3, "x"), (0, "sha256:" + "a" * 64), (True, "sha256:" + "a" * 64), (3, 5), "3", [3], (3, "sha256:" + "a" * 64, 1), (2 ** 70, "sha256:" + "a" * 64)])

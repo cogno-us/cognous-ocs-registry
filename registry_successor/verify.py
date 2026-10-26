@@ -726,6 +726,6 @@ def verify_selection(selection, context, trust, verifier, now, record=None, key_
             return _verify(selection, context, trust, verifier, now, record, key_admission, V2_CONTRACT, True)
         return _verify(selection, context, trust, verifier, now, record, key_admission, contract_version)
     except Exception:
-        layers = {name: NOT_EVALUATED for name in LAYERS}
+        layers = {name: NOT_EVALUATED for name in (LAYERS_V2 if type(contract_version) is str and contract_version == V2_CONTRACT else LAYERS)}
         layers["structural"] = REFUSE
         return VerificationReport(False, "field_invalid", "internal verification error", layers, None, False, None, False)

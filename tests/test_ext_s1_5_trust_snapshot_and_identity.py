@@ -648,7 +648,7 @@ def test_v1_token_validator_and_verifier_are_byte_and_behaviour_unchanged():
     import hashlib, unicodedata
     from registry_successor import common, verify
     assert hashlib.sha256(Path(common.__file__).read_bytes()).hexdigest() == "f87c0f1c51785df32f1ad60b77096258729e45cca6586a696533d63ad28aece2"
-    assert hashlib.sha256(Path(verify.__file__).read_bytes()).hexdigest() == "0d2322e57032331db81d277e35155d3b0b625b41cb09dab84ece9c456287d22d"  # re-pinned by S01 (plan v1.4 Amendment 1: v2 signing domain, withdrawal disposition, snapshot floor; was 934c49c6 after PR #34 / FU-2): verify.py is intentionally changed there; the r08-v1 behaviour is pinned by the golden replay and the legacy differential
+    assert hashlib.sha256(Path(verify.__file__).read_bytes()).hexdigest() == "6224927bd339561e9d093acc0f9c5779c3fbae117c135ab94287769ef7fdee8e"  # re-pinned by S01 (plan v1.4 Amendment 1: v2 signing domain, withdrawal disposition, snapshot floor; was 934c49c6 after PR #34 / FU-2): verify.py is intentionally changed there; the r08-v1 behaviour is pinned by the golden replay and the legacy differential
     assert common.valid_token("transf\u00e9rer") and common.valid_token("EP-006") and not common.valid_token("a*") and not common.valid_token("a b") and not common.valid_token("")
     real = unicodedata.category
     unicodedata.category = lambda ch: (_ for _ in ()).throw(AssertionError("host database read"))
