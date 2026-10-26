@@ -12,7 +12,11 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Protocol
 
 from registry_successor import common as c
+from registry_successor import selection as sel_mod
+from registry_successor.canonical_b64 import decode_canonical_base64
 from registry_successor.common import ExpectedContext
+from registry_successor.key_admission import (
+    DETAIL_KEY_ADMISSION_INVALID, DETAIL_TRUST_SNAPSHOT_MALFORMED, inspect_ed25519_key)
 
 LAYERS = (
     "structural", "integrity", "record_binding", "trust_snapshot", "authenticity",
@@ -23,7 +27,7 @@ SUPPORTED_ALG = "ed25519"
 
 __all__ = [
     "ExpectedContext", "AuthorityGrant", "IssuerEntry", "TrustSnapshot", "SignatureVerifier", "VerificationReport",
-    "LAYERS", "verify_selection",
+    "LAYERS", "verify_selection", "TypedVerificationReport",
 ]
 
 
@@ -75,8 +79,228 @@ class VerificationReport:
     bound_record_digest: Optional[str] = None
 
 
-def _normalize_trust(trust: Any) -> Optional[dict]:
-    """Return a normalized view of a well-formed snapshot, or None."""
+@dataclass(frozen=True)
+class TypedVerificationReport(VerificationReport):
+    """A VerificationReport that also carries a typed sub-cause of `code`. Returned ONLY when a refusal has one (today:
+    the two `trust_snapshot_invalid` conditions). Every other report is the base class, so the frozen r08-v1 serialized
+    shape is untouched."""
+    detail_code: Optional[str] = None    # DETAIL_KEY_ADMISSION_INVALID or DETAIL_TRUST_SNAPSHOT_MALFORMED
+    detail_cause: Optional[str] = None   # stable cause label (e.g. key_small_order, key_length, policy_refused)
+
+
+LEGACY_CONTRACT = "r08-v1"
+V2_CONTRACT = "r08-v2"
+
+
+def _admission_mandatory(selection: Any, contract_version: Any) -> bool:
+    """Admission is mandatory on every path except the explicit legacy `r08-v1` default. Fail closed: any other or odd
+    `contract_version` value, or an envelope that itself says r08-v2, selects the mandatory path."""
+    if type(contract_version) is not str or contract_version != LEGACY_CONTRACT:
+        return True
+    envelope = getattr(selection, "envelope", None)
+    if type(envelope) is not dict:
+        # Fail toward mandatory: a dict subclass, list, or any other object could declare or hide a version. Only a
+        # selection that is not ok with NO envelope at all (structurally refused earlier, legacy shape) stays legacy.
+        # only a selection whose `ok` is exactly False/absent with no envelope keeps the frozen legacy shape
+        return envelope is not None or getattr(selection, "ok", False) is not False
+    declared = envelope.get("contract_version")
+    return type(declared) is not str or declared != LEGACY_CONTRACT  # only an exact-str r08-v1 envelope may be legacy
+
+
+def _private_entry(entry: Any) -> Optional[IssuerEntry]:
+    """Mandatory path only: exact-type, single-read private copy of an issuer entry. The public key may be of any type here
+    (junk is classified later as key_type / key_length by admission). Returns None for a malformed entry shape."""
+    if type(entry) is not IssuerEntry:
+        return None
+    key_id, issuer_id, alg, public_key, authority = entry.key_id, entry.issuer_id, entry.alg, entry.public_key, entry.authority
+    if type(key_id) is not str or type(issuer_id) is not str or type(alg) is not str:
+        return None
+    if type(authority) not in (tuple, list):
+        return None
+    grants = []
+    for g in authority:
+        if type(g) is not AuthorityGrant:
+            return None
+        fields = (g.consumer_id, g.tenant, g.institution, g.authority_domain, g.operation)
+        if any(type(f) is not str for f in fields):
+            return None
+        grants.append(AuthorityGrant(*fields))
+    return IssuerEntry(key_id, issuer_id, alg, public_key, tuple(grants))
+
+
+class _NotSnapshottable(Exception):
+    pass
+
+
+MAX_JSON_NODES = 10000  # total node budget for one private copy; far above any real selection or record (parser caps are lower)
+
+
+def _json_copy(value: Any, depth: int = 0, state: Optional[dict] = None) -> Any:
+    """Mandatory path: private deep copy of a JSON-shaped value using EXACT builtin types only (dict with exact-str keys,
+    list, tuple, str, int, bool, None). Any subclass, float, set, bytes or other object raises `_NotSnapshottable`, so a
+    stateful or lying object can never reach a later decision. Each node is read once. Fail closed on resource abuse: a
+    container reached twice (a cycle OR a shared reference, which a parsed document never has) is refused, and the total
+    number of nodes is bounded by MAX_JSON_NODES, so work is linear and bounded."""
+    if state is None:
+        state = {"seen": set(), "nodes": 0}
+    state["nodes"] += 1
+    if state["nodes"] > MAX_JSON_NODES or depth > 32:
+        raise _NotSnapshottable()
+    t = type(value)
+    if t is str or t is bool or value is None:
+        return value
+    if t is int:
+        return int(value)
+    if t is dict or t is list or t is tuple:
+        if id(value) in state["seen"]:
+            raise _NotSnapshottable()
+        state["seen"].add(id(value))
+        if t is dict:
+            out = {}
+            for k, v in list(value.items()):
+                if type(k) is not str:
+                    raise _NotSnapshottable()
+                out[k] = _json_copy(v, depth + 1, state)
+            return out
+        return t(_json_copy(v, depth + 1, state) for v in list(value))
+    raise _NotSnapshottable()
+
+
+def _exact_items(container: Any) -> Optional[tuple]:
+    """One read of an exact list/tuple/set/frozenset into an immutable tuple, else None."""
+    if type(container) not in (list, tuple, set, frozenset):
+        return None
+    return tuple(container)
+
+
+def _private_trust(trust: Any) -> Optional[dict]:
+    """Mandatory path: validate EXACT types and take ONE read of every TrustSnapshot field; everything later uses only the
+    returned copy. Same acceptance rules as the legacy normalizer apart from the exact-type requirements."""
+    if type(trust) is not TrustSnapshot:
+        return None
+    snapshot_id, version, valid_until, issuers_in = trust.snapshot_id, trust.version, trust.valid_until, trust.issuers
+    revoked_key_ids, revoked_selections, min_epochs = trust.revoked_key_ids, trust.revoked_selections, trust.min_epochs
+    if type(snapshot_id) is not str or not c.valid_token(snapshot_id):
+        return None
+    if type(version) is not int or version < 1:
+        return None
+    if type(valid_until) is not str:
+        return None
+    valid_until_dt = c.parse_timestamp(valid_until)
+    if valid_until_dt is None:
+        return None
+    entries = _exact_items(issuers_in) if type(issuers_in) in (list, tuple) else None
+    if entries is None:
+        return None
+    issuers: dict = {}
+    for raw in entries:
+        entry = _private_entry(raw)
+        if entry is None or not c.valid_token(entry.key_id) or not c.valid_token(entry.issuer_id) or entry.key_id in issuers:
+            return None
+        if not all(c.valid_token(v) for g in entry.authority for v in
+                   (g.consumer_id, g.tenant, g.institution, g.authority_domain, g.operation)):
+            return None
+        issuers[entry.key_id] = (entry, entry.authority)
+    keys = _exact_items(revoked_key_ids)
+    if keys is None or any(type(k) is not str for k in keys):
+        return None
+    sels = _exact_items(revoked_selections)
+    if sels is None:
+        return None
+    revoked_sel = set()
+    for item in sels:
+        if not (type(item) is tuple and len(item) == 2 and type(item[0]) is str and type(item[1]) is int):
+            return None
+        revoked_sel.add((item[0], int(item[1])))
+    if type(min_epochs) is dict:
+        pairs = tuple(min_epochs.items())
+    elif type(min_epochs) in (list, tuple):
+        pairs = tuple(min_epochs)
+    else:
+        return None
+    floors: dict = {}
+    for item in pairs:
+        if type(item) is not tuple or len(item) != 2:
+            return None
+        sid, floor = item
+        if type(sid) is not str or type(floor) is not int or floor < 1 or sid in floors:
+            return None
+        floors[sid] = int(floor)
+    return {"issuers": issuers, "revoked_keys": frozenset(keys), "revoked_selections": revoked_sel,
+            "floors": floors, "valid_until": valid_until_dt}
+
+
+def _private_selection(selection: Any) -> Any:
+    """Mandatory path: an exact-type deep private copy of the parsed selection (statement, digest, signatures). A selection
+    whose `ok` is not exactly True, or whose content is not exact JSON-shaped data, becomes a structurally refused result."""
+    ok = getattr(selection, "ok", False)
+    code = getattr(selection, "code", None)
+    code = code if type(code) is str and code in c.CODES else None
+    if ok is not True:
+        return sel_mod.SelectionResult(False, code or "field_invalid", "selection is not ok")
+    try:
+        statement = _json_copy(getattr(selection, "statement", None))
+        signatures = _json_copy(getattr(selection, "signatures", None))
+        digest = getattr(selection, "statement_digest", None)
+        if type(digest) is not str or type(statement) is not dict or type(signatures) not in (list, tuple):
+            raise _NotSnapshottable()
+    except Exception:
+        return sel_mod.SelectionResult(False, "field_invalid", "selection content is not exact data")
+    return sel_mod.SelectionResult(True, None, "", None, statement, digest, signatures)
+
+
+def _private_record(record: Any) -> Any:
+    """Mandatory path: exact-type deep private copy of a validated record result, or a refused stand-in."""
+    from types import SimpleNamespace
+    refused = SimpleNamespace(ok=False, record=None, record_digest=None)
+    if record is None:
+        return None
+    try:
+        if getattr(record, "ok", False) is not True:
+            return refused
+        body, digest = _json_copy(getattr(record, "record", None)), getattr(record, "record_digest", None)
+        if type(body) is not dict or type(digest) is not str:
+            return refused
+        return SimpleNamespace(ok=True, record=body, record_digest=digest)
+    except Exception:
+        return refused
+
+
+def _private_context(context: Any) -> Any:
+    """Mandatory path: exact ExpectedContext with exact-str members, else None (scope refusal)."""
+    if type(context) is not ExpectedContext:
+        return None
+    try:
+        members = (context.consumer_id, context.tenant, context.institution, context.authority_domain, context.operation)
+    except Exception:  # half-built object
+        return None
+    if any(type(m) is not str for m in members):
+        return None
+    return ExpectedContext(*members)
+
+
+def _private_now(now: Any) -> Optional[datetime.datetime]:
+    """Mandatory path: exact aware datetime read once, normalized to a plain UTC datetime (no stateful tzinfo)."""
+    if type(now) is not datetime.datetime:
+        return None
+    try:
+        offset = now.utcoffset()
+        if now.tzinfo is None or offset is None:
+            return None
+        return (now.replace(tzinfo=None) - offset).replace(tzinfo=datetime.timezone.utc)
+    except Exception:
+        return None
+
+
+def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
+    """Return a normalized view of a well-formed snapshot, or None. On the mandatory-admission path a missing, empty or
+    wrong-type public key is NOT a shape error here: it is left for `_admission_failure` so it gets the typed
+    key_admission_invalid detail (key_type / key_length). The legacy path is unchanged."""
+    if mandatory:
+        try:
+            return _private_trust(trust)  # exact types, one read per field; the legacy code below is untouched
+        except Exception:  # e.g. a half-built object: typed as a malformed snapshot, fail closed
+            return None
     if not isinstance(trust, TrustSnapshot):
         return None
     if not c.valid_token(trust.snapshot_id) or not c.is_int(trust.version) or trust.version < 1:
@@ -89,7 +313,7 @@ def _normalize_trust(trust: Any) -> Optional[dict]:
     for entry in trust.issuers:
         if not isinstance(entry, IssuerEntry) or not c.valid_token(entry.key_id) or not c.valid_token(entry.issuer_id):
             return None
-        if not isinstance(entry.alg, str) or not isinstance(entry.public_key, bytes) or not entry.public_key:
+        if not isinstance(entry.alg, str) or (not isinstance(entry.public_key, bytes) or not entry.public_key):
             return None
         if entry.key_id in issuers or not isinstance(entry.authority, (tuple, list)):
             return None
@@ -126,6 +350,28 @@ def _normalize_trust(trust: Any) -> Optional[dict]:
         return None
     return {"issuers": issuers, "revoked_keys": frozenset(trust.revoked_key_ids), "revoked_selections": revoked_sel,
             "floors": floors, "valid_until": c.parse_timestamp(trust.valid_until)}
+
+
+def _admission_failure(trust: dict, key_admission: Any, mandatory: bool) -> Optional[tuple]:
+    """(detail text, cause) when an admitted signing key is refused, else None. Fail closed.
+    The built-in Ed25519 check runs whenever admission is mandatory or any policy is supplied; a caller policy can only
+    add refusals (a non-True or raising policy refuses). With `mandatory` False and no policy: legacy, no admission."""
+    if key_admission is None and not mandatory:
+        return None
+    for key_id, (entry, _grants) in trust["issuers"].items():
+        cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None
+        if mandatory and cause is None and (type(entry.public_key) is not bytes or not entry.public_key):
+            cause = "key_type" if type(entry.public_key) is not bytes else "key_length"  # any alg: never admit junk
+        admitted = True
+        if key_admission is not None:
+            try:
+                admitted = key_admission(entry.alg, entry.public_key) is True
+            except Exception:
+                admitted = False
+        if cause is not None or not admitted:
+            cause = cause or "policy_refused"
+            return (f"trust snapshot admits a signing key refused by the key-admission policy ({cause}; key_id={key_id})", cause)
+    return None
 
 
 def _statement_view(selection: Any) -> Optional[dict]:
@@ -167,7 +413,7 @@ def _record_binding(statement: dict, record: Any) -> Optional[tuple]:
     return None
 
 
-def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -> tuple:
+def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any, canonical_b64: bool = False) -> tuple:
     """Returns (code_or_None, detail, valid) where valid lists every (entry, grants) whose signature verified."""
     from registry_successor import selection as sel_mod
     signatures = getattr(selection, "signatures", None)
@@ -191,11 +437,22 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -
             failure = ("issuer_key_revoked", "the key id is revoked")
         else:
             entry, grants = found
-            try:
-                raw = base64.b64decode(sig.get("signature"), validate=True)
-            except (binascii.Error, ValueError, TypeError):
-                failure = ("signature_invalid", "signature is not valid base64")
-            else:
+            text = sig.get("signature")
+            if canonical_b64:
+                raw = decode_canonical_base64(text)  # r08-v2 only: exactly the RFC 4648 section 4 spelling
+                if raw is None:
+                    try:
+                        base64.b64decode(text, validate=True)
+                        failure = ("signature_invalid", "signature is not canonical base64")
+                    except (binascii.Error, ValueError, TypeError):
+                        failure = ("signature_invalid", "signature is not valid base64")
+            else:  # frozen r08-v1 behaviour, identical to origin/main
+                try:
+                    raw = base64.b64decode(text, validate=True)
+                except (binascii.Error, ValueError, TypeError):
+                    raw = None
+                    failure = ("signature_invalid", "signature is not valid base64")
+            if raw is not None:
                 try:
                     good = verifier.verify(entry.alg, entry.public_key, message, raw) if entry.alg == SUPPORTED_ALG else False
                 except Exception:
@@ -211,19 +468,27 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -
     return (first_failure[0], first_failure[1], [])
 
 
-def _verify(selection, context, trust_in, verifier, now, record) -> VerificationReport:
+def _verify(selection, context, trust_in, verifier, now, record, key_admission=None, contract_version=LEGACY_CONTRACT) -> VerificationReport:
     layers = {name: NOT_EVALUATED for name in LAYERS}
     codes: dict = {}
     details: dict = {}
+    typed: dict = {}
 
-    def mark(layer: str, code: Optional[str], detail: str = "") -> None:
+    def mark(layer: str, code: Optional[str], detail: str = "", typed_detail: Optional[tuple] = None) -> None:
         layers[layer] = PASS if code is None else REFUSE
         if code is not None:
             assert code in c.CODES, code
             codes[layer] = code
             details[layer] = detail
+            if typed_detail is not None:
+                typed[layer] = typed_detail
 
-    when = _aware(now)
+    mandatory = _admission_mandatory(selection, contract_version)  # decided ONCE from the caller's original objects
+    if mandatory:  # exact types + one read: every later decision uses these private copies only
+        selection, record, context = _private_selection(selection), _private_record(record), _private_context(context)
+        when = _private_now(now)
+    else:
+        when = _aware(now)
     statement = _statement_view(selection)
     if statement is None:
         given = getattr(selection, "code", None)
@@ -238,11 +503,15 @@ def _verify(selection, context, trust_in, verifier, now, record) -> Verification
             bad = _record_binding(statement, record)
             mark("record_binding", *(bad if bad else (None,)))
 
-    trust = _normalize_trust(trust_in)
+    trust = _normalize_trust(trust_in, mandatory)
+    admission = None if trust is None else _admission_failure(trust, key_admission, mandatory)
     if trust_in is None:
         mark("trust_snapshot", "trust_snapshot_missing", "no trust snapshot supplied")
     elif trust is None:
-        mark("trust_snapshot", "trust_snapshot_invalid", "trust snapshot is malformed")
+        mark("trust_snapshot", "trust_snapshot_invalid", "trust snapshot is malformed",
+             (DETAIL_TRUST_SNAPSHOT_MALFORMED, None) if mandatory else None)  # legacy r08-v1 shape stays byte-frozen
+    elif admission is not None:
+        mark("trust_snapshot", "trust_snapshot_invalid", admission[0], (DETAIL_KEY_ADMISSION_INVALID, admission[1]))
     elif when is None:
         mark("trust_snapshot", "time_unavailable", "no trusted current time")
     elif when >= trust["valid_until"]:
@@ -256,7 +525,7 @@ def _verify(selection, context, trust_in, verifier, now, record) -> Verification
         if verifier is None:
             mark("authenticity", "verifier_unavailable", "no signature verifier supplied; digest match is not authentication")
         elif trust_ok:
-            code, detail, valid_signers = _authenticity(statement, selection, trust, verifier)
+            code, detail, valid_signers = _authenticity(statement, selection, trust, verifier, mandatory)
             mark("authenticity", code, detail)
             if code is None:
                 authenticated = True
@@ -309,20 +578,32 @@ def _verify(selection, context, trust_in, verifier, now, record) -> Verification
     first = next((name for name in LAYERS if layers[name] == REFUSE), None)
     required_ok = all(layers[name] == PASS for name in LAYERS if name != "record_binding")
     ok = first is None and required_ok and (record is None or layers["record_binding"] == PASS)
-    return VerificationReport(
+    klass, extra = VerificationReport, {}
+    if not ok and first in typed:
+        klass, extra = TypedVerificationReport, {"detail_code": typed[first][0], "detail_cause": typed[first][1]}
+    return klass(
         ok=ok, code=None if ok else codes.get(first, "selection_missing"),
         detail="" if ok else details.get(first, "verification incomplete"),
         layers=dict(layers), selection_digest=getattr(selection, "statement_digest", None) if statement is not None else None,
         authenticated=authenticated, issuer_id=issuer_id, operationally_authorized=False,
         participation=statement.get("participation") if statement is not None else None,
+        **extra,
         bound_record_digest=(statement.get("record") or {}).get("record_digest")
         if statement is not None and layers["record_binding"] == PASS and isinstance(statement.get("record"), dict) else None)
 
 
-def verify_selection(selection, context, trust, verifier, now, record=None) -> VerificationReport:
-    """Layered technical verification. Never raises; never returns an acceptance on internal error."""
+def verify_selection(selection, context, trust, verifier, now, record=None, key_admission=None,
+                     contract_version=LEGACY_CONTRACT) -> VerificationReport:
+    """Layered technical verification. Never raises; never returns an acceptance on internal error.
+
+    Public-key admission (registry_successor.key_admission) is MANDATORY unless `contract_version` is exactly the legacy
+    `r08-v1` default: on every other value, and whenever the envelope says `r08-v2`, the built-in Ed25519 admission check
+    is applied to every issuer key when the trust snapshot is admitted, whether or not `key_admission` is supplied.
+    `key_admission`, an optional `(alg, public_key) -> bool`, can only add refusals. On the legacy path it keeps its
+    old opt-in meaning (None = no admission).
+    """
     try:
-        return _verify(selection, context, trust, verifier, now, record)
+        return _verify(selection, context, trust, verifier, now, record, key_admission, contract_version)
     except Exception:
         layers = {name: NOT_EVALUATED for name in LAYERS}
         layers["structural"] = REFUSE
