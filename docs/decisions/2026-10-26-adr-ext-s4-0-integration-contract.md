@@ -23,7 +23,7 @@
 | **N-9** epoch saturation | 10 | AD-1 **adopted, alternative A** |
 | Fallback basis strictness; `cause` vocabulary | 6.1, 3.3 | AD-4, AD-5 **adopted, alternative A** |
 | Lineage replacement cannot reset ratchet, high-water, revocation | 3.7 | Resolved (prohibited fail-closed; carry-forward defined, not authorized) |
-| Registry label/digest in the log-entry schema; nullability | 3.3 | Resolved (closed 22-member schema) |
+| Registry label/digest in the log-entry schema; nullability | 3.3 | Resolved (closed 24-member schema) |
 
 ## 1. Required invariants and where each is enforced
 
@@ -43,9 +43,9 @@
 | Frozen text | Read from now on as |
 |---|---|
 | Contract 8.3 and 7.4 line 8: "optional scopes report `overlay_not_applied`" for a restored or unknown store | Already superseded by Amendment 1 S-13/N-12: an unknown store is `UNKNOWN_FAIL_CLOSED` (HOLD) for every participation. This ADR keeps that and states it again in 3.6 |
-| EXT-S1-5 spec section 12, N-7, N-8, N-9 "UNRESOLVED"; Amendment 1 section 349 and 367 | Resolved by sections 6, 4.1 and 10 of this ADR **when adopted** (N-9 pending AD-1) |
+| EXT-S1-5 spec section 12, N-7, N-8, N-9 "UNRESOLVED"; Amendment 1 section 349 and 367 | Resolved by sections 6, 4.1 and 10 of this ADR **when adopted** (AD-1 adopted) |
 | Control Plane `docs/policy-binding-approval-generation.md`: `activation_sequence` RESERVED; withdrawn disposition PROVISIONAL | `activation_sequence` is defined in 3.2 and stays **outside** `policy-binding/0.1` and outside the claim in V1; the withdrawn shape is fixed in 5.2 and is the shape the Control Plane already implements, so the word PROVISIONAL is removed by adoption without a Control Plane change |
-| Control Plane reasons 0.3 ownership record: eight names PROPOSED; HOLD everywhere | Classification in 9.2 is a consumer-boundary table; the Control Plane keeps returning `hold` (AD-3 alternative A). Names remain unratified until the Control Plane owner and Architect ratify (AD-3) |
+| Control Plane reasons 0.3 ownership record: eight names PROPOSED; HOLD everywhere | Classification in 9.2 is a consumer-boundary table; the Control Plane keeps returning `hold` (AD-3 alternative A). Names are **ratified** by the Architect (AD-3, section 12) |
 | Contract 7.1 "`EXT-S4-0` freezes whether negative evidence shares the hash-chained log or is a companion stream" | Companion stream (6.3) |
 | ADR D-17 fallback reasons `never_activated`, `withdrawn`, `expired` | Only the two N-12 bases survive (6.1); `expired` is superseded by N-12(c) (already recorded in Amendment 1 S-15) |
 | TR-01 DT-01..DT-07 | DT-02 (high-water design) is answered by section 3; DT-04 by 3.6; DT-06 by 5 and 6.3; DT-01 (host naming) remains open (section 12) |
@@ -86,7 +86,7 @@ There is exactly one trusted writer: the activation writers `activate_selection`
 
 ### 3.3 Log entry (hash chain)
 
-Entry hash = `"sha256:" + hex(sha256(b"ocs-reg/s4/log-entry\n" + canonical_bytes(entry)))`. The entry is a **closed schema of exactly 22 members, all always present** (a member that does not apply carries JSON `null`; no member is ever omitted, so the preimage has one shape per version):
+Entry hash = `"sha256:" + hex(sha256(b"ocs-reg/s4/log-entry\n" + canonical_bytes(entry)))`. The entry is a **closed schema of exactly 24 members, all always present** (a member that does not apply carries JSON `null`; no member is ever omitted, so the preimage has one shape per version):
 
 | # | Member | Type / value |
 |---|---|---|
@@ -101,9 +101,9 @@ Entry hash = `"sha256:" + hex(sha256(b"ocs-reg/s4/log-entry\n" + canonical_bytes
 | 9 | `selection_epoch` | integer or `null` |
 | 10 | `selection_digest` | the registry statement digest (`statement_digest`) or `null`; one member, no duplicate |
 | 11 | `policy_generation` | integer or `null` |
-| 12 | `supersedes` | triple `(selection_id, epoch, selection_digest)` or `null` |
+| 12 | `supersedes` | JSON object with exactly the keys `selection_id`, `epoch`, `selection_digest`, or `null` |
 | 13 | `participation` | `required`, `optional` or `null` |
-| 14 | `state_before` | `none`, `active`, `withdrawn` or `revoked`, or `null` |
+| 14 | `state_before` | string `none` (no row), `active`, `withdrawn` or `revoked`, or `null` where the entry has no scope |
 | 15 | `state_after` | same set, or `null` |
 | 16 | `ratchet_after` | boolean or `null` |
 | 17 | `snapshot_version` | integer or `null` |
@@ -111,7 +111,9 @@ Entry hash = `"sha256:" + hex(sha256(b"ocs-reg/s4/log-entry\n" + canonical_bytes
 | 19 | `issuer_key_id` | identifier or `null` |
 | 20 | `reasons_registry_label` | **always non-null**; closed V1 allow-list `{runtime-authority-reasons/0.3}` |
 | 21 | `reasons_registry_sha256` | **always non-null**; `sha256:` + 64 hex; closed V1 allow-list `{sha256:58b29ef74b9bd49d3eae7278d8cce73c7cbc6a1095a07f7b9fa44f48a7b8c07f}` (the Control Plane pin at `fff27ebf`, written in the registry's `sha256:` form) |
-| 22 | `recorded_at` | lock-time clock, always non-null |
+| 22 | `recorded_at` | lock-time clock, always non-null; UTC `YYYY-MM-DDTHH:MM:SS.ffffffZ` (fixed six fractional digits) |
+| 23 | `baseline_floor` | integer >= 0 on `baseline` entries (the generation floor for every governed scope, 3.6/4.4), else `null` |
+| 24 | `determination_ref` | `sha256:` + 64 hex: digest of the authenticating determination or operator `decision_ref` record; non-null on `baseline`, `ratchet_provision` and `non_participation`, else `null` |
 
 **Registry label and digest (AD-2 alternative A, adopted).** Members 20 and 21 are **required, non-null, on every entry of every `entry_type` and `cause`** (including `sync` entries of every cause and the `baseline`), and are part of the hash preimage. They record the reasons registry that the enforcing component's **own build pins** when it writes the entry. The writer refuses (fail closed, typed `field_invalid`, member `reasons_registry_label` or `reasons_registry_sha256`) to write any entry whose pair is not in the allow-list; an unknown label or digest never defaults, never downgrades to 0.2 and never skips. A different registry (for example a future 0.4) needs an ADR amendment that extends the allow-list; entries written under the earlier pair stay valid and immutable. Result rows retain the label and the log head. This is **consumer custody of the build pin, not authenticated issuer publication**, and every report says so.
 
@@ -121,13 +123,17 @@ Entry hash = `"sha256:" + hex(sha256(b"ocs-reg/s4/log-entry\n" + canonical_bytes
 |---|---|---|---|---|---|---|---|---|---|
 | `activate` / `none` | N, N | N, N, N | N (bump, 4.2) | `null` at the first activation of the lineage, else N | N | N / N | N | N | N |
 | `withdraw` / `none` | N, N | N, N, N | N (bump unless saturated) | N | N | N / N | N | N | N |
-| `revoke` / `none` or `issuer_key_revoked` | N, N | N, N, N for the revoked row, **else** N, N, `null` for a non-current pair | N if the row state changed, else `null` | `null` | N for the row, else `null` | N / N for the row, else `null` / `null` | N for the row, else `null` | N | N for `issuer_key_revoked`, else `null` |
+| `revoke` / `none` or `issuer_key_revoked`, pair of an existing row | N, N | N, N, N for the row's pair, N, N, `null` for a non-current pair | N if the row state changed, else `null` | `null` | N | N / N | N | N | N for `issuer_key_revoked`, else `null` |
+| `revoke` / `none`, pair with **no row** | `null`, `null` | N, N, `null` | `null` | `null` | `null` | `null` / `null` | `null` | N | `null` |
+| `revoke` / `issuer_key_revoked`, key with no row | `null`, `null` | `null` x3 | `null` | `null` | `null` | `null` / `null` | `null` | N | N |
 | `sync` / `none` (snapshot sync) | `null`, `null` | `null` x3 | `null` | `null` | `null` | `null` / `null` | `null` | N | `null` |
 | `sync` / `baseline` | `null`, `null` | `null` x3 | `null` | `null` | `null` | `null` / `null` | `null` | `null` allowed (no snapshot yet) | `null` |
-| `sync` / `ratchet_provision` | N, `null` | `null` x3 | `null` | `null` | `required` | `null` / `null` | **true** | `null` | `null` |
+| `sync` / `ratchet_provision` | N, `null` | `null` x3 | `null` | `null` | `required` | N / N (the unchanged current row state, or `none`) | **true** | `null` | `null` |
 | `sync` / `non_participation` | N, `null` | `null` x3 | `null` | `null` | `optional` | `none` / `none` | **false** | `null` | `null` |
 
-`cause` is valid only with the entry types shown: `issuer_key_revoked` on `revoke`; `baseline`, `ratchet_provision` and `non_participation` on `sync` only (so the `entry_type` set stays exactly four values, AD-5 alternative A); `none` on the others. A `sync`-class entry with cause `baseline`, `ratchet_provision` or `non_participation` **never activates, withdraws, selects, revokes or authorizes anything and can only tighten**: it records a baseline, sets a ratchet (`ratchet_after = true`), or records a non-participation fact. `state_before`/`state_after`/`ratchet_after` make the row and ratchet **re-derivable by replaying the log**, so a row with no matching entry is detectable. Log entries and evidence rows are serialized with the registry `canonical_bytes` function under their own value rules (JSON `null` and nested triples are permitted in them); contract 4.1's no-`null` rule applies to the completed policy binding only. The digest-prefix constants differ per object so no hash can be replayed as another object's hash.
+`cause` is valid only with the entry types shown: `issuer_key_revoked` on `revoke`; `baseline`, `ratchet_provision` and `non_participation` on `sync` only (so the `entry_type` set stays exactly four values, AD-5 alternative A); `none` on the others. A `sync`-class entry with cause `baseline`, `ratchet_provision` or `non_participation` **never activates, withdraws, selects, revokes or authorizes an effect**. They are not all tightening, and are therefore guarded: `ratchet_provision` only tightens (it sets the ratchet). `baseline` and `non_participation` are **authenticated-determination records**: each requires a non-null `determination_ref` (member 24) and the preconditions below, and each can make something admissible (a baseline lifts `unknown` only under 3.6; `non_participation` enables the fallback basis of 6.1). `non_participation` preconditions, checked by the writer under the lock: store `known`; ratchet unset for the governed scope; no row, no lineage binding and no history for it. `baseline` preconditions: 3.6. A refused precondition writes nothing.
+
+**Replay rule.** Replaying the log derives, per governed scope, the row state, the lineage binding, the epoch high-water, the generation counter, the revoked pairs and keys and the log head, and the ratchet as the **OR of every `ratchet_after = true`**: `ratchet_after = false` (on `non_participation`) means only "this entry does not set it" and **can never reduce** a ratchet set earlier; a replay that clears a ratchet is a hash-chain/replay failure. Snapshot `valid_until`, the floors and statement validity windows are **not** claimed re-derivable from the log: they are re-read from the retained verified snapshots and statements (committed by the digests in the entries) and recorded as evidence. `state_before`/`state_after`/`ratchet_after` make the row and ratchet **re-derivable by replaying the log**, so a row with no matching entry is detectable (for the authority state listed in the replay rule). Log entries and evidence rows are serialized with the registry `canonical_bytes` function under their own value rules (JSON `null` and nested triples are permitted in them); contract 4.1's no-`null` rule applies to the completed policy binding only. The digest-prefix constants differ per object so no hash can be replayed as another object's hash.
 
 `activation_ref` (D-14) = the `entry_hash` of the `activate` entry. Because the preimage includes scope, epoch, selection digest, generation and sequence, it identifies one activation event and cannot be reused across scopes, epochs, generations or restores.
 
@@ -145,7 +151,7 @@ Log, evidence and revoked-set rows are insert-only. There is no update or delete
 
 ### 3.6 Store state, restore fence and anchor
 
-- `store_state = unknown` until baselined. Lost state is unknown, never zero (contract 8.3 item 3). A store is baselined only by an explicit, logged `baseline` operation that writes sequence 1 and records the anchor reference.
+- `store_state = unknown` until baselined. Lost state is unknown, never zero (contract 8.3 item 3). Two baselines exist, both a logged `sync`/`baseline` entry with non-null `determination_ref`: (1) **genesis baseline**: sequence 1 of a store whose `store_id` has **no anchor and no prior log anywhere**, `baseline_floor = 0`, empty tables; it is refused if an anchor for that `store_id` exists (a lost or emptied database is not a new store); (2) **recovery baseline**: permitted only when a retained copy of the log up to at least the anchored head passes chain verification and replay reproduces **every anchored digest** (`scope_required_digest`, `lineage_digest`, `highwater_digest`, `revoked_set_digest`, `generation_ceiling`); the writer then **rebuilds the tables from that replay** (lineage binding, ratchet, high-water, revoked pairs and keys, generation counters) and writes the recovery `baseline` entry with `baseline_floor` = the anchor's `generation_ceiling`. If no such verified log copy exists, the store stays `unknown` and **V1 provides no baseline** that could start from empty tables: a re-baseline never resets the lineage binding, the ratchet, the high-water or the revoked sets.
 - **Anchor** (`ocs-s4/store-anchor/1`): `store_id`, `head_sequence`, `head_entry_hash`, `evidence_head_sequence`, `evidence_head_hash`, `generation_ceiling` (the largest `policy_generation` issued in the store), `scope_required_digest` (digest over the sorted `(governed_scope_digest, set)` pairs), `lineage_digest` (digest over the sorted `(governed_scope_digest, selection_id)` pairs), `highwater_digest`, `revoked_set_digest`, `floor_min_epochs_digest`, `floor_min_trust_snapshot_version`, `anchored_at`. The digests are defined **at `head_sequence`** and are recomputed by replaying the log prefix up to that sequence (3.3), never from current tables. The anchor is held **outside the database it protects**, by a custodian the operator designates, and is advanced after each acknowledged log head.
 - At open and before every guard, the Runtime compares the store with the anchor. **Anchor absent, unreadable, ahead of the store (`head_sequence` or `evidence_head_sequence` greater than the store's), a different entry hash at the anchored sequence in either stream, a log-prefix replay that does not reproduce the anchored digests, or a broken chain between the anchored head and the store head makes `store_state = unknown`.** A store *ahead* of a stale anchor is accepted only if the chain from the anchored head to the store head verifies. An unknown store is HOLD (`UNKNOWN_FAIL_CLOSED`) for **every** participation (N-12); required scopes refuse; optional scopes do not fall back (invariant I-6).
 - Restart before the first successful `sync` refuses required scopes (contract 8.3 item 5). Unacknowledged publication reads `UNKNOWN`, not `ACTIVE` (DT-04).
@@ -158,10 +164,10 @@ Log, evidence and revoked-set rows are insert-only. There is no update or delete
 **Rules (fail closed, V1).**
 
 1. **Governed-scope keyed state.** The ratchet (`selection_scope_required_v1`), the generation counter (`selection_generation_v1`) and the lineage binding (`selection_lineage_v1`) are keyed by `governed_scope_digest`, never by `selection_id` (3.2). Nothing keyed by the governed scope is reset, re-seeded or re-created by any statement.
-2. **One lineage per governed scope.** The first accepted `activate` binds `selection_id` to the governed scope in `selection_lineage_v1` (the binding is also covered by the hash chain through that `activate` entry and by `lineage_digest` in the anchor). From then on, every `activate` or `withdraw` statement whose `selection_id` differs from the binding is **refused** with the existing registry code `selection_conflict` and typed detail cause `lineage_replacement_prohibited` (no new code; `CODES_V2` stays 48). The refusal applies whatever the bound lineage's state: `active`, `withdrawn`, `revoked`, expired, epoch-saturated, generation-saturated, or with a ratchet set. A claim whose `selection_id` differs from the binding refuses at the guard (7.2 line 2), and a no-binding claim for a governed scope that has a lineage binding, a row or a ratchet is refused (7.4 item 8).
+2. **One lineage per governed scope.** The first accepted `activate` binds `selection_id` to the governed scope in `selection_lineage_v1` (the binding is also covered by the hash chain through that `activate` entry and by `lineage_digest` in the anchor). From then on, every `activate` or `withdraw` statement whose `selection_id` differs from the binding is **refused** with the existing registry code `selection_conflict` and typed detail cause `lineage_replacement_prohibited` (no new code; `CODES_V2` stays 48). The refusal applies whatever the bound lineage's state: `active`, `withdrawn`, `revoked`, expired, epoch-saturated, generation-saturated, or with a ratchet set. A claim whose `selection_id` differs from the binding refuses at the guard (ADR 7.2, contract 7.4 line 2), and a no-binding claim for a governed scope that has a lineage binding, a row or a ratchet is refused (contract 7.4 item 8) **unless** the 6.1 basis `valid_withdrawal_fallback_transition` holds (optional, ratchet unset, row `withdrawn` by an authenticated `withdraw` entry); that is the only exception.
 3. **Permanent restrictions.** Revoked `(selection_id, epoch)` pairs and revoked issuer `key_id`s are never deleted and never scoped away; the old lineage's `high_water_epoch` row is retained, so no old-lineage statement or epoch can be replayed, and a `revoked` row for the governed scope keeps the scope disabled.
 4. **Authenticated durable carry-forward: defined, NOT authorized in V1.** A replacement lineage would be admissible only through all of: (a) an issuer-signed statement that names the old lineage's final `(selection_id, epoch, selection_digest)` as its predecessor across `selection_id`s, which the frozen `r08-v2` statement shape cannot express (its `supersedes` is same-`selection_id`) and therefore needs a contract amendment or new statement version; (b) an operator-approved `decision_ref`; (c) its own hash-chained log entry (a new `cause` value, hence an ADR amendment; the `entry_type` set stays four); and (d) inheritance as hard preconditions: the ratchet stays set (never cleared), the generation counter **continues** from the governed-scope value (never restarts), revoked pairs and keys stay revoked, the old lineage's high-water stays, and `activation_ref` is a fresh entry hash. None of (a) to (c) exists, so **in V1 the replacement is prohibited**; this ADR builds no writer or code path for it.
-5. **Consequences.** Epoch saturation (AD-1) and generation saturation are terminal for re-activation in V1: the scope can be withdrawn or revoked but not re-enabled until a carry-forward contract is adopted. Operators who need a different policy for the same scope must use a statement of the bound lineage at a higher epoch.
+5. **Consequences.** Epoch saturation (AD-1) and generation saturation are terminal for re-activation in V1: an epoch-saturated scope can only be revoked (a withdraw statement also needs a strictly higher epoch), a generation-saturated scope can be withdrawn or revoked (4.2), and neither can be re-enabled until a carry-forward contract is adopted. Operators who need a different policy for the same scope must use a statement of the bound lineage at a higher epoch.
 
 ## 4. Consumer policy-generation ownership and custody (N-8)
 
@@ -173,7 +179,7 @@ Log, evidence and revoked-set rows are insert-only. There is no update or delete
 
 Per **governed scope**, in `selection_generation_v1` (so it continues across any `selection_id`, 3.7), inside the transaction of each log entry:
 
-- first `activate` for the scope: generation = 1;
+- the counter for a governed scope starts at the `baseline_floor` of the latest `baseline` entry (0 at genesis); first `activate` for the scope: generation = counter + 1 (so 1 at genesis);
 - every later `activate`, `withdraw` or `revoke` that changes the row's state: generation = previous + 1;
 - `sync` entries and refused transitions: no change;
 - a `revoke` of a pair that is not the row's current epoch changes no row state and does not bump.
@@ -186,7 +192,7 @@ V1 range is **1 .. 2147483647**, the range the merged `policy-binding/0.1` alrea
 
 ### 4.4 Custody
 
-Generation, activation reference, log head and ratchet are covered by the same anchor and restore fence (3.6). A restored older store cannot re-issue an earlier generation because an older store than the anchor is `unknown`. Re-baselining after a restore must start every scope's generation **above the anchor's `generation_ceiling`** (and above any higher value the retained evidence shows); the baseline operation takes that floor as an input and refuses without it. If the anchor is lost or untrusted, the operator must supply a floor in writing that exceeds every generation ever issued; a re-baseline that cannot establish a floor leaves the store `unknown`. Because `activation_ref` is a fresh entry hash after any re-baseline, an approval from before the restore also fails on `approval_policy_activation_mismatch` even if a generation were reused.
+Generation, activation reference, log head and ratchet are covered by the same anchor and restore fence (3.6). A restored older store cannot re-issue an earlier generation because an older store than the anchor is `unknown`. Re-baselining after a restore follows 3.6 (recovery baseline only, `baseline_floor` = the anchor's `generation_ceiling`, which is in the preimage and so replayable). If the anchor is lost or untrusted, or no verified log copy exists, there is **no V1 baseline**: the store stays `unknown`. Because `activation_ref` is a fresh entry hash after any re-baseline, an approval from before the restore also fails on `approval_policy_activation_mismatch` even if a generation were reused.
 
 ## 5. Authenticated withdrawal transition identity
 
@@ -221,7 +227,7 @@ This is deliberately **stricter than contract 7.4 item 8(c)** ("no row and no hi
 
 ### 6.2 Evidence record `ocs-s4/fallback-evidence/1`
 
-Written for every admitted fallback and every refused fallback attempt, with exactly these members: `record_version`, `evidence_sequence`, `prev_evidence_hash`, `scope_key_digest`, `outcome` (`fallback_admitted` or `fallback_refused`), `fallback_basis` (`never_required_governed_policy`, `valid_withdrawal_fallback_transition`, or `none`), `registry_code` (the original code, for example `selection_withdrawn`, `field_invalid`), `projection_refusal_code` (present only for a refused projection; `null` otherwise; **this closes the open layout in the EXT-S1-5 spec N-7**), `stage`, `member`, `original_selection_digest`, `transition_ref` (the withdraw entry hash, or `null`), `log_head_sequence`, `log_head_hash`, `ratchet_set` (boolean as read), `store_state`, `recorded_at`, `evidence_hash`.
+Written for every admitted fallback and every refused fallback attempt, with exactly these members: `record_version`, `evidence_sequence`, `prev_evidence_hash`, `governed_scope_digest`, `scope_key_digest` (`null` when no selection exists), `outcome` (`fallback_admitted` or `fallback_refused`), `fallback_basis` (`never_required_governed_policy`, `valid_withdrawal_fallback_transition`, or `none`), `registry_code` (the original code, for example `selection_withdrawn`, `field_invalid`), `projection_refusal_code` (present only for a refused projection; `null` otherwise; **this closes the open layout in the EXT-S1-5 spec N-7**), `stage`, `member`, `original_selection_digest`, `transition_ref` (the withdraw entry hash, or `null`), `log_head_sequence`, `log_head_hash`, `ratchet_set` (boolean as read), `store_state`, `recorded_at`, `evidence_hash`.
 
 ### 6.3 Companion stream (decision of contract 7.1)
 
@@ -240,7 +246,7 @@ Evidence, negative evidence for rejected transitions and guard refusals live in 
 
 ### 7.2 What the guard compares (contract 7.4, restated as the closed list)
 
-Under the lock, a claim carrying a binding is refused unless every line of contract 7.4 holds (members well formed and `binding_digest` recomputed; scope key equal; row exists and `active`; `selection_id`, `selection_epoch`, `selection_digest`, record triple and **`activation_ref` equal the row**; epoch equals the scope high-water and meets the held floor; not revoked and issuer key not revoked; lock-time clock inside `[valid_from, valid_until)`; participation not weaker than the ratchet; snapshot version at or above the floor, fingerprint equal to the logged one, current snapshot record unexpired). `effective_policy_digest` is claim-carried evidence, checked for self-consistency only. Because `activation_ref` fixes the generation (4.2), **no separate generation member is carried in the claim** and the registry 14-member binding is unchanged.
+Under the lock, a claim carrying a binding is refused unless every line of contract 7.4 holds (members well formed and `binding_digest` recomputed; scope key equal; row exists and `active`; `selection_id`, `selection_epoch`, `selection_digest`, record triple and **`activation_ref` equal the row**; epoch equals the scope high-water and meets the held floor; not revoked and issuer key not revoked; lock-time clock inside `[valid_from, valid_until)`; participation not weaker than the ratchet; snapshot version at or above the floor, fingerprint equal to the logged one, current snapshot record unexpired). `effective_policy_digest` is claim-carried evidence, checked for self-consistency only. The guard additionally requires the claim's `selection_id` to equal the governed scope's lineage binding (3.7) and reads the ratchet and generation by governed scope. Because `activation_ref` fixes the generation (4.2), **no separate generation member is carried in the claim** and the registry 14-member binding is unchanged.
 
 ### 7.3 Unreadable or indeterminate state
 
@@ -292,7 +298,7 @@ The Control Plane `registry_identity(label)` / `registry_admits` check a label a
 
 ### 9.2 Classification of the eight proposed codes
 
-The Control Plane keeps returning `hold` for all of them (systemic; `deny` is declared but never emitted, and no REFUSE_STALE exists). The **consumer boundary** classifies by the table below. Names remain PROPOSED, NOT RATIFIED (AD-3).
+The Control Plane keeps returning `hold` for all of them (systemic; `deny` is declared but never emitted, and no REFUSE_STALE exists). The **consumer boundary** classifies by the table below. Names are RATIFIED by the Architect (AD-3); reasons 0.3 bytes are unchanged.
 
 | Code | Class | Notes |
 |---|---|---|
@@ -300,7 +306,7 @@ The Control Plane keeps returning `hold` for all of them (systemic; `deny` is de
 | `approval_policy_generation_missing` | REFUSE | stripped or legacy approval; new approval required |
 | `approval_policy_generation_invalid` | REFUSE | malformed |
 | `approval_policy_generation_mismatch` | **by direction, decided by the consumer from durable state:** carried below the durable generation, REFUSE_STALE; carried above it, HOLD **for that decision only** (the profile or the store lags or was restored older; the anchor check of 3.6, not a single approval, decides `store_state`, so one stale or forged approval cannot force a store-wide HOLD) | The Control Plane compares equality only and stays opaque; direction comes from `selection_generation_v1`. If the durable generation is unreadable, HOLD |
-| `approval_policy_activation_mismatch` | REFUSE_STALE if the carried `activation_ref` is an earlier `activate`/`withdraw` entry hash of the same scope in the log; REFUSE if it is not an entry of this scope's chain (substituted or foreign); HOLD if the log cannot be read | A digest has no order; the chain gives it one |
+| `approval_policy_activation_mismatch` | REFUSE_STALE if the carried `activation_ref` is an earlier `activate`/`withdraw` entry hash of the same governed scope in the log; REFUSE if it is not an entry of this governed scope's chain (substituted or foreign); HOLD if the log cannot be read | A digest has no order; the chain gives it one |
 | `freshness_ceiling_exceeded` | REFUSE | trusted profile violates a ceiling |
 | `freshness_ceiling_unanchored` | REFUSE | ceilinged profile without `anchor_deadline_to_inputs` |
 | `policy_binding_invalid` | REFUSE | malformed trusted configuration |
@@ -318,7 +324,7 @@ A consumer that receives a reason code, registry label, commitment version, bind
 | Mechanism | Table 9.2 and class vocabulary 9.1 at the Runtime/host boundary; Control Plane unchanged | Control Plane emits `deny` for definitive codes and a new outcome kind for stale; new reasons registry revision if names change |
 | Consequence | No Control Plane or registry-bytes change, and no re-pin; effect safety identical (any non-`authorized` result writes no effect). The Control Plane `hold` is not authoritative for classification, so every consumer must implement the table | One classification source, but a bounded Control Plane PR with owner and Architect review, a new reasons registry (0.4) if any name is renamed, golden-test churn and a further re-pin of Runtime and Qualification |
 
-**Also required from the Architect/Control Plane owner:** ratify, rename or reject each of the eight names. Because 0.3 is immutable, a rename means a successor registry; the Qualification suite already keeps 0.2 (164) and 0.3 (172) as separate assertions and would add a third.
+**Ratification (done).** The Architect ratified all eight names unchanged and adopted alternative A. A rename would have needed a successor registry (0.3 is immutable); none is needed, so the Qualification suite keeps its two assertions (0.2: 164, 0.3: 172).
 
 ## 10. N-9 epoch saturation — Decision AD-1 (ADOPTED by the Architect, alternative A)
 
@@ -359,7 +365,9 @@ Under A the same rule applies to `policy_generation` (4.2) and the evidence sequ
 | AR-22 | `activate` or `withdraw` under a different `selection_id` for a governed scope that is active, withdrawn, revoked, epoch-saturated, generation-saturated or ratcheted | `selection_conflict` / `lineage_replacement_prohibited`; ratchet, high-water, generation and revoked set unchanged | S4-2 |
 | AR-23 | Attempt to present `optional` or a no-binding claim through a new `selection_id` over a ratcheted scope | refused; ratchet survives | S4-2, S4-3 |
 | AR-24 | Log write whose `reasons_registry_label` or `reasons_registry_sha256` is outside the allow-list, or null | writer refuses `field_invalid`; no entry; no default to 0.2 | S4-2 |
-| AR-25 | Entry violating the 3.3 nullability table (wrong nulls, invalid `cause` for `entry_type`, `sync` activating, a missing member) | refused at write; replay of the log rejects it | S4-2 |
+| AR-25 | Entry violating the 3.3 nullability table (wrong nulls, invalid `cause` for `entry_type`, `sync` activating, a missing member, `baseline`/`non_participation` without `determination_ref`, `non_participation` over a row, lineage binding or set ratchet); replay that would clear a ratchet | refused at write; replay rejects it | S4-2 |
+| AR-26 | Recovery with no verified log copy, an anchor that replay does not reproduce, or genesis baseline when an anchor exists | store stays `unknown`; no empty-table baseline; lineage, ratchet, high-water and revoked sets never reset | S4-2, S4-3 |
+| AR-27 | Snapshot revokes a pair or key that has no row, then that pair is presented for activation | revoke is logged (no governed scope) and replayable; activation of the revoked pair refused | S4-2 |
 
 ## 12. Outstanding Architect decisions
 
@@ -376,18 +384,18 @@ Not decided here, still open: independent human cryptographic review and the ind
 
 ## 13. Recommended implementation sequence (not authorized)
 
-1. Architect adopts this ADR and rules AD-1..AD-3 (docs only).
+1. Architect gives final approval to this ADR (AD-1..AD-5 and the name ratification are already adopted; docs only).
 2. `EXT-S4-1`: **record "not required"** unless the Architect rejects 7.2 (no new claim member, so no residual wiring) and do not open the PR.
 3. `EXT-S4-4` Control Plane claim-carried binding (serial; no `bounded.py` semantic edit; claim profile successor; no-binding claims byte-identical).
 4. `EXT-S4-5` re-pin Runtime and Control Plane; supersede evidence at the old tuple.
 5. `EXT-S4-2` Runtime destination: table set 3.2, writers, ratchet, anchor check, guard, typed refusal 7.4, evidence stream; never `safe_executor.py`.
-6. If AD-3 ratifies renames: reasons successor registry and a third Qualification assertion; otherwise none.
-7. `EXT-S4-3` registry-hosted emulator gate exercising AR-01..AR-25 end to end.
+6. No reasons successor registry is needed (names ratified unchanged).
+7. `EXT-S4-3` registry-hosted emulator gate exercising AR-01..AR-27 end to end.
 8. Independent qualification stays PREPARE-only until a lead is designated.
 
 ## 14. Limits of this ADR
 
-- Docs only: no code was run, no vectors were generated, no digest in this ADR was computed by executing code. Runtime and Control Plane facts come from reading source at the pins above; the Runtime was not executed.
+- Docs only: no code was run and no vectors were generated. The one digest check made: `sha256sum` of `schemas/runtime_authority_reasons_0_3.json` at Control Plane `fff27ebf` equals `58b29ef7…` (raw lowercase hex; the ADR writes it as `sha256:` + that hex, the registry's digest form). Runtime and Control Plane facts come from reading source at the pins above; the Runtime was not executed.
 - Builder-authored; one AI technical review; no human cryptographic review; no independent qualification. The anchor, hash-chain and evidence designs are **designs**, not demonstrated properties.
 - Section 3.6's restore detection is only as good as the external anchor's freshness; V1 provides no custody mechanism for it.
 - RELEASE, PUBLICATION and PRODUCTION remain HOLD; Tier 1 NOT STARTED.
