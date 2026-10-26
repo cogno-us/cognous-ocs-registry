@@ -8,6 +8,7 @@ Participation is chosen per operation. Kinds:
                                  the mapping to component failure classes is open decision LD-02.
 `operationally_authorized` is always False: technical verification is not operational authorization.
 """
+import copy
 from dataclasses import dataclass, fields
 from typing import Any, Optional
 
@@ -136,14 +137,48 @@ def verify_and_decide(participation: Any, caller: Any, record_text: Any, selecti
     return _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission, contract_version, False)
 
 
+def validate_record_text_v2(text: Any) -> "record_mod.RecordResult":
+    """The `r08-v2` record validation entry point (V01a). The same checks, order and codes as `record.validate_record_text` (it reuses that module's
+    shape, value and supersession checks and its refusal constructor), but the record must carry exactly `contract_version` `r08-v2` and its family is
+    looked up in the `r08-v2` table (`families.FAMILIES_V2`: the v1 families plus `f1ab`, `f4`, `f5`). An `r08-v1` document refuses `contract_unsupported`
+    here; an `r08-v2` document still refuses at the unchanged v1 validator. No fallback or implicit upgrade. Pure; never raises.
+    (Lives here because `record.py` is frozen by the EXT-S1-5 boundary guard; see tests/test_ext_s1_5_identity_module.py.)"""
+    try:
+        loaded = c.load_document(text)
+        if not loaded.ok:
+            return record_mod._refuse(loaded.code, loaded.detail)
+        body = loaded.value
+        if not isinstance(body, dict):
+            return record_mod._refuse("field_type_invalid", "document is not an object")
+        if body.get("contract_version") != families.CONTRACT_V2:
+            return record_mod._refuse("contract_unsupported")
+        if body.get("kind") != "record":
+            return record_mod._refuse("kind_unsupported")
+        spec = families.lookup_v2(body.get("family"))
+        if spec is None:
+            return record_mod._refuse("family_unsupported")
+        code = record_mod._shape(body, spec) or record_mod._values(body, spec)
+        if code:
+            return record_mod._refuse(code)
+        if not record_mod._supersession_ok(body):
+            return record_mod._refuse("supersession_invalid")
+        if body["payload_digest"] != c.digest(body["payload"]):
+            return record_mod._refuse("digest_mismatch", "payload_digest")
+        if body["record_digest"] != c.digest({k: v for k, v in body.items() if k != "record_digest"}):
+            return record_mod._refuse("digest_mismatch", "record_digest")
+        return record_mod.RecordResult(True, None, "", copy.deepcopy(body), body["record_digest"])
+    except Exception:  # defensive: an unexpected shape error is a refusal, never an acceptance
+        return record_mod._refuse("field_type_invalid", "unexpected structure")
+
+
 def _validate_record_v2_entry(record_text: Any):
     """Record validation for the r08-v2 decision entry (V01a). Returns `(RecordResult, contract)`; the contract is the exact version the record
-    declares, and `_decide_verified` composes with that version's table. A document declaring `r08-v2` is validated by
-    `validate_record_text_v2` (family table `FAMILIES_V2`, so `f1ab` is accepted). A document that is not `r08-v2` (`contract_unsupported` there)
-    goes, unchanged, to the existing `r08-v1` validator: records the v2 entry already accepted before V01a (`r08-v1` `f1a`) keep exactly
-    their previous result and composition. Dispatch is on the record's own declared version only, never a retry: an `r08-v2` document is
-    never judged by the v1 validator, and an `r08-v1` document never reaches the v2 family table (so `r08-v1` `f1ab` still refuses)."""
-    rec = record_mod.validate_record_text_v2(record_text)
+    declares, and `_decide_verified` composes with that version's table. A document declaring `r08-v2` is validated by `validate_record_text_v2`
+    (family table `FAMILIES_V2`, so `f1ab` is accepted). A document that is not `r08-v2` (`contract_unsupported` there) goes, unchanged, to the
+    existing `r08-v1` validator: records the v2 entry already accepted before V01a (`r08-v1` `f1a`) keep exactly their previous result and
+    composition. Dispatch is on the record's own declared version only, never a retry: an `r08-v2` document is never judged by the v1 validator,
+    and an `r08-v1` document never reaches the v2 family table (so `r08-v1` `f1ab` still refuses)."""
+    rec = validate_record_text_v2(record_text)
     if rec.ok or rec.code != "contract_unsupported":
         return rec, families.CONTRACT_V2
     return record_mod.validate_record_text(record_text), families.CONTRACT_V1

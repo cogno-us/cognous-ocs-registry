@@ -138,13 +138,14 @@ def test_v1a_04_malformed_payload_refuses_with_typed_code(mutate, code):
     pl = payload()
     mutate(pl)
     rec = record(pl)
-    assert record_mod.validate_record_text_v2(r.dumps(rec)).code == code
+    assert decision.validate_record_text_v2(r.dumps(rec)).code == code
     assert_refused(decide(rec=rec, sel=selection_text(rec)), "composition_record_invalid")
 
 
 def test_v1a_04_non_json_record_refuses():
     d = decide(record_text="not json")
-    assert d.kind == "required_policy_unavailable" and d.effective is None and d.code in c.CODES
+    assert decision.validate_record_text_v2("not json").code == "json_malformed"
+    assert_refused(d, "composition_record_invalid")
 
 
 # ---- V1A-05 forged / wrong key
@@ -175,7 +176,7 @@ def test_v1a_06_record_altered_after_signing_refuses():
     sel = selection_text(rec)
     tampered = copy.deepcopy(rec)
     tampered["payload"]["allowed_units"] = ["u-read", "u-write"]  # widen without resealing
-    assert record_mod.validate_record_text_v2(r.dumps(tampered)).code == "digest_mismatch"  # validator-level typed code
+    assert decision.validate_record_text_v2(r.dumps(tampered)).code == "digest_mismatch"  # validator-level typed code
     assert_refused(decide(rec=tampered, sel=sel), "composition_record_invalid")  # decision-level (ORACLE CORRECTION, as for V1A-04)
     resealed = r.seal_record(tampered)  # widen and reseal: no longer the record the signed selection pins
     assert_refused(decide(rec=resealed, sel=sel), "record_digest_mismatch")
@@ -224,7 +225,9 @@ def test_v1a_10_other_record_than_pinned_refuses():
 def test_v1a_11_v1_entry_still_refuses_f1ab_and_accepts_f1a():
     rec = record()
     d1 = decision.verify_and_decide("required", caller(), r.dumps(rec), selection_text(rec), s.CTX, s.trust(pub=PK), r.FakeVerifier(), r.NOW)
-    assert d1.kind == "required_policy_unavailable" and d1.effective is None
+    assert d1.kind == "required_policy_unavailable" and d1.effective is None  # cause is asserted at the validator below
+    v1_f1ab = r.seal_record(dict(r.make_record(), family=f.FAMILY_F1AB, payload=payload()))
+    assert record_mod.validate_record_text(r.dumps(v1_f1ab)).code == "family_unsupported"  # the cause, at the unchanged v1 validator
     f1a = r.make_record()
     caller3 = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
     env = r.make_envelope(r.make_statement(f1a), public_key=s.PK)
@@ -234,10 +237,30 @@ def test_v1a_11_v1_entry_still_refuses_f1ab_and_accepts_f1a():
 
 def test_v1a_12_validators_do_not_cross_accept():
     v2_text, v1_text = r.dumps(record()), r.dumps(r.make_record())
-    assert record_mod.validate_record_text(v2_text).code in ("contract_unsupported", "family_unsupported")
-    assert record_mod.validate_record_text_v2(v2_text).ok is True
-    res = record_mod.validate_record_text_v2(v1_text)
+    assert record_mod.validate_record_text(v2_text).code == "contract_unsupported"
+    assert decision.validate_record_text_v2(v2_text).ok is True
+    res = decision.validate_record_text_v2(v1_text)
     assert res.ok is False and res.code == "contract_unsupported"
+
+
+# ---- parity: the v2 validator is the v1 validator's checks under the other contract tag (guards the duplicated control flow against drift)
+def _swap(body, version):
+    return r.seal_record(dict(body, contract_version=version))
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda b: None, lambda b: b.update(kind="x"), lambda b: b.update(family="nope"), lambda b: b.update(record_id="!!"), lambda b: b.update(record_version=0),
+    lambda b: b.update(non_authorizing=False), lambda b: b["evaluator"].update(binding="x"), lambda b: b["source"].update(commit="zz"),
+    lambda b: b["provenance"].update(authored_at="no"), lambda b: b.update(supersedes={"record_id": "f1a-test-record", "record_version": 1, "record_digest": "sha256:" + "0" * 64}),
+    lambda b: b.pop("provenance"), lambda b: b.update(extra=1), lambda b: b["payload"].update(allowed_units=["b", "a"]),
+])
+def test_v1a_parity_v2_validator_matches_v1_validator_codes(mutate):
+    body = copy.deepcopy(r.make_record())  # f1a, valid under both tables
+    mutate(body)
+    body = r.seal_record(body) if "payload" in body and "provenance" in body else body
+    one = record_mod.validate_record_text(r.dumps(_swap(body, "r08-v1") if "payload" in body and "provenance" in body else body))
+    two = decision.validate_record_text_v2(r.dumps(_swap(body, "r08-v2") if "payload" in body and "provenance" in body else dict(body, contract_version="r08-v2")))
+    assert (one.ok, one.code) == (two.ok, two.code)
 
 
 # ---- V1A-16 legacy records at the v2 entry (compatibility finding recorded in the second commit)
@@ -253,7 +276,22 @@ def test_v1a_16_v1_contract_records_keep_their_existing_v2_entry_behaviour():
     assert d.kind == "applied" and d.effective["allowed_units"] == ("unit-a",)
     legacy_f1ab = r.seal_record(dict(r.make_record(), family=f.FAMILY_F1AB, payload=payload()))  # contract_version stays r08-v1
     d2 = decide(rec=legacy_f1ab, sel=selection_text(legacy_f1ab))
-    assert d2.kind == "required_policy_unavailable" and d2.effective is None
+    assert d2.kind == "required_policy_unavailable" and d2.effective is None and d2.code == "composition_record_invalid"
+    assert record_mod.validate_record_text(r.dumps(legacy_f1ab)).code == "family_unsupported"
+
+
+@pytest.mark.parametrize("mutate,code", [
+    (lambda b: b.update(family="f9-unknown"), "family_unsupported"),
+    (lambda b: b.pop("contract_version"), "contract_unsupported"),
+    (lambda b: b.update(contract_version="r08-v3"), "contract_unsupported"),
+    (lambda b: b.update(kind="selection"), "kind_unsupported"),
+])
+def test_v1a_17_invalid_v2_documents_are_refused_with_the_validator_code(mutate, code):
+    body = record()
+    mutate(body)
+    body = r.seal_record(body)
+    assert decision.validate_record_text_v2(r.dumps(body)).code == code
+    assert_refused(decide(rec=body, sel=selection_text(record())), "composition_record_invalid")
 
 
 # ---- V1A-13 one verifier
