@@ -313,9 +313,10 @@ def test_no_v1_entry_point_emits_a_v2_only_code_over_the_corpus():
 
 
 def test_v2_only_codes_have_no_behaviour_in_this_package():
-    """selection_withdrawn and the snapshot floor are declared, not implemented (later packages)."""
+    """selection_withdrawn and the snapshot floor were declared-only until S01. S01 (plan v1.4 Amendment 1) implements them, and ONLY in
+    verify.py (the v2 disposition layer and the v2 snapshot-floor check); every other module, the v1 vocabulary included, still has none."""
     for path in sorted((ROOT / "registry_successor").glob("*.py")):
-        if path.name == "v2_codes.py":
+        if path.name in ("v2_codes.py", "verify.py"):
             continue
         text = path.read_text()
         assert "selection_withdrawn" not in text and "trust_snapshot_version_stale" not in text, path.name

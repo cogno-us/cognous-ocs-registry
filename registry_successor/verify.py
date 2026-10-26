@@ -537,6 +537,8 @@ def _floor_outcome(trust: dict, min_version: Any, last_accepted: Any) -> Optiona
 
 def _verify(selection, context, trust_in, verifier, now, record, key_admission=None, contract_version=LEGACY_CONTRACT,
             v2=False, min_trust_snapshot_version=None, last_accepted_snapshot=None) -> VerificationReport:
+    if v2:
+        contract_version = V2_CONTRACT  # the v2 mode never trusts a caller-supplied label: admission is mandatory, always
     names = LAYERS_V2 if v2 else LAYERS
     layers = {name: NOT_EVALUATED for name in names}
     codes: dict = {}
