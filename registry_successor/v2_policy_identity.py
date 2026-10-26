@@ -68,17 +68,17 @@ lazily set module global `_TOKEN_TABLE`, and its pin is checked at the FIRST tok
 cached, so every later evaluation re-checks). A payload with no token to evaluate (for example all-empty deny-all lists) never touches the table.
 
 REMAINING HOST-UNICODE DEPENDENCE and ordering obligations (documented, NOT fixed in this PR; bounded follow-ups):
-  * FU-1 (families, r08-v2 composition): `registry_successor/v2_f1ab.py` (`_entry_ok`, `normalize_caller`) and `registry_successor/v2_age_bounds.py` (F5 class keys),
-    both registered in `FAMILIES_V2`, still call the host `common.valid_token`, so r08-v2 family COMPOSITION is host-dependent. A host newer than 15.1 may accept a token the
-    frozen table rejects (composition passes, then `validate_effective_payload` refuses `field_invalid` at the digest step: fails closed). A host older than 15.1 may
-    refuse a token the frozen table accepts (for example U+2EBF0, CJK Extension I). Follow-up FU-1: route both family modules to `frozen_token_valid`
-    (tests = the 38 `token_unicode` vectors with `unicodedata` poisoned); this needs the table lifted out of this module to avoid a circular import.
+  * FU-1 (families, r08-v2 composition): RESOLVED. `v2_f1ab.py` and `v2_age_bounds.py` (the F1ab list entries, the caller normalizers and the F5 class keys) now decide
+    token validity with the shared frozen predicate `v2_token.frozen_token_valid` (this module re-exports it), so r08-v2 family composition is host-independent
+    (tests/test_fu_b_identity_order_and_family_tokens.py: the 38 `token_unicode` vectors with `unicodedata` poisoned, and the older-host/newer-host cases U+2EBF0 accepted,
+    U+088F refused). The shared r08-v1 statement and record validators (`selection.py`, `record.py`, `compose.py`, `verify.py`) still use the host `common.valid_token`
+    byte-for-byte unchanged: they are r08-v1 paths (v2 projects a scope token by the ASCII identity-or-refusal rule, which refuses every non-ASCII token).
   * TrustSnapshot OBJECT path: `trust_snapshot_from_verified` runs the verifier's `_normalize_trust` (host `common.valid_token`) AND THEN the frozen check, so the decision is
     host AND frozen: never looser than the frozen table; stricter than it only on a host older than 15.1 (a frozen-valid token refused: fail closed). Snapshots given as
     dicts are decided by the frozen table alone.
   * FU-2 (N-10(c) ordering): the snapshot-version ingest bound lives ONLY in `trust_snapshot_from_verified`. `verify._normalize_trust` (shared core, untouched) does not
     enforce it (it accepts a version of 2^60). A caller MUST pass a `TrustSnapshot` through this adapter before any authority evaluation; nothing here can force that
-    ordering on a consumer. Follow-up FU-2: a consumer-wiring test, or a bound in the shared verifier under its own PR. Digests give integrity, never authentication.
+    ordering on a consumer. Follow-up FU-2 is owned by the core-verifier follow-up work (Worker A: verify.py), not by this module. Digests give integrity, never authentication.
 """
 import hashlib
 import re
@@ -633,6 +633,11 @@ def validate_binding(doc: Any) -> dict:
     a subclass). Phases (first failure wins, sorted path order inside a phase): object, scope object, missing members, unknown members, types, values.
     The top-level set (14 plain members plus `scope`) and the nested `scope` set (tenant, institution, authority_domain) are checked as TWO sets, before
     flattening."""
+    return _validate_binding_values(_validate_binding_shape(doc))
+
+
+def _validate_binding_shape(doc: Any) -> dict:
+    """Claim type, required members (missing, unknown) and member types: the claim-shape part of `validate_binding` (ruling F4 steps 1). Returns the private plain copy."""
     d = _plain(doc)
     if type(d) is not dict:
         _type_refusal(None, d)
@@ -659,6 +664,12 @@ def validate_binding(doc: Any) -> dict:
                 _type_refusal(path, v)
         elif type(v) is not str:
             _type_refusal(path, v)
+    return d
+
+
+def _validate_binding_values(d: dict) -> dict:
+    """The value phase of `validate_binding` (ranges, identifier and digest grammar, `binding_profile`) over a shape-checked private copy."""
+    flat = _flatten_checked(d)
     for path in sorted(flat):
         v = flat[path]
         if path in _INT_PATHS:
@@ -764,17 +775,23 @@ def compare_binding_identity(binding: Any, authoritative: Any) -> str:
 
 
 def verify_carried_binding_digest(binding: dict, carried: Any, authoritative: Any = None) -> str:
-    """Guard check on a carried binding digest. Order (ruling 4.6): (1) the binding is validated (syntax, `binding_profile` version, all 15 members), (2) the
-    carried digest's format (`field_invalid`), (3) when `authoritative` (the consumer-owned durable row, `compare_binding_identity`) is given, the authoritative
-    identity and context are compared (`store_unknown`, `selection_epoch_stale`, `policy_identity_mismatch`), and only then (4) the carried digest is compared
-    with the recomputed value (`digest_mismatch`, evidence carried and recomputed). WITHOUT `authoritative` this is a digest-integrity check only: it verifies
+    """Guard check on a carried binding digest. Order (Architect F4 ruling; a malformed carried digest is a CLAIM-SHAPE failure, never an identity mismatch):
+    (1) the claim's type and required members (`field_missing`, `field_unknown`, `field_type_invalid`); (2) the carried digest's representation and encoding
+    (`field_invalid`, evidence `observed_value_class`); (3) the contract version (`binding_profile`) and the remaining member values (`field_invalid`);
+    (4) when `authoritative` (the consumer-owned durable row) is given: an unusable row is `store_unknown` (UNKNOWN_FAIL_CLOSED, unchanged) and the scope key and
+    selection id are compared (`policy_identity_mismatch`); (5) a claim epoch BEHIND the same row is `selection_epoch_stale`; (6) the remaining canonical identity
+    members are compared (`policy_identity_mismatch`); (7) only then the validated carried digest is compared with the recomputed value (`digest_mismatch`,
+    evidence carried and recomputed). So a malformed digest on a cross-row, stale, unknown-store or wrong-version claim refuses as claim shape. NOTE (pinned vectors
+    GD-002 and GD-003): a well-formed but incorrect digest stays `digest_mismatch`; the Architect text names `policy_identity_mismatch` for it, which the pinned
+    vectors contradict, so the code is NOT changed here (reported for a ruling). WITHOUT `authoritative` this is a digest-integrity check only: it verifies
     no identity and no context, and a caller that needs the identity guarantee MUST pass the row (the guard, EXT-S4-2, is the consumer).
     WARNING: `authoritative=None` is NOT an identity verification. A matching digest proves only that the binding is internally consistent; it never shows that the
     binding names the activated policy, scope or epoch. Do not use the None form as a guard."""
-    b = validate_binding(binding)  # ONE private validated copy: the digest and the identity below are both of THIS copy (no mutation of the caller's object between them)
-    recomputed = binding_digest(b)
+    d = _validate_binding_shape(binding)  # ONE private copy: the digest and the identity below are both of THIS copy (no mutation of the caller's object between them)
     if not (type(carried) is str and _ascii_match(_DIGEST, carried)):
         _refuse("field_invalid", evidence={"observed_value_class": _value_class(carried)})
+    b = _validate_binding_values(d)
+    recomputed = binding_digest(b)
     if authoritative is not None:
         compare_binding_identity(b, authoritative)
     if carried != recomputed:
@@ -790,53 +807,8 @@ _ISSUER_MEMBERS = ("alg", "authority", "issuer_id", "key_id", "public_key")
 _LOWER_HEX = frozenset("0123456789abcdef")
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Frozen token membership (spec 6.1, ruling N-13): Unicode 15.1.0, a committed excluded-range table, NO runtime Unicode database and no network.
-# ----------------------------------------------------------------------------------------------------------------------
-TOKEN_TABLE_SHA256 = "8c85813d25f6ed53371e27f0e4895a89de44a619824486dcff8d48ff8b607474"  # pinned in the spec and the vectors (pins.token_unicode_table)
-_TOKEN_TABLE: Any = None
-_RANGE_RE = re.compile(rb'\[\s*"([0-9A-F]{4,6})",\s*"([0-9A-F]{4,6})"\s*\]')
-
-
-def _load_token_table(raw: Any = None, expected: str = TOKEN_TABLE_SHA256) -> Tuple[list, list]:
-    """Verify the sha256 of the embedded table bytes BEFORE parsing and fail closed: a mismatched or malformed table raises RuntimeError (a build defect, never a
-    typed refusal and never an accepting default). No file is opened and no host Unicode database is read."""
-    try:
-        if raw is None:
-            from .v2_token_table import TABLE_BYTES as raw
-        if type(raw) is not bytes or hashlib.sha256(raw).hexdigest() != expected or b'"unicode_version": "15.1.0"' not in raw:
-            raise ValueError("pin")
-        head, _, tail = raw.partition(b'"excluded_ranges"')
-        ranges = [(int(x, 16), int(y, 16)) for x, y in _RANGE_RE.findall(tail)]
-        if not ranges or any(a > b or (i and a <= ranges[i - 1][1]) for i, (a, b) in enumerate(ranges)) or ranges[-1][1] > 0x10FFFF:
-            raise ValueError("ranges")
-    except Exception:
-        raise RuntimeError("the pinned Unicode 15.1.0 token table does not match its sha256 pin or is malformed") from None
-    return [a for a, _ in ranges], ranges
-
-
-def frozen_token_valid(value: Any) -> bool:
-    """The token rule with frozen membership: an exact `str` of 1..128 code points, no `*`, no code point inside an excluded range of the pinned table.
-    No normalization. Consults no runtime Unicode database."""
-    global _TOKEN_TABLE
-    if type(value) is not str or not 1 <= len(value) <= c.MAX_ENTRY_CHARS or "*" in value:
-        return False
-    if _TOKEN_TABLE is None:
-        _TOKEN_TABLE = _load_token_table()
-    starts, ranges = _TOKEN_TABLE
-    for ch in value:
-        cp = ord(ch)
-        lo, hi = 0, len(starts)  # binary search: the last range whose start is <= cp
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if starts[mid] <= cp:
-                lo = mid + 1
-            else:
-                hi = mid
-        i = lo - 1
-        if i >= 0 and ranges[i][0] <= cp <= ranges[i][1]:
-            return False
-    return True
+# Frozen token membership (spec 6.1, ruling N-13) lives in `v2_token` (shared with the r08-v2 family modules); re-exported here under its original names.
+from .v2_token import TOKEN_TABLE_SHA256, _load_token_table, frozen_token_valid  # noqa: E402,F401
 
 
 def _token(v: Any) -> bool:

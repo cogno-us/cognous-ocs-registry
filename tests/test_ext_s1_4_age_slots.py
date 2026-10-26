@@ -247,7 +247,7 @@ def test_no_new_codes_and_table_shape():
 def test_module_is_pure_and_imports_no_component():
     src = (ROOT / "registry_successor/v2_age_bounds.py").read_text(encoding="utf-8")
     imports = re.findall(r"^(?:from|import) ([\w.]+)", src, re.M)
-    assert set(imports) <= {"itertools", "collections.abc", "typing", "registry_successor", "registry_successor.compose"}, imports
+    assert set(imports) <= {"itertools", "collections.abc", "typing", "registry_successor", "registry_successor.compose", "registry_successor.v2_token"}, imports
     for banned in ("agent_control_plane", "engine", "open(", "time.", "datetime", "os.", "random"):
         assert banned not in src, banned
     # no amount slot, reserved or inactive, anywhere in the payload field sets
@@ -760,7 +760,7 @@ MUTATIONS = {  # name -> (old, new, expected violated property)
     "drop empty map check": ("    if not m or len(m) > MAX_CLASSES:", "    if len(m) > MAX_CLASSES:", "empty_map"),
     "drop map bound": ("    if not m or len(m) > MAX_CLASSES:", "    if not m:", "map_bound"),
     "drop sorted check": ("keys != sorted(keys)", "False", "unsorted_keys"),
-    "drop token check": ("not all(c.valid_token(k) for k in keys) or ", "", "bad_token"),
+    "drop token check": ("not all(frozen_token_valid(k) for k in keys) or ", "", "bad_token"),
     "max instead of min f4": ("effective = {k: min(cal[k], payload[k]) for k in F4_FIELDS}", "effective = {k: max(cal[k], payload[k]) for k in F4_FIELDS}", "min_f4"),
     "registry replaces caller f4": ("effective = {k: min(cal[k], payload[k]) for k in F4_FIELDS}", "effective = {k: payload[k] for k in F4_FIELDS}", "min_f4"),
     "max instead of min f5": ("min(base[k], reg[k]) if k in reg else base[k]", "max(base[k], reg[k]) if k in reg else base[k]", "min_f5"),

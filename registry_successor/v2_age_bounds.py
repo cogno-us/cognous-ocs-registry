@@ -21,7 +21,7 @@ differ (in-repo drift only). Caller domain is 0..AGE_MAX: only the class base is
 admit 0 (runtime_authority.py:87, ge=0); the F4 scalars are unvalidated constructor arguments (bounded.py:1271, :1274).
 Registry domain is 1..AGE_MAX.
 
-F5 class keys follow the opaque-token rule of contract section 2 (`common.valid_token`: plain `str`, 1..128, no control or
+F5 class keys follow the opaque-token rule of contract section 2 (`v2_token.frozen_token_valid`, the frozen Unicode 15.1.0 rule: plain `str`, 1..128, no control or
 separator character, no `*`; exact string, no case folding). The Control Plane itself constrains a class id only to a non-empty
 string, so this rule is stricter and fails closed: a longer or exotic class id cannot be set through the registry. Keys must
 appear sorted and are bounded at MAX_ENTRIES (the canonical-list convention); an empty map refuses.
@@ -44,6 +44,7 @@ from typing import Any, Optional
 
 from registry_successor import common as c
 from registry_successor.compose import CompositionResult
+from registry_successor.v2_token import frozen_token_valid
 
 FAMILY_F4 = "f4-control-plane-age-bounds"
 FAMILY_F5 = "f5-action-class-age-bounds"
@@ -106,7 +107,7 @@ def f5_payload_validator(payload: dict) -> Optional[str]:
     if not m or len(m) > MAX_CLASSES:
         return "field_invalid"
     keys = list(m)
-    if not all(c.valid_token(k) for k in keys) or keys != sorted(keys):
+    if not all(frozen_token_valid(k) for k in keys) or keys != sorted(keys):
         return "field_invalid"
     if not all(is_registry_age(v) for v in m.values()):
         return "field_invalid"
@@ -150,7 +151,7 @@ def normalize_caller_f5(caller: Any) -> Optional[dict]:
     m = _snapshot(snap[F5_FIELD], MAX_CLASSES)
     if m is None or not m:
         return None
-    if not all(type(k) is str and c.valid_token(k) for k in m):
+    if not all(type(k) is str and frozen_token_valid(k) for k in m):
         return None
     if not all(is_caller_age(v) for v in m.values()):
         return None
