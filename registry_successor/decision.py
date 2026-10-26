@@ -15,6 +15,8 @@ from registry_successor import common as c
 from registry_successor import families
 from registry_successor import record as record_mod
 from registry_successor import selection as selection_mod
+from registry_successor import v2_codes
+from registry_successor import v2_selection as v2_selection_mod
 from registry_successor import verify as verify_mod
 
 
@@ -40,16 +42,16 @@ class TypedPolicyDecision(PolicyDecision):
     detail_member: Optional[str] = None
 
 
-def _refusal(participation: Any, caller: Any, code: str, detail: str = "", typed: Any = None) -> PolicyDecision:
-    base = _plain_refusal(participation, caller, code, detail)
+def _refusal(participation: Any, caller: Any, code: str, detail: str = "", typed: Any = None, codes: Any = c.CODES) -> PolicyDecision:
+    base = _plain_refusal(participation, caller, code, detail, codes)
     if typed is None:
         return base
     return TypedPolicyDecision(*(getattr(base, f.name) for f in fields(PolicyDecision)), detail_code=typed[0], detail_cause=typed[1],
                                detail_stage=typed[2] if len(typed) > 2 else None, detail_member=typed[3] if len(typed) > 2 else None)
 
 
-def _plain_refusal(participation: Any, caller: Any, code: str, detail: str = "") -> PolicyDecision:
-    assert code in c.CODES, code
+def _plain_refusal(participation: Any, caller: Any, code: str, detail: str = "", codes: Any = c.CODES) -> PolicyDecision:
+    assert code in codes, code
     if participation == "optional":
         normalized = families.lookup(families.V1_DEFAULT_FAMILY).caller_normalizer(caller)
         return PolicyDecision("overlay_not_applied", normalized if normalized is not None else caller, False, (), code,
@@ -74,7 +76,7 @@ def refusal_rev2(participation: Any, code: str, detail: str = "") -> PolicyDecis
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
 
 
-def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) -> PolicyDecision:
+def _decide_verified(participation: Any, caller: Any, record: Any, report: Any, codes: Any = c.CODES) -> PolicyDecision:
     """INTERNAL. Only verify_and_decide may call this, with objects it produced itself. Not a public interface:
     a caller-supplied report is never authority."""
     try:
@@ -88,7 +90,7 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) 
             stage, member = getattr(report, "detail_stage", None), getattr(report, "detail_member", None)
             typed = ((dc, cause if type(cause) is str else None) + ((stage, member) if type(stage) is str and type(member) is str else ())
                      if type(dc) is str else None)
-            return _refusal(participation, caller, code if code in c.CODES else "selection_missing", typed=typed)
+            return _refusal(participation, caller, code if code in codes else "selection_missing", typed=typed, codes=codes)
         if getattr(report, "participation", None) != participation:
             return _refusal(participation, caller, "participation_mismatch",
                             "the signed selection's participation does not equal the operation class")
@@ -130,17 +132,27 @@ def verify_and_decide(participation: Any, caller: Any, record_text: Any, selecti
     `key_admission` is the optional trust-boundary key policy (see `key_admission.py`); it is forwarded unchanged to
     `verify_selection`. `contract_version` selects the verification path: anything but exactly `r08-v1` makes built-in key
     admission mandatory (see `verify_selection`); the callback can only add refusals."""
+    return _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission, contract_version, False)
+
+
+def _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission, contract_version, v2):
+    """The one implementation behind `verify_and_decide` (r08-v1 parser, closed `c.CODES`) and `verify_and_decide_v2` (r08-v2 parser,
+    closed `CODES_V2`, `verify_selection_v2`)."""
+    codes = v2_codes.CODES_V2 if v2 else c.CODES
     try:
         if participation not in c.PARTICIPATION:
             return _refusal("required", caller, "participation_mismatch", "operation participation is not required or optional")
         if selection_text is None:
             return _refusal(participation, caller, "selection_missing")
-        sel = selection_mod.parse_selection_envelope(selection_text)
+        sel = (v2_selection_mod.parse_selection_envelope_v2 if v2 else selection_mod.parse_selection_envelope)(selection_text)
         if not sel.ok:
-            return _refusal(participation, caller, sel.code if sel.code in c.CODES else "selection_missing", sel.detail)
+            return _refusal(participation, caller, sel.code if sel.code in codes else "selection_missing", sel.detail, codes=codes)
         rec = record_mod.validate_record_text(record_text)
-        report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec, key_admission, contract_version)
-        return _decide_verified(participation, caller, rec, report)
+        if v2:
+            report = verify_mod.verify_selection_v2(sel, context, trust, verifier, now, rec, key_admission)
+        else:
+            report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec, key_admission, contract_version)
+        return _decide_verified(participation, caller, rec, report, codes)
     except Exception:  # defensive: never an acceptance on unexpected input
         return _refusal(participation if participation in c.PARTICIPATION else "required", caller, "selection_missing", "unexpected input")
 
@@ -149,6 +161,7 @@ def verify_and_decide_v2(participation: Any, caller: Any, record_text: Any, sele
                          trust: Any, verifier: Any, now: Any, key_admission: Any = None) -> PolicyDecision:
     """The r08-v2 verify-and-decide entry point: no `contract_version` parameter, hardwired to "r08-v2" (mandatory key
     admission, canonical base64, exact-type private copies). Delegates to `verify_and_decide`, the single implementation.
-    Selection TEXT is still parsed by the existing r08-v1 envelope parser (no v2 parser exists yet)."""
-    return verify_and_decide(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission,
-                             verify_mod.V2_CONTRACT)
+    Selection TEXT is parsed by the r08-v2 envelope parser (`v2_selection`); refusals use the closed `CODES_V2`. A withdrawal is
+    never an application: it is `required_policy_unavailable` / `overlay_not_applied` with `selection_withdrawn`."""
+    return _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission,
+                        verify_mod.V2_CONTRACT, True)

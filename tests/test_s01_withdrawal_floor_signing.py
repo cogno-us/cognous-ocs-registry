@@ -162,8 +162,10 @@ def test_wd02_withdrawal_is_never_translated_into_success_by_decide():
         wd_p = s.withdraw_statement(s.select_statement(participation=participation), participation=participation)
         d = decision.verify_and_decide_v2(participation, caller, rec_text, r.dumps(s.envelope(wd_p)), CTX, s.trust(), FAKE, NOW)
         assert (d.kind, d.code, d.caller_unchanged, d.operationally_authorized) == (kind, "selection_withdrawn", unchanged, False)
-        assert d.effective is None or d.effective == caller
-        assert (d.effective is None) == (participation == "required")
+        if participation == "required":
+            assert d.effective is None  # the caller policy is never returned on a required operation
+        else:  # optional: unchanged caller policy (normalized to tuples), explicitly not denial
+            assert d.effective == {k: tuple(vv) for k, vv in caller.items()}
 
 
 def test_wd03_valid_select_decides_applied_at_the_v2_entry():
@@ -171,7 +173,7 @@ def test_wd03_valid_select_decides_applied_at_the_v2_entry():
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a", "unit-c"]}
     d = decision.verify_and_decide_v2("required", caller, r.dumps(rec), r.dumps(s.envelope(s.select_statement())), CTX, s.trust(), FAKE, NOW)
     assert (d.kind, d.code) == ("applied", None)
-    assert d.effective == {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
+    assert d.effective == {"allowed_actions": ("write-file",), "allowed_adapters": ("local-fs",), "allowed_units": ("unit-a",)}
 
 
 @pytest.mark.parametrize("name,mutate,code", [
@@ -328,7 +330,13 @@ def test_sf08_floor_failure_blocks_authentication_and_decisions():
     assert rep.authenticated is False and rep.layers["authenticity"] == "not_evaluated"
     d = decision.verify_and_decide_v2("required", {"allowed_actions": [], "allowed_adapters": [], "allowed_units": []},
                                       r.dumps(r.make_record()), r.dumps(env), CTX, s.trust(version=1), FAKE, NOW)
-    assert d.kind in ("required_policy_unavailable", "applied")  # decide exposes no floor input in S01: documented limitation
+    # Documented S01 limitation: verify_and_decide_v2 exposes NO floor input, so a stale snapshot is still accepted there. The floor is
+    # enforced at verify_selection_v2; a refused floor report can never become an application:
+    assert d.kind == "applied_deny_all"
+    floor_rep = verify2(env, trust=s.trust(version=1), min_trust_snapshot_version=2)
+    refused = decision._decide_verified("required", {"allowed_actions": [], "allowed_adapters": [], "allowed_units": []},
+                                        record_mod.validate_record_text(r.dumps(r.make_record())), floor_rep, v2_codes.CODES_V2)
+    assert (refused.kind, refused.code, refused.effective) == ("required_policy_unavailable", "trust_snapshot_version_stale", None)
 
 
 # ================================================================ AV: EXT-S1-9 adversarial verifier battery (builder side)

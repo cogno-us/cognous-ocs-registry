@@ -8,11 +8,14 @@ authenticity layer refuses `verifier_unavailable`; a matching SHA-256 digest is 
 import base64
 import binascii
 import datetime
+import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Protocol
 
 from registry_successor import common as c
 from registry_successor import selection as sel_mod
+from registry_successor import v2_codes
+from registry_successor import v2_selection as v2_sel
 from registry_successor.canonical_b64 import decode_canonical_base64
 from registry_successor.common import ExpectedContext
 from registry_successor.key_admission import (
@@ -22,12 +25,13 @@ LAYERS = (
     "structural", "integrity", "record_binding", "trust_snapshot", "authenticity",
     "authority", "scope", "time", "revocation", "epoch",
 )
+LAYERS_V2 = LAYERS + ("disposition",)  # r08-v2 adds a final `disposition` layer (docs/r08-v2-contract.md section 3.1)
 PASS, REFUSE, NOT_EVALUATED = "pass", "refuse", "not_evaluated"
 SUPPORTED_ALG = "ed25519"
 
 __all__ = [
     "ExpectedContext", "AuthorityGrant", "IssuerEntry", "TrustSnapshot", "SignatureVerifier", "VerificationReport",
-    "LAYERS", "verify_selection", "verify_selection_v2", "TypedVerificationReport", "MAX_SNAPSHOT_VERSION",
+    "LAYERS", "LAYERS_V2", "verify_selection", "verify_selection_v2", "TypedVerificationReport", "MAX_SNAPSHOT_VERSION",
 ]
 
 
@@ -241,7 +245,8 @@ def _private_trust(trust: Any):
             return None
         floors[sid] = int(floor)
     return {"issuers": issuers, "revoked_keys": frozenset(keys), "revoked_selections": revoked_sel,
-            "floors": floors, "valid_until": valid_until_dt}
+            "floors": floors, "valid_until": valid_until_dt, "version": version, "snapshot_id": snapshot_id,
+            "valid_until_raw": valid_until}
 
 
 def _private_selection(selection: Any) -> Any:
@@ -427,7 +432,7 @@ def _record_binding(statement: dict, record: Any) -> Optional[tuple]:
     return None
 
 
-def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any, canonical_b64: bool = False) -> tuple:
+def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any, canonical_b64: bool = False, v2: bool = False) -> tuple:
     """Returns (code_or_None, detail, valid) where valid lists every (entry, grants) whose signature verified."""
     from registry_successor import selection as sel_mod
     signatures = getattr(selection, "signatures", None)
@@ -437,7 +442,7 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any, c
     if not supported:
         return ("signature_algorithm_unsupported", "no ed25519 signature present", [])
     try:
-        message = sel_mod.signing_input(statement)
+        message = v2_sel.signing_input_v2(statement) if v2 else sel_mod.signing_input(statement)  # r08-v2 signs under its OWN domain
     except Exception:
         return ("signature_invalid", "signing input cannot be built", [])
     first_failure = None
@@ -482,8 +487,58 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any, c
     return (first_failure[0], first_failure[1], [])
 
 
-def _verify(selection, context, trust_in, verifier, now, record, key_admission=None, contract_version=LEGACY_CONTRACT) -> VerificationReport:
-    layers = {name: NOT_EVALUATED for name in LAYERS}
+_FINGERPRINT = re.compile(r"\Asha256:[0-9a-f]{64}\Z")
+
+
+def _floor_inputs_ok(min_version: Any, last_accepted: Any) -> bool:
+    """True when the optional snapshot-floor inputs are well formed (strict types; absent = off)."""
+    if min_version is not None and not (type(min_version) is int and 1 <= min_version <= MAX_SNAPSHOT_VERSION):
+        return False
+    if last_accepted is not None:
+        if type(last_accepted) is not tuple or len(last_accepted) != 2:
+            return False
+        version, fingerprint = last_accepted
+        if not (type(version) is int and 1 <= version <= MAX_SNAPSHOT_VERSION):
+            return False
+        if type(fingerprint) is not str or not _FINGERPRINT.match(fingerprint):
+            return False
+    return True
+
+
+def _rebuilt_snapshot(trust: dict) -> TrustSnapshot:
+    """The admitted snapshot rebuilt from the verifier's private copy (never the caller's object), for fingerprinting."""
+    return TrustSnapshot(
+        snapshot_id=trust["snapshot_id"], version=trust["version"], valid_until=trust["valid_until_raw"],
+        issuers=tuple(entry for entry, _ in trust["issuers"].values()), revoked_key_ids=frozenset(trust["revoked_keys"]),
+        revoked_selections=frozenset(trust["revoked_selections"]), min_epochs=tuple(trust["floors"].items()))
+
+
+def _floor_outcome(trust: dict, min_version: Any, last_accepted: Any) -> Optional[tuple]:
+    """Stateless floor decision (docs/r08-v2-contract.md section 5): stale when older than the external floor, older than the last
+    accepted snapshot, or the same version with a different fingerprint. None = acceptable. A fingerprint that cannot be computed
+    fails closed as `trust_snapshot_invalid`."""
+    stale = ("trust_snapshot_version_stale", "trust snapshot is older than the required floor")
+    if min_version is not None and trust["version"] < min_version:
+        return stale
+    if last_accepted is not None:
+        version, fingerprint = last_accepted
+        if trust["version"] < version:
+            return stale
+        if trust["version"] == version:
+            try:
+                from registry_successor import v2_policy_identity as pid  # lazy: v2_policy_identity imports this module
+                same = pid.trust_snapshot_fingerprint_from_verified(_rebuilt_snapshot(trust)) == fingerprint
+            except Exception:
+                return ("trust_snapshot_invalid", "trust snapshot cannot be fingerprinted")
+            if not same:
+                return ("trust_snapshot_version_stale", "same version with a different fingerprint")
+    return None
+
+
+def _verify(selection, context, trust_in, verifier, now, record, key_admission=None, contract_version=LEGACY_CONTRACT,
+            v2=False, min_trust_snapshot_version=None, last_accepted_snapshot=None) -> VerificationReport:
+    names = LAYERS_V2 if v2 else LAYERS
+    layers = {name: NOT_EVALUATED for name in names}
     codes: dict = {}
     details: dict = {}
     typed: dict = {}
@@ -491,29 +546,42 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
     def mark(layer: str, code: Optional[str], detail: str = "", typed_detail: Optional[tuple] = None) -> None:
         layers[layer] = PASS if code is None else REFUSE
         if code is not None:
-            assert code in c.CODES, code
+            assert code in (v2_codes.CODES_V2 if v2 else c.CODES), code
             codes[layer] = code
             details[layer] = detail
             if typed_detail is not None:
                 typed[layer] = typed_detail
 
     mandatory = _admission_mandatory(selection, contract_version)  # decided ONCE from the caller's original objects
+    envelope_in = getattr(selection, "envelope", None)  # ONE read; only an exact dict can declare a version
+    declared = envelope_in.get("contract_version") if type(envelope_in) is dict else None
+    wrong_contract = (type(declared) is not str or declared != V2_CONTRACT) if v2 else (type(declared) is str and declared == V2_CONTRACT)
+    if v2 and type(envelope_in) is not dict:
+        wrong_contract = True
     if mandatory:  # exact types + one read: every later decision uses these private copies only
         selection, record, context = _private_selection(selection), _private_record(record), _private_context(context)
         when = _private_now(now)
     else:
         when = _aware(now)
+    if wrong_contract and getattr(selection, "ok", False) is True:  # cross-version: never verified, never signed-over
+        selection = sel_mod.SelectionResult(False, "contract_unsupported", "selection envelope is not of the entry point's contract version")
     statement = _statement_view(selection)
+    shape_code = None
+    if statement is not None and v2:  # defense in depth: re-check the closed r08-v2 statement shape on the private copy
+        shape_code = "field_invalid" if "disposition" not in statement else v2_sel._statement_code_v2(statement)
     if statement is None:
         given = getattr(selection, "code", None)
-        mark("structural", given if given in c.CODES else "field_invalid", "selection is missing or not structurally valid")
+        mark("structural", given if given in (v2_codes.CODES_V2 if v2 else c.CODES) else "field_invalid", "selection is missing or not structurally valid")
+    elif shape_code is not None:
+        mark("structural", shape_code, "statement is not a valid r08-v2 statement")
+        statement = None
     else:
         mark("structural", None)
         if c.digest(statement) == selection.statement_digest:
             mark("integrity", None)
         else:
             mark("integrity", "digest_mismatch", "statement digest does not match canonical statement")
-        if record is not None:
+        if record is not None and statement.get("disposition") != "withdraw":  # a withdrawal pins no record
             bad = _record_binding(statement, record)
             mark("record_binding", *(bad if bad else (None,)))
 
@@ -536,8 +604,11 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
         mark("trust_snapshot", "time_unavailable", "no trusted current time")
     elif when >= trust["valid_until"]:
         mark("trust_snapshot", "trust_snapshot_expired", "trust snapshot is past valid_until")
+    elif v2 and not _floor_inputs_ok(min_trust_snapshot_version, last_accepted_snapshot):
+        mark("trust_snapshot", "trust_snapshot_invalid", "snapshot floor input is malformed")
     else:
-        mark("trust_snapshot", None)
+        floor = _floor_outcome(trust, min_trust_snapshot_version, last_accepted_snapshot) if v2 else None
+        mark("trust_snapshot", *(floor if floor else (None,)))
     trust_ok = layers["trust_snapshot"] == PASS
 
     authenticated, issuer_id, valid_signers = False, None, []
@@ -545,7 +616,7 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
         if verifier is None:
             mark("authenticity", "verifier_unavailable", "no signature verifier supplied; digest match is not authentication")
         elif trust_ok:
-            code, detail, valid_signers = _authenticity(statement, selection, trust, verifier, mandatory)
+            code, detail, valid_signers = _authenticity(statement, selection, trust, verifier, mandatory, v2)
             mark("authenticity", code, detail)
             if code is None:
                 authenticated = True
@@ -595,9 +666,16 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
             else:
                 mark("epoch", None)
 
-    first = next((name for name in LAYERS if layers[name] == REFUSE), None)
-    required_ok = all(layers[name] == PASS for name in LAYERS if name != "record_binding")
-    ok = first is None and required_ok and (record is None or layers["record_binding"] == PASS)
+    withdrawal = v2 and statement is not None and statement.get("disposition") == "withdraw"
+    if v2 and statement is not None and all(layers[n] == PASS for n in LAYERS if n != "record_binding") and (
+            withdrawal or record is None or layers["record_binding"] == PASS):
+        if withdrawal:  # authenticated, in scope and in time: a withdrawal is a typed refusal, never a success
+            mark("disposition", "selection_withdrawn", "the authenticated statement withdraws the selection")
+        else:
+            mark("disposition", None)
+    first = next((name for name in names if layers[name] == REFUSE), None)
+    required_ok = all(layers[name] == PASS for name in names if name != "record_binding")
+    ok = first is None and required_ok and (withdrawal is False) and (record is None or layers["record_binding"] == PASS)
     klass, extra = VerificationReport, {}
     if not ok and first in typed:
         td = typed[first]
@@ -615,11 +693,20 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
         if statement is not None and layers["record_binding"] == PASS and isinstance(statement.get("record"), dict) else None)
 
 
-def verify_selection_v2(selection, context, trust, verifier, now, record=None, key_admission=None) -> VerificationReport:
+def verify_selection_v2(selection, context, trust, verifier, now, record=None, key_admission=None, *,
+                        min_trust_snapshot_version=None, last_accepted_snapshot=None) -> VerificationReport:
     """The r08-v2 verification entry point. It takes NO `contract_version` parameter and hardwires `V2_CONTRACT`, so a caller
     can neither omit the version nor substitute one, and nothing in the selection or envelope can steer it to the legacy
-    path. It delegates to `verify_selection`, the single verification and admission implementation: no second authority."""
-    return verify_selection(selection, context, trust, verifier, now, record, key_admission, V2_CONTRACT)
+    path. It shares `_verify` with `verify_selection`, the single verification and admission implementation: no second authority.
+    Optional keyword-only snapshot-floor inputs (docs/r08-v2-contract.md section 5; both default off): `min_trust_snapshot_version`
+    (an int) and `last_accepted_snapshot` (a `(version, fingerprint)` tuple). The verifier stays stateless; the caller supplies them."""
+    try:
+        return _verify(selection, context, trust, verifier, now, record, key_admission, V2_CONTRACT, True,
+                       min_trust_snapshot_version, last_accepted_snapshot)
+    except Exception:
+        layers = {name: NOT_EVALUATED for name in LAYERS_V2}
+        layers["structural"] = REFUSE
+        return VerificationReport(False, "field_invalid", "internal verification error", layers, None, False, None, False)
 
 
 def verify_selection(selection, context, trust, verifier, now, record=None, key_admission=None,
@@ -633,6 +720,8 @@ def verify_selection(selection, context, trust, verifier, now, record=None, key_
     old opt-in meaning (None = no admission).
     """
     try:
+        if type(contract_version) is str and contract_version == V2_CONTRACT:  # one implementation, one v2 semantics
+            return _verify(selection, context, trust, verifier, now, record, key_admission, V2_CONTRACT, True)
         return _verify(selection, context, trust, verifier, now, record, key_admission, contract_version)
     except Exception:
         layers = {name: NOT_EVALUATED for name in LAYERS}
