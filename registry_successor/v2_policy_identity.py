@@ -63,7 +63,22 @@ Rulings N-10 to N-12 are RULED and implemented (syntax-first parse, strict ints,
 never-activated). N-13 is RULED and adopted: effective-payload list entries and F5 class names are decided by the sha256-pinned Unicode 15.1.0 table (`frozen_token_valid`), never by the host database. N-10(c) is RULED (Architect final ruling): the 2^53 - 1 representation bound is applied at INGEST in `trust_snapshot_from_verified`
 (`trust_snapshot_invalid`, stage `ingest`, member `trust_snapshot_version`; the code and stage names are PROPOSED pending Architect confirmation, PR #35 spec 5.5.2); the snapshot shape guard and the projection stage remain second lines of defence.
 
-Pure: no clock, no network, no mutable state; the sha256-pinned token table is embedded (`v2_token_table`), verified at first use, fail closed. Digests give integrity, never authentication.
+Pure with one benign exception: no clock, no network, no file I/O. The sha256-pinned Unicode 15.1.0 token table is embedded (`v2_token_table`); it is cached in the
+lazily set module global `_TOKEN_TABLE`, and its pin is checked at the FIRST token evaluation (not at import), failing closed with RuntimeError (a failed check is not
+cached, so every later evaluation re-checks). A payload with no token to evaluate (for example all-empty deny-all lists) never touches the table.
+
+REMAINING HOST-UNICODE DEPENDENCE and ordering obligations (documented, NOT fixed in this PR; bounded follow-ups):
+  * FU-1 (families, r08-v2 composition): `registry_successor/v2_f1ab.py` (`_entry_ok`, `normalize_caller`) and `registry_successor/v2_age_bounds.py` (F5 class keys),
+    both registered in `FAMILIES_V2`, still call the host `common.valid_token`, so r08-v2 family COMPOSITION is host-dependent. A host newer than 15.1 may accept a token the
+    frozen table rejects (composition passes, then `validate_effective_payload` refuses `field_invalid` at the digest step: fails closed). A host older than 15.1 may
+    refuse a token the frozen table accepts (for example U+2EBF0, CJK Extension I). Follow-up FU-1: route both family modules to `frozen_token_valid`
+    (tests = the 38 `token_unicode` vectors with `unicodedata` poisoned); this needs the table lifted out of this module to avoid a circular import.
+  * TrustSnapshot OBJECT path: `trust_snapshot_from_verified` runs the verifier's `_normalize_trust` (host `common.valid_token`) AND THEN the frozen check, so the decision is
+    host AND frozen: never looser than the frozen table; stricter than it only on a host older than 15.1 (a frozen-valid token refused: fail closed). Snapshots given as
+    dicts are decided by the frozen table alone.
+  * FU-2 (N-10(c) ordering): the snapshot-version ingest bound lives ONLY in `trust_snapshot_from_verified`. `verify._normalize_trust` (shared core, untouched) does not
+    enforce it (it accepts a version of 2^60). A caller MUST pass a `TrustSnapshot` through this adapter before any authority evaluation; nothing here can force that
+    ordering on a consumer. Follow-up FU-2: a consumer-wiring test, or a bound in the shared verifier under its own PR. Digests give integrity, never authentication.
 """
 import hashlib
 import re
@@ -824,7 +839,7 @@ def frozen_token_valid(value: Any) -> bool:
 def _token(v: Any) -> bool:
     """A snapshot-scope token on the r08-v2 identity path: decided by the frozen Unicode 15.1.0 table (`frozen_token_valid`), never by the host database. The
     shipped `common.valid_token` (r08-v1, the verifier) is NOT changed; the adapter still passes a `TrustSnapshot` through the verifier first, so the v2 decision is
-    the verifier's AND this one: never looser than the verifier, and host-independent for every snapshot given as a dict."""
+    the verifier's AND this one: never looser than the frozen table, stricter only on a host older than 15.1, and host-independent for every snapshot given as a dict."""
     return frozen_token_valid(v)
 
 
