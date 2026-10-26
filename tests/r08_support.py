@@ -38,6 +38,12 @@ def seal_record(body):
     return body
 
 
+def make_record_v2(**over):
+    """V01a: an `r08-v2` record (the v2 public decision entry accepts `r08-v2` records only; contract section 1). Same body as `make_record`,
+    `contract_version` `r08-v2`, re-sealed so its digests are the v2 record's own."""
+    return seal_record(dict(make_record(**over), contract_version="r08-v2"))
+
+
 def make_statement(record=None, **over):
     record = record or make_record()
     stmt = {

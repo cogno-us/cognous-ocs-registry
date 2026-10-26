@@ -572,12 +572,13 @@ def test_decision_pipeline_negative_key_admission_on_v2_never_applies_and_never_
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
+    rec2 = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only; `rec` stays for the frozen v1 entry
     for participation in ("required", "optional"):
-        stmt = r.make_statement_v2(rec, participation=participation)
+        stmt = r.make_statement_v2(rec2, participation=participation)
         for key in (IDENTITY, SMALL_ORDER_ENCODINGS[3], b"short"):
             sel_text = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=key, signed=True))
             for policy in (None, lambda a, k: True):
-                d = decision.verify_and_decide_v2(participation, caller, r.dumps(rec), sel_text, CTX, _trust(key),
+                d = decision.verify_and_decide_v2(participation, caller, r.dumps(rec2), sel_text, CTX, _trust(key),
                                                   r.FakeVerifier(), r.NOW, key_admission=policy)
                 assert d.code == "trust_snapshot_invalid" and d.operationally_authorized is False
                 assert d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
@@ -594,11 +595,12 @@ def test_decision_pipeline_ordinary_v2_caller_with_a_valid_key_is_still_applied(
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
-    stmt = r.make_statement_v2(rec, participation="required")
+    rec2 = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only; `rec` stays for the frozen v1 entry
+    stmt = r.make_statement_v2(rec2, participation="required")
     key = LEGIT_KEYS[0]
     sel_text = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=key, signed=True))
     for policy in (None, ka.builtin_key_admission):
-        d = decision.verify_and_decide_v2("required", caller, r.dumps(rec), sel_text, CTX, _trust(key), r.FakeVerifier(),
+        d = decision.verify_and_decide_v2("required", caller, r.dumps(rec2), sel_text, CTX, _trust(key), r.FakeVerifier(),
                                           r.NOW, key_admission=policy)
         assert d.kind == "applied" and d.code is None, (d.code, d.detail)
         assert type(d) is decision.PolicyDecision
@@ -612,11 +614,12 @@ def test_decision_pipeline_forwards_contract_version_to_the_verifier():
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
-    stmt = r.make_statement_v2(rec, participation="required")
+    rec2 = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only; `rec` stays for the frozen v1 entry
+    stmt = r.make_statement_v2(rec2, participation="required")
     sel_text = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=PK, signed=True))
-    args = ("required", caller, r.dumps(rec), sel_text, CTX, _trust(), r.FakeVerifier(), r.NOW)
+    args = ("required", caller, r.dumps(rec2), sel_text, CTX, _trust(), r.FakeVerifier(), r.NOW)
     sel_v1 = r.dumps(r.make_envelope(r.make_statement(rec, participation="required"), key_id=KEY, public_key=PK, signed=True))
-    assert decision.verify_and_decide(*(args[:3] + (sel_v1,) + args[4:])).kind == "applied"   # legacy placeholder key
+    assert decision.verify_and_decide(*(("required", caller, r.dumps(rec), sel_v1) + args[4:])).kind == "applied"   # legacy placeholder key
     d = decision.verify_and_decide_v2(*args)                                          # PK is 17 bytes: key_length
     assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
     assert d.detail_cause == "key_length"
@@ -652,9 +655,10 @@ def test_decision_pipeline_reports_junk_keys_as_key_admission_invalid_on_v2(junk
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
+    rec2 = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only; `rec` stays for the frozen v1 entry
     for part in ("required", "optional"):
-        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), key_id=KEY, public_key=PK, signed=True))
-        d = decision.verify_and_decide_v2(part, caller, r.dumps(rec), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW)
+        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec2, participation=part), key_id=KEY, public_key=PK, signed=True))
+        d = decision.verify_and_decide_v2(part, caller, r.dumps(rec2), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW)
         assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
         assert d.detail_cause == cause and d.operationally_authorized is False
         sel_v1 = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), key_id=KEY, public_key=PK, signed=True))
@@ -1219,16 +1223,17 @@ def test_v2_decision_entry_negative_decisions_and_ordinary_caller():
     from registry_successor import decision
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"], "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
+    rec2 = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only; `rec` stays for the frozen v1 entry
     for part in ("required", "optional"):
-        stmt = r.make_statement_v2(rec, participation=part)
+        stmt = r.make_statement_v2(rec2, participation=part)
         bad = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=IDENTITY, signed=True))
-        d = decision.verify_and_decide_v2(part, caller, r.dumps(rec), bad, CTX, _trust(IDENTITY), r.FakeVerifier(), r.NOW, lambda a, k: True)
+        d = decision.verify_and_decide_v2(part, caller, r.dumps(rec2), bad, CTX, _trust(IDENTITY), r.FakeVerifier(), r.NOW, lambda a, k: True)
         assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and d.operationally_authorized is False
         good = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
-        ok = decision.verify_and_decide_v2(part, caller, r.dumps(rec), good, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW)
+        ok = decision.verify_and_decide_v2(part, caller, r.dumps(rec2), good, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW)
         assert ok.kind == "applied" and type(ok) is decision.PolicyDecision
         # unsupported/odd request shapes still refuse through the same single implementation
-        assert decision.verify_and_decide_v2("bogus", caller, r.dumps(rec), good, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW).kind == "required_policy_unavailable"
+        assert decision.verify_and_decide_v2("bogus", caller, r.dumps(rec2), good, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW).kind == "required_policy_unavailable"
 
 
 VERSION_BAD = [0, -1, 2**53, 2**60, True, False, 1.0, "1", None, b"1", _LyingInt(1), [1]]
@@ -1269,10 +1274,11 @@ def test_fu2_decision_pipeline_carries_the_same_typed_evidence_and_does_not_ente
     from registry_successor import decision
     caller = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
     rec = r.make_record()
+    rec2 = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only; `rec` stays for the frozen v1 entry
     for part in ("required", "optional"):
-        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
+        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec2, participation=part), key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
         t = verify.TrustSnapshot("trust-snap-test-1", 2**60, "2026-12-31T00:00:00Z", _trust(LEGIT_KEYS[0]).issuers)
-        d = decision.verify_and_decide_v2(part, caller, r.dumps(rec), sel, CTX, t, r.FakeVerifier(), r.NOW)
+        d = decision.verify_and_decide_v2(part, caller, r.dumps(rec2), sel, CTX, t, r.FakeVerifier(), r.NOW)
         assert d.code == "trust_snapshot_invalid" and (d.detail_stage, d.detail_member) == ("ingest", "trust_snapshot_version")
         assert d.operationally_authorized is False
     # evidence is metadata on the report object only: the statement digest the report echoes is unaffected

@@ -282,9 +282,18 @@ def test_v1a_16_v1_contract_records_are_refused_at_the_v2_entry():
     assert record_mod.validate_record_text(r.dumps(legacy_f1ab)).code == "family_unsupported"  # r08-v1 f1ab remains unsupported
 
 
-def test_v1a_16_no_legacy_fallback_symbol_and_v2_f1a_is_accepted():
-    src = Path(decision.__file__).read_text(encoding="utf-8")
-    assert "validate_record_text(record_text)" not in src.split("def _decide_text")[1].split("def verify_and_decide_v2")[0]  # no v1 validator on the v2 path
+def test_v1a_16_no_legacy_fallback_symbol_and_v2_f1a_is_accepted(monkeypatch):
+    assert not hasattr(decision, "_validate_record_v2_entry")  # the fallback dispatcher is gone
+    calls = []
+    real = record_mod.validate_record_text
+    monkeypatch.setattr(record_mod, "validate_record_text", lambda text: (calls.append(1), real(text))[1])
+    f1a_v1 = r.make_record()
+    stmt1 = r.make_statement_v2(f1a_v1)
+    ad = ev.Ed25519Verifier()
+    sel1 = r.dumps(s.envelope(stmt1, signature=sign(stmt1), pub=PK))
+    d1 = decision.verify_and_decide_v2("required", {"allowed_actions": [], "allowed_adapters": [], "allowed_units": []}, r.dumps(f1a_v1), sel1, s.CTX,
+                                       s.trust(pub=PK), ad, r.NOW, ad.key_admission)
+    assert d1.effective is None and calls == []  # the frozen v1 validator is never consulted on the v2 path, for any record
     f1a_v2 = r.seal_record(dict(r.make_record(), contract_version="r08-v2"))
     caller3 = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
     stmt = r.make_statement_v2(f1a_v2)
