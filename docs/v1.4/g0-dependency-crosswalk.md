@@ -1,6 +1,6 @@
 # G0 dependency crosswalk
 
-G0 IN REVIEW. Documentation only; proposal for Architect review and operator approval. Nothing here authorizes S01-S09 or any implementation. Dispositions: SATISFIED / REQUIRED / DEFERRED / NOT APPLICABLE / UNVERIFIED. "Satisfied" means the obligation is met **at the level stated** (specified or developer-tested), never independently qualified. Sources: [plan v1.2](../plans/PROJECT_PLAN-v1.2.md) section 5 (R07-R18), [plan v1.3](../plans/PROJECT_PLAN-v1.3-DRAFT.md) section 6 (P0-P6), [plan v1.4](../plans/PROJECT_PLAN-v1.4.md) section 4 (S01-S09), the [EXT cards](../p1-extraction-plan/11-ext-pr-execution-cards.md), the [closeout ledger](../closeout/program-closeout-2026-10-26.md). Profile: [MSOP-F1a-C11](g0-minimum-profile.md).
+G0 APPROVED / CLOSED on merge of PR #40. The dispositions below are the G0 analysis; the schedule that resolves its gaps is in [Amendment 1](../decisions/2026-10-26-amendment-1-plan-v1.4-g0-schedule.md) (G0 → S01 → S02 → S03 → S03A → S04 → S05 → S06 → S07 → S08 → S09). Documentation only. S01-S09 and S03A are NOT AUTHORIZED. Nothing here authorizes implementation. Dispositions: SATISFIED / REQUIRED / DEFERRED / NOT APPLICABLE / UNVERIFIED. "Satisfied" means the obligation is met **at the level stated** (specified or developer-tested), never independently qualified. Sources: [plan v1.2](../plans/PROJECT_PLAN-v1.2.md) section 5 (R07-R18), [plan v1.3](../plans/PROJECT_PLAN-v1.3-DRAFT.md) section 6 (P0-P6), [plan v1.4](../plans/PROJECT_PLAN-v1.4.md) section 4 (S01-S09), the [EXT cards](../p1-extraction-plan/11-ext-pr-execution-cards.md), the [closeout ledger](../closeout/program-closeout-2026-10-26.md). Profile: [MSOP-F1a-C11](g0-minimum-profile.md).
 
 ## 1. Part A: v1.3 phases P0-P6 and v1.2 obligations R07-R18
 
@@ -12,7 +12,7 @@ G0 IN REVIEW. Documentation only; proposal for Architect review and operator app
 | R08 versioned contract | Registry | `r08-v2` #25/#32, family `f1ab` #29, identity #33 | none | SATISFIED (S+I+D) | Frozen |
 | R08 GCR preliminary review | Registry, GCR architect | [07-gcr-compatibility-boundary](../r08-preparation/07-gcr-compatibility-boundary.md) (specified); GCR architect disposition not found | none | DEFERRED; disposition UNVERIFIED | Missing evidence: a recorded GCR architect disposition. Not needed for an OCS-only demonstration (v1.3 section 6) |
 | P2 / R09 authenticated lifecycles, selection, custody, anti-rollback | Registry; Runtime holds state | Verifier #19, Ed25519 #26 and core hardening #34 (SECURITY-HELD), kit #28, ADR-S4-0 (specified) | S01 (withdrawal, snapshot floor), S04 (durable state, anti-rollback), S07 | PARTIAL: REQUIRED | Registry-side verification is developer-tested; withdrawal, durable consumer state and independent security review are missing |
-| P3 typed extraction, Runtime lane (F1a) | Runtime | None; Runtime unchanged since `c5e97e87` | **none** | REQUIRED, **no owning sprint** | Mandatory gap G0-GAP-1 below |
+| P3 typed extraction, Runtime lane (F1a) | Runtime | None; Runtime unchanged since `c5e97e87` | S03A | REQUIRED; owner S03A (Amendment 1) | Was G0-GAP-1, section 3 |
 | P3 typed extraction, Control Plane lane (F4/F5) | Control Plane | R6 #84 delivers approval generation and ceilings only | none | DEFERRED | Not needed for F1a (section 2) |
 | P4 / R10 integration and effect-time boundary | Runtime, Control Plane | None end to end; ADR specifies | S02, S04, S05, S06 | REQUIRED | Core of the demonstration |
 | R11 family migrations | Registry + owners | F1a record/compose exist (S03/S04, #29); F4/F5 families (#31) built, unconsumed | S06 for F1a only | F1a REQUIRED; other families DEFERRED | Plan v1.4 section 2. Each deferred family stays unmigrated; customers keep code or host constants |
@@ -29,9 +29,9 @@ G0 IN REVIEW. Documentation only; proposal for Architect review and operator app
 | Item | Demo? | Later? | Disposition and reason | v1.4 |
 |---|---|---|---|---|
 | EXT-S1-6 withdrawal and snapshot floor | **Yes** | Yes | REQUIRED. Withdrawal and snapshot-floor refusals are in the required demonstration; codes exist only as declarations (`registry_successor/v2_codes.py`), no emitter | S01 |
-| EXT-S1-9 adversarial verifier battery | **Partly**: cases for tampered, unapproved, expired and replayed selection | Yes | REQUIRED, **no owning sprint** (plan says reused within acceptance/independent testing). Mandatory gap G0-GAP-2 | none; S06/S08 |
+| EXT-S1-9 adversarial verifier battery | **Partly**: cases for tampered, unapproved, expired and replayed selection | Yes | REQUIRED; builder-side battery assigned to S01 by Amendment 1 (was G0-GAP-2) | S01; S07/S08 independent |
 | EXT-S2-1 Runtime characterization battery | Yes (baseline for byte-identity and the F1a denial order) | Yes | REQUIRED (test-only) | none; fits S03 regression or S06 |
-| EXT-S2-2 narrowing adapter | **Yes** | Yes | REQUIRED, **no owning sprint**. Mandatory gap G0-GAP-1 | none |
+| EXT-S2-2 narrowing adapter | **Yes** | Yes | REQUIRED; owned by S03A (Amendment 1; was G0-GAP-1) | S03A |
 | EXT-S3-1 Control Plane characterization | Only the unchanged-claims control | Yes | REQUIRED as a re-run at new heads (plan S03 already re-runs "S3-1 regression") | S03 |
 | EXT-S3-2/3 age helper and F4 host factory | No: F4 values are not in the profile | Yes, if F4 is adopted | DEFERRED. Capability not available: central freshness control | none |
 | EXT-S3-4 approval generation part | Yes | Yes | SATISFIED for generation and ceilings by #84 (D); AR-11 is exercised end to end in S06 | S02/S06 |
@@ -45,7 +45,9 @@ G0 IN REVIEW. Documentation only; proposal for Architect review and operator app
 | EXT-S5 predeclaration and gates | No (builder stage) | Yes | REQUIRED for the candidate verdict; preparation exists in #231; no automatic equivalence (plan section 4) | S07-S08 |
 | EXT-S6 freeze and full run | No | Yes | S09 gives the evidence freeze only; the exact-pin full run is S08 | S08-S09 |
 
-## 3. Mandatory gaps for Architect disposition (no new increment created)
+## 3. Mandatory gaps and their disposition (resolved by Amendment 1 except G0-GAP-3)
+
+After the operator decision: GAP-1 → S03A, GAP-2 → S01, GAP-4 → S01, GAP-3 open. The text below is the pre-decision G0 analysis, kept as evidence.
 
 **G0-GAP-1: Runtime-side F1a narrowing is unowned.** The ADR's guard (S4-2, plan S05) compares the claim-carried identity with the durable row; it does not apply the verified selection's allowed sets to the Runtime's `LocalExecutionPolicy`. The Registry has `compose_f1ab` (`registry_successor/v2_f1ab.py`, the five-set r08-v2 composer; `compose_f1a` in `compose.py` is the v1 three-key one), but the Runtime must call or mirror it so that `op-refused` is refused and the effective-policy digest describes the policy the gate actually applied ([identity spec](../ext-implementation/ext-s1-5-effective-policy-identity-spec.md)). EXT-S2-2 ("narrowing adapter", new file, `safe_executor.py` untouched) is that work, and plan v1.4 maps no sprint to it. Plan v1.4 section 4 already provides the route: a separate operator-approved amendment. Options: (a) add a bounded Runtime sprint before S04 or fold it into S05; (b) weaker demonstration limited to binding, withdrawal and restore refusals with no registry-narrowed value (not recommended: it would not demonstrate registry governance). Evidence it is genuinely missing: Runtime `c5e97e87` has `LocalExecutionPolicy` with no registry-driven narrowing, and the closeout ledger records EXT-S2-1/2 NOT STARTED.
 
@@ -59,4 +61,4 @@ G0-GAP-3 and G0-GAP-4 are listed for completeness. None of the gaps makes the ex
 
 ## 4. Dependency order for the minimum demonstration
 
-G0 approval → S01 (Registry withdrawal/snapshot floor; G0-GAP-2 optional here) → S02 (Control Plane claim-carried binding) → S03 (re-pin) → [G0-GAP-1 Runtime narrowing, if ruled in] → S04 (durable state) → S05 (guard) → S06 (end-to-end) → S07 → S08 → S09. Registry, Control Plane and Runtime changes touching shared authority state or the claim schema stay serialized (plan section 4). Concurrency is allowed only for read-only inventories and test planning.
+G0 → S01 (Registry withdrawal, snapshot floor, signing-domain repair, EXT-S1-9 battery) → S02 (Control Plane claim-carried binding) → S03 (re-pin) → **S03A (Runtime F1a narrowing)** → S04 (durable state) → S05 (guard) → S06 (end-to-end) → S07 → S08 → S09. Registry, Control Plane and Runtime changes touching shared authority state or the claim schema stay serialized (plan section 4). Concurrency is allowed only for read-only inventories and test planning.

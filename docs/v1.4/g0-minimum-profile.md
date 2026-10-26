@@ -1,6 +1,6 @@
-# G0 minimum operational profile: freeze proposal
+# G0 minimum operational profile (ADOPTED for planning)
 
-**G0 IN REVIEW. This is a proposal for operator approval, not a frozen profile.** Documentation only. It authorizes no implementation: S01-S09 are NOT AUTHORIZED. Tier 1: NOT STARTED. Release, publication and production: HOLD. Authority: [plan v1.4](../plans/PROJECT_PLAN-v1.4.md) section 3. Nothing here is independently qualified. Nothing proposed here has been run.
+**Status: ADOPTED for planning by operator decision (relayed by the Architect directive of 2026-10-26); G0 APPROVED / CLOSED on merge of PR #40.** Earlier text below that says "proposal" or "proposed" records the pre-decision state and is kept for history. Recorded decisions and the schedule change: [Amendment 1](../decisions/2026-10-26-amendment-1-plan-v1.4-g0-schedule.md). The profile is frozen for planning only. It authorizes no implementation: S01-S09 and S03A are NOT AUTHORIZED until separately approved. Tier 1: NOT STARTED. Release, publication and production: HOLD. Nothing here is independently qualified and nothing proposed has been run.
 
 Companions: [dependency crosswalk](g0-dependency-crosswalk.md), [acceptance matrix](g0-acceptance-matrix.md).
 
@@ -51,9 +51,11 @@ Identifiers below are **proposed fixture names**, to be fixed at S06 predeclarat
 | Platform | Linux x86-64, CPython 3.11-3.13 | tested scope in `docs/adapters/ed25519.md` |
 | Optional | F4/F5 integer-second age families (#31): **not included**; the scenario does not need them | plan section 2 |
 
-## 5. Decision for the operator
+## 5. Operator decision (recorded 2026-10-26)
 
-Approve, amend or reject `MSOP-F1a-C11` as the minimum profile. Related choices that affect the next sprint instruction: (0) accept the five-set `f1ab` payload (two sets unnarrowed) instead of the plan's three-field wording, or ask for a three-key contract (would need a new contract version, not proposed); (a) accept the mandatory gaps in the crosswalk (Runtime F1a narrowing, builder-side adversarial battery) as bounded plan amendments or choose the weaker demonstration they describe; (b) keep F4/F5 and Control Plane EXT-S3-1..3 out; (c) synthetic keys only; (d) name the Tier 1 lead before S06 oracle freeze (plan section 7); (e) decide the CCTV licence scope question (acceptance matrix section 3).
+Approved: `MSOP-F1a-C11` (F1a-only scope, scenario C11); the five-set `f1ab` payload with institutions and authority-domains unchanged (the earlier question (0) is resolved); a dedicated Runtime narrowing sprint S03A; EXT-S1-9 and the signing-domain repair in S01; deferral of F4/F5 and Control Plane EXT-S3-1..3; synthetic Ed25519 keys. Details: [Amendment 1](../decisions/2026-10-26-amendment-1-plan-v1.4-g0-schedule.md). Still open: naming an independent Tier 1 lead before the S06 oracle freeze; independent cryptographic review; the CCTV licence scope decision (acceptance matrix section 3).
+
+Original question text, kept for history: approve, amend or reject the profile; accept the gaps as plan amendments; keep F4/F5 and EXT-S3-1..3 out; synthetic keys only; name a Tier 1 lead; decide the CCTV licence scope.
 
 ## 6. Explicit exclusions and the customer capability each removes
 
