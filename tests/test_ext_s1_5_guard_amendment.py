@@ -95,6 +95,30 @@ def test_refusal_rev2_with_a_bad_participation_is_a_revision_1_refusal(bad):
     assert d.code == "participation_mismatch" and d.code in c.CODES and d.kind == "required_policy_unavailable" and d.effective is None
 
 
+def test_refusal_rev2_with_a_hostile_participation_never_runs_its_eq_or_hash():
+    class Boom:
+        def __eq__(self, other):
+            raise RuntimeError("hostile __eq__")
+
+        __hash__ = None
+
+    class BoomStr(str):
+        def __eq__(self, other):
+            raise RuntimeError("hostile str __eq__")
+
+        __hash__ = str.__hash__
+
+    class Liar(str):
+        def __eq__(self, other):
+            return True
+
+        __hash__ = str.__hash__
+
+    for bad in (Boom(), BoomStr("required"), Liar("nope")):
+        d = decision.refusal_rev2(bad, "store_unknown")
+        assert d.code == "participation_mismatch" and d.kind == "required_policy_unavailable" and d.operationally_authorized is False
+
+
 def test_withdrawal_and_snapshot_floor_mappings_are_not_introduced_here():
     """Ruling 4.4: introduced only when their owning contracts and codes are available. The codes are declared (CODES_V2) but no evaluator and no owning contract
     implementation exist in this package, so the identity module has no row and no behaviour for them."""

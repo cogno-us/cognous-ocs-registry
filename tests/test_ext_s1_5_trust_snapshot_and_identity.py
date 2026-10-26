@@ -660,6 +660,42 @@ def test_v1_token_validator_and_verifier_are_byte_and_behaviour_unchanged():
         unicodedata.category = real
 
 
+def test_negative_zero_literal_is_refused_and_literal_zero_is_unchanged():
+    """Review (Copilot): spec 5.5.1 prohibits negative zero; `-0` loads as a rejected-literal marker (never the integer 0), so validation refuses it by range
+    (`field_invalid`, as the pinned vector BI-INT-NEGATIVE-ZERO) and the serializer refuses it; literal 0 and every valid digest are unchanged."""
+    f4, f5 = "f4-control-plane-age-bounds", "f5-action-class-age-bounds"
+    good = '{"status_max_age_seconds":0,"approval_max_age_seconds":1}'
+    neg = '{"status_max_age_seconds":-0,"approval_max_age_seconds":1}'
+    assert m.load_document(good) == {"status_max_age_seconds": 0, "approval_max_age_seconds": 1}
+    loaded = m.load_document(neg)
+    assert loaded["status_max_age_seconds"] != 0 and type(loaded["status_max_age_seconds"]) is m.OutOfRangeInteger
+    e = _refusal(m.effective_policy_digest, f4, loaded)
+    assert (e.code, e.member) == ("field_invalid", "status_max_age_seconds")
+    assert _refusal(m.canonical_json_bytes, loaded).code is not None
+    d0 = m.effective_policy_digest(f4, m.load_document(good))
+    assert d0 == m.effective_policy_digest(f4, {"status_max_age_seconds": 0, "approval_max_age_seconds": 1})
+    ok5 = m.load_document('{"class_status_max_age_seconds":{"x":0}}')
+    assert m.effective_policy_digest(f5, ok5)
+    e = _refusal(m.effective_policy_digest, f5, m.load_document('{"class_status_max_age_seconds":{"x":-0}}'))
+    assert e.code == "field_invalid"
+    b = V["valid"][0]["input_json"]
+    assert _refusal(m.parse_binding, b.replace('"record_version": 2', '"record_version": -0')).code == "field_invalid"
+    assert m.parse_binding(b)  # the unmodified valid vector still loads
+
+
+def test_missing_or_unreadable_snapshot_attributes_are_typed_refusals_not_attribute_errors():
+    bare = TrustSnapshot.__new__(TrustSnapshot)
+    for fn in (m.trust_snapshot_from_verified, m.trust_snapshot_fingerprint_from_verified):
+        e = _refusal(fn, bare)
+        assert (e.code, e.stage, e.member) == ("trust_snapshot_invalid", "ingest", "trust_snapshot_version")
+        assert e.evidence["observed_value_class"] == "missing"
+    for attr in ("snapshot_id", "valid_until", "issuers"):  # the fields without class defaults (a deleted defaulted field reads back its default)
+        snap = _snap()
+        object.__delattr__(snap, attr)  # frozen dataclass: bypass to simulate a removed field
+        for fn in (m.trust_snapshot_from_verified, m.trust_snapshot_fingerprint_from_verified):
+            assert _refusal(fn, snap).code == "trust_snapshot_invalid", attr
+
+
 def _bad_rows():
     b = _binding()
     good = _row(b)

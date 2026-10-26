@@ -51,7 +51,7 @@ def refusal_rev2(participation: Any, code: str, detail: str = "") -> PolicyDecis
     `participation_mismatch` (a revision-1 code), as everywhere else. Technical refusal only: `operationally_authorized` is False."""
     if type(code) is not str or code not in REV2_CODES:
         raise ValueError("not a revision-2 additive code")
-    if participation not in c.PARTICIPATION:
+    if type(participation) is not str or participation not in c.PARTICIPATION:  # exact str BEFORE membership: a hostile `__eq__` is never called
         return _refusal("required", None, "participation_mismatch", "operation participation is not required or optional")
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
 

@@ -358,6 +358,9 @@ _HEX = frozenset("0123456789abcdefABCDEF")
 
 def _int_literal(text: str) -> Any:
     digits = text.lstrip("-")
+    if text == "-0":  # negative zero (spec 5.5.1) is NEVER the integer 0: the rejected-literal marker is integer-typed, outside every range, refused by the serializer
+        marker = OutOfRangeInteger
+        return marker(text)
     if len(digits) <= _MAX_EXACT_DIGITS:
         return int(text)
     return OutOfRangeInteger(text)
@@ -974,7 +977,11 @@ def trust_snapshot_from_verified(trust: Any) -> dict:
     if type(trust) is _verify.TrustSnapshot:
         # N-10(c) ingest bound (PROPOSED mapping, PR #35 spec 5.5.2): the representation bound is applied to the delivered version BEFORE the snapshot is used in
         # authority evaluation (`_normalize_trust`), the fingerprint or any projection; `bool`, floats, strings, None and out-of-range ints never get further.
-        version = trust.version
+        try:
+            version = trust.version
+        except Exception:  # a missing or unreadable version (e.g. `TrustSnapshot.__new__`) is an invalid ingest value, never an escaping AttributeError
+            _refuse("trust_snapshot_invalid", "trust_snapshot_version", "ingest",
+                    evidence={"expected_range": INTEGER_RANGES["trust_snapshot_version"], "observed_value_class": "missing"})
         if not _snapshot_version_ok(version):
             _refuse("trust_snapshot_invalid", "trust_snapshot_version", "ingest",
                     evidence={"expected_range": INTEGER_RANGES["trust_snapshot_version"], "observed_value_class": _value_class(version)})
