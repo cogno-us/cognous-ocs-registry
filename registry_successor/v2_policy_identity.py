@@ -41,7 +41,7 @@ floor and a revoked-selection epoch are strict POSITIVE ints in the declared sel
 twice in one issuer) is refused while distinct grants, and the same grant under two issuers, are accepted; MAX_SNAPSHOT_NODES (1048576) refuses as `input_too_large`;
 a non-str or ambiguous key refuses before any projection or digest; `NON_STRING_KEY` and `AMBIGUOUS_STRING_KEY` are TYPED `DiagnosticLabel` values that the
 exact-type boundary refuses everywhere a digest or document could take them; `project_effective_policy_digest` is the public projection entry point;
-`verify_carried_binding_digest` orders: binding syntax and version, carried-digest format, authoritative identity and context (when the row is given), then the
+`verify_carried_binding_digest` orders: binding claim shape, carried-digest format, member values and version, authoritative identity and context (when the row is given), then the
 digest comparison. This is STRICTER than `verify._normalize_trust` in exactly these places, each fail-closed: a version above 2^53 - 1, a floor or revoked epoch
 outside [1, 2147483647] (the verifier accepts any strict int for a revoked epoch and any floor of at least 1), and a repeated grant (the verifier accepts it).
 
@@ -76,7 +76,8 @@ REMAINING HOST-UNICODE DEPENDENCE and ordering obligations (documented, NOT fixe
   * TrustSnapshot OBJECT path: `trust_snapshot_from_verified` runs the verifier's `_normalize_trust` (host `common.valid_token`) AND THEN the frozen check, so the decision is
     host AND frozen: never looser than the frozen table; stricter than it only on a host older than 15.1 (a frozen-valid token refused: fail closed). Snapshots given as
     dicts are decided by the frozen table alone.
-  * FU-2 (N-10(c) ordering): the snapshot-version ingest bound lives ONLY in `trust_snapshot_from_verified`. `verify._normalize_trust` (shared core, untouched) does not
+  * FU-2 (N-10(c) ordering): the snapshot-version ingest bound is enforced in `trust_snapshot_from_verified` AND on the mandatory r08-v2 path (`verify._private_trust`, via
+    `verify_selection_v2` / `verify_and_decide_v2`). The non-mandatory `verify._normalize_trust` (the r08-v1 path and the adapter's object path) does not
     enforce it (it accepts a version of 2^60). A caller MUST pass a `TrustSnapshot` through this adapter before any authority evaluation; nothing here can force that
     ordering on a consumer. Follow-up FU-2 is owned by the core-verifier follow-up work (Worker A: verify.py), not by this module. Digests give integrity, never authentication.
 """

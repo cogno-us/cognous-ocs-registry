@@ -1294,222 +1294,177 @@
    "why": "padding character inside"
   },
   {
-   "decoded_hex": "795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41",
+   "decoded_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
    "expect": "accept",
    "id": "pos-len65",
    "stdlib_validate_decodes": true,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "canonical RFC 4648 section 4 spelling"
   },
   {
    "expect": "reject",
    "id": "neg-len65-missing-pad",
    "stdlib_validate_decodes": false,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q",
    "why": "padding omitted"
   },
   {
    "expect": "reject",
    "id": "neg-len65-excess-pad",
    "stdlib_validate_decodes": false,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E==",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q==",
    "why": "excess padding"
   },
   {
    "expect": "reject",
    "id": "neg-len65-excess-pad4",
    "stdlib_validate_decodes": false,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=====",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=====",
    "why": "excess padding"
   },
   {
-   "decodes_to_hex": "795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41",
+   "decodes_to_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
    "expect": "reject",
    "id": "neg-len65-padbits-01",
    "stdlib_validate_decodes": true,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0F=",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9R=",
    "why": "non-zero pad bits: alternate spelling of identical bytes"
   },
   {
-   "decodes_to_hex": "795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41",
+   "decodes_to_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
    "expect": "reject",
    "id": "neg-len65-padbits-02",
    "stdlib_validate_decodes": true,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0G=",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9S=",
    "why": "non-zero pad bits: alternate spelling of identical bytes"
   },
   {
-   "decodes_to_hex": "795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41795091344d08f1a25058ad96176d2b23c32f1a609a987e7e0a53e4f5e4f5e1f1a0c7ebecee34b50ef74a61f83444dba98005cc644cf0a0bc0a54b322a6b28f41",
+   "decodes_to_hex": "ad996e8e63f881cfc8f8752aee53585913c9dd0a49c836bc05588a6f8adcb6ac9bb73f6afd6e072b5f80ff3e86cfaa8145c4807a4f6b2e3ad6050e5fc1a1767fd4",
    "expect": "reject",
    "id": "neg-len65-padbits-03",
    "stdlib_validate_decodes": true,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0H=",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9T=",
    "why": "non-zero pad bits: alternate spelling of identical bytes"
   },
   {
    "expect": "reject",
    "id": "neg-len65-leading-space",
    "stdlib_validate_decodes": false,
-   "text": " eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": " rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "whitespace"
   },
   {
    "expect": "reject",
    "id": "neg-len65-trailing-newline",
    "stdlib_validate_decodes": false,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=\n",
+   "text": "rZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=\n",
    "why": "whitespace / line break"
   },
   {
    "expect": "reject",
    "id": "neg-len65-embedded-crlf",
    "stdlib_validate_decodes": false,
-   "text": "eVCR\r\nNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": "rZlu\r\njmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "line break inside"
   },
   {
    "expect": "reject",
    "id": "neg-len65-embedded-space",
    "stdlib_validate_decodes": false,
-   "text": "eVCR NE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": "rZlu jmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "whitespace inside"
   },
   {
    "expect": "reject",
    "id": "neg-len65-urlsafe",
    "stdlib_validate_decodes": false,
-   "text": "eVCRNE0I8aJQWK2WF20rI8MvGmCamH5-ClPk9eT14fGgx-vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph-fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": "rZlujmP4gc_I-HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q_W4HK1-A_z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "URL-safe alphabet"
   },
   {
    "expect": "reject",
    "id": "neg-len65-nonalphabet",
    "stdlib_validate_decodes": false,
-   "text": "eVC!NE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": "rZl!jmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "character outside the alphabet"
   },
   {
    "expect": "reject",
    "id": "neg-len65-fullwidth",
    "stdlib_validate_decodes": false,
-   "text": "\uff21VCRNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": "\uff21ZlujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "non-ASCII look-alike character"
   },
   {
    "expect": "reject",
    "id": "neg-len65-pad-inside",
    "stdlib_validate_decodes": false,
-   "text": "eV=RNE0I8aJQWK2WF20rI8MvGmCamH5+ClPk9eT14fGgx+vs7jS1DvdKYfg0RNupgAXMZEzwoLwKVLMiprKPQXlQkTRNCPGiUFitlhdtKyPDLxpgmph+fgpT5PXk9eHxoMfr7O40tQ73SmH4NETbqYAFzGRM8KC8ClSzIqayj0E=",
+   "text": "rZ=ujmP4gc/I+HUq7lNYWRPJ3QpJyDa8BViKb4rctqybtz9q/W4HK1+A/z6Gz6qBRcSAek9rLjrWBQ5fwaF2f9Q=",
    "why": "padding character inside"
   },
   {
-   "decoded_hex": "7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e",
+   "decoded_hex": "d87959d614917dbcfadbadde79514c1429a9f778b0d2c89867d537d61a4394bf061568a0afb5504a02fd6980e99910af5a7cfa5120b81fcaebf1e96acf9ea4a39f2abb1c5ece2db3533a501225c2836522dd7e1f7cc5fa907bfe4dc46222c51b",
    "expect": "accept",
    "id": "pos-len96",
    "stdlib_validate_decodes": true,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=",
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
    "why": "canonical RFC 4648 section 4 spelling"
-  },
-  {
-   "expect": "reject",
-   "id": "neg-len96-missing-pad",
-   "stdlib_validate_decodes": false,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4",
-   "why": "padding omitted"
-  },
-  {
-   "expect": "reject",
-   "id": "neg-len96-excess-pad",
-   "stdlib_validate_decodes": false,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4==",
-   "why": "excess padding"
-  },
-  {
-   "expect": "reject",
-   "id": "neg-len96-excess-pad4",
-   "stdlib_validate_decodes": false,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=====",
-   "why": "excess padding"
-  },
-  {
-   "decodes_to_hex": "7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e",
-   "expect": "reject",
-   "id": "neg-len96-padbits-01",
-   "stdlib_validate_decodes": true,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I5=",
-   "why": "non-zero pad bits: alternate spelling of identical bytes"
-  },
-  {
-   "decodes_to_hex": "7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e",
-   "expect": "reject",
-   "id": "neg-len96-padbits-02",
-   "stdlib_validate_decodes": true,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I6=",
-   "why": "non-zero pad bits: alternate spelling of identical bytes"
-  },
-  {
-   "decodes_to_hex": "7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e7c353e06c9d681d8b85d411159c70f43392663c177c5e66123195a8f4bda2603e67c9835bef6763e9c13a03e3917d5235e1c0241542bc5acb7af787b4192f08e",
-   "expect": "reject",
-   "id": "neg-len96-padbits-03",
-   "stdlib_validate_decodes": true,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I7=",
-   "why": "non-zero pad bits: alternate spelling of identical bytes"
   },
   {
    "expect": "reject",
    "id": "neg-len96-leading-space",
    "stdlib_validate_decodes": false,
-   "text": " fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=",
+   "text": " 2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
    "why": "whitespace"
   },
   {
    "expect": "reject",
    "id": "neg-len96-trailing-newline",
    "stdlib_validate_decodes": false,
-   "text": "fDU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=\n",
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb\n",
    "why": "whitespace / line break"
   },
   {
    "expect": "reject",
    "id": "neg-len96-embedded-crlf",
    "stdlib_validate_decodes": false,
-   "text": "fDU+\r\nBsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=",
+   "text": "2HlZ\r\n1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
    "why": "line break inside"
   },
   {
    "expect": "reject",
    "id": "neg-len96-embedded-space",
    "stdlib_validate_decodes": false,
-   "text": "fDU+ BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=",
+   "text": "2HlZ 1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
    "why": "whitespace inside"
   },
   {
    "expect": "reject",
    "id": "neg-len96-urlsafe",
    "stdlib_validate_decodes": false,
-   "text": "fDU-BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A-ORfVI14cAkFUK8Wst694e0GS8I4=",
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv-TcRiIsUb",
    "why": "URL-safe alphabet"
+  },
+  {
+   "expect": "reject",
+   "id": "neg-len96-urlsafe-char",
+   "stdlib_validate_decodes": false,
+   "text": "2HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsU-",
+   "why": "URL-safe or malformed tail"
   },
   {
    "expect": "reject",
    "id": "neg-len96-nonalphabet",
    "stdlib_validate_decodes": false,
-   "text": "fDU!BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=",
+   "text": "2Hl!1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
    "why": "character outside the alphabet"
   },
   {
    "expect": "reject",
    "id": "neg-len96-fullwidth",
    "stdlib_validate_decodes": false,
-   "text": "\uff21DU+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=",
+   "text": "\uff21HlZ1hSRfbz6263eeVFMFCmp93iw0siYZ9U31hpDlL8GFWigr7VQSgL9aYDpmRCvWnz6USC4H8rr8elqz56ko58quxxezi2zUzpQEiXCg2Ui3X4ffMX6kHv+TcRiIsUb",
    "why": "non-ASCII look-alike character"
-  },
-  {
-   "expect": "reject",
-   "id": "neg-len96-pad-inside",
-   "stdlib_validate_decodes": false,
-   "text": "fD=+BsnWgdi4XUERWccPQzkmY8F3xeZhIxlaj0vaJgPmfJg1vvZ2PpwToD45F9UjXhwCQVQrxay3r3h7QZLwjnw1PgbJ1oHYuF1BEVnHD0M5JmPBd8XmYSMZWo9L2iYD5nyYNb72dj6cE6A+ORfVI14cAkFUK8Wst694e0GS8I4=",
-   "why": "padding character inside"
   },
   {
    "expect": "reject",

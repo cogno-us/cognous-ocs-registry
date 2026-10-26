@@ -119,12 +119,11 @@ def test_older_and_newer_host_cases_decide_identically(host, monkeypatch):
     import unicodedata
     real = unicodedata.category
 
+    # explicit categories for BOTH probe characters in every emulated host: independent of the interpreter's own Unicode database
+    emulated = {"older": {0x2EBF0: "Cn", 0x088F: "Cn"}, "newer": {0x2EBF0: "Lo", 0x088F: "Lo"}, "same": {0x2EBF0: "Lo", 0x088F: "Cn"}}[host]
+
     def cat(ch):
-        if host == "older" and ord(ch) == 0x2EBF0:
-            return "Cn"
-        if host == "newer" and ord(ch) == 0x088F:
-            return "Lo"
-        return real(ch)
+        return emulated.get(ord(ch)) or real(ch)
     monkeypatch.setattr(unicodedata, "category", cat)
     accepted, refused = chr(0x2EBF0), chr(0x088F)
     for tok, want in ((accepted, True), (refused, False)):

@@ -20,7 +20,7 @@ from registry_successor import selection, verify  # noqa: E402
 from registry_successor.canonical_b64 import decode_canonical_base64  # noqa: E402
 
 VECTORS_PATH = Path(__file__).resolve().parent / "vectors" / "r08_v2_canonical_base64_vectors.json"
-VECTORS_SHA256 = "5882926c0cb68f700c64cabae96b11740e2d704962a3649d5e71340d7620e636"
+VECTORS_SHA256 = "964fba696968fb5509c596c78fd04a17d2e090565595749cf8b36df2465fbd28"
 DOC = json.loads(VECTORS_PATH.read_text(encoding="utf-8"))
 VECTORS = DOC["vectors"]
 CTX = c.ExpectedContext("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
@@ -59,6 +59,17 @@ def test_vector_file_is_pinned_and_has_the_expected_shape():
     rejects = [v for v in VECTORS if v["expect"] == "reject"]
     assert len(accepts) >= 12 and len(rejects) >= 150
     assert any(v["stdlib_validate_decodes"] for v in rejects) and any(not v["stdlib_validate_decodes"] for v in rejects)
+    # advertised lengths are real (review): every pos-lenN encodes exactly N bytes, every neg-lenN family derives from N bytes, and the padding model fits N % 3
+    for v in VECTORS:
+        head = v["id"].split("-")
+        if len(head) >= 2 and head[1].startswith("len"):
+            n = int(head[1][3:])
+            if v["expect"] == "accept":
+                assert head[0] == "pos" and len(bytes.fromhex(v["decoded_hex"])) == n and len(base64.b64decode(v["text"], validate=True)) == n
+                assert v["text"].count("=") == (3 - n % 3) % 3 and len(v["text"]) == 4 * ((n + 2) // 3)
+            elif "-padbits-" in v["id"]:  # the alternate spellings of the SAME bytes (other negatives may decode to other lengths on purpose)
+                assert len(bytes.fromhex(v["decodes_to_hex"])) == n
+    assert {int(v["id"].split("-")[1][3:]) for v in accepts} == {1, 2, 3, 4, 5, 31, 32, 33, 63, 64, 65, 96}
     # every vector is independently re-derivable: an accept is exactly the stdlib canonical encoding of its bytes
     for v in accepts:
         assert base64.b64encode(bytes.fromhex(v["decoded_hex"])).decode("ascii") == v["text"]
