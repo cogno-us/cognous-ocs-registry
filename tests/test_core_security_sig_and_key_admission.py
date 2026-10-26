@@ -147,10 +147,10 @@ PK = b"public-key-test-1"
 
 
 def _signed_selection(signature_text):
-    stmt = r.make_statement()
-    env = r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=False)
+    stmt = r.make_statement_v2()
+    env = r.make_envelope_v2(stmt, key_id=KEY, public_key=PK, signed=False)
     env["signatures"] = [{"alg": "ed25519", "key_id": KEY, "signature": signature_text}]
-    sel = selection.parse_selection_envelope(r.dumps(env))
+    sel = r.parse_v2(r.dumps(env))
     return stmt, sel
 
 
@@ -162,16 +162,25 @@ def _trust(public_key=PK):
 
 
 def _verify(signature_text, **kw):
-    from registry_successor.selection import signing_input
-    stmt, sel = _signed_selection(signature_text)
     kw.setdefault("contract_version", "r08-v2")  # canonical spelling is enforced on the r08-v2 path only
-    return verify.verify_selection(sel, CTX, _trust(kw.pop("public_key", LEGIT_KEYS[0])),
-                                   Sig64Verifier(), r.NOW, **kw), signing_input(stmt)
+    if kw["contract_version"] == "r08-v1":
+        from registry_successor.selection import signing_input as signing_input_v1
+        stmt, sel = _signed_selection_v1(signature_text)
+        message = signing_input_v1(stmt)
+    else:
+        stmt, sel = _signed_selection(signature_text)
+        message = r.signing_input_v2(stmt)
+    return verify.verify_selection(sel, CTX, _trust(kw.pop("public_key", LEGIT_KEYS[0])), Sig64Verifier(), r.NOW, **kw), message
+
+
+def _canonical_signature_v1():
+    from registry_successor.selection import signing_input as signing_input_v1
+    return hashlib.sha512(b"sig|" + LEGIT_KEYS[0] + b"|" + signing_input_v1(r.make_statement())).digest()
 
 
 def _canonical_signature():
-    from registry_successor.selection import signing_input
-    msg = signing_input(r.make_statement())
+    from r08_support import signing_input_v2 as signing_input
+    msg = signing_input(r.make_statement_v2())
     raw = hashlib.sha512(b"sig|" + LEGIT_KEYS[0] + b"|" + msg).digest()
     return raw
 
@@ -318,16 +327,27 @@ def test_compose_requires_every_policy_to_return_exactly_true():
 
 
 def _good_signature_for(public_key):
-    from registry_successor.selection import signing_input
-    msg = signing_input(r.make_statement())
+    from r08_support import signing_input_v2 as signing_input
+    msg = signing_input(r.make_statement_v2())
     return base64.b64encode(hashlib.sha512(b"sig|" + public_key + b"|" + msg).digest()).decode("ascii")
 
 
-def _admit(public_key, policy):
+# ---- r08-v1 (legacy path) helpers: unchanged v1 statement, v1 signing domain, v1 parser ----
+def _good_signature_for_v1(public_key):
+    from registry_successor.selection import signing_input as signing_input_v1
+    msg = signing_input_v1(r.make_statement())
+    return base64.b64encode(hashlib.sha512(b"sig|" + public_key + b"|" + msg).digest()).decode("ascii")
+
+
+def _signed_selection_v1(signature_text):
     stmt = r.make_statement()
     env = r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=False)
-    env["signatures"] = [{"alg": "ed25519", "key_id": KEY, "signature": _good_signature_for(public_key)}]
-    sel = selection.parse_selection_envelope(r.dumps(env))
+    env["signatures"] = [{"alg": "ed25519", "key_id": KEY, "signature": signature_text}]
+    return stmt, selection.parse_selection_envelope(r.dumps(env))
+
+
+def _admit(public_key, policy):
+    sel = _signed_selection_v1(_good_signature_for_v1(public_key))[1]
     return verify.verify_selection(sel, CTX, _trust(public_key), Sig64Verifier(), r.NOW, key_admission=policy)
 
 
@@ -371,20 +391,20 @@ def test_a_policy_that_raises_or_returns_non_true_fails_closed():
 
 
 def test_malformed_snapshot_still_reports_the_existing_malformed_detail():
-    report = verify.verify_selection(_signed_selection("AAAA")[1], CTX, "not a snapshot", Sig64Verifier(), r.NOW,
+    report = verify.verify_selection(_signed_selection_v1("AAAA")[1], CTX, "not a snapshot", Sig64Verifier(), r.NOW,
                                      key_admission=ka.builtin_key_admission)
     assert report.code == "trust_snapshot_invalid" and report.detail == "trust snapshot is malformed"
 
 
 def test_missing_snapshot_still_reports_missing():
-    report = verify.verify_selection(_signed_selection("AAAA")[1], CTX, None, Sig64Verifier(), r.NOW,
+    report = verify.verify_selection(_signed_selection_v1("AAAA")[1], CTX, None, Sig64Verifier(), r.NOW,
                                      key_admission=ka.builtin_key_admission)
     assert report.code == "trust_snapshot_missing"
 
 
 def test_admission_failure_precedes_expiry_and_missing_time():
     t = _trust(b"1234567")
-    sel = _signed_selection("AAAA")[1]
+    sel = _signed_selection_v1("AAAA")[1]
     late = r.NOW.replace(year=2030)
     assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), late, key_admission=ka.builtin_key_admission).code == "trust_snapshot_invalid"
     assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), None, key_admission=ka.builtin_key_admission).code == "trust_snapshot_invalid"
@@ -421,14 +441,14 @@ def test_revoked_nonsigning_issuer_bad_key_still_blocks_snapshot():
                  verify.IssuerEntry("key-test-2", "issuer-test-2", "ed25519", b"\x01" + b"\x00" * 31, (grant,))),
         revoked_key_ids=frozenset({"key-test-2"}))
     raw = hashlib.sha512(b"sig|" + good + b"|" + signing_input(r.make_statement())).digest()
-    _stmt, sel = _signed_selection(base64.b64encode(raw).decode("ascii"))
+    _stmt, sel = _signed_selection_v1(base64.b64encode(raw).decode("ascii"))
     assert verify.verify_selection(sel, CTX, trust, Sig64Verifier(), r.NOW).ok is True
     report = verify.verify_selection(sel, CTX, trust, Sig64Verifier(), r.NOW, key_admission=ka.builtin_key_admission)
     assert report.code == "trust_snapshot_invalid" and "key-test-2" in report.detail
 
 
 def test_custom_policy_cannot_relax_the_builtin_ed25519_check():
-    report, _ = _verify(base64.b64encode(_canonical_signature()).decode("ascii"), public_key=b"\x01" + b"\x00" * 31,
+    report, _ = _verify(base64.b64encode(_canonical_signature_v1()).decode("ascii"), public_key=b"\x01" + b"\x00" * 31,
                         key_admission=lambda a, k: True, contract_version="r08-v1")
     assert report.code == "trust_snapshot_invalid" and "key_small_order" in report.detail
 
@@ -438,7 +458,7 @@ def test_admission_refusal_outranks_snapshot_expiry():
     bad = b"\x01" + b"\x00" * 31
     expired = verify.TrustSnapshot("trust-snap-test-1", 1, "2000-01-01T00:00:00Z",
                                    (verify.IssuerEntry(KEY, "issuer-test-1", "ed25519", bad, (grant,)),))
-    _stmt, sel = _signed_selection(base64.b64encode(_canonical_signature()).decode("ascii"))
+    _stmt, sel = _signed_selection_v1(base64.b64encode(_canonical_signature_v1()).decode("ascii"))
     assert verify.verify_selection(sel, CTX, expired, Sig64Verifier(), r.NOW).code == "trust_snapshot_expired"
     refused = verify.verify_selection(sel, CTX, expired, Sig64Verifier(), r.NOW, key_admission=ka.builtin_key_admission)
     assert refused.code == "trust_snapshot_invalid"
@@ -463,10 +483,12 @@ CALLBACKS = {"omitted": None, "always_true": lambda a, k: True, "builtin": ka.bu
 
 
 def _v2(public_key, policy, contract_version=V2):
-    stmt = r.make_statement()
-    env = r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=False)
-    env["signatures"] = [{"alg": "ed25519", "key_id": KEY, "signature": _good_signature_for(public_key)}]
-    sel = selection.parse_selection_envelope(r.dumps(env))
+    """V2 label -> a real r08-v2 selection (v2 statement, v2 domain, v2 parser); any other label -> the unchanged v1 selection
+    (those cases test the mandatory-admission path that every non-`r08-v1` label selects)."""
+    if type(contract_version) is str and contract_version == V2:
+        sel = _signed_selection(_good_signature_for(public_key))[1]
+    else:
+        sel = _signed_selection_v1(_good_signature_for_v1(public_key))[1]
     return verify.verify_selection(sel, CTX, _trust(public_key), Sig64Verifier(), r.NOW,
                                    key_admission=policy, contract_version=contract_version)
 
@@ -499,11 +521,11 @@ def test_the_legacy_path_is_unchanged_without_a_callback():
 
 def test_an_envelope_that_says_r08_v2_selects_the_mandatory_path_even_on_the_legacy_argument():
     import dataclasses
-    stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    stmt, sel = _signed_selection_v1(_good_signature_for_v1(IDENTITY))
     v2sel = dataclasses.replace(sel, envelope={**sel.envelope, "contract_version": V2})
     t = _trust(IDENTITY)
     assert verify.verify_selection(sel, CTX, t, Sig64Verifier(), r.NOW).ok is True
-    assert verify.verify_selection(v2sel, CTX, t, Sig64Verifier(), r.NOW).code == "trust_snapshot_invalid"
+    assert verify.verify_selection(v2sel, CTX, t, Sig64Verifier(), r.NOW).code == "contract_unsupported"  # S01: a v2-declared envelope is refused at the v1 entry, never verified
 
 
 @pytest.mark.parametrize("policy_name", list(CALLBACKS))
@@ -534,7 +556,7 @@ def test_invalid_key_admission_is_distinguishable_from_a_malformed_snapshot_with
     assert malformed.detail_code != bad_key.detail_code
     assert len(c.CODES) == 46 and "key_admission_invalid" not in c.CODES
     # the frozen r08-v1 serialized shape: a malformed snapshot there is a plain report with no typed fields
-    legacy = verify.verify_selection(sel, CTX, "not a snapshot", Sig64Verifier(), r.NOW)
+    legacy = verify.verify_selection(_signed_selection_v1("AAAA")[1], CTX, "not a snapshot", Sig64Verifier(), r.NOW)
     assert type(legacy) is verify.VerificationReport and legacy.code == "trust_snapshot_invalid"
 
 
@@ -551,17 +573,18 @@ def test_decision_pipeline_negative_key_admission_on_v2_never_applies_and_never_
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
     for participation in ("required", "optional"):
-        stmt = r.make_statement(rec, participation=participation)
+        stmt = r.make_statement_v2(rec, participation=participation)
         for key in (IDENTITY, SMALL_ORDER_ENCODINGS[3], b"short"):
-            sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=key, signed=True))
+            sel_text = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=key, signed=True))
             for policy in (None, lambda a, k: True):
-                d = decision.verify_and_decide(participation, caller, r.dumps(rec), sel_text, CTX, _trust(key),
-                                               r.FakeVerifier(), r.NOW, key_admission=policy, contract_version=V2)
+                d = decision.verify_and_decide_v2(participation, caller, r.dumps(rec), sel_text, CTX, _trust(key),
+                                                  r.FakeVerifier(), r.NOW, key_admission=policy)
                 assert d.code == "trust_snapshot_invalid" and d.operationally_authorized is False
                 assert d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
                 assert d.kind == ("required_policy_unavailable" if participation == "required" else "overlay_not_applied")
                 assert (d.effective is None) if participation == "required" else (d.caller_unchanged is True)
-            legacy = decision.verify_and_decide(participation, caller, r.dumps(rec), sel_text, CTX, _trust(key),
+            sel_v1 = r.dumps(r.make_envelope(r.make_statement(rec, participation=participation), key_id=KEY, public_key=key, signed=True))
+            legacy = decision.verify_and_decide(participation, caller, r.dumps(rec), sel_v1, CTX, _trust(key),
                                                 r.FakeVerifier(), r.NOW)
             assert not hasattr(legacy, "detail_code")  # the legacy r08-v1 decision keeps its frozen shape
 
@@ -571,15 +594,16 @@ def test_decision_pipeline_ordinary_v2_caller_with_a_valid_key_is_still_applied(
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
-    stmt = r.make_statement(rec, participation="required")
+    stmt = r.make_statement_v2(rec, participation="required")
     key = LEGIT_KEYS[0]
-    sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=key, signed=True))
+    sel_text = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=key, signed=True))
     for policy in (None, ka.builtin_key_admission):
-        d = decision.verify_and_decide("required", caller, r.dumps(rec), sel_text, CTX, _trust(key), r.FakeVerifier(),
-                                       r.NOW, key_admission=policy, contract_version=V2)
+        d = decision.verify_and_decide_v2("required", caller, r.dumps(rec), sel_text, CTX, _trust(key), r.FakeVerifier(),
+                                          r.NOW, key_admission=policy)
         assert d.kind == "applied" and d.code is None, (d.code, d.detail)
         assert type(d) is decision.PolicyDecision
-    legacy = decision.verify_and_decide("required", caller, r.dumps(rec), sel_text, CTX, _trust(key), r.FakeVerifier(), r.NOW)
+    sel_v1 = r.dumps(r.make_envelope(r.make_statement(rec, participation="required"), key_id=KEY, public_key=key, signed=True))
+    legacy = decision.verify_and_decide("required", caller, r.dumps(rec), sel_v1, CTX, _trust(key), r.FakeVerifier(), r.NOW)
     assert legacy.kind == "applied"
 
 
@@ -588,11 +612,12 @@ def test_decision_pipeline_forwards_contract_version_to_the_verifier():
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
-    stmt = r.make_statement(rec, participation="required")
-    sel_text = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=PK, signed=True))
+    stmt = r.make_statement_v2(rec, participation="required")
+    sel_text = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=PK, signed=True))
     args = ("required", caller, r.dumps(rec), sel_text, CTX, _trust(), r.FakeVerifier(), r.NOW)
-    assert decision.verify_and_decide(*args).kind == "applied"                       # legacy placeholder key
-    d = decision.verify_and_decide(*args, contract_version=V2)                       # PK is 17 bytes: key_length
+    sel_v1 = r.dumps(r.make_envelope(r.make_statement(rec, participation="required"), key_id=KEY, public_key=PK, signed=True))
+    assert decision.verify_and_decide(*(args[:3] + (sel_v1,) + args[4:])).kind == "applied"   # legacy placeholder key
+    d = decision.verify_and_decide_v2(*args)                                          # PK is 17 bytes: key_length
     assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
     assert d.detail_cause == "key_length"
 
@@ -616,7 +641,7 @@ def test_empty_and_wrong_type_keys_are_admission_failures_on_v2_not_malformed(ju
             _signed_selection("AAAA")[1], CTX, _trust(junk), Sig64Verifier(), r.NOW, key_admission=policy, contract_version=V2)
         assert report.code == "trust_snapshot_invalid"
         assert report.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and report.detail_cause == cause
-    legacy = verify.verify_selection(_signed_selection("AAAA")[1], CTX, _trust(junk), Sig64Verifier(), r.NOW)
+    legacy = verify.verify_selection(_signed_selection_v1("AAAA")[1], CTX, _trust(junk), Sig64Verifier(), r.NOW)
     assert legacy.code == "trust_snapshot_invalid" and legacy.detail == "trust snapshot is malformed"
     assert type(legacy) is verify.VerificationReport
 
@@ -628,12 +653,12 @@ def test_decision_pipeline_reports_junk_keys_as_key_admission_invalid_on_v2(junk
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
     for part in ("required", "optional"):
-        sel = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), key_id=KEY, public_key=PK, signed=True))
-        d = decision.verify_and_decide(part, caller, r.dumps(rec), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW,
-                                       contract_version=V2)
+        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), key_id=KEY, public_key=PK, signed=True))
+        d = decision.verify_and_decide_v2(part, caller, r.dumps(rec), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW)
         assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID
         assert d.detail_cause == cause and d.operationally_authorized is False
-        legacy = decision.verify_and_decide(part, caller, r.dumps(rec), sel, CTX, _trust(junk), r.FakeVerifier(), r.NOW)
+        sel_v1 = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), key_id=KEY, public_key=PK, signed=True))
+        legacy = decision.verify_and_decide(part, caller, r.dumps(rec), sel_v1, CTX, _trust(junk), r.FakeVerifier(), r.NOW)
         assert legacy.code == "trust_snapshot_invalid" and not hasattr(legacy, "detail_code")
 
 
@@ -687,19 +712,20 @@ def test_every_contract_version_but_the_exact_legacy_str_is_mandatory(label, ver
 def test_envelope_declared_v2_beats_a_legacy_argument_and_odd_envelope_values_are_mandatory():
     import collections
     import dataclasses
-    _stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    _stmt, sel = _signed_selection_v1(_good_signature_for_v1(IDENTITY))
     t = _trust(IDENTITY)
     for declared in (V2, collections.UserString("r08-v1"), b"r08-v1", None, 1, _EqLiar()):
         forged = dataclasses.replace(sel, envelope={**sel.envelope, "contract_version": declared})
         assert verify._admission_mandatory(forged, "r08-v1") is True, declared
-        assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW, contract_version="r08-v1").code == "trust_snapshot_invalid"
-        assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW, key_admission=lambda a, k: True).code == "trust_snapshot_invalid"
+        expected = "contract_unsupported" if (type(declared) is str and declared == V2) else "trust_snapshot_invalid"  # S01 cross-version refusal
+        assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW, contract_version="r08-v1").code == expected
+        assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW, key_admission=lambda a, k: True).code == expected
     assert verify._admission_mandatory(sel, "r08-v1") is False  # the single legacy skip: exact-str v1 argument AND exact-str v1 envelope
     assert verify._admission_mandatory(None, "r08-v1") is False
 
 
 def test_the_only_non_mandatory_path_is_exact_str_r08_v1_argument_with_an_exact_str_r08_v1_envelope():
-    _stmt, sel = _signed_selection("AAAA")
+    _stmt, sel = _signed_selection_v1("AAAA")
     non_mandatory = [(sel, "r08-v1"), (None, "r08-v1")]
     for version in [x[1] for x in _contract_version_cases()] + ["r08-v1"]:
         for selection_obj in (sel, None):
@@ -804,12 +830,15 @@ def test_m3_legacy_r08_v1_path_keeps_noncanonical_base64_exactly_as_origin_main(
             expected_legacy = (True, None) if decoded == raw else (False, "signature does not verify")
         except Exception:
             expected_legacy = (False, "signature is not valid base64")
-        rep = verify.verify_selection(_signed_selection(text)[1], CTX, _trust(key), Sig64Verifier(), r.NOW)
+        rep = verify.verify_selection(_signed_selection_v1(text)[1], CTX, _trust(key), Sig64Verifier(), r.NOW)
         assert (rep.ok, None if rep.ok else rep.detail) == expected_legacy, repr(text)
         assert rep.ok == (rep.code is None) and type(rep) is verify.VerificationReport
-        strict = verify.verify_selection(_signed_selection(text)[1], CTX, _trust(key), Sig64Verifier(), r.NOW, contract_version=V2)
-        assert strict.ok is (text == canonical), repr(text)
-    assert sum(verify.verify_selection(_signed_selection(t)[1], CTX, _trust(key), Sig64Verifier(), r.NOW).ok for t in _variants(raw)) == 16
+    raw2 = hashlib.sha512(b"sig|" + key + b"|" + r.signing_input_v2(r.make_statement_v2())).digest()
+    canonical2 = base64.b64encode(raw2).decode("ascii")
+    for text2 in _variants(raw2) + [canonical2 + "\n", " " + canonical2, canonical2.replace("+", "-"), canonical2[:-2], canonical2 + "=", "!!not base64!!"]:
+        strict = verify.verify_selection(_signed_selection(text2)[1], CTX, _trust(key), Sig64Verifier(), r.NOW, contract_version=V2)
+        assert strict.ok is (text2 == canonical2), repr(text2)
+    assert sum(verify.verify_selection(_signed_selection_v1(t)[1], CTX, _trust(key), Sig64Verifier(), r.NOW).ok for t in _variants(raw)) == 16
 
 
 def test_l1_non_exact_dict_envelopes_take_the_mandatory_path():
@@ -835,9 +864,9 @@ def test_l1_non_exact_dict_envelopes_take_the_mandatory_path():
 
 def test_m1_envelope_declared_v2_forces_mandatory_even_when_the_argument_is_omitted():
     import dataclasses
-    _stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    _stmt, sel = _signed_selection_v1(_good_signature_for_v1(IDENTITY))
     forged = dataclasses.replace(sel, envelope={**sel.envelope, "contract_version": V2})
-    assert verify.verify_selection(forged, CTX, _trust(IDENTITY), Sig64Verifier(), r.NOW).code == "trust_snapshot_invalid"
+    assert verify.verify_selection(forged, CTX, _trust(IDENTITY), Sig64Verifier(), r.NOW).code == "contract_unsupported"  # S01: refused earlier than admission; still never legacy
     # residual risk (documented, not changed): a v2 caller handing over an envelope that DECLARES r08-v1 and omitting the argument is legacy
     assert verify.verify_selection(sel, CTX, _trust(IDENTITY), Sig64Verifier(), r.NOW).ok is True
 
@@ -1012,8 +1041,8 @@ def test_context_and_now_and_record_are_exact_typed_single_read_copies_on_the_ma
     # record result: subclass dict / str digest / stateful ok are refused as an invalid record
     rec = r.make_record()
     parsed = __import__("registry_successor.record", fromlist=["x"]).validate_record_text(r.dumps(rec))
-    stmt = r.make_statement(rec, participation="required")
-    sel = selection.parse_selection_envelope(r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=LEGIT_KEYS[0], signed=True)))
+    stmt = r.make_statement_v2(rec, participation="required")
+    sel = r.parse_v2(r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=LEGIT_KEYS[0], signed=True)))
     import dataclasses
     for bad in (dataclasses.replace(parsed, record=_DictSub(parsed.record)), dataclasses.replace(parsed, ok=1),
                 dataclasses.replace(parsed, record_digest=_StrSub(parsed.record_digest))):
@@ -1109,23 +1138,23 @@ def test_v2_entry_points_take_no_contract_version_and_are_exported():
 
 def test_v2_entry_delegates_to_the_single_implementation_with_the_hardwired_version(monkeypatch):
     seen = []
-    real = verify.verify_selection
+    real = verify._verify  # S01: the v2 entry and verify_selection share ONE implementation, `_verify`, with the version hardwired
 
     def spy(*args, **kw):
         seen.append((args, kw))
         return real(*args, **kw)
-    monkeypatch.setattr(verify, "verify_selection", spy)
+    monkeypatch.setattr(verify, "_verify", spy)
     _v2_entry()
-    assert len(seen) == 1 and seen[0][0][-1] == verify.V2_CONTRACT == "r08-v2" and seen[0][1] == {}
+    assert len(seen) == 1 and seen[0][0][7] == verify.V2_CONTRACT == "r08-v2" and seen[0][0][8] is True
     from registry_successor import decision
     seen2 = []
-    real2 = decision.verify_and_decide
-    monkeypatch.setattr(decision, "verify_and_decide", lambda *a, **k: (seen2.append((a, k)), real2(*a, **k))[1])
+    real2 = decision._decide_text
+    monkeypatch.setattr(decision, "_decide_text", lambda *a, **k: (seen2.append((a, k)), real2(*a, **k))[1])
     caller = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
     rec = r.make_record()
-    sel = r.dumps(r.make_envelope(r.make_statement(rec, participation="required"), key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
+    sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation="required"), key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
     decision.verify_and_decide_v2("required", caller, r.dumps(rec), sel, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW)
-    assert len(seen2) == 1 and seen2[0][0][-1] == "r08-v2"
+    assert len(seen2) == 1 and seen2[0][0][-2] == "r08-v2" and seen2[0][0][-1] is True
 
 
 def test_v2_entry_equals_verify_selection_with_the_v2_version_across_cases():
@@ -1159,8 +1188,10 @@ def test_v2_entry_cannot_be_steered_to_legacy_by_the_selection_or_envelope():
             forged = dataclasses.replace(base, envelope=env, ok=ok)
             rep = verify.verify_selection_v2(forged, CTX, t, Sig64Verifier(), r.NOW, None, lambda a, k: True)
             assert rep.ok is False
-            if ok is True:
+            if ok is True and env is base.envelope:  # the genuine v2 envelope reaches admission
                 assert rep.code == "trust_snapshot_invalid" and rep.detail_cause == "key_small_order"
+            elif ok is True:  # S01: any other / odd envelope is refused as the wrong contract; never legacy, never verified
+                assert rep.code == "contract_unsupported"
 
 
 def test_v2_entry_keeps_the_review_bypass_cases_closed():
@@ -1189,11 +1220,11 @@ def test_v2_decision_entry_negative_decisions_and_ordinary_caller():
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"], "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
     for part in ("required", "optional"):
-        stmt = r.make_statement(rec, participation=part)
-        bad = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=IDENTITY, signed=True))
+        stmt = r.make_statement_v2(rec, participation=part)
+        bad = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=IDENTITY, signed=True))
         d = decision.verify_and_decide_v2(part, caller, r.dumps(rec), bad, CTX, _trust(IDENTITY), r.FakeVerifier(), r.NOW, lambda a, k: True)
         assert d.code == "trust_snapshot_invalid" and d.detail_code == ka.DETAIL_KEY_ADMISSION_INVALID and d.operationally_authorized is False
-        good = r.dumps(r.make_envelope(stmt, key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
+        good = r.dumps(r.make_envelope_v2(stmt, key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
         ok = decision.verify_and_decide_v2(part, caller, r.dumps(rec), good, CTX, _trust(LEGIT_KEYS[0]), r.FakeVerifier(), r.NOW)
         assert ok.kind == "applied" and type(ok) is decision.PolicyDecision
         # unsupported/odd request shapes still refuse through the same single implementation
@@ -1222,7 +1253,7 @@ def test_fu2_out_of_range_or_non_int_versions_are_ingest_refusals_on_the_mandato
 def test_fu2_other_malformed_snapshots_carry_no_ingest_member_and_legacy_is_unchanged():
     rep = _v2_run(snapshot_id="bad id")
     assert rep.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED and rep.detail_stage is None and rep.detail_member is None
-    sel = _signed_selection(_good_signature_for(LEGIT_KEYS[0]))[1]
+    sel = _signed_selection_v1(_good_signature_for_v1(LEGIT_KEYS[0]))[1]
     for version in (2**60, 2**53):
         legacy = verify.verify_selection(sel, CTX, verify.TrustSnapshot("trust-snap-test-1", version, "2026-12-31T00:00:00Z", _trust().issuers[:0]
                                                                          + (verify.IssuerEntry(KEY, "issuer-test-1", "ed25519", LEGIT_KEYS[0], (verify.AuthorityGrant(
@@ -1239,7 +1270,7 @@ def test_fu2_decision_pipeline_carries_the_same_typed_evidence_and_does_not_ente
     caller = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
     rec = r.make_record()
     for part in ("required", "optional"):
-        sel = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
+        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), key_id=KEY, public_key=LEGIT_KEYS[0], signed=True))
         t = verify.TrustSnapshot("trust-snap-test-1", 2**60, "2026-12-31T00:00:00Z", _trust(LEGIT_KEYS[0]).issuers)
         d = decision.verify_and_decide_v2(part, caller, r.dumps(rec), sel, CTX, t, r.FakeVerifier(), r.NOW)
         assert d.code == "trust_snapshot_invalid" and (d.detail_stage, d.detail_member) == ("ingest", "trust_snapshot_version")
