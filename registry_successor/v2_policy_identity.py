@@ -33,8 +33,7 @@ caller already holds). The three additive codes (`not_activated`, `policy_identi
 
 DEFERRED (not implemented here, listed so no consumer assumes them): (1) the registry-form identity (null `activation_ref`) built from verified inputs and its
 completion with `activation_ref` (spec 4 and 10 assign this to the Registry source PR); (2) the guard itself and durable state (EXT-S4); (3) the mapping rows
-for the two v2-only codes of `V2_ADDED_CODES` (withdrawal and the snapshot floor: owning contracts and evaluators absent); (4) the shipped registry statement validator `common.valid_token` still reads the host Unicode database (a source PR matter; this module uses the frozen table
-for effective-payload entries and F5 class names); (5) (spec ids renamed: the typed evidence stages are INPUT / DURABLE_STATE); (6) a trust root or any authentication of a snapshot: the adapter
+for the two v2-only codes of `V2_ADDED_CODES` (withdrawal and the snapshot floor: owning contracts and evaluators absent); (4) the shipped registry statement validator `common.valid_token` (r08-v1, and the verifier's `_normalize_trust` that the adapter calls first) still reads the host Unicode database and is NOT changed here (a bounded follow-up); this module uses the frozen table for effective-payload entries, F5 class names and snapshot-scope tokens; (5) (spec ids renamed: the typed evidence stages are INPUT / DURABLE_STATE); (6) a trust root or any authentication of a snapshot: the adapter
 and the digests give integrity only and add no authority.
 
 RULED (Architect Batch 6, 4.6, N-10) and applied here: a snapshot version is a strict int in [1, 2^53 - 1] (not an operational freshness bound); a `min_epochs`
@@ -823,7 +822,10 @@ def frozen_token_valid(value: Any) -> bool:
 
 
 def _token(v: Any) -> bool:
-    return type(v) is str and c.valid_token(v)
+    """A snapshot-scope token on the r08-v2 identity path: decided by the frozen Unicode 15.1.0 table (`frozen_token_valid`), never by the host database. The
+    shipped `common.valid_token` (r08-v1, the verifier) is NOT changed; the adapter still passes a `TrustSnapshot` through the verifier first, so the v2 decision is
+    the verifier's AND this one: never looser than the verifier, and host-independent for every snapshot given as a dict."""
+    return frozen_token_valid(v)
 
 
 def _snapshot_version_ok(v: Any) -> bool:

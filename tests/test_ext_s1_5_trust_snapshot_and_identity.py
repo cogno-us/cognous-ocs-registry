@@ -615,6 +615,51 @@ def test_token_unicode_vectors_drive_both_production_validators_without_the_host
         assert got is want, (family, vec["id"])
 
 
+def _snapshot_with_token(token):
+    import copy
+    d = copy.deepcopy(TF001["input"])
+    d["snapshot_id"] = token
+    d["issuers"][0]["key_id"] = token
+    d["issuers"][0]["authority"][0][0] = token
+    d["issuers"] = sorted(d["issuers"], key=lambda i: i["key_id"])
+    return d
+
+
+@pytest.mark.parametrize("vec", V["token_unicode"]["vectors"], ids=lambda v: v["id"])
+def test_snapshot_scope_tokens_decide_by_the_frozen_table_with_the_host_database_poisoned(vec, monkeypatch):
+    """Architect ruling on #33: the v2 snapshot-scope path (snapshot id, issuer key id, grant tokens) follows the frozen Unicode 15.1.0 table identically on
+    every runtime. `unicodedata` and the shipped `common.valid_token` are poisoned: no host dependence on this path."""
+    import unicodedata
+    def poisoned(*a, **k):
+        raise AssertionError("host Unicode database consulted")
+    monkeypatch.setattr(unicodedata, "category", poisoned)
+    monkeypatch.setattr(m.c, "valid_token", poisoned)
+    text = _tu_text(vec)
+    d = _snapshot_with_token(text)
+    if vec["expected"]["valid"]:
+        assert m.trust_snapshot_fingerprint(d).startswith("sha256:")
+    else:
+        assert _refusal(m.trust_snapshot_fingerprint, d).code == "trust_snapshot_invalid"
+
+
+def test_v1_token_validator_and_verifier_are_byte_and_behaviour_unchanged():
+    """Golden: the shipped r08-v1 `common.valid_token` and the verifier are untouched by this PR (sha256 pins of the sources at main) and `valid_token` still
+    reads the host database (it raises when the host database is poisoned), while the v2 predicate does not."""
+    import hashlib, unicodedata
+    from registry_successor import common, verify
+    assert hashlib.sha256(Path(common.__file__).read_bytes()).hexdigest() == "f87c0f1c51785df32f1ad60b77096258729e45cca6586a696533d63ad28aece2"
+    assert hashlib.sha256(Path(verify.__file__).read_bytes()).hexdigest() == "905610a8438890ce61da27a580be16efd571de10e523f517a0f52cb487d263ce"
+    assert common.valid_token("transf\u00e9rer") and common.valid_token("EP-006") and not common.valid_token("a*") and not common.valid_token("a b") and not common.valid_token("")
+    real = unicodedata.category
+    unicodedata.category = lambda ch: (_ for _ in ()).throw(AssertionError("host database read"))
+    try:
+        with pytest.raises(AssertionError):
+            common.valid_token("abc")  # the v1 path still consults the host database
+        assert m.frozen_token_valid("abc")  # the v2 path does not
+    finally:
+        unicodedata.category = real
+
+
 def _bad_rows():
     b = _binding()
     good = _row(b)
