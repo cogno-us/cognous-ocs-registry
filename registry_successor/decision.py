@@ -54,6 +54,23 @@ def _plain_refusal(participation: Any, caller: Any, code: str, detail: str = "")
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
 
 
+REV2_CODES = ("not_activated", "policy_identity_mismatch", "store_unknown")  # the three additive codes of `r08-v2-reasons/2` (v2_codes.CODES_V2_REV2)
+
+
+def refusal_rev2(participation: Any, code: str, detail: str = "") -> PolicyDecision:
+    """The explicit revision-2 refusal path (Amendment 1 section 6.7(e) items 1 and 3; Architect Batch 6 rulings 4.7 and N-12). It takes ONLY a revision-2
+    additive code (anything else is a ValueError, a programmer error: revision-1 causes keep going through `_refusal`) and passes the code through UNCHANGED
+    (it is never remapped to an existing code). A revision-2 code is NEVER an optional fallback: none yields `overlay_not_applied` and none returns or
+    leaves the caller policy usable, whatever the participation; `store_unknown` is HOLD (UNKNOWN_FAIL_CLOSED), `not_activated` and `policy_identity_mismatch`
+    are REFUSE, and all three are `required_policy_unavailable` with no policy. A participation that is neither required nor optional is refused as
+    `participation_mismatch` (a revision-1 code), as everywhere else. Technical refusal only: `operationally_authorized` is False."""
+    if type(code) is not str or code not in REV2_CODES:
+        raise ValueError("not a revision-2 additive code")
+    if type(participation) is not str or participation not in c.PARTICIPATION:  # exact str BEFORE membership: a hostile `__eq__` is never called
+        return _refusal("required", None, "participation_mismatch", "operation participation is not required or optional")
+    return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
+
+
 def _decide_verified(participation: Any, caller: Any, record: Any, report: Any) -> PolicyDecision:
     """INTERNAL. Only verify_and_decide may call this, with objects it produced itself. Not a public interface:
     a caller-supplied report is never authority."""
