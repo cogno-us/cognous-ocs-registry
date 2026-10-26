@@ -12,10 +12,15 @@ bits zero. Implemented by decode then re-encode and compare (`registry_successor
 Why: `base64.b64decode(..., validate=True)` accepts 16 spellings of every 64-byte signature (the last character carries
 four unused bits). That is a second spelling of the same signed envelope.
 
-Behaviour change: a signature spelled any way but canonical now refuses `signature_invalid` with detail
+Scope (Architect ruling): canonical spelling is enforced on the **r08-v2 (mandatory) path only**. The frozen r08-v1 legacy path
+keeps the exact origin/main rule (`base64.b64decode(..., validate=True)`; a non-canonical spelling with non-zero trailing bits that
+decoded and verified before still verifies, and detail strings are unchanged). Pinned by
+`test_m3_legacy_r08_v1_path_keeps_noncanonical_base64_exactly_as_origin_main`.
+
+Behaviour on the r08-v2 path: a signature spelled any way but canonical now refuses `signature_invalid` with detail
 `signature is not canonical base64`. Undecodable text keeps `signature is not valid base64`; a canonical signature that
 fails verification keeps `signature does not verify`. No reason code is added (CODES stays 46). Non-`str` signature values
-(including `bytes`) now refuse; parsed envelopes only ever carry `str`. The v1 golden corpus is unchanged and passes.
+(including `bytes`) refuse on that path; parsed envelopes only ever carry `str`. The v1 golden corpus is unchanged and passes.
 
 Open question for the Architect: the contract text should state the canonical spelling explicitly. This PR does not edit the
 hash-pinned contract file.
@@ -44,8 +49,8 @@ that the v2 parser (EXT-S1-5/6) inherits it with no further wiring, and the v2 p
 `verify._admission_mandatory` returns False (admission NOT mandatory) in exactly one situation: the `contract_version`
 argument is an exact built-in `str` (`type(x) is str`) equal to "r08-v1" AND the parsed selection envelope is either absent
 (a structurally invalid selection, refused earlier) or a plain `dict` whose `contract_version` is an exact `str` "r08-v1". Why it
-exists: the frozen r08-v1 golden corpus and fixtures use non-32-byte placeholder keys, and r08-v1 behaviour must replay
-byte-identically. Everything else is mandatory, and the type test runs before any equality so `__eq__`, `__str__`, `__hash__`
+exists: the frozen r08-v1 golden corpus and fixtures use non-32-byte placeholder keys, and r08-v1 behaviour
+(including the base64 rule) must stay as on origin/main. Everything else is mandatory, and the type test runs before any equality so `__eq__`, `__str__`, `__hash__`
 and `__class__` tricks are never consulted:
 
 | `contract_version` argument | result |
@@ -55,8 +60,26 @@ and `__class__` tricks are never consulted:
 | `None`, `int`, "" , any other string | mandatory |
 | `UserString("r08-v1")`, `str` subclass "r08-v1", b"r08-v1" | mandatory (equal-looking but not an exact `str`) |
 | `str` subclass or instance with lying `__eq__`/`__str__`/`__class__` | mandatory (type checked first) |
-| exact `str` "r08-v1" with an envelope declaring "r08-v2", or any non-exact-`str` envelope version | mandatory (envelope overrides the argument) |
-| exact `str` "r08-v1" with an exact-`str` "r08-v1" envelope | legacy: callback-optional (the only skip) |
+| exact `str` "r08-v1" with an envelope declaring "r08-v2", or any non-exact-`str` envelope version (missing, `None`, `bytes`, `int`, `UserString`) | mandatory (envelope overrides the argument) |
+| exact `str` "r08-v1" with an envelope that is a `dict` subclass, a list, a `str`, an `int` or any other non-exact-`dict` (selection `ok`) | mandatory (fail toward mandatory) |
+| exact `str` "r08-v1" with a selection that is not `ok` and has NO envelope (structurally refused; frozen legacy shape) | legacy (golden-corpus compatibility only; refused at the structural layer anyway) |
+| exact `str` "r08-v1" with an exact `dict` envelope whose `contract_version` is an exact `str` "r08-v1" | legacy: callback-optional (the only skip for an ok selection) |
+
+**Single read of trust-snapshot entries (M2).** On the mandatory path `_normalize_trust` accepts only exact `TrustSnapshot`,
+`IssuerEntry`, `AuthorityGrant` and exact-`str` ids/alg, and `_private_entry` takes ONE read of each attribute into a private copy.
+Admission, the caller callback, `verifier.verify` and the authority layer all use that copy, never the live object, so a stateful
+subclass or a `str` subclass with a flipping `__eq__` cannot show admission one key and the verifier another. The public key may
+be any type at that point (classified `key_type`/`key_length` by admission). The legacy path keeps its original normalization.
+
+**Residual risk, M1 (analysis; default NOT changed).** `contract_version` defaults to "r08-v1". An envelope that declares
+"r08-v2" (or any non-exact-`str`/odd value) already forces the mandatory path whatever the argument says, so the future v2 parser
+inherits the gate as long as its envelopes carry `contract_version`. Residual: a v2 caller that omits the argument AND passes an
+envelope that declares "r08-v1" (or a parser that drops the member from an `ok` selection, which is mandatory, so only the first
+case) is treated as legacy. Today `selection.py` refuses non-r08-v1 envelopes, so no real r08-v2 envelope exists. Changing the
+default would break every legacy caller and the golden runner, so it is not done. Smallest options for the Architect, both
+non-breaking for the golden corpus: (a) a separate `verify_selection_v2` / `verify_and_decide_v2` wrapper that hardwires
+`contract_version="r08-v2"`, used by every v2 call site; or (b) make `contract_version` a required keyword on a new v2 entry
+point only. No code for either is added in this PR.
 
 A callback can only add refusals on every path, and the built-in check is never disabled by omitting it. No reason code is
 added. Pinned by `test_every_contract_version_but_the_exact_legacy_str_is_mandatory`,
@@ -113,7 +136,7 @@ Typed detail, in `registry_successor/key_admission.py`:
 These are carried as `detail_code` / `detail_cause` on `TypedVerificationReport` (a subclass of `VerificationReport`) and on
 `TypedPolicyDecision` (a subclass of `PolicyDecision`). The subclasses are returned only for a refusal that has a typed detail
 on the mandatory path (and, on the legacy path, only for a key-admission refusal, which legacy fixtures never trigger). Every
-other report or decision is the base class, so the frozen r08-v1 serialized shape (golden corpus, 5,000+ cases) is byte-identical.
+other report or decision is the base class, so the frozen r08-v1 serialized shape is unchanged (golden corpus, 5,000+ cases, passes).
 `verify_and_decide` now propagates `detail_code` / `detail_cause`; free-text `detail` is still not surfaced there (pre-existing).
 
 ### 2a. Behaviour notes
@@ -148,11 +171,13 @@ state the canonical base64 spelling explicitly (section 1; this PR does not edit
 
 ## 3. Evidence
 
-- 175 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 52 mutation-suite tests (47 source mutants over
+- 216 behavioural tests (`tests/test_core_security_sig_and_key_admission.py`) and 67 mutation-suite tests (62 source mutants over
   `canonical_b64`, `key_admission`, `verify`, `decision`, all killed, plus probes that pass on unmutated source and one documented
-  equivalent mutant). Coverage: 16 noncanonical spellings through the full verifier pipeline; the 8 small-order encodings, the
-  identity, 38 aliases, wrong lengths and types, 42 legitimate keys (RFC 8032 vectors 1 and 2 plus 40 derived by plain integer
-  arithmetic); callback omission, `lambda: True` bypass attempts, composed and raising callbacks on the mandatory path;
-  `contract_version` fail-closed values; envelope-declared r08-v2; valid signatures and ordinary callers still applied;
-  negative decisions for required and optional participation; typed-detail distinctness; legacy r08-v1 shape unchanged.
+  equivalent mutant), counted from the actual run on this head; full suite 2155 passed. Coverage: 16 noncanonical spellings
+  through the full verifier pipeline (v2 strict, legacy stdlib rule); the 8 small-order encodings, the identity, 38 aliases, wrong
+  lengths and types, 42 legitimate keys (RFC 8032 vectors 1 and 2 plus 40 derived by plain integer arithmetic); callback omission,
+  `lambda: True` bypass attempts, composed and raising callbacks on the mandatory path; `contract_version` fail-closed values;
+  envelope-declared r08-v2 and non-exact-dict envelopes; stateful-entry and flipping-`alg` TOCTOU probes; valid signatures and
+  ordinary callers still applied; negative decisions for required and optional participation; typed-detail distinctness; legacy
+  r08-v1 shape unchanged.
 - Limits: no real Ed25519 library is used in these tests; point arithmetic is a test-local transcription; only CPython.

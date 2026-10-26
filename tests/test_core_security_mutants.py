@@ -126,9 +126,13 @@ def _verify_probe(mod):
 
     good = run(canon, key, None)
     assert good.ok is True
-    odd = run(canon[:-3] + alphabet[base + 1] + "==", key, None)
+    odd = run(canon[:-3] + alphabet[base + 1] + "==", key, None, "r08-v2")
     assert odd.ok is False and odd.detail == "signature is not canonical base64"
+    # frozen r08-v1 path: identical to origin/main, a non-canonical spelling that decodes fine still verifies
+    assert run(canon[:-3] + alphabet[base + 1] + "==", key, None, "r08-v1").ok is True
+    assert run(canon, key, None, "r08-v2").ok is True
     assert run("!!bad!!", key, None).detail == "signature is not valid base64"
+    assert run("!!bad!!", key, None, "r08-v2").detail == "signature is not valid base64"
     from registry_successor import key_admission as ka
     bad_key = b"\x01" + b"\x00" * 31
     raw_bad = hashlib.sha512(b"sig|" + bad_key + b"|" + msg).digest()
@@ -197,6 +201,58 @@ def _verify_probe(mod):
     rv = mod.verify_selection(sel, ctx, revoked, _V64(), r.NOW, key_admission=ka.builtin_key_admission)
     assert rv.code == "trust_snapshot_invalid" and "key-test-2" in rv.detail
 
+    # TOCTOU: admission and verification must use one private snapshot of each entry (mandatory path)
+    ident = b"\x01" + b"\x00" * 31
+    ident_sig = base64.b64encode(hashlib.sha512(b"sig|" + ident + b"|" + msg).digest()).decode("ascii")
+    selx = selection.parse_selection_envelope(r.dumps(dict(
+        r.make_envelope(stmt, key_id="key-test-1", public_key=b"x", signed=False),
+        signatures=[{"alg": "ed25519", "key_id": "key-test-1", "signature": ident_sig}])))
+    grant2 = mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+
+    class Spy(mod.IssuerEntry):
+        reads = 0
+
+        def __getattribute__(self, name):
+            if name == "public_key":
+                Spy.reads += 1
+                return key if Spy.reads <= 1 else ident
+            return object.__getattribute__(self, name)
+
+    class FlipAlg(str):
+        n = 0
+
+        def __eq__(self, other):
+            FlipAlg.n += 1
+            return False if FlipAlg.n == 1 else str.__eq__(self, other)
+        __hash__ = str.__hash__
+
+    for entry in (Spy("key-test-1", "issuer-test-1", "ed25519", key, (grant2,)),
+                  mod.IssuerEntry("key-test-1", "issuer-test-1", FlipAlg("ed25519"), ident, (grant2,))):
+        Spy.reads = FlipAlg.n = 0
+        t = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (entry,))
+        rep = mod.verify_selection(selx, ctx, t, _V64(), r.NOW, contract_version="r08-v2")
+        assert rep.ok is False and rep.code == "trust_snapshot_invalid", type(entry)
+    # exact snapshot type only on the mandatory path
+    class SubSnap(mod.TrustSnapshot):
+        pass
+    sub = SubSnap("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", key, (grant2,)),))
+    assert mod.verify_selection(selx, ctx, sub, _V64(), r.NOW, contract_version="r08-v2").detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED
+    # fail toward mandatory for odd envelopes on the legacy argument
+    import dataclasses
+
+    class DD(dict):
+        pass
+    badsel = selection.parse_selection_envelope("not json")
+    assert badsel.ok is False and badsel.envelope is None
+    legacy_trust = mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                                     (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", b"placeholder", (grant2,)),))
+    assert mod.verify_selection(badsel, ctx, legacy_trust, _V64(), r.NOW).layers["trust_snapshot"] == mod.PASS  # legacy shape kept
+    for env in (DD(selx.envelope, contract_version="r08-v2"), DD(selx.envelope), [1], 5):
+        forged = dataclasses.replace(selx, envelope=env)
+        assert mod.verify_selection(forged, ctx, mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+            (mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", ident, (grant2,)),)), _V64(), r.NOW,
+            contract_version="r08-v1").code == "trust_snapshot_invalid", type(env)
+
 
 def _decision_probe(mod):
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
@@ -225,7 +281,6 @@ def _decision_probe(mod):
         no = mod.verify_and_decide(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW,
                                    key_admission=lambda a, k: False, contract_version="r08-v2")
         assert no.code == "trust_snapshot_invalid" and no.detail_cause == "policy_refused"
-
 
 MUTANTS = {
     "canonical_b64": (_b64_probe, {
@@ -263,6 +318,16 @@ MUTANTS = {
         "mandatory_requires_callback": [("    if key_admission is None and not mandatory:", "    if key_admission is None:")],
         "callback_replaces_builtin": [("cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG else None", "cause = inspect_ed25519_key(entry.public_key) if entry.alg == SUPPORTED_ALG and key_admission is None else None")],
         "mandatory_only_for_exact_v2": [("    if type(contract_version) is not str or contract_version != LEGACY_CONTRACT:\n        return True", "    if contract_version == V2_CONTRACT:\n        return True")],
+        "canonical_b64_on_legacy_path": [("raw = decode_canonical_base64(text)  # r08-v2 only", "raw = decode_canonical_base64(text) if True else None  # r08-v2 only"),
+                                         ("            if canonical_b64:\n", "            if True:\n")],
+        "canonical_b64_never": [("            if canonical_b64:\n", "            if False:\n")],
+        "authenticity_not_given_mandatory": [("_authenticity(statement, selection, trust, verifier, mandatory)", "_authenticity(statement, selection, trust, verifier, False)")],
+        "entry_not_private_copy": [("            entry = _private_entry(entry)  # ONE validated read", "            entry = entry if type(entry) is IssuerEntry else None  # ONE validated read")],
+        "exact_entry_type_dropped": [("    if type(entry) is not IssuerEntry:\n        return None\n    key_id", "    key_id")],
+        "exact_alg_type_dropped": [("or type(alg) is not str:\n        return None\n    if type(authority)", ":\n        return None\n    if type(authority)")],
+        "exact_snapshot_type_dropped": [("    if mandatory and type(trust) is not TrustSnapshot:\n        return None", "    pass")],
+        "envelope_non_dict_legacy": [("return envelope is not None or getattr(selection, \"ok\", False) is True", "return False")],
+        "envelope_okless_none_mandatory": [("return envelope is not None or getattr(selection, \"ok\", False) is True", "return True")],
         "legacy_equality_only": [("type(contract_version) is not str or contract_version != LEGACY_CONTRACT", "contract_version != LEGACY_CONTRACT")],
         "legacy_isinstance_str": [("type(contract_version) is not str or", "not isinstance(contract_version, str) or")],
         "junk_key_left_to_normalizer": [("(not mandatory and (not isinstance(entry.public_key, bytes)", "((not isinstance(entry.public_key, bytes)")],

@@ -164,14 +164,15 @@ def _trust(public_key=PK):
 def _verify(signature_text, **kw):
     from registry_successor.selection import signing_input
     stmt, sel = _signed_selection(signature_text)
-    return verify.verify_selection(sel, CTX, _trust(**({"public_key": kw.pop("public_key")} if "public_key" in kw else {})),
+    kw.setdefault("contract_version", "r08-v2")  # canonical spelling is enforced on the r08-v2 path only
+    return verify.verify_selection(sel, CTX, _trust(kw.pop("public_key", LEGIT_KEYS[0])),
                                    Sig64Verifier(), r.NOW, **kw), signing_input(stmt)
 
 
 def _canonical_signature():
     from registry_successor.selection import signing_input
     msg = signing_input(r.make_statement())
-    raw = hashlib.sha512(b"sig|" + PK + b"|" + msg).digest()
+    raw = hashlib.sha512(b"sig|" + LEGIT_KEYS[0] + b"|" + msg).digest()
     return raw
 
 
@@ -428,7 +429,7 @@ def test_revoked_nonsigning_issuer_bad_key_still_blocks_snapshot():
 
 def test_custom_policy_cannot_relax_the_builtin_ed25519_check():
     report, _ = _verify(base64.b64encode(_canonical_signature()).decode("ascii"), public_key=b"\x01" + b"\x00" * 31,
-                        key_admission=lambda a, k: True)
+                        key_admission=lambda a, k: True, contract_version="r08-v1")
     assert report.code == "trust_snapshot_invalid" and "key_small_order" in report.detail
 
 
@@ -704,3 +705,138 @@ def test_the_only_non_mandatory_path_is_exact_str_r08_v1_argument_with_an_exact_
         for selection_obj in (sel, None):
             expected_legacy = (selection_obj, version) in non_mandatory and type(version) is str
             assert verify._admission_mandatory(selection_obj, version) is (not expected_legacy)
+
+
+# ---------------------------------------------------------------- independent-review round (M2, M3, L1)
+
+def _ident_selection():
+    _stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    return sel
+
+
+def test_m2_stateful_entry_cannot_show_admission_a_good_key_and_the_verifier_the_identity_key():
+    sel = _ident_selection()
+    grant = verify.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+
+    class Spy(verify.IssuerEntry):
+        reads = 0
+
+        def __getattribute__(self, name):
+            if name == "public_key":
+                Spy.reads += 1
+                return LEGIT_KEYS[0] if Spy.reads <= 1 else IDENTITY
+            return object.__getattribute__(self, name)
+
+    for cut in range(1, 6):
+        Spy.reads = 0
+        entry = Spy(KEY, "issuer-test-1", "ed25519", LEGIT_KEYS[0], (grant,))
+        t = verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (entry,))
+        seen = []
+
+        class V:
+            def verify(self, alg, pk, m, s):
+                seen.append(pk)
+                return Sig64Verifier().verify(alg, pk, m, s)
+        report = verify.verify_selection(sel, CTX, t, V(), r.NOW, contract_version=V2)
+        assert report.ok is False and report.code == "trust_snapshot_invalid" and IDENTITY not in seen
+
+
+def test_m2_stateful_str_subclass_alg_cannot_flip_between_admission_and_verification():
+    class FlipAlg(str):
+        n = 0
+
+        def __eq__(self, other):
+            FlipAlg.n += 1
+            return False if FlipAlg.n == 1 else str.__eq__(self, other)
+        __hash__ = str.__hash__
+    grant = verify.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+    FlipAlg.n = 0
+    t = verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                             (verify.IssuerEntry(KEY, "issuer-test-1", FlipAlg("ed25519"), IDENTITY, (grant,)),))
+    report = verify.verify_selection(_ident_selection(), CTX, t, Sig64Verifier(), r.NOW, contract_version=V2)
+    assert report.ok is False and report.code == "trust_snapshot_invalid"
+
+
+def test_m2_mandatory_path_accepts_exact_types_only_for_snapshot_entry_and_grant():
+    grant = verify.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
+
+    class SubSnap(verify.TrustSnapshot):
+        pass
+
+    class SubEntry(verify.IssuerEntry):
+        pass
+
+    class SubGrant(verify.AuthorityGrant):
+        pass
+
+    class SubStr(str):
+        pass
+    sel = _signed_selection(_good_signature_for(LEGIT_KEYS[0]))[1]
+    good = verify.IssuerEntry(KEY, "issuer-test-1", "ed25519", LEGIT_KEYS[0], (grant,))
+    assert verify.verify_selection(sel, CTX, verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (good,)),
+                                   Sig64Verifier(), r.NOW, contract_version=V2).ok is True
+    cases = [SubSnap("trust-snap-test-1", 1, "2026-12-31T00:00:00Z", (good,)),
+             verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                                  (SubEntry(KEY, "issuer-test-1", "ed25519", LEGIT_KEYS[0], (grant,)),)),
+             verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                                  (verify.IssuerEntry(KEY, "issuer-test-1", "ed25519", LEGIT_KEYS[0],
+                                                      (SubGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test"),)),)),
+             verify.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
+                                  (verify.IssuerEntry(SubStr(KEY), "issuer-test-1", "ed25519", LEGIT_KEYS[0], (grant,)),))]
+    for t in cases:
+        report = verify.verify_selection(sel, CTX, t, Sig64Verifier(), r.NOW, contract_version=V2)
+        assert report.ok is False and report.code == "trust_snapshot_invalid"
+        assert report.detail_code == ka.DETAIL_TRUST_SNAPSHOT_MALFORMED
+
+
+def test_m3_legacy_r08_v1_path_keeps_noncanonical_base64_exactly_as_origin_main():
+    """Golden-style: on the frozen legacy path the outcome equals the plain stdlib rule (origin/main behaviour); only r08-v2 is canonical."""
+    from registry_successor.selection import signing_input
+    key = LEGIT_KEYS[0]
+    raw = hashlib.sha512(b"sig|" + key + b"|" + signing_input(r.make_statement())).digest()
+    texts = _variants(raw) + [base64.b64encode(raw).decode("ascii") + "\n", " " + base64.b64encode(raw).decode("ascii"),
+                              base64.b64encode(raw).decode("ascii").replace("+", "-"), base64.b64encode(raw).decode("ascii")[:-2],
+                              base64.b64encode(raw).decode("ascii") + "=", "!!not base64!!"]
+    canonical = base64.b64encode(raw).decode("ascii")
+    for text in texts:
+        try:
+            decoded = base64.b64decode(text, validate=True)
+            expected_legacy = (True, None) if decoded == raw else (False, "signature does not verify")
+        except Exception:
+            expected_legacy = (False, "signature is not valid base64")
+        rep = verify.verify_selection(_signed_selection(text)[1], CTX, _trust(key), Sig64Verifier(), r.NOW)
+        assert (rep.ok, None if rep.ok else rep.detail) == expected_legacy, repr(text)
+        assert rep.ok == (rep.code is None) and type(rep) is verify.VerificationReport
+        strict = verify.verify_selection(_signed_selection(text)[1], CTX, _trust(key), Sig64Verifier(), r.NOW, contract_version=V2)
+        assert strict.ok is (text == canonical), repr(text)
+    assert sum(verify.verify_selection(_signed_selection(t)[1], CTX, _trust(key), Sig64Verifier(), r.NOW).ok for t in _variants(raw)) == 16
+
+
+def test_l1_non_exact_dict_envelopes_take_the_mandatory_path():
+    import dataclasses
+
+    class DD(dict):
+        pass
+    _stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    t = _trust(IDENTITY)
+    for env in (DD({**sel.envelope, "contract_version": V2}), DD(sel.envelope), [sel.envelope], "r08-v1", 7):
+        forged = dataclasses.replace(sel, envelope=env)
+        assert verify._admission_mandatory(forged, "r08-v1") is True, type(env)
+        for kw in ({}, {"contract_version": "r08-v1"}, {"key_admission": lambda a, k: True}):
+            assert verify.verify_selection(forged, CTX, t, Sig64Verifier(), r.NOW, **kw).code == "trust_snapshot_invalid"
+    # an invalid selection with no envelope keeps the frozen legacy shape (golden corpus compatibility)
+    bad = selection.parse_selection_envelope("not json")
+    assert bad.ok is False and verify._admission_mandatory(bad, "r08-v1") is False
+    # envelope with the version member missing or odd on an ok selection is mandatory
+    for decl in (None, 1, b"r08-v1"):
+        forged = dataclasses.replace(sel, envelope={**sel.envelope, "contract_version": decl})
+        assert verify._admission_mandatory(forged, "r08-v1") is True
+
+
+def test_m1_envelope_declared_v2_forces_mandatory_even_when_the_argument_is_omitted():
+    import dataclasses
+    _stmt, sel = _signed_selection(_good_signature_for(IDENTITY))
+    forged = dataclasses.replace(sel, envelope={**sel.envelope, "contract_version": V2})
+    assert verify.verify_selection(forged, CTX, _trust(IDENTITY), Sig64Verifier(), r.NOW).code == "trust_snapshot_invalid"
+    # residual risk (documented, not changed): a v2 caller handing over an envelope that DECLARES r08-v1 and omitting the argument is legacy
+    assert verify.verify_selection(sel, CTX, _trust(IDENTITY), Sig64Verifier(), r.NOW).ok is True

@@ -98,9 +98,32 @@ def _admission_mandatory(selection: Any, contract_version: Any) -> bool:
         return True
     envelope = getattr(selection, "envelope", None)
     if type(envelope) is not dict:
-        return False  # no parsed envelope: nothing declares r08-v2 (structural layer refuses such a selection anyway)
+        # Fail toward mandatory: a dict subclass, list, or any other object could declare or hide a version. Only a
+        # selection that is not ok with NO envelope at all (structurally refused earlier, legacy shape) stays legacy.
+        return envelope is not None or getattr(selection, "ok", False) is True
     declared = envelope.get("contract_version")
     return type(declared) is not str or declared != LEGACY_CONTRACT  # only an exact-str r08-v1 envelope may be legacy
+
+
+def _private_entry(entry: Any) -> Optional[IssuerEntry]:
+    """Mandatory path only: exact-type, single-read private copy of an issuer entry. The public key may be of any type here
+    (junk is classified later as key_type / key_length by admission). Returns None for a malformed entry shape."""
+    if type(entry) is not IssuerEntry:
+        return None
+    key_id, issuer_id, alg, public_key, authority = entry.key_id, entry.issuer_id, entry.alg, entry.public_key, entry.authority
+    if type(key_id) is not str or type(issuer_id) is not str or type(alg) is not str:
+        return None
+    if type(authority) not in (tuple, list):
+        return None
+    grants = []
+    for g in authority:
+        if type(g) is not AuthorityGrant:
+            return None
+        fields = (g.consumer_id, g.tenant, g.institution, g.authority_domain, g.operation)
+        if any(type(f) is not str for f in fields):
+            return None
+        grants.append(AuthorityGrant(*fields))
+    return IssuerEntry(key_id, issuer_id, alg, public_key, tuple(grants))
 
 
 def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
@@ -109,6 +132,8 @@ def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
     key_admission_invalid detail (key_type / key_length). The legacy path is unchanged."""
     if not isinstance(trust, TrustSnapshot):
         return None
+    if mandatory and type(trust) is not TrustSnapshot:
+        return None  # exact type only on the mandatory path: no subclass with computed attributes
     if not c.valid_token(trust.snapshot_id) or not c.is_int(trust.version) or trust.version < 1:
         return None
     if c.parse_timestamp(trust.valid_until) is None:
@@ -117,6 +142,10 @@ def _normalize_trust(trust: Any, mandatory: bool = False) -> Optional[dict]:
         return None
     issuers: dict = {}
     for entry in trust.issuers:
+        if mandatory:
+            entry = _private_entry(entry)  # ONE validated read of every attribute; later steps use only this copy
+            if entry is None:
+                return None
         if not isinstance(entry, IssuerEntry) or not c.valid_token(entry.key_id) or not c.valid_token(entry.issuer_id):
             return None
         if not isinstance(entry.alg, str) or (not mandatory and (not isinstance(entry.public_key, bytes) or not entry.public_key)):
@@ -219,7 +248,7 @@ def _record_binding(statement: dict, record: Any) -> Optional[tuple]:
     return None
 
 
-def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -> tuple:
+def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any, canonical_b64: bool = False) -> tuple:
     """Returns (code_or_None, detail, valid) where valid lists every (entry, grants) whose signature verified."""
     from registry_successor import selection as sel_mod
     signatures = getattr(selection, "signatures", None)
@@ -244,14 +273,21 @@ def _authenticity(statement: dict, selection: Any, trust: dict, verifier: Any) -
         else:
             entry, grants = found
             text = sig.get("signature")
-            raw = decode_canonical_base64(text)
-            if raw is None:
+            if canonical_b64:
+                raw = decode_canonical_base64(text)  # r08-v2 only: exactly the RFC 4648 section 4 spelling
+                if raw is None:
+                    try:
+                        base64.b64decode(text, validate=True)
+                        failure = ("signature_invalid", "signature is not canonical base64")
+                    except (binascii.Error, ValueError, TypeError):
+                        failure = ("signature_invalid", "signature is not valid base64")
+            else:  # frozen r08-v1 behaviour, identical to origin/main
                 try:
-                    base64.b64decode(text, validate=True)
-                    failure = ("signature_invalid", "signature is not canonical base64")
+                    raw = base64.b64decode(text, validate=True)
                 except (binascii.Error, ValueError, TypeError):
+                    raw = None
                     failure = ("signature_invalid", "signature is not valid base64")
-            else:
+            if raw is not None:
                 try:
                     good = verifier.verify(entry.alg, entry.public_key, message, raw) if entry.alg == SUPPORTED_ALG else False
                 except Exception:
@@ -320,7 +356,7 @@ def _verify(selection, context, trust_in, verifier, now, record, key_admission=N
         if verifier is None:
             mark("authenticity", "verifier_unavailable", "no signature verifier supplied; digest match is not authentication")
         elif trust_ok:
-            code, detail, valid_signers = _authenticity(statement, selection, trust, verifier)
+            code, detail, valid_signers = _authenticity(statement, selection, trust, verifier, mandatory)
             mark("authenticity", code, detail)
             if code is None:
                 authenticated = True
