@@ -406,12 +406,20 @@ def test_f4_04_invalid_payloads_refuse(mutate, code):
     assert_refused(fam_decide(ab.FAMILY_F4, pl, F4C, rec=rec), "composition_record_invalid")
 
 
-def test_f4_04_float_and_oversized_numbers_refuse_at_the_loader():
-    for raw in ("1.5", "1e3", str(2 ** 70)):
-        text = json.dumps(fam_record(ab.FAMILY_F4, F4P)).replace('"status_max_age_seconds": 120', '"status_max_age_seconds": ' + raw)
-        res = decision.validate_record_text_v2(text)
-        assert res.ok is False and res.code in ("json_number_unsupported", "field_invalid", "digest_mismatch", "field_type_invalid"), (raw, res.code)
-        assert_refused(fam_decide(ab.FAMILY_F4, F4P, F4C, text=text, rec=fam_record(ab.FAMILY_F4, F4P)), "composition_record_invalid")
+@pytest.mark.parametrize("raw,code", [("1.5", "json_number_unsupported"), ("1e3", "json_number_unsupported"),
+                                      (str(2 ** 70), "field_invalid"), (str(ab.AGE_MAX + 1), "field_invalid")])
+def test_f4_04_float_and_oversized_numbers_refuse_with_the_exact_code(raw, code):
+    sealed = fam_record(ab.FAMILY_F4, F4P)
+    text = json.dumps(sealed).replace('"status_max_age_seconds": 120', '"status_max_age_seconds": ' + raw)
+    assert text != json.dumps(sealed)
+    assert decision.validate_record_text_v2(text).code == code  # refused at the loader / value check, before any digest comparison
+    assert_refused(fam_decide(ab.FAMILY_F4, F4P, F4C, text=text, rec=sealed), "composition_record_invalid")
+
+
+def test_v1a_parity_non_object_and_garbage_documents():
+    for doc in ("[]", "1", "null", '"x"', "{", ""):
+        assert (decision.validate_record_text_v2(doc).ok, decision.validate_record_text_v2(doc).code) == \
+               (record_mod.validate_record_text(doc).ok, record_mod.validate_record_text(doc).code), doc
 
 
 @pytest.mark.parametrize("value", [1, ab.AGE_MAX])
