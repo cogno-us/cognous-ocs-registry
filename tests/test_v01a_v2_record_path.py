@@ -16,7 +16,7 @@ PREDECLARED ORACLES (committed before any source change; expected outcome at bas
   V1A-12  v2 record validator refuses an r08-v1 document, v1 validator refuses an r08-v2 document (no cross acceptance) | guard
   V1A-13  the v2 decision calls the one existing verifier `verify_selection_v2` (no second verifier)  | guard
   V1A-14  `operationally_authorized` is False on every outcome; refusals never return the caller policy under `required` | guard
-  V1A-16  r08-v1 f1a record at the v2 entry keeps its pre-V01a result (applied, three-set); r08-v1 document claiming f1ab still refuses | guard
+  V1A-16  STRICT SEPARATION: r08-v1 record at the v2 entry -> validator `contract_unsupported`, decision `composition_record_invalid`; r08-v2 record at the v1 entry refuses; r08-v1 f1ab unsupported; r08-v2 f1a accepted at v2 | baseline: FAIL (v1 f1a was accepted at v2)
   V1A-15  optional participation: any refusal leaves `overlay_not_applied` (not an application) | guard
 
 ACTUAL baseline result at `17675ee1` (unchanged source, recorded before the fix): 19 failed, 5 passed. The failing set includes cases the
@@ -263,35 +263,42 @@ def test_v1a_parity_v2_validator_matches_v1_validator_codes(mutate):
     assert (one.ok, one.code) == (two.ok, two.code)
 
 
-# ---- V1A-16 legacy records at the v2 entry (compatibility finding recorded in the second commit)
-def test_v1a_16_v1_contract_records_keep_their_existing_v2_entry_behaviour():
-    """Existing tests and callers feed `r08-v1` `f1a` records to verify_and_decide_v2; that stays applied with the three-set composition, and an
-    `r08-v1` document claiming family `f1ab` still refuses (the v2 family table is reachable only by an `r08-v2` document)."""
+# ---- V1A-16 STRICT VERSION SEPARATION (remediation of the Architect review of PR #43; replaces the earlier legacy-compat oracle)
+def test_v1a_16_v1_contract_records_are_refused_at_the_v2_entry():
+    """Contract section 1: the v2 public decision entry accepts `r08-v2` record documents only. An `r08-v1` `f1a` record (valid at the v1 entry) is
+    refused `contract_unsupported` at the validator boundary and `composition_record_invalid` at the decision (established precedence). No
+    downgrade, version guessing or retry."""
     f1a = r.make_record()
     caller3 = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
     stmt = r.make_statement_v2(f1a)
     ad = ev.Ed25519Verifier()
     sel = r.dumps(s.envelope(stmt, signature=sign(stmt), pub=PK))
     d = decision.verify_and_decide_v2("required", caller3, r.dumps(f1a), sel, s.CTX, s.trust(pub=PK), ad, r.NOW, ad.key_admission)
-    assert d.kind == "applied" and d.effective["allowed_units"] == ("unit-a",)
+    assert_refused(d, "composition_record_invalid")
+    assert decision.validate_record_text_v2(r.dumps(f1a)).code == "contract_unsupported"
+    assert record_mod.validate_record_text(r.dumps(f1a)).ok is True  # the frozen v1 validator still accepts it at the v1 entry
     legacy_f1ab = r.seal_record(dict(r.make_record(), family=f.FAMILY_F1AB, payload=payload()))  # contract_version stays r08-v1
-    d2 = decide(rec=legacy_f1ab, sel=selection_text(legacy_f1ab))
-    assert d2.kind == "required_policy_unavailable" and d2.effective is None and d2.code == "composition_record_invalid"
-    assert record_mod.validate_record_text(r.dumps(legacy_f1ab)).code == "family_unsupported"
+    assert_refused(decide(rec=legacy_f1ab, sel=selection_text(legacy_f1ab)), "composition_record_invalid")
+    assert record_mod.validate_record_text(r.dumps(legacy_f1ab)).code == "family_unsupported"  # r08-v1 f1ab remains unsupported
 
 
-@pytest.mark.parametrize("mutate,code", [
-    (lambda b: b.update(family="f9-unknown"), "family_unsupported"),
-    (lambda b: b.pop("contract_version"), "contract_unsupported"),
-    (lambda b: b.update(contract_version="r08-v3"), "contract_unsupported"),
-    (lambda b: b.update(kind="selection"), "kind_unsupported"),
-])
-def test_v1a_17_invalid_v2_documents_are_refused_with_the_validator_code(mutate, code):
-    body = record()
-    mutate(body)
-    body = r.seal_record(body)
-    assert decision.validate_record_text_v2(r.dumps(body)).code == code
-    assert_refused(decide(rec=body, sel=selection_text(record())), "composition_record_invalid")
+def test_v1a_16_no_legacy_fallback_symbol_and_v2_f1a_is_accepted():
+    src = Path(decision.__file__).read_text(encoding="utf-8")
+    assert "validate_record_text(record_text)" not in src.split("def _decide_text")[1].split("def verify_and_decide_v2")[0]  # no v1 validator on the v2 path
+    f1a_v2 = r.seal_record(dict(r.make_record(), contract_version="r08-v2"))
+    caller3 = {"allowed_actions": ["write-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a"]}
+    stmt = r.make_statement_v2(f1a_v2)
+    ad = ev.Ed25519Verifier()
+    sel = r.dumps(s.envelope(stmt, signature=sign(stmt), pub=PK))
+    d = decision.verify_and_decide_v2("required", caller3, r.dumps(f1a_v2), sel, s.CTX, s.trust(pub=PK), ad, r.NOW, ad.key_admission)
+    assert d.kind == "applied" and d.effective["allowed_units"] == ("unit-a",)
+
+
+def test_v1a_16_r08_v2_record_is_refused_at_the_v1_entry():
+    rec = record()
+    d = decision.verify_and_decide("required", caller(), r.dumps(rec), selection_text(rec), s.CTX, s.trust(pub=PK), r.FakeVerifier(), r.NOW)
+    assert d.kind == "required_policy_unavailable" and d.effective is None
+    assert record_mod.validate_record_text(r.dumps(rec)).code == "contract_unsupported"
 
 
 # ---- V1A-13 one verifier
@@ -312,3 +319,202 @@ def test_v1a_15_optional_refusal_is_not_an_application():
     rec = record()
     d = decide(participation="optional", rec=rec, ctx=c.ExpectedContext("x", "tenant-a", "inst-a", "domain-a", "op-test"))
     assert d.kind == "overlay_not_applied" and d.caller_unchanged is True
+
+
+# =============================================================================================================================================
+# REMEDIATION 2: F4/F5 DECISION-LEVEL COVERAGE (Registry decision-path reachability only: no Control Plane wiring, activation or dispatch).
+# Predeclared expectations (baseline = unchanged source of commit e3f97ddd, where F4/F5 are already reachable via FAMILIES_V2):
+#   V1A-F4-01 valid record + authenticated selection -> applied, effective = min(caller, registry) per field          | baseline: PASS expected
+#   V1A-F4-02 registry narrower -> effective = registry; V1A-F4-03 registry wider -> effective = caller (never widened) | PASS expected
+#   V1A-F4-04 missing / extra / invalid payload fields -> validator typed code; decision `composition_record_invalid`  | PASS expected
+#   V1A-F4-05 boundaries: 1 and AGE_MAX accepted, 0 / -1 / AGE_MAX+1 / bool / str / float / over-large refused         | PASS expected
+#   V1A-F4-06 invalid caller values -> `composition_caller_invalid`, no policy                                          | PASS expected
+#   V1A-F4-07 required-operation refusals (forged, wrong scope, withdrawn) never return a policy; optional -> overlay_not_applied | PASS expected
+#   V1A-F5-01..07 the same for the class-age map, plus: caller class absent from the registry keeps the caller value; registry class unknown
+#                 to the caller -> `composition_record_invalid`; empty / unsorted / non-token class keys refused; invalid caller map refused
+# Limitation reported, not resolved here: docs/r08-v2-contract.md section 2.1 says the maximum is "pending" while the code and DR-CP-AGE-1 carry
+# AGE_MAX = 2147483647 (the V1 technical representation ceiling). These tests pin the code constant imported from v2_age_bounds; no constant is invented.
+# =============================================================================================================================================
+import json  # noqa: E402
+
+from registry_successor import v2_age_bounds as ab  # noqa: E402
+
+F4P = {"status_max_age_seconds": 120, "approval_max_age_seconds": 600}
+F4C = {"status_max_age_seconds": 300, "approval_max_age_seconds": 600}
+F5P = {"class_status_max_age_seconds": {"cls-a": 120, "cls-b": 900}}
+F5C = {"class_status_max_age_seconds": {"cls-a": 300, "cls-b": 600, "cls-c": 45}}
+
+
+def fam_record(family, pl, **over):
+    body = dict(r.make_record(), contract_version="r08-v2", family=family, record_id="age-test-record", payload=pl)
+    body.update(over)
+    return r.seal_record(body)
+
+
+def fam_sel(rec, family, sk=None):
+    stmt = r.make_statement_v2(rec, family=family)
+    return r.dumps(s.envelope(stmt, signature=sign(stmt, sk), pub=PK))
+
+
+def fam_decide(family, pl, cl, participation="required", sel=None, text=None, ctx=None, rec=None):
+    rec = rec if rec is not None else fam_record(family, pl)
+    ad = ev.Ed25519Verifier()
+    return decision.verify_and_decide_v2(participation, cl, text if text is not None else r.dumps(rec), sel if sel is not None else fam_sel(rec, family),
+                                         ctx or s.CTX, s.trust(pub=PK), ad, r.NOW, ad.key_admission)
+
+
+# ---- F4
+def test_f4_01_valid_selection_composes_with_the_caller():
+    d = fam_decide(ab.FAMILY_F4, F4P, F4C)
+    assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False
+    assert d.effective == {"status_max_age_seconds": 120, "approval_max_age_seconds": 600}
+
+
+def test_f4_02_registry_narrower_than_caller_narrows():
+    d = fam_decide(ab.FAMILY_F4, {"status_max_age_seconds": 10, "approval_max_age_seconds": 20}, F4C)
+    assert d.kind == "applied" and d.effective == {"status_max_age_seconds": 10, "approval_max_age_seconds": 20}
+
+
+def test_f4_03_registry_wider_than_caller_never_widens():
+    d = fam_decide(ab.FAMILY_F4, {"status_max_age_seconds": 9000, "approval_max_age_seconds": 9000}, F4C)
+    assert d.kind == "applied" and d.effective == F4C
+
+
+@pytest.mark.parametrize("mutate,code", [
+    (lambda p: p.pop("approval_max_age_seconds"), "field_missing"),
+    (lambda p: p.update(identity_max_age_seconds=5), "field_unknown"),
+    (lambda p: p.update(status_max_age_seconds="120"), "field_type_invalid"),
+    (lambda p: p.update(status_max_age_seconds=True), "field_type_invalid"),
+    (lambda p: p.update(status_max_age_seconds=0), "field_invalid"),
+    (lambda p: p.update(status_max_age_seconds=-1), "field_invalid"),
+    (lambda p: p.update(status_max_age_seconds=ab.AGE_MAX + 1), "field_invalid"),
+])
+def test_f4_04_invalid_payloads_refuse(mutate, code):
+    pl = dict(F4P)
+    mutate(pl)
+    rec = fam_record(ab.FAMILY_F4, pl)
+    assert decision.validate_record_text_v2(r.dumps(rec)).code == code
+    assert_refused(fam_decide(ab.FAMILY_F4, pl, F4C, rec=rec), "composition_record_invalid")
+
+
+def test_f4_04_float_and_oversized_numbers_refuse_at_the_loader():
+    for raw in ("1.5", "1e3", str(2 ** 70)):
+        text = json.dumps(fam_record(ab.FAMILY_F4, F4P)).replace('"status_max_age_seconds": 120', '"status_max_age_seconds": ' + raw)
+        res = decision.validate_record_text_v2(text)
+        assert res.ok is False and res.code in ("json_number_unsupported", "field_invalid", "digest_mismatch", "field_type_invalid"), (raw, res.code)
+        assert_refused(fam_decide(ab.FAMILY_F4, F4P, F4C, text=text, rec=fam_record(ab.FAMILY_F4, F4P)), "composition_record_invalid")
+
+
+@pytest.mark.parametrize("value", [1, ab.AGE_MAX])
+def test_f4_05_registry_boundaries_are_accepted(value):
+    d = fam_decide(ab.FAMILY_F4, {"status_max_age_seconds": value, "approval_max_age_seconds": value}, {"status_max_age_seconds": ab.AGE_MAX, "approval_max_age_seconds": ab.AGE_MAX})
+    assert d.kind == "applied" and d.effective == {"status_max_age_seconds": value, "approval_max_age_seconds": value}
+
+
+@pytest.mark.parametrize("bad", [
+    {"status_max_age_seconds": 1}, {**F4C, "extra": 1}, {**F4C, "status_max_age_seconds": -1}, {**F4C, "status_max_age_seconds": True},
+    {**F4C, "status_max_age_seconds": 1.5}, {**F4C, "status_max_age_seconds": "9"}, {**F4C, "status_max_age_seconds": ab.AGE_MAX + 1}, {}, None, "caller",
+])
+def test_f4_06_invalid_callers_refuse_and_are_never_replaced(bad):
+    assert_refused(fam_decide(ab.FAMILY_F4, F4P, bad), "composition_caller_invalid")
+
+
+def test_f4_06_caller_zero_is_valid_and_stays_zero():
+    d = fam_decide(ab.FAMILY_F4, F4P, {"status_max_age_seconds": 0, "approval_max_age_seconds": 600})
+    assert d.kind == "applied" and d.effective["status_max_age_seconds"] == 0 and d.deny_all is False
+
+
+def test_f4_07_required_refusals_return_no_policy_and_optional_is_not_an_application():
+    rec = fam_record(ab.FAMILY_F4, F4P)
+    stmt = r.make_statement_v2(rec, family=ab.FAMILY_F4)
+    bad = bytearray(base64.b64decode(sign(stmt)))
+    bad[0] ^= 1
+    forged = r.dumps(s.envelope(stmt, signature=base64.b64encode(bytes(bad)).decode("ascii"), pub=PK))
+    assert_refused(fam_decide(ab.FAMILY_F4, F4P, F4C, sel=forged, rec=rec), "signature_invalid")
+    wrong = c.ExpectedContext("consumer-test", "tenant-b", "inst-a", "domain-a", "op-test")
+    assert_refused(fam_decide(ab.FAMILY_F4, F4P, F4C, ctx=wrong, rec=rec), "selection_scope_mismatch")
+    wd = s.withdraw_statement(stmt)
+    assert_refused(fam_decide(ab.FAMILY_F4, F4P, F4C, rec=rec, sel=r.dumps(s.envelope(wd, signature=sign(wd), pub=PK))), "selection_withdrawn")
+    assert_refused(fam_decide(ab.FAMILY_F4, F4P, F4C, rec=rec, participation="required", ctx=c.ExpectedContext("x", "tenant-a", "inst-a", "domain-a", "op-test")), "selection_consumer_mismatch")
+    o = fam_decide(ab.FAMILY_F4, F4P, F4C, participation="optional", rec=rec, ctx=wrong)
+    assert o.kind == "overlay_not_applied" and o.caller_unchanged is True and o.operationally_authorized is False
+
+
+# ---- F5
+def test_f5_01_valid_class_map_composes_per_class():
+    d = fam_decide(ab.FAMILY_F5, F5P, F5C)
+    assert d.kind == "applied" and d.operationally_authorized is False
+    assert d.effective == {"class_status_max_age_seconds": {"cls-a": 120, "cls-b": 600, "cls-c": 45}}  # cls-b: registry 900 > caller 600 stays 600; cls-c absent from registry keeps 45
+
+
+def test_f5_02_registry_narrower_narrows_only_that_class():
+    d = fam_decide(ab.FAMILY_F5, {"class_status_max_age_seconds": {"cls-a": 7}}, F5C)
+    assert d.kind == "applied" and d.effective["class_status_max_age_seconds"] == {"cls-a": 7, "cls-b": 600, "cls-c": 45}
+
+
+def test_f5_03_registry_wider_never_widens():
+    d = fam_decide(ab.FAMILY_F5, {"class_status_max_age_seconds": {"cls-a": 9999, "cls-b": 9999, "cls-c": 9999}}, F5C)
+    assert d.kind == "applied" and d.effective == F5C
+
+
+def test_f5_04_unknown_action_class_refuses():
+    assert_refused(fam_decide(ab.FAMILY_F5, {"class_status_max_age_seconds": {"cls-z": 5}}, F5C), "composition_record_invalid")
+
+
+@pytest.mark.parametrize("pl,code", [
+    ({}, "field_missing"),
+    ({"class_status_max_age_seconds": {"cls-a": 5}, "extra": {}}, "field_unknown"),
+    ({"class_status_max_age_seconds": [1]}, "field_type_invalid"),
+    ({"class_status_max_age_seconds": {"cls-a": "5"}}, "field_type_invalid"),
+    ({"class_status_max_age_seconds": {"cls-a": True}}, "field_type_invalid"),
+    ({"class_status_max_age_seconds": {}}, "field_invalid"),
+    ({"class_status_max_age_seconds": {"cls-a": 0}}, "field_invalid"),
+    ({"class_status_max_age_seconds": {"cls-a": -3}}, "field_invalid"),
+    ({"class_status_max_age_seconds": {"cls-a": ab.AGE_MAX + 1}}, "field_invalid"),
+    ({"class_status_max_age_seconds": {"a*b": 5}}, "field_invalid"),
+    ({"class_status_max_age_seconds": {"": 5}}, "field_invalid"),
+])
+def test_f5_05_invalid_payloads_refuse(pl, code):
+    rec = fam_record(ab.FAMILY_F5, pl)
+    assert decision.validate_record_text_v2(r.dumps(rec)).code == code
+    assert_refused(fam_decide(ab.FAMILY_F5, pl, F5C, rec=rec), "composition_record_invalid")
+
+
+def test_f5_05_unsorted_class_keys_refuse():
+    rec = fam_record(ab.FAMILY_F5, {"class_status_max_age_seconds": {"cls-b": 5, "cls-a": 5}})  # insertion order kept by plain json.dumps
+    text = json.dumps(rec)
+    assert decision.validate_record_text_v2(text).code == "field_invalid"
+    assert_refused(fam_decide(ab.FAMILY_F5, None, F5C, rec=rec, text=text), "composition_record_invalid")
+
+
+@pytest.mark.parametrize("value", [1, ab.AGE_MAX])
+def test_f5_05_boundaries_are_accepted(value):
+    d = fam_decide(ab.FAMILY_F5, {"class_status_max_age_seconds": {"cls-a": value}}, {"class_status_max_age_seconds": {"cls-a": ab.AGE_MAX}})
+    assert d.kind == "applied" and d.effective["class_status_max_age_seconds"] == {"cls-a": value}
+
+
+@pytest.mark.parametrize("bad", [
+    {"class_status_max_age_seconds": {}}, {}, {"class_status_max_age_seconds": {"cls-a": -1}}, {"class_status_max_age_seconds": {"cls-a": True}},
+    {"class_status_max_age_seconds": {"cls-a": 1.5}}, {"class_status_max_age_seconds": {"a b": 5}}, {"class_status_max_age_seconds": {"cls-a": ab.AGE_MAX + 1}},
+    {"class_status_max_age_seconds": [("cls-a", 1)]}, {**F5C, "extra": 1}, None, "caller",
+])
+def test_f5_06_invalid_caller_maps_refuse(bad):
+    assert_refused(fam_decide(ab.FAMILY_F5, {"class_status_max_age_seconds": {"cls-a": 5}}, bad), "composition_caller_invalid")
+
+
+def test_f5_07_required_refusals_return_no_policy_and_optional_is_not_an_application():
+    rec = fam_record(ab.FAMILY_F5, F5P)
+    stmt = r.make_statement_v2(rec, family=ab.FAMILY_F5)
+    forged = r.dumps(s.envelope(stmt, signature=sign(stmt, OTHER_SK), pub=PK))
+    assert_refused(fam_decide(ab.FAMILY_F5, F5P, F5C, sel=forged, rec=rec), "signature_invalid")
+    wrong = c.ExpectedContext("consumer-test", "tenant-a", "inst-a", "domain-a", "op-other")
+    assert_refused(fam_decide(ab.FAMILY_F5, F5P, F5C, ctx=wrong, rec=rec), "selection_operation_mismatch")
+    wd = s.withdraw_statement(stmt)
+    assert_refused(fam_decide(ab.FAMILY_F5, F5P, F5C, rec=rec, sel=r.dumps(s.envelope(wd, signature=sign(wd), pub=PK))), "selection_withdrawn")
+    o = fam_decide(ab.FAMILY_F5, F5P, F5C, participation="optional", rec=rec, ctx=wrong)
+    assert o.kind == "overlay_not_applied" and o.caller_unchanged is True and o.operationally_authorized is False
+
+
+def test_f4_f5_decision_does_not_widen_or_authorize_anywhere():
+    for d in (fam_decide(ab.FAMILY_F4, F4P, F4C), fam_decide(ab.FAMILY_F5, F5P, F5C)):
+        assert d.operationally_authorized is False and d.deny_all is False and d.deny_all_fields == ()
