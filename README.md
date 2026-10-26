@@ -20,7 +20,7 @@ Newly authored material: Apache-2.0 (`LICENSE`); imported material keeps its own
 
 D1–D5 of 2026-10-24: [docs/decisions/2026-10-24-operator-decisions-D1-D5.md](docs/decisions/2026-10-24-operator-decisions-D1-D5.md).
 
-## Current state (reconciled in S06; the live record is [docs/sprint-status.md](docs/sprint-status.md))
+## Current state (reconciled in S06; the live record is [docs/sprint-status.md](docs/sprint-status.md); program closeout: [docs/closeout/](docs/closeout/program-closeout-2026-10-26.md))
 
 S01 to S05 are complete and merged (S01 baseline recovery, S02 inventory, S03 contract, S04 consumer, S05 differential equivalence); S06 consolidation is recorded in the status file. No further sprint is authorized: a new rule family, shared ISS/OCS registry work, dynamic activation, approval of a manifest pin, publication, production and formal independent qualification each need a separate operator decision. Release, publication and production are on HOLD.
 
