@@ -1,0 +1,62 @@
+[
+ {
+  "id": "W1-007",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "IMMUTABLE_CONTROL (admission floor)",
+  "evidence": "engine/safe_executor.py:147-184 pre-snapshot structural guard; same literals reused by OpenShell _bounded_json (openshell_environment.py:36-53); no config path exists."
+ },
+ {
+  "id": "W1-008",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "IMMUTABLE_CONTROL (admission floor)",
+  "evidence": "safe_executor.py:147 max_bytes kwarg never passed (snapshot_envelope); accounting weights are bookkeeping."
+ },
+ {
+  "id": "W1-027",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "IMMUTABLE_CONTROL (admission floor)",
+  "evidence": "safe_executor.py:318-321 identity syntax validation of tenant_id."
+ },
+ {
+  "id": "W1-030",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "IMMUTABLE_CONTROL (admission floor)",
+  "evidence": "safe_executor.py:343-344,396-408 protected evaluator semantic (separator set)."
+ },
+ {
+  "id": "W2-086",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "IMMUTABLE_CONTROL (admission floor)",
+  "evidence": "openshell_environment.py:36-38,52-53 hostile-output floor."
+ },
+ {
+  "id": "W2-087",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "IMMUTABLE_CONTROL (admission floor)",
+  "evidence": "openshell_environment.py:115-160 stdin/output caps."
+ },
+ {
+  "id": "W3-062",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "CALLER_SUPPLIED (synthetic destination constructor arg), OUT-OF-SCOPE",
+  "evidence": "dedupe_destination.py:105 dedupe_ttl_seconds=600 validated at _dedupe_init:41-43; models provider behaviour; shortening widens duplicate window."
+ },
+ {
+  "id": "W2-001",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "HOST_OWNED_CONFIG, OUT-OF-SCOPE (legacy unauthenticated shell)",
+  "evidence": "engine/engine.py docstring: legacy shell performs no side effect; agent_id is caller-asserted, never authenticated; permissions.py:15-23."
+ },
+ {
+  "id": "W2-003",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "sample data, HOST_OWNED_CONFIG, OUT-OF-SCOPE",
+  "evidence": "permissions.json:1-4 not read by any supported execution path; engine.py takes permissions_file argument."
+ },
+ {
+  "id": "W1-040",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "ALREADY-GOVERNED (REGISTRY_BACKED sets)",
+  "evidence": "registry_f1a_narrowing.py FIELDS and registry_selection_authority.sa_fields() include allowed_adapters/actions/units; guard _check_policy_containment 1451-1484."
+ }
+]

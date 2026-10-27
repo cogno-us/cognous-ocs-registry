@@ -1,0 +1,432 @@
+[
+ {
+  "id": "W1-007",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "147-184 (limit check line 155)",
+  "evidence_snippet": "if depth > 32 or nodes > 10000:",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-001"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Evaluated as IMMUTABLE_CONTROL admission floor (see candidate)."
+ },
+ {
+  "id": "W1-008",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "147,161,183",
+  "evidence_snippet": "def _admit_plain_data(value: object, *, max_bytes: int = 1048576)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-002"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Evaluated as IMMUTABLE_CONTROL admission floor (see candidate)."
+ },
+ {
+  "id": "W1-027",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "318-321",
+  "evidence_snippet": "not (1 <= len(op.tenant_id) <= 128)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-003"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Evaluated as IMMUTABLE_CONTROL admission floor (see candidate)."
+ },
+ {
+  "id": "W1-029",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "343",
+  "evidence_snippet": "_TARGET_MATCH_MODES = (\"segment\", \"exact\", \"legacy-prefix\")",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "The vocabulary tuple is a closed, fail-closed enum (IMMUTABLE_CONTROL); the mode CHOICE is already a CALLER_SUPPLIED per-policy field (default 'segment'). Strictness order exact < segment < legacy-prefix. Registry is not involved today (registry_f1a_narrowing preserves target_match). Whether a Registry family may select a stricter mode is an Architect design decision.",
+   "evidence": "engine/safe_executor.py:343,393-394; engine/registry_f1a_narrowing.py:20-22",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-B-004"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W1-030",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "344",
+  "evidence_snippet": "_TARGET_SEPARATORS = \"/:\"",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-005"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Evaluated as IMMUTABLE_CONTROL admission floor (see candidate)."
+ },
+ {
+  "id": "W1-033",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "358-372",
+  "evidence_snippet": "target_match: str = \"segment\"",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-004",
+   "G0-B-006",
+   "G0-B-009",
+   "G0-B-011"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W1-040",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "417-424",
+  "evidence_snippet": "if op.unit not in self.allowed_units:",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-010",
+   "G0-B-011"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Already REGISTRY_BACKED via f1ab."
+ },
+ {
+  "id": "W1-041",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "425-426",
+  "evidence_snippet": "if float(op.amount) > max_amount:",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-007",
+   "G0-B-011"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W1-043",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "429-430",
+  "evidence_snippet": "if op.effective_max_effects > max_effects:",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-008",
+   "G0-B-011"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W1-056",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "521-562",
+  "evidence_snippet": "ALTER TABLE attempts RENAME TO attempts_v01",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Not a configurable rule: schema migration inserting operation_digest 'legacy:unknown' and created_at=time.time(). Propose still_configurable NO (IMMUTABLE_CONTROL). Unchanged since pin.",
+   "evidence": "engine/safe_executor.py:521-562",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-B-030"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W1-058",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "701-713",
+  "evidence_snippet": "INSERT INTO attempt_events(attempt_id,status,error,created_at)",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "transition_attempt accepts any status string for an existing attempt_id; there is no transition table, and a characterisation test pins this. It is the absence of a rule, not a value; propose NO unless the Architect wants a new transition rule (new work, not migration).",
+   "evidence": "engine/safe_executor.py:701-713; tests/test_attempt_transition_characterisation.py:1-66",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-B-030"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W1-073",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/safe_executor.py",
+  "current_lines": "1073-1088",
+  "evidence_snippet": "observation = self.destination.observe_bound(snapshot)",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "observe_historical snapshots the envelope and calls destination.observe_bound without any authorization renewal and without writes; mandatory invariant (observation does not renew authority). Propose NO.",
+   "evidence": "engine/safe_executor.py:1073-1088",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-B-030"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-001",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/permissions.py",
+  "current_lines": "15-23",
+  "evidence_snippet": "return any(isinstance(entry, str) and entry == action_type for entry in allowed)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-014"
+  ],
+  "notes": "Found at same paths; both unchanged vs old pin. Legacy unauthenticated shell, non-effecting; see G0-B-014 (OUT-OF-SCOPE). Value is HOST_OWNED_CONFIG."
+ },
+ {
+  "id": "W2-003",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/permissions.json",
+  "current_lines": "1-4",
+  "evidence_snippet": "\"agent1\": [\"read\", \"write\"], \"agent2\": [\"read\"]",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-014"
+  ],
+  "notes": "Found at same paths; both unchanged vs old pin. Legacy unauthenticated shell, non-effecting; see G0-B-014 (OUT-OF-SCOPE). Value is HOST_OWNED_CONFIG."
+ },
+ {
+  "id": "W2-025",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/operation_admission.py",
+  "current_lines": "152-155",
+  "evidence_snippet": "required_observations = {\"applied\", \"partial\", \"absent\", \"unknown\"}",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Closed qualification floor: all four observation states must be covered. Propose NO (IMMUTABLE_CONTROL); Registry could only add.",
+   "evidence": "engine/operation_admission.py:152-155; tests/test_o6_p1a_operation_admission.py:110",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-B-023"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-036",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/refund_intent.py",
+  "current_lines": "26,34-35",
+  "evidence_snippet": "if self.effect_class != \"refund.issue\":",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "effect_class accepts only 'refund.issue' (hard ValueError otherwise): profile identity of the synthetic refund intent. Propose NO.",
+   "evidence": "engine/refund_intent.py:26,34-35",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-B-024"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-038",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/refund_intent.py",
+  "current_lines": "55-59",
+  "evidence_snippet": "op.action_id not in {\"refund.issue\", \"urn:cognous:action:refund-issue-routine-v1\"}",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Two-string action id set binds the intent to the synthetic profile; scope equality checks institution/domain/customer. Tenant-scoped ops refused. Propose NO (profile binding).",
+   "evidence": "engine/refund_intent.py:55-59",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-B-024"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-067",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/control_plane_adapter.py",
+  "current_lines": "160-168",
+  "evidence_snippet": "from agent_control_plane.bounded import DefinitiveDestinationRejection",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Closed seven-string set of destination error codes treated as definitive rejections; refusal vocabulary. Propose NO.",
+   "evidence": "engine/control_plane_adapter.py:160-168",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-B-025"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-077",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/control_plane_adapter.py",
+  "current_lines": "424-436",
+  "evidence_snippet": "trusted_institution_id=snapshot.operation.institution_id,",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "reconcile builds the adapter with trusted_institution_id and trusted_authority_domain taken from the snapshot's own operation (caller envelope), then workflow.reconcile(effect_id); effect-free and absence never grants dispatch. A binding mechanism, not a threshold. Propose NO. Observation: the 'trusted' ids are not independently authenticated here.",
+   "evidence": "engine/control_plane_adapter.py:424-436",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-082",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/openshell_environment.py",
+  "current_lines": "89-90",
+  "evidence_snippet": "if self.runtime != \"docker\" or self.cpu != \"1\" or self.memory != \"256Mi\":",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Fields runtime/cpu/memory accept only 'docker'/'1'/'256Mi' (equality check raising 'only qualified local Docker profile supported'). Qualified-profile identity, no range. Propose NO.",
+   "evidence": "engine/openshell_environment.py:89-90",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-B-026"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-083",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/openshell_environment.py",
+  "current_lines": "74,93-94",
+  "evidence_snippet": "timeout_seconds: int = 15",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-027"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W2-086",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/openshell_environment.py",
+  "current_lines": "36-38,52-53",
+  "evidence_snippet": "if len(value) > 1048576:",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-028"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Evaluated as IMMUTABLE_CONTROL admission floor (see candidate)."
+ },
+ {
+  "id": "W2-087",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/openshell_environment.py",
+  "current_lines": "118,151-158,192",
+  "evidence_snippet": "if len(data) > 65536:",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-028"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Evaluated as IMMUTABLE_CONTROL admission floor (see candidate)."
+ },
+ {
+  "id": "W3-024",
+  "historical_class": "UNRESOLVED",
+  "current_status": "MOVED",
+  "current_file": "engine/local_authority_effect.py",
+  "current_lines": "631-645",
+  "evidence_snippet": "conn.execute(f\"DELETE FROM {table} WHERE {column}=?\", (key,))",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Unconditional DELETE by key, no revocation write; callers in tests only (owner removal). Not a threshold. Propose NO configurable; flag authority-surface question: grants have no retained revocation table while approvals gained authority_approval_revocations_v1 (new in current).",
+   "evidence": "engine/local_authority_effect.py:631-645",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-B-029"
+  ],
+  "notes": "File changed (+211 lines); function moved from LAE:546-560 to 631-645 body unchanged."
+ },
+ {
+  "id": "W3-062",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/dedupe_destination.py",
+  "current_lines": "105",
+  "evidence_snippet": "dedupe_ttl_seconds: int = 600",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-015"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout. Constructor arg of synthetic destination; classification: CALLER_SUPPLIED default."
+ },
+ {
+  "id": "W3-063",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/dedupe_destination.py",
+  "current_lines": "76-93",
+  "evidence_snippet": "if now - row[\"committed_at\"] < ttl:",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Guard compares now - committed_at < ttl, deletes key after ttl, InProgress while held < ttl. Models provider dedupe memory; TTL is a destination constructor property (synthetic). Propose NO as Runtime policy (see G0-B-015).",
+   "evidence": "engine/dedupe_destination.py:76-93,105",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-B-015"
+  ],
+  "notes": "Source file diff-stat vs ec728da6 shows no change; lines verified in current checkout."
+ },
+ {
+  "id": "W3-087",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "engine/recovery_resolution.py",
+  "current_lines": "266-269",
+  "evidence_snippet": "if not 0 <= age <= 86400:",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-B-016"
+  ],
+  "notes": "Verified at recovery_resolution.py:266-269 (24h window check at 268)."
+ }
+]

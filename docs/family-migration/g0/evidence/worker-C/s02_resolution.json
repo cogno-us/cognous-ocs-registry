@@ -1,0 +1,744 @@
+[
+ {
+  "id": "W4-004",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/policy_gate.py",
+  "current_lines": "196-201",
+  "evidence_snippet": "(\"read_allowed_tool_policy\", action.action_type == \"read\", \"allow\", ...)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Part of the PolicyGate evaluator: reached only after blocked_tool_policy and unknown_tool_policy; whole table is the documented evaluator contract. Proposed IMMUTABLE_CONTROL/RETAIN-IN-CODE. Lead decides.",
+   "evidence": "policy_gate.py 8-17 docstring ordering; _apply_rules returns on first matching rule (222-231); PolicyGate not imported by bounded.py",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-029"
+  ],
+  "notes": "Legacy gate used by RunRecorder, not by acp run."
+ },
+ {
+  "id": "W4-014",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/policy_config.py",
+  "current_lines": "16-23",
+  "evidence_snippet": "default_action: Literal[\"allow\", \"block\", \"escalate\"] = \"escalate\"",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "default_action has no consumer in current source: frame_from_policy_config copies only policy_version/allowed_tools/blocked_tools; PolicyGate never reads it. Tool lists remain caller-authored data used by the legacy gate; authority_required is converted to grants by authority_records_from_policy_config (see W4-018).",
+   "evidence": "policy_config.py 43-59 (frame_from_policy_config args); grep default_action across src/tests/examples/tools finds policy_config.py:23, examples/policy_config.json and unrelated manifest code only",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-027"
+  ],
+  "notes": "Public API only (exported in __init__.py); one example caller."
+ },
+ {
+  "id": "W4-015",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/policy_config.py",
+  "current_lines": "23",
+  "evidence_snippet": "default_action: Literal[\"allow\", \"block\", \"escalate\"] = \"escalate\"",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Inert default: declared and validated, never consumed. Not a migration candidate; fail-safe value escalate is irrelevant because nothing reads it. Flag for Architect (dead field).",
+   "evidence": "same grep as W4-014",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-027"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W4-018",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/policy_config.py",
+  "current_lines": "62-82",
+  "evidence_snippet": "scope=list(scopes), source=source, expires_at=expires_at",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Authority-granting helper, not a tunable: every scope list in authority_required becomes a live AuthorityRecord for the given actor; the action_type key is ignored; expires_at defaults None. Registry must never create grants. Proposed NOT_ELIGIBLE / RETAIN-IN-CODE.",
+   "evidence": "policy_config.py 62-82 loop `for _action_type, scopes in config.authority_required.items()`",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-028"
+  ],
+  "notes": "Naming mismatch: 'authority_required' produces grants."
+ },
+ {
+  "id": "W4-020",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/demo_policies.py",
+  "current_lines": "36-39",
+  "evidence_snippet": "allowed_tools = [\"crm_read\", \"notes_search\"]",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-025"
+  ],
+  "notes": "Caller-overridable keyword defaults; module has no caller in src/tests/examples/tools; not exported. Classification CONFIGURABLE-CANDIDATE is formally true (literal defaults) but demo-only; recommend OUT-OF-SCOPE."
+ },
+ {
+  "id": "W4-021",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/demo_policies.py",
+  "current_lines": "81-84",
+  "evidence_snippet": "allowed_tools = [\"crm_read\", \"crm_write\", \"notes_search\"]",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-025"
+  ],
+  "notes": "Same as W4-020."
+ },
+ {
+  "id": "W4-022",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/demo_policies.py",
+  "current_lines": "50-54",
+  "evidence_snippet": "scope=[\"read\"], source=\"demo_policy_config\"",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Hard-coded demo grant of scope read (no expiry), not caller-overridable, not reachable from a supported entry point. Not a migration candidate; Registry must not create grants.",
+   "evidence": "demo_policies.py 50-54; no references to read_only_recorder outside the module",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-026"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W4-023",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/demo_policies.py",
+  "current_lines": "95-99",
+  "evidence_snippet": "scope=[\"read\", \"write\"], source=\"demo_policy_config\"",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Hard-coded demo grant of read+write (no expiry); a write scope makes PolicyGate allow write actions on allowed tools. Same disposition as W4-022: RETAIN-IN-CODE, demo only.",
+   "evidence": "demo_policies.py 95-99; policy_gate.py 201-211",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-026"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W4-033",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/rule_revision.py",
+  "current_lines": "150",
+  "evidence_snippet": "reasons.extend(d for d in defects if d != \"unsigned_revision_row\")",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Not a policy knob. Unsigned rows are retained for visibility but never count: revision_defects flags them, counting_rows/valid excludes any row with defects, and the from_digest chain check is skipped for them (line 163). The exemption only decides refuse-vs-record, not adoption. Proposed IMMUTABLE_CONTROL.",
+   "evidence": "rule_revision.py 92 (`unsigned_revision_row`), 103 (valid = rows with no revision_defects), 163; docstring 'Unsigned rows are retained (visibility) but never count.'",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [],
+  "notes": "Test: tests/test_rule_revision.py::test_unsigned_revision_row_resolves_unknown"
+ },
+ {
+  "id": "W5-002",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/reason_vocabulary.py",
+  "current_lines": "21-25, 31-32",
+  "evidence_snippet": "minimum_prior_count: int = 5, minimum_current_exposure: int = 1",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-037"
+  ],
+  "notes": "Kwarg defaults; diagnostic only; no src consumer of refusal_trends in this repo."
+ },
+ {
+  "id": "W5-011",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/manifest_validation.py",
+  "current_lines": "17",
+  "evidence_snippet": "SUPPORTED_VERSIONS = frozenset({\"1.0\", \"1.1\"})",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Closed protocol vocabulary: an unsupported version yields a validator error (line 72) and the gate fails closed with invalid_manifest. Proposed IMMUTABLE_CONTROL (closed refusal/support set); adding versions would widen the accepted language.",
+   "evidence": "manifest_validation.py 17, 72; docstring: E999/invalid_manifest fails closed",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [],
+  "notes": ""
+ },
+ {
+  "id": "W5-012",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/manifest_validation.py",
+  "current_lines": "18-21",
+  "evidence_snippet": "_EFFECTFUL / _HIGH_RISK / _PRIVILEGED frozensets",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Proposed HARD_CODED_LITERAL protective classification mirrored from an external action-manifest validator ('the same gate, the same codes'); removal widens, so keep in code. Residual uncertainty: the external validator is not in this repository (NOT READ).",
+   "evidence": "manifest_validation.py 18-21 and usage at 121, 144, 167; bounded.py 2663 comment 'Port of the action-manifest runtime consumption contract'",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-C-032"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W5-023",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/manifest_validation.py",
+  "current_lines": "90",
+  "evidence_snippet": "manifest_default = manifest.get(\"default_action\", \"escalate\")",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Fail-safe validator default. At runtime the only effective value is \"block\" (bounded.py 2664-2667); \"allow\"/\"escalate\" confer nothing; the validator demands review/authority/limits when default != block. The manifest itself is host-authored, digest-bound input.",
+   "evidence": "manifest_validation.py 90, 99; bounded.py 2664-2667",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-C-031"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W5-028",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/decision_input_profile.py",
+  "current_lines": "50-56, 269-272, 332-333",
+  "evidence_snippet": "ALLOWED_ASSURANCE_CLASSES = {...4...}; ALLOWED_EVIDENCE_STATES = {current, unknown, conflict}",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Closed vocabularies of a proposed, non-authorizing profile ('authorizing': false, runtime_enforcement_claim false in conformance vectors); validation raises ProfileValidationError for anything else. Proposed IMMUTABLE_CONTROL (closed vocab).",
+   "evidence": "decision_input_profile.py 50-56, 196-200, 271-272, 332-333",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [],
+  "notes": ""
+ },
+ {
+  "id": "W5-044",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/validation.py",
+  "current_lines": "188-193",
+  "evidence_snippet": "collector.warning(\"authority_actor_mismatch\", ...)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Diagnostic severity only. A mismatched-actor authority record cannot confer authority because PolicyGate._active_authority_scopes skips records whose actor differs from the frame actor (policy_gate.py 283-284). Proposed IMMUTABLE_CONTROL/RETAIN-IN-CODE.",
+   "evidence": "validation.py 188-193; policy_gate.py 281-284",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [],
+  "notes": ""
+ },
+ {
+  "id": "W5-048",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/strict_json.py",
+  "current_lines": "21, 24-33",
+  "evidence_snippet": "MAX_TEXT = 200",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-041"
+  ],
+  "notes": "Presentation limit; escaping is a control."
+ },
+ {
+  "id": "W6-004",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "100",
+  "evidence_snippet": "EVIDENCE_KINDS = frozenset({\"authorization\", \"context\", \"post_effect\"})",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Closed enum used fail-closed: a kind outside it (including case variants) yields required_evidence_not_current (hold). Proposed IMMUTABLE_CONTROL. The authority-context schema that defines the enum is outside this repository (NOT READ).",
+   "evidence": "bounded.py 2538 (`obligation[\"kind\"] not in EVIDENCE_KINDS`)",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [],
+  "notes": ""
+ },
+ {
+  "id": "W6-005",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "101",
+  "evidence_snippet": "UNKNOWN_BEHAVIORS = frozenset({\"hold_effect\", \"preserve_if_other_basis_suffices\", \"reconcile_no_blind_retry\"})",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Closed protocol vocabulary; an unrecognised value holds (context_unknown_requires_hold). Note: only hold_effect triggers a currency/age check at bounded.py 2551-2557; the other two recognised values add no check in the gate, so their semantics are carried by the authority context, not by CP policy. Proposed IMMUTABLE_CONTROL.",
+   "evidence": "bounded.py 2549-2557 (hold_effect branch at 2551)",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [],
+  "notes": "Surprise: two of three behaviours are accepted but have no CP branch."
+ },
+ {
+  "id": "W6-008",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "154 (also 297; local_authority_effect.py 50, 61, 155)",
+  "evidence_snippet": "tenant_id: str = Field(min_length=1, max_length=128)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-035"
+  ],
+  "notes": "Present at five Python sites and one JSON schema; shape control."
+ },
+ {
+  "id": "W6-016",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "411-415",
+  "evidence_snippet": "max_age_seconds: int = Field(gt=0)\nclock_tolerance_seconds: int = Field(default=5, ge=0)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-001"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W6-040",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "1271-1274",
+  "evidence_snippet": "status/identity/mandate/approval_max_age_seconds: int = 60",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-003",
+   "G0-C-005",
+   "G0-C-004"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W6-041",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "1275",
+  "evidence_snippet": "clock_tolerance_seconds: int = 5,",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-006"
+  ],
+  "notes": "Distinct from ObservationPolicy.clock_tolerance_seconds."
+ },
+ {
+  "id": "W6-042",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "1276, 1300, 1858, 1901",
+  "evidence_snippet": "if policy is None: reasons.append(\"observation_policy_missing\")",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Not a configurable rule: absence of an ObservationPolicy is a fail-closed hold, not a permissive default. observation_policy_missing is added to reasons in both the transport-failure path and _reconcile_observation; accepted = not reasons, so no observation is accepted and result is hold. execute() then raises PermissionError('destination observation is not valid for effect dispatch') and the destination is untouched. Docs: 'Missing policy ... fails closed.' Proposed IMMUTABLE_CONTROL (presence requirement); the policy VALUES are inventoried separately.",
+   "evidence": "bounded.py 1858, 1901, 1940-1952; docs/bounded_authorization_effect.md 250-253; tests/test_bounded_authorization.py::test_missing_observation_policy_blocks_initial_dispatch (line 1040)",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-001"
+  ],
+  "notes": "Decisive current-source evidence found; lead still decides."
+ },
+ {
+  "id": "W7-021",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "1890-1968",
+  "evidence_snippet": "future_limit = reference + timedelta(seconds=policy.clock_tolerance_seconds) ... > policy.max_age_seconds",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-001"
+  ],
+  "notes": "Values from ObservationPolicy; code is the evaluator."
+ },
+ {
+  "id": "W7-040",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "2352, 2366",
+  "evidence_snippet": "self._fresh(identity.observed_at, now, self.identity_max_age_seconds)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-005"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W7-042",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "2394-2400",
+  "evidence_snippet": "if self._freshness is not None: bound ... _class_age_bound ... elif not self._fresh(status.observed_at, now, (class max_status_age_seconds if profile else self.status_max_age_seconds))",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-007",
+   "G0-C-008",
+   "G0-C-003",
+   "G0-C-019"
+  ],
+  "notes": "Selection is code; values are configurable elsewhere."
+ },
+ {
+  "id": "W7-047",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "2445, 2469, 2398-2399",
+  "evidence_snippet": "self._fresh(conflict.observed_at, now, self.status_max_age_seconds)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-003"
+  ],
+  "notes": "Under a runtime profile, conflict and policy status still use the global status bound, only grant status uses the class bound."
+ },
+ {
+  "id": "W7-050",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "2505",
+  "evidence_snippet": "self._fresh(approval.observed_at, now, self.approval_max_age_seconds)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-004"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W8-005",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/runtime_authority.py",
+  "current_lines": "131",
+  "evidence_snippet": "max_status_age_seconds: int = Field(default=60, ge=0)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-008"
+  ],
+  "notes": "Old RA:87; shifted +44 lines by policy_binding additions."
+ },
+ {
+  "id": "W8-006",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/runtime_authority.py",
+  "current_lines": "132",
+  "evidence_snippet": "on_unreadable: Literal[\"refuse\", \"bounded_tolerance\"] = \"refuse\"",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-009"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W8-007",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/runtime_authority.py",
+  "current_lines": "135",
+  "evidence_snippet": "requires_revocation_assurance: bool = Field(default=False, ...)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-010"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W8-008",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/runtime_authority.py",
+  "current_lines": "138-146",
+  "evidence_snippet": "reversibility ... reads_protected_data ... counterparty_observable",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-011"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W8-011",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/runtime_authority.py",
+  "current_lines": "157-165",
+  "evidence_snippet": "minimum_count: StrictInt = Field(default=0, ge=0)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-012"
+  ],
+  "notes": "Proposed reclassification: threshold arrives in approved authority context (CALLER_SUPPLIED), not host profile."
+ },
+ {
+  "id": "W8-014",
+  "historical_class": "UNRESOLVED",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/runtime_authority.py",
+  "current_lines": "194-217",
+  "evidence_snippet": "\"\"\"Trusted host configuration. Public keys are never selected by evidence.\"\"\"",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Host trust configuration (HOST_OWNED_CONFIG at profile level; producer_keys and catalogue membership are trust roots). Not Registry-creatable and not a unit migration candidate; its numeric members are separate candidates. allow_synthetic_resolver is guarded: the constructor raises unless allow_test_time is set. No loader, file reader or env read exists for the profile.",
+   "evidence": "runtime_authority.py 194-201; bounded.py 1288-1290; grep os.environ/getenv over src/ returns nothing",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-013"
+  ],
+  "notes": "Profile gained a policy_binding member since the S02 pin; approval_commitment now has a v2 preimage when set."
+ },
+ {
+  "id": "W8-040",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/freshness.py",
+  "current_lines": "61-62",
+  "evidence_snippet": "lease_acquire_timeout_seconds: float = Field(default=5.0, gt=0)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-016"
+  ],
+  "notes": "Historical FR coordinates were cumulative; current freshness.py is byte-identical to the old pin (323 lines)."
+ },
+ {
+  "id": "W8-041",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/freshness.py",
+  "current_lines": "63-64",
+  "evidence_snippet": "reaper_interval_seconds: int = Field(default=30, ge=1)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-017"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W8-042",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/freshness.py",
+  "current_lines": "65-66",
+  "evidence_snippet": "nonce: bool = True",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-018"
+  ],
+  "notes": "Safeguard toggle."
+ },
+ {
+  "id": "W8-043",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/freshness.py",
+  "current_lines": "67-68",
+  "evidence_snippet": "max_age_extension_seconds: int = Field(default=0, ge=0)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-019"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W8-044",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/freshness.py",
+  "current_lines": "69-72",
+  "evidence_snippet": "anchor_deadline_to_inputs: bool = Field(default=False, ...)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-020"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W8-068",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/holder_inventory.py",
+  "current_lines": "43-55",
+  "evidence_snippet": "holders: list[AuthorityHolder] = Field(default_factory=list, max_length=10000)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-014"
+  ],
+  "notes": "Host data; not a narrowing parameter."
+ },
+ {
+  "id": "W8-072",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/operation_identity.py",
+  "current_lines": "45-51",
+  "evidence_snippet": "resolver_id/resolver_version: str = Field(min_length=1, max_length=256)",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-015"
+  ],
+  "notes": "Labels only."
+ },
+ {
+  "id": "W8-091",
+  "historical_class": "UNRESOLVED",
+  "current_status": "MOVED",
+  "current_file": "src/agent_control_plane/bounded.py",
+  "current_lines": "2570-2574 (also 290, 1797; local_authority_effect.py 541)",
+  "evidence_snippet": "effective_max_effects = min(requirement_permission, grant_permission, action effect_limits)",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Origin of the effect cap: minimum of three declared integers, none a code literal: (1) requirement permission max_effects, (2) grant permission max_effects (both from the authority context, exact int required), (3) manifest action effect_limits.max_effects (absent limits fall back to proposal.effects but missing_effect_limits already refuses effects>1/amount>0; absent max_effects inside limits = 0). Stored on the binding, passed to destination.apply, enforced cumulatively by the destination. Whether Registry should narrow effect caps is not decided (Registry F4/F5 docstrings: no amount slot).",
+   "evidence": "bounded.py 2570-2574, 2675-2682, 1797, 1175-1187",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [
+   "G0-C-033"
+  ],
+  "notes": "Row id in S02 pointed at LAE:443; current local_authority_effect.py only copies current.effective_max_effects (line 541)."
+ },
+ {
+  "id": "W9-001",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/cli_run.py",
+  "current_lines": "510",
+  "evidence_snippet": "observation_policy=ObservationPolicy(max_age_seconds=300, clock_tolerance_seconds=5),",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-002"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W9-002",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/models.py",
+  "current_lines": "420-451 (cli.py 76-80, 107-114)",
+  "evidence_snippet": "redact_payloads: bool = Field(default=True ...)",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-038",
+   "G0-C-039"
+  ],
+  "notes": "Split proposal: confidentiality core vs presentation flags."
+ },
+ {
+  "id": "W9-003",
+  "historical_class": "CONFIGURABLE-CANDIDATE",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/cli_run.py",
+  "current_lines": "61, 169-170, 238-245",
+  "evidence_snippet": "MAX_INPUT_BYTES = 1024 * 1024",
+  "still_configurable": "YES",
+  "proposed_resolution_for_unresolved": null,
+  "candidate_rule_ids": [
+   "G0-C-040"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W9-007",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/records.py",
+  "current_lines": "66-67, 190-228",
+  "evidence_snippet": "self._gate = gate or PolicyGate()",
+  "still_configurable": "UNRESOLVED",
+  "proposed_resolution_for_unresolved": {
+   "text": "Evaluator selection is code injection by the Python caller, and include_trace only toggles trace retention: both branches call the same rules and record the same decision. Not data-driven policy. Proposed RETAIN-IN-CODE.",
+   "evidence": "records.py 67, 213-226",
+   "confidence": "MEDIUM"
+  },
+  "candidate_rule_ids": [
+   "G0-C-030"
+  ],
+  "notes": ""
+ },
+ {
+  "id": "W9-017",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/microsoft_agt.py",
+  "current_lines": "288-302",
+  "evidence_snippet": "if agt.warnings: return self._finish(result=\"hold\", ... reasons=(\"agt_warning_requires_review\",))",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Protective fail-closed rule stated in the source: 'Warnings are restrictions in this bounded profile. They never become implicit permission merely because the underlying AGT decision allows.' Relaxing it would widen. Proposed IMMUTABLE_CONTROL.",
+   "evidence": "microsoft_agt.py 288-302",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [],
+  "notes": ""
+ },
+ {
+  "id": "W9-027",
+  "historical_class": "UNRESOLVED",
+  "current_status": "UNCHANGED",
+  "current_file": "src/agent_control_plane/merge.py / dedupe.py",
+  "current_lines": "merge.py 129-151; dedupe.py 111-135, 144-155",
+  "evidence_snippet": "Applied: acknowledged or partial, or closeout observed applied/partial. Unresolved: attempted or unknown with no closeout",
+  "still_configurable": "NO",
+  "proposed_resolution_for_unresolved": {
+   "text": "Recovery classification that errs toward blocking a new key: an attempted/unknown attempt without a closeout is treated as possibly applied (unresolved) so no new effect id is minted; only failed attempts are treated as not applied. Narrowing such a definition would risk double effects. Proposed IMMUTABLE_CONTROL.",
+   "evidence": "merge.py 132-133 docstring; dedupe.py 112-114",
+   "confidence": "HIGH"
+  },
+  "candidate_rule_ids": [],
+  "notes": ""
+ }
+]

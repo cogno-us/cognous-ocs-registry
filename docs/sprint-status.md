@@ -23,6 +23,22 @@ Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md
 
 ---
 
+## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-27): G0 INVENTORY RECONCILIATION SUBMITTED FOR ARCHITECT REVIEW
+
+Separate from the V01–V09 status above, which is unchanged. Non-authorizing, builder-side, read-only inventory. Approved plan: [plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md](plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md) (merged in PR [#49](https://github.com/cogno-us/cognous-ocs-registry/pull/49), merge `317eb76acb2847c534c3ce7c2180b89b4aef987d`). Package: [family-migration/g0/g0-exit-report.md](family-migration/g0/g0-exit-report.md).
+
+| Item | State |
+|---|---|
+| G0 inventory (620 S02 rows reconciled; 116 current candidate records in 97 rule groups; 32 unresolved rows tracked) | submitted in the G0 PR (this change); open for Architect review; not merged by the builder |
+| Builder recommendation | G0 PASS (inventory complete) with 24 named Architect decisions; G1 blocked on AD-01 and AD-03 |
+| Waves M1–M13 | none started; no migration implemented; no component source changed |
+
+G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+
+**Next authorized action:** none for the builder beyond leaving the G0 PR open for Architect review.
+
+---
+
 ## HISTORICAL (as prepared, pre-merge, 2026-10-27; superseded by the post-merge status above): V01–V08 merged; V09 FREEZE-CANDIDATE PREPARED, NOT ACCEPTED
 
 Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md) (Constitution pin `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`). Candidate package: [v09/README.md](v09/README.md) (manifest, inventory, evidence index, gate matrix, limitation and exclusion registers, readiness report, independent-review handover). **Release, publication and production: HOLD. This is not a release; no tag or version exists.**

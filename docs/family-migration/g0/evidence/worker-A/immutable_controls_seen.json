@@ -1,0 +1,158 @@
+[
+ {
+  "file": "registry_successor/v2_token.py",
+  "symbol": "TOKEN_TABLE_SHA256 / _load_token_table",
+  "lines": "13; 18-33",
+  "why_immutable": "looks like a tunable Unicode rule; actually sha256-pinned frozen predicate, fail-closed RuntimeError"
+ },
+ {
+  "file": "registry_successor/common.py",
+  "symbol": "MAX_ENTRIES/MAX_ENTRY_CHARS",
+  "lines": "26-27",
+  "why_immutable": "looks like list limits; part of record admissibility and golden vectors"
+ },
+ {
+  "file": "registry_successor/common.py",
+  "symbol": "MAX_DOCUMENT_BYTES, MAX_DEPTH",
+  "lines": "24-25",
+  "why_immutable": "loader DoS floor"
+ },
+ {
+  "file": "registry_successor/v2_policy_identity.py",
+  "symbol": "MAX_NODES, MAX_SNAPSHOT_NODES, _MAX_EXACT_DIGITS",
+  "lines": "107-110",
+  "why_immutable": "serializer/DoS floors"
+ },
+ {
+  "file": "registry_successor/v2_policy_identity.py",
+  "symbol": "INTEGER_RANGES, AGE_RANGES",
+  "lines": "113-122",
+  "why_immutable": "per-field integer domains; per ruling OQ-1 independent literals; serialization domains"
+ },
+ {
+  "file": "registry_successor/v2_age_bounds.py",
+  "symbol": "AGE_MIN, AGE_MAX, CALLER_MIN",
+  "lines": "56-58",
+  "why_immutable": "age domain bounds; drift-tested against DR-CP-AGE-1"
+ },
+ {
+  "file": "registry_successor/v2_age_bounds.py",
+  "symbol": "MAX_CLASSES",
+  "lines": "59",
+  "why_immutable": "= MAX_ENTRIES; class-map cap"
+ },
+ {
+  "file": "registry_successor/families.py",
+  "symbol": "FAMILIES, FAMILIES_V2",
+  "lines": "64; 99",
+  "why_immutable": "read-only dispatch tables"
+ },
+ {
+  "file": "registry_successor/families.py",
+  "symbol": "CONTRACT_V1, CONTRACT_V2, table_for_contract_version",
+  "lines": "127-149",
+  "why_immutable": "version separation, no fallback"
+ },
+ {
+  "file": "registry_successor/v2_policy_identity.py",
+  "symbol": "IDENTITY_FAMILIES",
+  "lines": "1143-1148",
+  "why_immutable": "derived family_version, never input"
+ },
+ {
+  "file": "registry_successor/v2_policy_identity.py",
+  "symbol": "REGISTERED_CONTRACT_VERSIONS",
+  "lines": "1149",
+  "why_immutable": "single-entry closed set"
+ },
+ {
+  "file": "registry_successor/v2_policy_identity.py",
+  "symbol": "BINDING_PROFILE, EFFECTIVE_PROFILE, SCOPE_KEY_PROFILE, prefixes",
+  "lines": "94-102",
+  "why_immutable": "digest domain separation"
+ },
+ {
+  "file": "registry_successor/v2_policy_identity.py",
+  "symbol": "_IDENT, _DIGEST regexes",
+  "lines": "132-133",
+  "why_immutable": "identifier/digest grammar for canonical binding"
+ },
+ {
+  "file": "registry_successor/common.py",
+  "symbol": "EVALUATOR_ID, EVALUATOR_BINDING",
+  "lines": "19-20",
+  "why_immutable": "protected evaluator binding"
+ },
+ {
+  "file": "registry_successor/common.py",
+  "symbol": "CODES",
+  "lines": "31-86",
+  "why_immutable": "closed refusal vocabulary"
+ },
+ {
+  "file": "registry_successor/v2_codes.py",
+  "symbol": "V2_ADDED_CODES, REV2_ADDED_CODES, CODES_V2, CODES_V2_REV2",
+  "lines": "26-39",
+  "why_immutable": "closed reason vocabulary"
+ },
+ {
+  "file": "registry_successor/v2_policy_identity.py",
+  "symbol": "MappingRow table (MP-*)",
+  "lines": "1368-1420",
+  "why_immutable": "code->verdict/decision_kind/retry mapping"
+ },
+ {
+  "file": "registry_successor/selection.py",
+  "symbol": "MAX_SIGNATURES, MAX_SIGNATURE_CHARS, SIGNING_DOMAIN",
+  "lines": "25-27",
+  "why_immutable": "authentication envelope"
+ },
+ {
+  "file": "registry_successor/v2_selection.py",
+  "symbol": "SIGNING_DOMAIN_V2, DISPOSITIONS",
+  "lines": "22-23",
+  "why_immutable": "signature domain separation"
+ },
+ {
+  "file": "registry_successor/verify.py",
+  "symbol": "SUPPORTED_ALG, LAYERS, LAYERS_V2, MAX_SNAPSHOT_VERSION, MAX_JSON_NODES",
+  "lines": "24-30; 137; 153",
+  "why_immutable": "verification layer order and bounds"
+ },
+ {
+  "file": "registry_successor/record.py",
+  "symbol": "TOP_FIELDS ... PROVENANCE_FIELDS; non_authorizing must be True",
+  "lines": "15-22; 62",
+  "why_immutable": "record shape; non_authorizing invariant"
+ },
+ {
+  "file": "registry_successor/key_admission.py",
+  "symbol": "SMALL_ORDER_Y, P",
+  "lines": "42-50",
+  "why_immutable": "Ed25519 admission blacklist"
+ },
+ {
+  "file": "registry_adapters/ed25519_verifier.py",
+  "symbol": "_KAT_* constants",
+  "lines": "29-37",
+  "why_immutable": "known-answer startup self-test"
+ },
+ {
+  "file": "registry_successor/canonical_b64.py",
+  "symbol": "canonical base64 decode",
+  "lines": "1-29",
+  "why_immutable": "Amendment 2 spelling rule"
+ },
+ {
+  "file": "registry_conformance/highwater.py",
+  "symbol": "VERDICTS, KINDS, POLICY_STATES, STATE_SCHEMA",
+  "lines": "32-75",
+  "why_immutable": "replay/rollback conformance model"
+ },
+ {
+  "file": "registry_consumer/consumer.py",
+  "symbol": "MAX_FILE_BYTES, MAX_SOURCE_BYTES",
+  "lines": "43-44",
+  "why_immutable": "frozen s04 read bounds"
+ }
+]

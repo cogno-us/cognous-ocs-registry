@@ -1,0 +1,152 @@
+[
+ {
+  "file": "engine/safe_executor.py",
+  "symbol": "MAX_EXACT_INTEGER_AMOUNT = 2**53",
+  "lines": "262-264",
+  "why_immutable": "binary64 exactness floor for amounts; not a tunable limit"
+ },
+ {
+  "file": "engine/safe_executor.py",
+  "symbol": "_strict_finite_number / _strict_positive_int",
+  "lines": "252-276",
+  "why_immutable": "exact builtin types, finite, non-negative; subclass-hook defence"
+ },
+ {
+  "file": "engine/safe_executor.py",
+  "symbol": "validate_snapshot effects == 1 / exactly_one",
+  "lines": "316",
+  "why_immutable": "one-effect invariant, not a max"
+ },
+ {
+  "file": "engine/safe_executor.py",
+  "symbol": "_target_is_well_formed",
+  "lines": "333-340",
+  "why_immutable": "refuses Cc/Cf/Cs/Zl/Zp and dot-segments in every mode"
+ },
+ {
+  "file": "engine/safe_executor.py",
+  "symbol": "LocalExecutionPolicy.__post_init__",
+  "lines": "374-394",
+  "why_immutable": "frozenset/non-empty/no-empty-prefix fail-closed construction; closed target_match enum"
+ },
+ {
+  "file": "engine/safe_executor.py",
+  "symbol": "sqlite3.connect timeout=10",
+  "lines": "499",
+  "why_immutable": "busy timeout liveness (also recovery_resolution:127, revocation_closeout:106, selection store 737)"
+ },
+ {
+  "file": "engine/safe_executor.py",
+  "symbol": "attempts legacy migration",
+  "lines": "521-562",
+  "why_immutable": "schema migration"
+ },
+ {
+  "file": "engine/recovery_resolution.py",
+  "symbol": "0 <= age lower bound",
+  "lines": "268",
+  "why_immutable": "no future-dated observations; only the 86400 width is a candidate"
+ },
+ {
+  "file": "engine/recovery_resolution.py",
+  "symbol": "POLICY = \"synthetic-structural/2\"",
+  "lines": "19",
+  "why_immutable": "policy identity label echoed in receipts"
+ },
+ {
+  "file": "engine/dedupe_destination.py",
+  "symbol": "IN_PROGRESS / _operation_guard rollback",
+  "lines": "28-93",
+  "why_immutable": "dedupe/in-progress semantics inside effect transaction"
+ },
+ {
+  "file": "engine/registry_selection_authority.py",
+  "symbol": "REASONS_ALLOWLIST (label+sha256)",
+  "lines": "63-65",
+  "why_immutable": "pinned reasons registry hash"
+ },
+ {
+  "file": "engine/registry_selection_authority.py",
+  "symbol": "INT_MAX, SEQ_MAX, ZERO_HASH",
+  "lines": "66-68",
+  "why_immutable": "counter saturation/overflow bounds"
+ },
+ {
+  "file": "engine/registry_selection_authority.py",
+  "symbol": "_IDENTIFIER regex {0,127}",
+  "lines": "81",
+  "why_immutable": "identifier token rule (128 chars)"
+ },
+ {
+  "file": "engine/registry_selection_authority.py",
+  "symbol": "_STALE_CODES, _HOLD_CODES, ENTRY_TYPES, CAUSES, STATES",
+  "lines": "77-85",
+  "why_immutable": "closed vocabularies; REFUSE vs HOLD classification"
+ },
+ {
+  "file": "engine/registry_selection_authority.py",
+  "symbol": "HostAnchorFile.LOCK_TIMEOUT_SECONDS",
+  "lines": "571",
+  "why_immutable": "10.0 s anchor lock wait; liveness"
+ },
+ {
+  "file": "engine/authorization_pin.py",
+  "symbol": "_MAX_ANCHOR_BYTES, _SQLITE_TIMEOUT_SECONDS",
+  "lines": "41-42",
+  "why_immutable": "1 MiB anchor cap, 2.0 s sqlite wait"
+ },
+ {
+  "file": "engine/authorization_pin.py",
+  "symbol": "backoff delay 0.002..0.05",
+  "lines": "256-265",
+  "why_immutable": "fence retry pacing"
+ },
+ {
+  "file": "engine/authorization_pin_format.py",
+  "symbol": "_MAX_STR=512, PIN_PROFILE, domains, STATUSES, CAUSE_* ",
+  "lines": "20-69",
+  "why_immutable": "pin format and closed cause vocabulary"
+ },
+ {
+  "file": "host/authorization_pin/installer.py",
+  "symbol": "file modes 0o644/0o755, STAGES, OUTCOMES",
+  "lines": "36-81,128-221",
+  "why_immutable": "custody/mode self-check, crash-recovery stages"
+ },
+ {
+  "file": "engine/local_authority_effect.py",
+  "symbol": "SUCCESSOR_PROFILE_NAME; profile check",
+  "lines": "~(new) model.profile not in (PROFILE, successor)",
+  "why_immutable": "successor claim never downgraded"
+ },
+ {
+  "file": "engine/local_authority_effect.py",
+  "symbol": "APPROVAL_REVOCATION_TABLE; set_approval_status terminality",
+  "lines": "new",
+  "why_immutable": "revoked terminal per approval_ref"
+ },
+ {
+  "file": "engine/local_authority_effect.py",
+  "symbol": "effect_budgets_v1 exhaustion",
+  "lines": "999-1010",
+  "why_immutable": "budget ledger enforcement"
+ },
+ {
+  "file": "engine/openshell_environment.py",
+  "symbol": "POLICY dict, COMMAND tuple, env PATH/HOME",
+  "lines": "10-30,192-195",
+  "why_immutable": "sandbox profile, executable substitution refusal"
+ },
+ {
+  "file": "engine/control_plane_adapter.py",
+  "symbol": "definitive rejection set",
+  "lines": "160-168",
+  "why_immutable": "closed refusal vocabulary"
+ },
+ {
+  "file": "engine/operation_admission.py",
+  "symbol": "required_observations",
+  "lines": "152",
+  "why_immutable": "qualification floor"
+ }
+]
