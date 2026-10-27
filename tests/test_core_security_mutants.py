@@ -470,13 +470,14 @@ def _decision_probe(mod):
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs", "s3"],
               "allowed_units": ["unit-a", "unit-b", "unit-c"]}
     rec = r.make_record()
+    rec2 = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only; `rec` stays for the frozen v1 entry
     ctx = c.ExpectedContext("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
     grant = verify_mod.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-test")
     trust = verify_mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                                      (verify_mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", b"public-key-test-1", (grant,)),))
     for part in ("required", "optional"):
         sel1 = r.dumps(r.make_envelope(r.make_statement(rec, participation=part), signed=True))
-        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), signed=True))
+        sel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec2, participation=part), signed=True))
         legacy = mod.verify_and_decide(part, caller, r.dumps(rec), sel1, ctx, trust, r.FakeVerifier(), r.NOW)
         assert legacy.code is None and not hasattr(legacy, "detail_code")
         # the legacy entry forwards its contract_version and key_admission: an r08-v1 selection labelled r08-v2 is the wrong contract (S01)
@@ -485,17 +486,17 @@ def _decision_probe(mod):
         assert mod.verify_and_decide(part, caller, r.dumps(rec), sel1, ctx, trust, r.FakeVerifier(), r.NOW,
                                      key_admission=lambda a, k: False).code == "trust_snapshot_invalid"
         for policy in (None, lambda a, k: True):
-            d = mod.verify_and_decide_v2(part, caller, r.dumps(rec), sel, ctx, trust, r.FakeVerifier(), r.NOW, key_admission=policy)
+            d = mod.verify_and_decide_v2(part, caller, r.dumps(rec2), sel, ctx, trust, r.FakeVerifier(), r.NOW, key_admission=policy)
             assert d.code == "trust_snapshot_invalid" and d.detail_code == "key_admission_invalid" and d.detail_cause == "key_length"
             assert d.kind == ("required_policy_unavailable" if part == "required" else "overlay_not_applied")
             assert d.operationally_authorized is False
         good = bytes.fromhex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")
         gtrust = verify_mod.TrustSnapshot("trust-snap-test-1", 1, "2026-12-31T00:00:00Z",
                                           (verify_mod.IssuerEntry("key-test-1", "issuer-test-1", "ed25519", good, (grant,)),))
-        gsel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec, participation=part), public_key=good, signed=True))
-        ok = mod.verify_and_decide_v2(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW)
+        gsel = r.dumps(r.make_envelope_v2(r.make_statement_v2(rec2, participation=part), public_key=good, signed=True))
+        ok = mod.verify_and_decide_v2(part, caller, r.dumps(rec2), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW)
         assert ok.code is None
-        no = mod.verify_and_decide_v2(part, caller, r.dumps(rec), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW,
+        no = mod.verify_and_decide_v2(part, caller, r.dumps(rec2), gsel, ctx, gtrust, r.FakeVerifier(), r.NOW,
                                       key_admission=lambda a, k: False)
         assert no.code == "trust_snapshot_invalid" and no.detail_cause == "policy_refused"
 

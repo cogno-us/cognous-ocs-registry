@@ -8,6 +8,7 @@ Participation is chosen per operation. Kinds:
                                  the mapping to component failure classes is open decision LD-02.
 `operationally_authorized` is always False: technical verification is not operational authorization.
 """
+import copy
 from dataclasses import dataclass, fields
 from typing import Any, Optional
 
@@ -76,7 +77,8 @@ def refusal_rev2(participation: Any, code: str, detail: str = "") -> PolicyDecis
     return PolicyDecision("required_policy_unavailable", None, False, (), code, detail, False)
 
 
-def _decide_verified(participation: Any, caller: Any, record: Any, report: Any, codes: Any = c.CODES) -> PolicyDecision:
+def _decide_verified(participation: Any, caller: Any, record: Any, report: Any, codes: Any = c.CODES,
+                     contract: Any = families.CONTRACT_V1) -> PolicyDecision:
     """INTERNAL. Only verify_and_decide may call this, with objects it produced itself. Not a public interface:
     a caller-supplied report is never authority."""
     try:
@@ -112,7 +114,7 @@ def _decide_verified(participation: Any, caller: Any, record: Any, report: Any, 
         if getattr(report, "bound_record_digest", None) != recomputed:
             return _refusal(participation, caller, "record_digest_mismatch",
                             "the record is not the one the verified selection pinned")
-        result = families.compose(caller, record)
+        result = families.compose_for(contract, caller, record)  # v1: `families.compose`, unchanged; v2: `families.compose_v2`
         if not result.ok:
             return _refusal(participation, caller, result.code, result.detail)
         kind = "applied_deny_all" if result.deny_all else "applied"
@@ -135,6 +137,40 @@ def verify_and_decide(participation: Any, caller: Any, record_text: Any, selecti
     return _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission, contract_version, False)
 
 
+def validate_record_text_v2(text: Any) -> "record_mod.RecordResult":
+    """The `r08-v2` record validation entry point (V01a). The same checks, order and codes as `record.validate_record_text` (it reuses that module's
+    shape, value and supersession checks and its refusal constructor), but the record must carry exactly `contract_version` `r08-v2` and its family is
+    looked up in the `r08-v2` table (`families.FAMILIES_V2`: the v1 families plus `f1ab`, `f4`, `f5`). An `r08-v1` document refuses `contract_unsupported`
+    here; an `r08-v2` document still refuses at the unchanged v1 validator. No fallback or implicit upgrade. Pure; never raises.
+    (Lives here because `record.py` is frozen by the EXT-S1-5 boundary guard; see tests/test_ext_s1_5_identity_module.py.)"""
+    try:
+        loaded = c.load_document(text)
+        if not loaded.ok:
+            return record_mod._refuse(loaded.code, loaded.detail)
+        body = loaded.value
+        if not isinstance(body, dict):
+            return record_mod._refuse("field_type_invalid", "document is not an object")
+        if body.get("contract_version") != families.CONTRACT_V2:
+            return record_mod._refuse("contract_unsupported")
+        if body.get("kind") != "record":
+            return record_mod._refuse("kind_unsupported")
+        spec = families.lookup_v2(body.get("family"))
+        if spec is None:
+            return record_mod._refuse("family_unsupported")
+        code = record_mod._shape(body, spec) or record_mod._values(body, spec)
+        if code:
+            return record_mod._refuse(code)
+        if not record_mod._supersession_ok(body):
+            return record_mod._refuse("supersession_invalid")
+        if body["payload_digest"] != c.digest(body["payload"]):
+            return record_mod._refuse("digest_mismatch", "payload_digest")
+        if body["record_digest"] != c.digest({k: v for k, v in body.items() if k != "record_digest"}):
+            return record_mod._refuse("digest_mismatch", "record_digest")
+        return record_mod.RecordResult(True, None, "", copy.deepcopy(body), body["record_digest"])
+    except Exception:  # defensive: an unexpected shape error is a refusal, never an acceptance
+        return record_mod._refuse("field_type_invalid", "unexpected structure")
+
+
 def _decide_text(participation, caller, record_text, selection_text, context, trust, verifier, now, key_admission, contract_version, v2):
     """The one implementation behind `verify_and_decide` (r08-v1 parser, closed `c.CODES`) and `verify_and_decide_v2` (r08-v2 parser,
     closed `CODES_V2`, `verify_selection_v2`)."""
@@ -147,12 +183,15 @@ def _decide_text(participation, caller, record_text, selection_text, context, tr
         sel = (v2_selection_mod.parse_selection_envelope_v2 if v2 else selection_mod.parse_selection_envelope)(selection_text)
         if not sel.ok:
             return _refusal(participation, caller, sel.code if sel.code in codes else "selection_missing", sel.detail, codes=codes)
-        rec = record_mod.validate_record_text(record_text)
+        # Strict version separation (contract section 1): the v2 entry validates `r08-v2` records only, against `FAMILIES_V2`; the v1 entry is
+        # the frozen `validate_record_text` against `FAMILIES`. There is no fallback, version guessing or retry between the two.
+        rec = (validate_record_text_v2 if v2 else record_mod.validate_record_text)(record_text)
+        record_contract = families.CONTRACT_V2 if v2 else families.CONTRACT_V1
         if v2:
             report = verify_mod.verify_selection_v2(sel, context, trust, verifier, now, rec, key_admission)
         else:
             report = verify_mod.verify_selection(sel, context, trust, verifier, now, rec, key_admission, contract_version)
-        return _decide_verified(participation, caller, rec, report, codes)
+        return _decide_verified(participation, caller, rec, report, codes, record_contract)
     except Exception:  # defensive: never an acceptance on unexpected input
         return _refusal(participation if participation in c.PARTICIPATION else "required", caller, "selection_missing", "unexpected input")
 

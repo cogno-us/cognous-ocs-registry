@@ -168,10 +168,16 @@ def test_wd02_withdrawal_is_never_translated_into_success_by_decide():
             assert d.effective == {k: tuple(vv) for k, vv in caller.items()}
 
 
+def _pin(statement, record):
+    """V01a: point a statement's record pin at `record` (used where a test now feeds an r08-v2 record to the v2 entry)."""
+    statement["record"] = {"record_id": record["record_id"], "record_version": record["record_version"], "record_digest": record["record_digest"]}
+    return statement
+
+
 def test_wd03_valid_select_decides_applied_at_the_v2_entry():
-    rec = r.make_record()
+    rec = r.make_record_v2()  # V01a: the v2 entry takes r08-v2 records only
     caller = {"allowed_actions": ["write-file", "read-file"], "allowed_adapters": ["local-fs"], "allowed_units": ["unit-a", "unit-c"]}
-    d = decision.verify_and_decide_v2("required", caller, r.dumps(rec), r.dumps(s.envelope(s.select_statement())), CTX, s.trust(), FAKE, NOW)
+    d = decision.verify_and_decide_v2("required", caller, r.dumps(rec), r.dumps(s.envelope(_pin(s.select_statement(), rec))), CTX, s.trust(), FAKE, NOW)
     assert (d.kind, d.code) == ("applied", None)
     assert d.effective == {"allowed_actions": ("write-file",), "allowed_adapters": ("local-fs",), "allowed_units": ("unit-a",)}
 
@@ -344,8 +350,9 @@ def test_sf08_floor_failure_blocks_authentication_and_decisions():
     env = s.envelope(s.select_statement())
     rep = verify2(env, trust=s.trust(version=1), min_trust_snapshot_version=2)
     assert rep.authenticated is False and rep.layers["authenticity"] == "not_evaluated"
+    env2 = s.envelope(_pin(s.select_statement(), r.make_record_v2()))  # V01a: the v2 decision entry takes an r08-v2 record
     d = decision.verify_and_decide_v2("required", {"allowed_actions": [], "allowed_adapters": [], "allowed_units": []},
-                                      r.dumps(r.make_record()), r.dumps(env), CTX, s.trust(version=1), FAKE, NOW)
+                                      r.dumps(r.make_record_v2()), r.dumps(env2), CTX, s.trust(version=1), FAKE, NOW)
     # Documented S01 limitation: verify_and_decide_v2 exposes NO floor input, so a stale snapshot is still accepted there. The floor is
     # enforced at verify_selection_v2; a refused floor report can never become an application:
     assert d.kind == "applied_deny_all"
@@ -417,10 +424,12 @@ def test_av06_participation_missing_unsupported_invalid():
     no_part = s.select_statement()
     del no_part["participation"]
     assert parse2(s.envelope(no_part)).code == "field_missing"
-    rec_text, caller = r.dumps(r.make_record()), {"allowed_actions": [], "allowed_adapters": [], "allowed_units": []}
-    d = decision.verify_and_decide_v2("optional", caller, rec_text, r.dumps(good_env()), CTX, s.trust(), FAKE, NOW)   # signed required, operation optional
+    rec_v2 = r.make_record_v2()  # V01a: the v2 decision entry takes r08-v2 records only
+    rec_text, caller = r.dumps(rec_v2), {"allowed_actions": [], "allowed_adapters": [], "allowed_units": []}
+    env_v2 = r.dumps(s.envelope(_pin(s.select_statement(), rec_v2)))
+    d = decision.verify_and_decide_v2("optional", caller, rec_text, env_v2, CTX, s.trust(), FAKE, NOW)   # signed required, operation optional
     assert (d.kind, d.code) == ("overlay_not_applied", "participation_mismatch")
-    d = decision.verify_and_decide_v2("bogus", caller, rec_text, r.dumps(good_env()), CTX, s.trust(), FAKE, NOW)
+    d = decision.verify_and_decide_v2("bogus", caller, rec_text, env_v2, CTX, s.trust(), FAKE, NOW)
     assert (d.kind, d.code) == ("required_policy_unavailable", "participation_mismatch")
 
 
