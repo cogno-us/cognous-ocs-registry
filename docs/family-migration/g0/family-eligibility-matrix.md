@@ -1,6 +1,8 @@
 # G0 family eligibility matrix
 
-Proposals only; none is ratified, none is implemented. Rows are source-backed by `current-candidate-ledger.json` (record ids `A-001` abbreviate `G0-A-001`). G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+Proposals only; none is ratified, none is implemented. Rows are source-backed by `current-candidate-ledger.json` (record ids `A-001` abbreviate `G0-A-001`). G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+
+Architect dispositions (2026-10-27): AD-01 ACCEPTED (F1b/M1: negative-oracle closure); AD-02 and AD-03 DIRECTION ACCEPTED (see `unresolved-decisions.md`). These do not ratify any other proposed disposition in this matrix.
 
 Disposition vocabulary: MIGRATED / ALREADY-GOVERNED / ELIGIBLE-NOT-MIGRATED / RETAIN-IN-CODE / OUT-OF-SCOPE / UNRESOLVED / BLOCKED. Nothing is MIGRATED under this program: no migration has been implemented.
 

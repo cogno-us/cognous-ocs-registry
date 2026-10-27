@@ -1,6 +1,6 @@
 # G0 unresolved items and Architect decisions
 
-G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
 
 ## 1. The 32 historical UNRESOLVED rows (individually tracked)
 
@@ -43,38 +43,40 @@ All 32 keep their historical classification **UNRESOLVED** in `historical-crossw
 
 Decisive evidence summary: W6-042 (a missing `ObservationPolicy` always produces a hold) is an immutable control by source; W4-014/W4-015 are inert (no consumer); W8-091 stays open on source (see AD-22). On the workers' own assessment 16 of the 32 rows remain `still_configurable = UNRESOLVED`: W1-029, W1-056, W1-058, W1-073, W2-025, W2-036, W2-038, W2-067, W2-077, W2-082, W3-024, W3-063, W5-012, W5-023, W8-091, W9-007; the other 16 are assessed NO (not a configurable rule) but are still not reclassified.
 
-## 2. Architect decisions required
+## 2. Architect decisions
 
-| Id | Decision | Source |
-|---|---|---|
-| AD-01 | Reclassify M1: F1b is ALREADY-GOVERNED in f1ab; confirm M1 becomes negative-oracle closure. | A finding 2 |
-| AD-02 | Reconcile Plan v1.0 'F4/F5 not covered' with the registered `f4`/`f5` families; map M11/M12 to the remainder. | A finding 4 |
-| AD-03 | Contract path for every new Registry-carried field: new family id under r08-v2 (hand edits to `FAMILIES_V2` and `IDENTITY_FAMILIES`) or r08-v3. | A decision 5 |
-| AD-04 | Add a single-source test tying `FAMILIES_V2` to `IDENTITY_FAMILIES` (no test asserts their key sets are equal today). | A decision 3 |
-| AD-05 | Ratify or replace the constant `MAX_SNAPSHOT_NODES = 1048576`, labelled PROPOSED in source. | A decision 4 |
-| AD-06 | For institutions and authority domains: equality ('carried unchanged') or subset (what Runtime enforces)? | A/B |
-| AD-07 | May the Registry ever carry `max_amount`, `max_effects`, `allowed_target_prefixes`, `target_match`, given Amendment 3 records them as caller-owned residuals? | A/B/C |
-| AD-08 | Confirm F3 limits stay floors (at most host-owned lowering). | B |
-| AD-09 | Recovery window 86400 s and OpenShell timeout are the only low-risk resource candidates; confirm eligibility. | B |
-| AD-10 | Confirm F6 (Runtime permissions) and F7 (Runtime TTL) as OUT-OF-SCOPE. | B |
-| AD-11 | Mapping of the Registry F4 status scalar onto conflict/policy status when a runtime-authority profile exists. | C surprise 5 |
-| AD-12 | Retire or guard inert `policy_config.default_action`, `authority_records_from_policy_config` and demo helpers. | C |
-| AD-13 | Is `DedupeProfile` policy or a provider fact? | C |
-| AD-14 | Relationship of the hub's `ocs-registry-record/0` format to Registry r08-v2. | D |
-| AD-15 | Constitution checkout HEAD `a4dd1111` inverts tier numbering relative to pin `1c2e920f`; confirm the pin remains authoritative. | D |
-| AD-16 | Replay-bundle and evidence-pack importers accept only Control Plane `7a4bcd40` / Runtime `c5e97e87` / manifest `fa170815`; current mains are refused. Wave G3 changes will hit this. | D |
-| AD-17 | The verifier vendors reasons 0.1/0.2 only; the Control Plane ships 0.3 (eight more codes). | D |
-| AD-18 | Tenant-id bound 128 appears in 8 places across 3 repositories with no shared source. | C/D |
-| AD-19 | Are hub, exchange, replay-bundle and action-manifest reference values in scope for the migration program? | D |
-| AD-20 | Consequence-tier delay ceilings (T0 4h … T4 30d) are proposed and unenforced; owner confirmation needed (BLOCKED). | D |
-| AD-21 | Claim-scanner term tables: in scope of the Registry? | D |
-| AD-22 | Origin of the effect cap (W8-091): minimum of three declared integers; who owns each? | C |
-| AD-23 | F10 tier: Tier 3 supportable (worker) vs Tier 2 minimum (S02 section 3). | C |
-| AD-24 | Several test names cited by S02 are NOT FOUND in current Runtime tests; confirm the cited equivalents. | B |
+Recorded 2026-10-27 from the Architect's review of PR #50 at `ad7c7896ee4f9af3cced6e91ce4cc33b6fe93b27`. The original questions and evidence are preserved unchanged; the right-hand column is the only addition. AD-01 is ACCEPTED; AD-02 and AD-03 are DIRECTION ACCEPTED; the other 21 decisions are OPEN. No worker classification, proposed resolution or reclassification is ratified by these dispositions.
+
+| Id | Decision (original question) | Source | Architect disposition |
+|---|---|---|---|
+| AD-01 | Reclassify M1: F1b is ALREADY-GOVERNED in f1ab; confirm M1 becomes negative-oracle closure. | A finding 2 | **ACCEPTED** (2026-10-27). F1b is already governed through Registry r08-v2 `f1ab`; proposed M1 is reclassified as negative-oracle closure; no additional F1b implementation is required. |
+| AD-02 | Reconcile Plan v1.0 'F4/F5 not covered' with the registered `f4`/`f5` families; map M11/M12 to the remainder. | A finding 4 | **DIRECTION ACCEPTED; detailed scope pending.** F4 and F5 are partially Registry-governed; future increments exclude already-governed fields and identify only the remaining eligible configuration; exact contract changes remain subject to G1 review. |
+| AD-03 | Contract path for every new Registry-carried field: new family id under r08-v2 (hand edits to `FAMILIES_V2` and `IDENTITY_FAMILIES`) or r08-v3. | A decision 5 | **DIRECTION ACCEPTED; successor contract pending.** Prefer a versioned successor contract over silently modifying frozen r08-v2 schemas; the specific family/version design is deferred to G1; this does not authorize contract implementation. |
+| AD-04 | Add a single-source test tying `FAMILIES_V2` to `IDENTITY_FAMILIES` (no test asserts their key sets are equal today). | A decision 3 | OPEN |
+| AD-05 | Ratify or replace the constant `MAX_SNAPSHOT_NODES = 1048576`, labelled PROPOSED in source. | A decision 4 | OPEN |
+| AD-06 | For institutions and authority domains: equality ('carried unchanged') or subset (what Runtime enforces)? | A/B | OPEN |
+| AD-07 | May the Registry ever carry `max_amount`, `max_effects`, `allowed_target_prefixes`, `target_match`, given Amendment 3 records them as caller-owned residuals? | A/B/C | OPEN |
+| AD-08 | Confirm F3 limits stay floors (at most host-owned lowering). | B | OPEN |
+| AD-09 | Recovery window 86400 s and OpenShell timeout are the only low-risk resource candidates; confirm eligibility. | B | OPEN |
+| AD-10 | Confirm F6 (Runtime permissions) and F7 (Runtime TTL) as OUT-OF-SCOPE. | B | OPEN |
+| AD-11 | Mapping of the Registry F4 status scalar onto conflict/policy status when a runtime-authority profile exists. | C surprise 5 | OPEN |
+| AD-12 | Retire or guard inert `policy_config.default_action`, `authority_records_from_policy_config` and demo helpers. | C | OPEN |
+| AD-13 | Is `DedupeProfile` policy or a provider fact? | C | OPEN |
+| AD-14 | Relationship of the hub's `ocs-registry-record/0` format to Registry r08-v2. | D | OPEN |
+| AD-15 | Constitution checkout HEAD `a4dd1111` inverts tier numbering relative to pin `1c2e920f`; confirm the pin remains authoritative. | D | OPEN |
+| AD-16 | Replay-bundle and evidence-pack importers accept only Control Plane `7a4bcd40` / Runtime `c5e97e87` / manifest `fa170815`; current mains are refused. Wave G3 changes will hit this. | D | OPEN |
+| AD-17 | The verifier vendors reasons 0.1/0.2 only; the Control Plane ships 0.3 (eight more codes). | D | OPEN |
+| AD-18 | Tenant-id bound 128 appears in 8 places across 3 repositories with no shared source. | C/D | OPEN |
+| AD-19 | Are hub, exchange, replay-bundle and action-manifest reference values in scope for the migration program? | D | OPEN |
+| AD-20 | Consequence-tier delay ceilings (T0 4h … T4 30d) are proposed and unenforced; owner confirmation needed (BLOCKED). | D | OPEN |
+| AD-21 | Claim-scanner term tables: in scope of the Registry? | D | OPEN |
+| AD-22 | Origin of the effect cap (W8-091): minimum of three declared integers; who owns each? | C | OPEN |
+| AD-23 | F10 tier: Tier 3 supportable (worker) vs Tier 2 minimum (S02 section 3). | C | OPEN |
+| AD-24 | Several test names cited by S02 are NOT FOUND in current Runtime tests; confirm the cited equivalents. | B | OPEN |
 
 ## 3. Reclassification proposals (NOT applied)
 
-Workers proposed 20 reclassifications. They are recorded here and in `evidence/worker-*/reclassification_proposals.json`; the historical classes in the crosswalk are unchanged.
+Workers proposed 20 reclassifications. They are recorded here and in `evidence/worker-*/reclassification_proposals.json` as **unratified proposals**; the historical classes in the crosswalk are unchanged.
 
 | Worker | Row | Historical class | Proposed |
 |---|---|---|---|

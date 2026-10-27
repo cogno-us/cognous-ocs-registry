@@ -23,19 +23,21 @@ Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md
 
 ---
 
-## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-27): G0 INVENTORY RECONCILIATION SUBMITTED FOR ARCHITECT REVIEW
+## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-27): G0 ARCHITECT CONDITIONALLY ACCEPTED; CLOSEOUT DOCUMENTATION CORRECTIONS PENDING REVIEW
 
 Separate from the V01–V09 status above, which is unchanged. Non-authorizing, builder-side, read-only inventory. Approved plan: [plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md](plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md) (merged in PR [#49](https://github.com/cogno-us/cognous-ocs-registry/pull/49), merge `317eb76acb2847c534c3ce7c2180b89b4aef987d`). Package: [family-migration/g0/g0-exit-report.md](family-migration/g0/g0-exit-report.md).
 
 | Item | State |
 |---|---|
-| G0 inventory (620 S02 rows reconciled; 116 current candidate records in 97 rule groups; 32 unresolved rows tracked) | submitted in the G0 PR (this change); open for Architect review; not merged by the builder |
-| Builder recommendation | G0 PASS (inventory complete) with 24 named Architect decisions; G1 blocked on AD-01 and AD-03 |
+| G0 inventory (620 S02 rows reconciled; 116 current candidate records in 97 rule groups; 33 candidate rule groups; 32 unresolved rows tracked) | G0 PR [#50](https://github.com/cogno-us/cognous-ocs-registry/pull/50); reviewed head `ad7c7896ee4f9af3cced6e91ce4cc33b6fe93b27` (exact-head CI green: runs 40593574612 and 40593568699); open for Architect review; not merged by the builder |
+| G0 | **ARCHITECT CONDITIONALLY ACCEPTED.** Closeout documentation corrections pending Architect re-review. |
+| Architect decisions | AD-01 ACCEPTED (F1b already governed; M1 is negative-oracle closure). AD-02 DIRECTION ACCEPTED (F4/F5 partly governed; residual scope pending). AD-03 DIRECTION ACCEPTED (versioned successor contract preferred; design deferred to G1; no implementation authorized). The other 21 decisions remain open. See [family-migration/g0/unresolved-decisions.md](family-migration/g0/unresolved-decisions.md) |
+| Builder recommendation | G0 PASS (inventory complete); independent qualification not performed |
 | Waves M1–M13 | none started; no migration implemented; no component source changed |
 
-G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
 
-**Next authorized action:** none for the builder beyond leaving the G0 PR open for Architect review.
+**Next authorized action:** none for the builder beyond leaving PR #50 open for Architect review. G1 is not authorized.
 
 ---
 

@@ -1,6 +1,6 @@
 # G0 source baseline (2026-10-27)
 
-Non-authorizing, builder-side, read-only inventory. G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+Non-authorizing, builder-side, read-only inventory. G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
 
 ## 1. Current main of every examined repository
 

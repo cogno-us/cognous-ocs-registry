@@ -1,10 +1,15 @@
 # G0 exit report — Registry family migration inventory reconciliation
 
-Builder-side, non-authorizing. This report recommends; the Architect decides. G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+Builder-side, non-authorizing. This report recommends; the Architect decides. G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
 
 ## 1. Result
 
-**Recommendation: G0 PASS (inventory complete) with 24 named Architect decisions; G1 remains blocked on AD-01 and AD-03.** The recommendation depends on the verification in section 7. PASS here means the inventory is complete and source-backed within the stated limits; it does not mean any family is approved, qualified or ready.
+**Recommendation: G0 PASS (inventory complete).** Architect disposition (2026-10-27): **G0 is conditionally accepted, subject to this documentation reconciliation.** Decisions AD-01, AD-02 and AD-03 are recorded in `unresolved-decisions.md`; the other 21 decisions remain open. G1–G5 are NOT AUTHORIZED, no migration is implemented, and the contract design for any new Registry field is deferred to G1 review. PASS here means the inventory is complete and source-backed within the stated limits; it does not mean any family is approved, qualified or ready.
+
+Architect dispositions applied (no worker classification is ratified by them):
+- **AD-01 ACCEPTED.** F1b (institutions, authority domains) is already governed through Registry r08-v2 `f1ab`; proposed M1 is reclassified as negative-oracle closure; no additional F1b implementation is required.
+- **AD-02 DIRECTION ACCEPTED; detailed scope pending.** F4 and F5 are partially Registry-governed; later increments exclude already-governed fields and name only the remaining eligible configuration.
+- **AD-03 DIRECTION ACCEPTED; successor contract pending.** Prefer a versioned successor contract over silently modifying frozen r08-v2 schemas; the family/version design is deferred to G1 and this does not authorize contract implementation.
 
 ## 2. Historical reconciliation (S02, 620 rows)
 
@@ -57,15 +62,17 @@ Downstream importers pin older producer revisions (AD-16); the verifier lacks re
 
 ## 7. Verification
 
+Reviewed commit: `ad7c7896ee4f9af3cced6e91ce4cc33b6fe93b27` (head of PR #50 when the Architect reviewed it). The statement in the submitted version of this report that exact-head CI was "not yet observed" is superseded by the table below. Documentation closeout commits on the same PR carry their own CI results in the PR checks.
+
 | Check | Result |
 |---|---|
-| `tests/test_g0_family_inventory_integrity.py` (620/620 rows, 75 resolutions, 32 unresolved tracked, 116 records source-backed, families dispositioned, no immutable control migrated, historical blobs unchanged, holds, sprint status) | PASS locally, 10 of 10 |
+| Exact-head CI on `ad7c7896` | Workflow run [40593574612](https://github.com/cogno-us/cognous-ocs-registry/actions/runs/40593574612) ("Registry tests", `pull_request`): completed, **success**; check `pytest` success. Workflow run [40593568699](https://github.com/cogno-us/cognous-ocs-registry/actions/runs/40593568699) ("PR #50", dynamic): completed, **success**; checks `Analyze (python)` and `Analyze (actions)` success. Check `CodeQL` success ([runs/122503911554](https://github.com/cogno-us/cognous-ocs-registry/runs/122503911554)). |
+| `tests/test_g0_family_inventory_integrity.py` | PASS locally, 10 of 10 at the reviewed commit (includes 620/620 rows, 75 resolutions, 32 unresolved tracked, 116 records source-backed, families dispositioned, no immutable control migrated, historical blobs unchanged, holds, sprint status); also run on CI as part of `pytest`. |
 | Mutation checks of that test (change a historical class; change a historical evidence file) | PASS: each mutation made the expected tests fail; both restored |
-| Full Registry suite, local | 6214 passed, 2 skipped, **1 FAILED**: `test_adapter_ed25519.py::test_installed_cryptography_matches_the_test_only_lock` (local environment has `cryptography` 50.0.2, the test-only lock says 50.0.1). The same test fails identically on the baseline without any G0 file, so it is environmental and not caused by G0. Exact-head CI on the PR is the authority. |
-| Exact-head CI on the G0 PR | NOT YET OBSERVED at the time this file was written; see the PR |
+| Full Registry suite, local only | 6214 passed, 2 skipped, **1 failed**: `test_adapter_ed25519.py::test_installed_cryptography_matches_the_test_only_lock` (local environment has `cryptography` 50.0.2, the test-only lock says 50.0.1). It fails identically on the baseline without any G0 file, so it is a local-only environmental failure; it did not occur on CI. |
 | Component test suites (Runtime, Control Plane, Stack Qualification) | NOT RUN: G0 is a read-only inventory and changed no component source |
 | Worker-cited test names | NOT RUN: cited by name only |
-| Independent review | NOT RUN: none is claimed; AI workers and CI are not independent assessors |
+| Independent qualification | NOT PERFORMED. CI is a same-organization automated check; it does not establish independent qualification, and AI workers and the lead are not independent assessors |
 
 Lead spot-checks (executed by the lead against the checkouts): f1ab field set; zero Registry code hits for `max_amount|max_effects|allowed_target_prefixes|target_match`; Runtime `tenant_id` 128 bound; Control Plane `cli_run.py:510` and `bounded.py:1271-1275`; `bounded.py` identical to the S02 pin; Control Plane and Runtime churn since the S02 pins (file lists in `source-baseline.md`). Worker claims not spot-checked are labelled worker findings in the ledger.
 
@@ -73,6 +80,6 @@ Lead spot-checks (executed by the lead against the checkouts): f1ab field set; z
 
 AI workers and CI are not independent assessors. Dispositions are proposals. Test bodies were not read and no component test suite was executed. The inventory is as complete as the grep-plus-read method allows; it is not proven exhaustive. Not read: see `source-baseline.md` section 4 and each worker's `notes.md`.
 
-## 9. Holds unchanged
+## 9. Holds
 
-G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD. The V09 candidate manifest and all historical evidence files are unchanged; no component source was changed; no workflow pin moved.
+G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD. (At submission the G0 line read "G0: AUTHORIZED"; the Architect's review changed it to conditional acceptance.) The V09 candidate manifest and all historical evidence files are unchanged; no component source was changed; no workflow pin moved.

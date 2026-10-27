@@ -1,18 +1,26 @@
 # G0 migration backlog (proposal; M1–M13 sequence unchanged)
 
-G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
 
 This backlog maps eligible families onto the approved M1–M13 sequence. **Nothing here starts a wave.** The order is not redesigned; where source contradicts a plan premise the conflict is stated (family-eligibility-matrix.md section 3). Ten fields are given per wave: source ownership, Registry contract/version, evaluator integration, Control Plane/Runtime dependencies, authorization semantics, non-widening proof, tests (positive/negative/differential), independent qualification, proposed PR sequence, blocking decisions.
 
+## Architect dispositions applied (2026-10-27)
+
+- **AD-01 ACCEPTED:** F1b is already governed through Registry r08-v2 `f1ab`; M1 is reclassified as negative-oracle closure for institution and authority-domain narrowing; no additional F1b implementation is required.
+- **AD-02 DIRECTION ACCEPTED; detailed scope pending:** F4/F5 are partially Registry-governed. Only the **residual eligible configuration** is proposed for later migration; already-governed fields are excluded. Exact contract changes remain subject to G1 review.
+- **AD-03 DIRECTION ACCEPTED; successor contract pending:** any new Registry field requires an **approved successor contract/version**. A versioned successor contract is preferred over silently modifying frozen r08-v2 schemas, which are not edited. The specific family/version design is deferred to G1; nothing here authorizes contract implementation. The approved static plan v1.0 is not changed.
+
+G1–G5 remain NOT AUTHORIZED. The wording of the waves below is a proposal; where it names a contract path, read it as subject to AD-03 and G1 review.
+
 ## Recommended first implementation increment (after Architect authorization)
 
-**M1 re-scoped as negative-oracle closure for institutions and authority domains.** It needs no contract change, no source change in Runtime or Control Plane, and it builds the differential harness that M2, M3, M11 and M12 reuse. Everything else needs the contract-path decision AD-03 (new narrowing-only family id under r08-v2 vs r08-v3) first. This is a recommendation only; G1 is not authorized.
+**M1, reclassified (AD-01 ACCEPTED) as negative-oracle closure for institution and authority-domain narrowing.** No additional F1b implementation is required. It needs no contract change, no source change in Runtime or Control Plane, and it builds the differential harness that M2, M3, M11 and M12 reuse. Every wave that adds a Registry field needs an approved successor contract/version first (AD-03 direction accepted: versioned successor contract; design deferred to G1). This is a recommendation only; G1 is not authorized.
 
 ## Summary
 
 | Wave | Family | G0 finding | Records |
 |---|---|---|---|
-| M1 | F1b allow-set completion (institutions, authority domains) | ALREADY-GOVERNED; evidence gap | A-002, B-010, B-012 |
+| M1 | F1b allow-set completion (institutions, authority domains) → negative-oracle closure (AD-01 ACCEPTED) | ALREADY-GOVERNED; evidence gap | A-002, B-010, B-012 |
 | M2 | F1c numeric ceilings (max_amount, max_effects) | ELIGIBLE-NOT-MIGRATED (conditional) | A-003, A-004, B-007, B-008, D-001 |
 | M3 | F1d target configuration | ELIGIBLE-NOT-MIGRATED (conditional) | A-005, A-006, B-004, B-006, D-002 |
 | M4 | F6 agent permissions | OUT-OF-SCOPE (Runtime) / UNRESOLVED (action-manifest) | B-014, D-008 |
@@ -26,7 +34,7 @@ This backlog maps eligible families onto the approved M1–M13 sequence. **Nothi
 | M12 | F5 authority-profile declarations | PARTLY ALREADY-GOVERNED; remainder ELIGIBLE-NOT-MIGRATED | A-008, C-008..C-011, C-021, C-031 |
 | M13 | Delta and residual closure | Closure item | S02 §3a rows W8-041, W8-042, W8-068, W8-072; the 32 UNRESOLVED rows |
 
-## M1 — F1b allow-set completion (institutions, authority domains)
+## M1 — Negative-oracle closure for institution and authority-domain narrowing (was: F1b allow-set completion; AD-01 ACCEPTED)
 
 G0 finding: **ALREADY-GOVERNED; evidence gap**. Records: A-002, B-010, B-012.
 
@@ -39,37 +47,37 @@ G0 finding: **ALREADY-GOVERNED; evidence gap**. Records: A-002, B-010, B-012.
 - **Tests (positive / negative / differential):** Positive: narrowing of institutions. Negative: disjoint set → `applied_deny_all` naming the two fields; NFC/NFD and case-fold; decision-level selection crossing `scope.institution`/`scope.authority_domain`. Differential: five-set composed policy vs baseline policy. Missing today: all of these exist only for `allowed_units`.
 - **Independent qualification:** Tier 1 subject: independent qualification required before acceptance, as for V08. Builder tests are not independent.
 - **Proposed PR sequence:** PR-1 Registry tests-only closure; PR-2 optional Stack Qualification differential; no contract PR.
-- **Blocking decisions:** AD-01 (reclassify M1 as evidence closure), AD-06 (equality vs subset for the two sets).
+- **Blocking decisions:** none for the reclassification (AD-01 ACCEPTED); AD-06 (equality vs subset for the two sets) remains OPEN.
 
 ## M2 — F1c numeric ceilings (max_amount, max_effects)
 
 G0 finding: **ELIGIBLE-NOT-MIGRATED (conditional)**. Records: A-003, A-004, B-007, B-008, D-001.
 
 - **Source ownership:** Caller owns the ceilings today (Runtime `LocalExecutionPolicy`; action-manifest per-action ceiling). A Registry family would carry a narrowing ceiling only.
-- **Registry contract / version:** New narrowing-only family (new family id under r08-v2, registered in both `FAMILIES_V2` and `IDENTITY_FAMILIES`) or r08-v3. The frozen contract states 'no max_amount slot'; Amendment 3 lists them as caller-owned residuals.
+- **Registry contract / version:** Requires an approved successor contract/version (AD-03 direction: versioned successor contract; frozen r08-v2 schemas are not edited; design deferred to G1). The frozen contract states 'no max_amount slot'; Amendment 3 lists them as caller-owned residuals.
 - **Evaluator integration:** Runtime guard extended to compare Registry ceiling ≥ effective ceiling inside the same atomic transaction; `safe_executor.py` evaluator unchanged.
 - **Control Plane / Runtime dependencies:** Runtime: adapter + guard + selection store identity. Control Plane: canonical policy binding / authorization-pin export carry a new family identity. Action-manifest authored ceilings stay caller data.
 - **Authorization semantics:** effective = min(caller, Registry); absent/unknown/corrupt record → existing refusal/HOLD, never a higher value. Numeric domain must be fixed first (int or finite float ≥ 0, magnitude ≤ 2^53).
 - **Non-widening proof:** Property: effective ≤ caller and ≤ Registry for all values incl. boundary equality, 2^53, float/int mix; guard refuses any effective value above the record.
 - **Tests (positive / negative / differential):** Positive: lower Registry ceiling applies. Negative: Registry above caller never raises; boundary equality; non-finite; NaN; bool-as-int. Differential: baseline policy with the ceiling set equal to the Registry value. Missing: no test names `test_amount_exactly_at_max_is_allowed` in the current Runtime tests (equivalents cited).
 - **Independent qualification:** Tier 1 (admission to an effect): independent qualification required.
-- **Proposed PR sequence:** PR-1 contract decision record/amendment; PR-2 Registry family + vectors; PR-3 Runtime adapter/guard; PR-4 Control Plane binding; PR-5 Stack Qualification differential; independent review.
-- **Blocking decisions:** AD-03 (contract path), AD-07 (may the Registry ever carry these), numeric domain ruling.
+- **Proposed PR sequence:** PR-1 approved successor contract/version (G1 review; no edit of frozen r08-v2 schemas); PR-2 Registry family + vectors under that successor; PR-3 Runtime adapter/guard; PR-4 Control Plane binding; PR-5 Stack Qualification differential; independent review.
+- **Blocking decisions:** AD-03 (direction accepted; successor contract pending), AD-07 (open: may the Registry ever carry these), numeric domain ruling.
 
 ## M3 — F1d target configuration
 
 G0 finding: **ELIGIBLE-NOT-MIGRATED (conditional)**. Records: A-005, A-006, B-004, B-006, D-002.
 
 - **Source ownership:** Caller owns prefixes and the mode choice. The mode vocabulary and separators (F2) stay in `safe_executor.py`.
-- **Registry contract / version:** As M2. Prefix order relation (subset of prefixes vs prefix-extension) is non-trivial; mode narrowing order is not proven in source.
+- **Registry contract / version:** Requires an approved successor contract/version, as M2. Prefix order relation (subset of prefixes vs prefix-extension) is non-trivial; mode narrowing order is not proven in source.
 - **Evaluator integration:** Evaluator unchanged; only the effective policy values are narrowed. Segment-aware matching remains code.
 - **Control Plane / Runtime dependencies:** Runtime guard and Control Plane binding as M2. Action-manifest `allowed_targets`/`allow_any_target` are a second authored home.
 - **Authorization semantics:** Narrowing only; an unknown mode or malformed prefix refuses; a record can never turn `exact` into `legacy-prefix`.
 - **Non-widening proof:** Define a partial order on (mode, prefix set) and prove effective ≤ both operands, including dot-segment and separator edge cases.
 - **Tests (positive / negative / differential):** Existing S01 suite covers target modes and well-formedness (names `test_default_target_match_is_segment_aware_*` etc. NOT FOUND in the current Runtime tests; equivalents cited). Add disjoint/overlapping prefix negatives and mode-widening negatives.
 - **Independent qualification:** Tier 1: independent qualification required.
-- **Proposed PR sequence:** After M2 contract decision: Registry family PR, Runtime PR, Control Plane PR, qualification PR.
-- **Blocking decisions:** AD-03, AD-07, order-relation ruling for prefixes and modes.
+- **Proposed PR sequence:** After the successor contract is approved at G1: Registry PR, Runtime PR, Control Plane PR, qualification PR.
+- **Blocking decisions:** AD-03 (direction accepted; successor contract pending), AD-07 (open), order-relation ruling for prefixes and modes.
 
 ## M4 — F6 agent permissions
 
@@ -166,7 +174,7 @@ G0 finding: **OUT-OF-SCOPE / RETAIN-IN-CODE**. Records: C-025..C-030.
 G0 finding: **ELIGIBLE-NOT-MIGRATED (conditional)**. Records: C-038, D-007, D-012.
 
 - **Source ownership:** Defaults in action-manifest (`[REDACTED]`), replay-bundle keyword defaults and the Control Plane `RedactionConfig`; the redaction mechanism and truncation stay in code.
-- **Registry contract / version:** New narrowing-only family where narrowing means *more* redaction.
+- **Registry contract / version:** Requires an approved successor contract/version; narrowing means *more* redaction.
 - **Evaluator integration:** Redaction mechanism (`redaction.py`) unchanged.
 - **Control Plane / Runtime dependencies:** Action-manifest, replay-bundle and Control Plane keep separate copies today (CD-06).
 - **Authorization semantics:** A record may only add redaction; it can never turn payload redaction off.
@@ -174,14 +182,14 @@ G0 finding: **ELIGIBLE-NOT-MIGRATED (conditional)**. Records: C-038, D-007, D-01
 - **Tests (positive / negative / differential):** Negative: attempt to disable payload redaction or fingerprint blanking must refuse.
 - **Independent qualification:** Confidentiality controls are treated as Tier 1 until reviewed (S02 section 3).
 - **Proposed PR sequence:** Registry family PR, per-component consumer PRs.
-- **Blocking decisions:** AD-03, AD-19.
+- **Blocking decisions:** AD-03 (direction accepted; successor contract pending), AD-19 (open).
 
 ## M11 — F4 freshness
 
 G0 finding: **PARTLY ALREADY-GOVERNED; remainder ELIGIBLE-NOT-MIGRATED**. Records: A-007, A-009, C-001..C-006, C-019, C-020, B-016, D-011.
 
 - **Source ownership:** Registry f4 already carries `status_max_age_seconds` and `approval_max_age_seconds`. Control Plane constructor defaults (60/60/60/60/5), the observation policy (300/5 literal in `acp run`) and the Runtime recovery window (86400) are uncovered.
-- **Registry contract / version:** Extend by a new family id or r08-v3; f4 is a closed two-int record.
+- **Registry contract / version:** Requires an approved successor contract/version for the **residual** fields only; `f4` already governs `status_max_age_seconds` and `approval_max_age_seconds` and is excluded (AD-02 direction accepted; scope pending).
 - **Evaluator integration:** `bounded._fresh` and `_reconcile_observation` unchanged; values narrowed at construction.
 - **Control Plane / Runtime dependencies:** Mapping ruling: under a runtime-authority profile the class bound replaces the global status bound only for grant status (conflict and policy status keep the ctor bound). 60 and 300 govern different decisions; nothing relates them.
 - **Authorization semantics:** min(host, Registry); a Registry age can only shorten the window; absent record keeps the host value.
@@ -189,22 +197,22 @@ G0 finding: **PARTLY ALREADY-GOVERNED; remainder ELIGIBLE-NOT-MIGRATED**. Record
 - **Tests (positive / negative / differential):** Existing: `test_bounded_authorization.py`, `test_freshness.py` (by name). Add decision-time and effect-time differential, and the 60-vs-300 independence test.
 - **Independent qualification:** Tier 1: independent qualification required.
 - **Proposed PR sequence:** Registry family PR, Control Plane PR, Runtime PR (recovery window), qualification PR.
-- **Blocking decisions:** AD-02, AD-03, AD-11.
+- **Blocking decisions:** AD-02 (direction accepted; detailed scope pending), AD-03 (direction accepted; successor contract pending), AD-11 (open).
 
 ## M12 — F5 authority-profile declarations
 
 G0 finding: **PARTLY ALREADY-GOVERNED; remainder ELIGIBLE-NOT-MIGRATED**. Records: A-008, C-008..C-011, C-021, C-031.
 
 - **Source ownership:** Registry f5 carries the class→age map; policy-binding/0.1 already carries host ceilings. `on_unreadable`, revocation assurance, reversibility and class declarations remain host profile values.
-- **Registry contract / version:** New family id or r08-v3.
+- **Registry contract / version:** Requires an approved successor contract/version for the **residual** fields only; the `f5` class→age map and policy-binding/0.1 ceilings are already governed and are excluded (AD-02 direction accepted; scope pending).
 - **Evaluator integration:** `validate_extensions` (protected) unchanged.
 - **Control Plane / Runtime dependencies:** Trust anchors (producer keys, catalogue, signer sets) are never externalized.
 - **Authorization semantics:** Only stricter directions: `refuse` over `bounded_tolerance`; longer assurance never allowed.
 - **Non-widening proof:** Order relation per field (enum strictness order) with refusal on unknown values.
 - **Tests (positive / negative / differential):** `test_runtime_authority.py`, `test_reversibility.py` (by name). Add per-field narrowing negatives; note UNKNOWN_BEHAVIORS has one gate branch.
 - **Independent qualification:** Tier 1: independent qualification required.
-- **Proposed PR sequence:** After M11 contract decision.
-- **Blocking decisions:** AD-02, AD-03.
+- **Proposed PR sequence:** After the successor contract is approved at G1.
+- **Blocking decisions:** AD-02 (direction accepted; detailed scope pending), AD-03 (direction accepted; successor contract pending).
 
 ## M13 — Delta and residual closure
 

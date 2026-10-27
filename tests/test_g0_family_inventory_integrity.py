@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 G0 = ROOT / "docs" / "family-migration" / "g0"
-HOLDS = ("G0: AUTHORIZED. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. "
+HOLDS = ("G0: CONDITIONAL ACCEPTANCE. G1–G5: NOT AUTHORIZED. V09 independent qualification: OPEN. Ed25519 #26/#34: SECURITY-HELD. "
          "Release: HOLD. Publication: HOLD. Production: HOLD.")
 VOC = {"MIGRATED", "ALREADY-GOVERNED", "ELIGIBLE-NOT-MIGRATED", "RETAIN-IN-CODE", "OUT-OF-SCOPE", "UNRESOLVED", "BLOCKED"}
 S02_CLASSES = {"MANDATORY-INVARIANT": 354, "SERIALIZATION-OR-EVIDENCE": 90, "INCIDENTAL-CONDITIONAL": 51, "REFUSAL-OR-REASON-VOCABULARY": 50,
@@ -186,3 +186,43 @@ def test_sprint_status_has_a_separate_successor_entry_and_keeps_history():
     assert s.startswith("# Sprint status (the only live status document)\n\n## CURRENT STATUS (2026-10-27, post-merge)")
     assert "## SUCCESSOR PROGRAM STATUS (Registry family migration" in s and HOLDS in s
     assert "## HISTORICAL (as prepared, pre-merge" in s
+
+
+def test_inventory_counts_are_preserved():
+    assert len(ROWS) == 620 and len(RECORDS) == 116 and len(LEDGER["rule_groups"]) == 97
+    cfg = {"ALREADY-GOVERNED", "ELIGIBLE-NOT-MIGRATED", "UNRESOLVED", "BLOCKED"}
+    assert sum(1 for g in LEDGER["rule_groups"] if g["lead_disposition"] in cfg) == 33
+    assert sum(1 for m in ROWS.values() if m["unresolved_tracking"]) == 32
+
+
+def test_reclassification_proposals_stay_unratified():
+    n = 0
+    for w in "BCD":
+        n += len(json.loads((G0 / "evidence" / f"worker-{w}" / "reclassification_proposals.json").read_text()))
+    assert n == 20
+    assert "unratified proposals" in (G0 / "unresolved-decisions.md").read_text()
+
+
+def test_architect_decisions_are_recorded_accurately_and_others_stay_open():
+    rows = {}
+    for line in (G0 / "unresolved-decisions.md").read_text().splitlines():
+        m = re.match(r"\| (AD-\d\d) \|", line)
+        if m:
+            rows[m.group(1)] = line
+    assert len(rows) == 24
+    assert "**ACCEPTED**" in rows["AD-01"]
+    assert "**DIRECTION ACCEPTED; detailed scope pending.**" in rows["AD-02"]
+    assert "**DIRECTION ACCEPTED; successor contract pending.**" in rows["AD-03"]
+    for k, line in rows.items():
+        if k not in {"AD-01", "AD-02", "AD-03"}:
+            assert line.rstrip().endswith("| OPEN |"), k
+    backlog = (G0 / "migration-backlog.md").read_text()
+    assert "negative-oracle closure" in backlog and "approved successor contract/version" in backlog
+
+
+def test_exit_report_records_verified_ci_and_does_not_claim_independence():
+    t = (G0 / "g0-exit-report.md").read_text()
+    assert "ad7c7896ee4f9af3cced6e91ce4cc33b6fe93b27" in t and "40593574612" in t and "40593568699" in t
+    assert "Independent qualification | NOT PERFORMED" in t and "does not establish independent qualification" in t
+    assert "NOT YET OBSERVED" not in t
+    assert "ARCHITECT CONDITIONALLY ACCEPTED" in (ROOT / "docs" / "sprint-status.md").read_text()
