@@ -42,7 +42,7 @@ def test_roles_codes_protocol_and_limits_are_stated():
     for needle in ("Control Plane Authorization Authority", "Trusted Authorization Installer", "Runtime Effect Executor",
                    "claim supplier is none of these", "no new HMAC, signature or Ed25519 scheme",
                    "policy_identity_mismatch", "store_unknown", "verifier_unavailable", "no new reason code",
-                   "journal_mode=DELETE", "mode=ro", "fence", "flock", "degraded", "pin_epoch", "intent_epoch", "committed_epoch",
+                   "journal_mode=DELETE", "mode=ro", "fence", "flock", "pin_epoch", "committed_epoch", "T_int", "T_c", "pin_transition_pending", "There is no degraded or unfenced mode", "no abandon operation", "admission barrier",
                    "UNDETECTED", "irreversible", "authorization state, not selection state", "inside the existing atomic effect transaction",
                    "does not claim instantaneous", "qualification blocker", "real OS privilege-isolation tests",
                    "RELEASE: HOLD", "PUBLICATION: HOLD", "PRODUCTION: HOLD", "NOT effective until the Architect merges it"):
@@ -54,7 +54,18 @@ def test_roles_codes_protocol_and_limits_are_stated():
 def test_plan_and_proposal_exist_and_stay_within_budget():
     plan = (DOCS / "f-a1-authorization-pin/qualification-plan.md").read_text(encoding="utf-8")
     ids = re.findall(r"\| (FA1-\d\d) \|", plan)
-    assert len(ids) == len(set(ids)) <= 30
+    assert len(ids) == len(set(ids)) and sum(int(x) for x in re.findall(r"\| FA1-\d\d \| (\d+) \|", plan)) <= 30
     assert "NOT EXECUTED" in plan and "real OS identities" in plan
     prop = (DOCS / "f-a1-authorization-pin/implementation-proposal.md").read_text(encoding="utf-8")
     assert "NOT authorized" in prop and "no code" in prop
+
+
+def test_revision_2_serialization_has_no_unfenced_terminal_commit():
+    t = AMEND.read_text(encoding="utf-8")
+    assert "fence_mode" not in t and "Degraded fence mode" not in t and "degraded mode" not in t.replace("no degraded or unfenced mode", "")
+    for needle in ("not** committed", "does **not** advance", "pending_blocked", "Lock-free pre-check", "While holding the shared fence",
+                   "never cleared without a verified completion", "No effect can commit using the previous active pin after T_c"):
+        assert needle in t, needle
+    plan = (DOCS / "f-a1-authorization-pin/qualification-plan.md").read_text(encoding="utf-8")
+    assert sum(int(x) for x in re.findall(r"\| FA1-\d\d \| (\d+) \|", plan)) == 30
+    assert "no unfenced commit" in plan and "does not complete while any earlier shared-fence effect is in flight" in plan
