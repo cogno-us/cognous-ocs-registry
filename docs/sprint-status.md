@@ -1,6 +1,37 @@
 # Sprint status (the only live status document)
 
-**CURRENT STATUS (V03, 2026-10-26/27; supersedes the "Next planned increment V01 — NOT YET AUTHORIZED" sentence below, which is HISTORICAL):** plan [v1.5](plans/PROJECT_PLAN-v1.5.md) vertical slice. Cross-component baseline and reconciliation record: [v03-cross-component-baseline.md](v03-cross-component-baseline.md); V04 starting inventory (NOT authorized): [v04-implementation-handoff.md](v04-implementation-handoff.md). All rows are developer-tested, not independently qualified. Tier 1 NOT STARTED; Ed25519 security review OPEN; release, publication and production HOLD.
+## CURRENT STATUS (2026-10-27): V01–V08 merged; V09 FREEZE-CANDIDATE PREPARED, NOT ACCEPTED
+
+Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md) (Constitution pin `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`). Candidate package: [v09/README.md](v09/README.md) (manifest, inventory, evidence index, gate matrix, limitation and exclusion registers, readiness report, independent-review handover). **Release, publication and production: HOLD. This is not a release; no tag or version exists.**
+
+**Standing holds:** V09: CANDIDATE PREPARATION AUTHORIZED; ACCEPTANCE NOT YET AUTHORIZED. Independent V07 security review: OPEN. Independent V08 Tier 1: NOT STARTED. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+
+| Sprint | Status | Exact merged revision | Qualification |
+|---|---|---|---|
+| V01a | MERGED | Registry #43 `943ab1831e39fadac1eb2a414ae322ccfa09bc6a` | BUILDER-TESTED |
+| V01 | MERGED | Runtime #145 `b86fa5db8226a9a93a68d0f42bfa6b5cc5caa5fd` | BUILDER-TESTED (developer demonstration, non-effecting) |
+| V02 | MERGED | Control Plane #85 `1bee3696ee6cd8037d142cdbcdb6020e052b0480` | BUILDER-TESTED (qualified with limitations) |
+| V03 | MERGED (docs) | Registry #44 `b1def8480135` | BUILDER-TESTED (20 PASS, 1 SKIP) |
+| V04 | MERGED | Runtime #146 `e55826f41efe` | BUILDER-TESTED |
+| V05 | MERGED | Runtime #147 `4199a6c793cd9ec37a5fd451f7d99265dcf634fd` | BUILDER-TESTED (50-execution cap exceeded, retained as a process exception) |
+| V06 | MERGED | Stack Qualification #232 `ae12221831bc39beea6dbf0ae7fda726baeecf1f` | SAME-ORGANIZATION QUALIFIED (bounded, synthetic) |
+| V07 | MERGED | Stack Qualification #234 `90e0e56e69448eadb43ea3df2017be189e09e3bb`; Registry Amendment 3 #45 `a1169a05afb917862f4a0f5865e278f4168ed171`; Runtime F-01 fix #148 `ac247dafbce3aacde37695575d457cf958b22560` | Assessor was the builder. **Independent V07: OPEN.** F-01 (HIGH) found, historical BREACH preserved, remediated and requalified (same organization). |
+| V08 | MERGED | Registry Amendment 4 #46 `1a4de32605519c505142b1ba3a57fa5b259b0b2c`; Control Plane #86 `d66ae07fa240510efdcc11ed4b3e1189dcefc822`; Runtime #149 `b5605f525ae73cbb7adcfef4716c67cdd33a5f7d`; Stack Qualification #237 `bb9b08904192b5f50a49e00ed8de0cab80fd7c19` | F-A1 (HIGH) found, historical BREACH and original failed gate preserved in Stack Qualification #235 (open, unmerged, head `7b72de9ac7e4898c0f9bdad3e9b337775cc9c543`), remediated and requalified (30 cases; CI run 40555193111). Same-organization only. **Independent V08 Tier 1: NOT STARTED.** |
+| V09 | **CANDIDATE PREPARED; NOT ACCEPTED** | this documentation-only PR on Registry `1a4de326`; the PR's merge commit is recorded here by the Architect on merge | Readiness classification: READY FOR INDEPENDENT QUALIFICATION. Not RELEASE READY. |
+
+**V07 and V08 qualification limitations:** same-organization AI sessions only; independence is not inferable from a separate AI session or CI. Real two-uid OS isolation was exercised on ephemeral hosts only; anchor custody, a consistent database-plus-anchor restore, revocation propagation delay (FA1-12) and production OS isolation are not demonstrated. FA1-13 is INCONCLUSIVE in the local record; the corrected case passed in CI only. The F-A1 workflow has no post-merge run on `main`; Runtime `main` is tree-identical to the qualified commit. Full register: [v09/limitations-and-exclusions.md](v09/limitations-and-exclusions.md).
+
+**Independent acceptance requirements before formal V09 acceptance:** (1) Architect designation of an independent cryptographic reviewer and an independent Tier 1 lead and oracle; (2) their scoped verdicts at the exact pins in [v09/candidate-manifest.json](v09/candidate-manifest.json); (3) Ed25519 #26/#34 independent review (hold lifted only by the Architect); (4) Architect F3 re-review of Runtime; (5) Architect decision on #235 and the superseded #236; (6) Architect acceptance decision for V09.
+
+**Remaining security holds:** Ed25519 #26/#34 SECURITY-HELD; no open CRITICAL or HIGH finding is known (F-01 and F-A1 remediated, historical results preserved); LOW and qualification-gap items remain open per the register.
+
+**Next authorized action:** none for the builder; the V09 candidate PR stays open and unmerged. Awaiting Architect review of the V09 PR and designation of the independent reviewers. V09 acceptance, release, publication and production are not authorized.
+
+---
+
+*The sections below are preserved. Anything that conflicts with the section above is HISTORICAL and is marked where known.*
+
+**HISTORICAL (superseded by the V09 status above; status as written at V03, 2026-10-26/27; every V04–V09 "NOT STARTED / NOT AUTHORIZED" statement in this block and the V04 dependency paragraph below is HISTORICAL):** plan [v1.5](plans/PROJECT_PLAN-v1.5.md) vertical slice. Cross-component baseline and reconciliation record: [v03-cross-component-baseline.md](v03-cross-component-baseline.md); V04 starting inventory (NOT authorized): [v04-implementation-handoff.md](v04-implementation-handoff.md). All rows are developer-tested, not independently qualified. Tier 1 NOT STARTED; Ed25519 security review OPEN; release, publication and production HOLD.
 
 | Sprint | Status | Pin / evidence |
 |---|---|---|
@@ -12,7 +43,7 @@
 
 **Next implementation dependency for V04:** explicit Architect authorization of V04 and confirmation of ADR open item O-5 (Runtime writer and claim function names; none exist at Runtime `b86fa5db`). V04 is Runtime durable scope-bound selection state (nine-table set, 24-member hash-chained log, ratchet, generation, high-water, lineage, restore/anchor fence); the effect-time guard in `execute_claim_atomic` is V05. Standing holds: durable activation and atomic effect-time enforcement are NOT AUTHORIZED until those sprints are authorized; independent Ed25519 review OPEN; Tier 1 NOT STARTED; release, publication and production HOLD.
 
-**ACTIVE PLAN (2026-10-26):** [v1.5 working-Registry-first](plans/PROJECT_PLAN-v1.5.md), [operator adoption](decisions/2026-10-26-operator-adoption-plan-v1.5.md). Prior v1.4/G0/S01 details below are **historical**. Registry S01 [PR #41](https://github.com/cogno-us/cognous-ocs-registry/pull/41) is **MERGED**, commit `d1dedf79dfb82a25acdcd590c7d39830fa74ef17`. **Next planned increment V01 — non-effecting Registry→Runtime F1a narrowing demonstration — NOT YET AUTHORIZED.** All V01–V09 require separate sprint authorization. No integrated Runtime policy flow is currently established. Tier 1 NOT STARTED; Ed25519 security review OPEN; release/publication/production HOLD.
+**HISTORICAL — plan adoption note (2026-10-26; plan v1.5 remains the governing plan, but the "Next planned increment V01 — NOT YET AUTHORIZED" sentence and "No integrated Runtime policy flow is currently established" are HISTORICAL):** [v1.5 working-Registry-first](plans/PROJECT_PLAN-v1.5.md), [operator adoption](decisions/2026-10-26-operator-adoption-plan-v1.5.md). Prior v1.4/G0/S01 details below are **historical**. Registry S01 [PR #41](https://github.com/cogno-us/cognous-ocs-registry/pull/41) is **MERGED**, commit `d1dedf79dfb82a25acdcd590c7d39830fa74ef17`. **Next planned increment V01 — non-effecting Registry→Runtime F1a narrowing demonstration — NOT YET AUTHORIZED.** All V01–V09 require separate sprint authorization. No integrated Runtime policy flow is currently established. Tier 1 NOT STARTED; Ed25519 security review OPEN; release/publication/production HOLD.
 
 **Current program (2026-10-26):** Operator-approved [static plan v1.4](plans/PROJECT_PLAN-v1.4.md), [adoption decision](decisions/2026-10-26-operator-adoption-plan-v1.4.md). **G0 planning/profile freeze ONLY authorized**; no implementation S01–S09 authorized. Historical v1.3 closeout: [program reconciliation](closeout/program-closeout-2026-10-26.md); historical S01–S06, R08 and EXT evidence below remains unchanged. **EXT-S4 implementation NOT AUTHORIZED. Tier 1 NOT STARTED. Release, publication and production HOLD.**
 

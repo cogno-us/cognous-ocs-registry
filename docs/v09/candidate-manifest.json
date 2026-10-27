@@ -1,0 +1,278 @@
+{
+ "schema": "ocs-v09-candidate-manifest/1",
+ "status": "V09 FREEZE-CANDIDATE PREPARATION. NOT ACCEPTED. NOT A RELEASE. NOT A TAG. Non-authorizing.",
+ "prepared": "2026-10-27",
+ "plan": {
+  "document": "docs/plans/PROJECT_PLAN-v1.5.md",
+  "blob": "1ba1139a2da827f1666df82a11e7f01a872da54b"
+ },
+ "constitution": {
+  "repository": "cogno-us/cognous-engineering-constitution",
+  "pinned_commit": "1c2e920f4e58e07a52e8e2408a506cf7dbc1292b",
+  "adoption_md_blob": "a9394cdb2b0c1432f2b2f10e82d94d3a8b0dd3f0",
+  "constitution_md_blob": "3bb01a02b824cfad96839e131a39578714b5d6eb",
+  "note": "Pinned revision only. The repository main has moved (a4dd1111 at preparation) and is NOT the adopted revision."
+ },
+ "selection_rule": "Each component pin is the verified `main` merge commit at preparation. A pin never resolves through a branch name. The Registry entry is the baseline on which this documentation-only PR is based; the merge commit of this PR cannot be self-referenced and is recorded in docs/sprint-status.md by the Architect on merge.",
+ "components": [
+  {
+   "id": "registry",
+   "repository": "cogno-us/cognous-ocs-registry",
+   "main_commit": "1a4de32605519c505142b1ba3a57fa5b259b0b2c",
+   "main_tree": "2e163b7bf7db570f5648c5bdd2ea74677ff0a472",
+   "merge_parents": [
+    "a1169a05afb917862f4a0f5865e278f4168ed171",
+    "8ce3b5352e79e70bbf0f50d20ada78a198cabdbd"
+   ],
+   "blobs_git_sha1": {
+    "docs/plans/PROJECT_PLAN-v1.5.md": "1ba1139a2da827f1666df82a11e7f01a872da54b",
+    "docs/r08-v2-contract.md": "ab66cc0e12eda4e5eaf9fb7642fb4fffb5110d4f",
+    "docs/r08-v2-contract-amendment-1.md": "081dae56b8fdd3736022900f8dc224eafcd96189",
+    "docs/r08-v2-contract-amendment-2.md": "e082331d729a6b07b2210a4fd02a06bba3a393c6",
+    "docs/r08-v2-contract-amendment-3.md": "c9bf1d39d60c4f15962855aa39e5d814052f2e77",
+    "docs/r08-v2-contract-amendment-4.md": "71d639aa208ba1007d0946de69a8ed76a2cfe67c",
+    "docs/f-a1-authorization-pin/implementation-proposal.md": "17214dc1c722d82c47cbb2bb7e930bcb2410d56e",
+    "docs/f-a1-authorization-pin/qualification-plan.md": "5492cbd0b0cf7b39ab9c9cbd114f0640049ef31e",
+    "docs/decisions/2026-10-26-adr-ext-s4-0-integration-contract.md": "86cfef73b6f5b9cdb98f5d60108ed2c8af5ac925",
+    "docs/v03-cross-component-baseline.md": "5875ffbd601807e1e56ecde00a596bf0a4d8b125",
+    "docs/trust-limitations.md": "940f6e8d48b5e1ca29616409f836b3d2d2e9b0e0",
+    "baseline/execution-runtime/engine/safe_executor.py": "2fc880dae37eac76e5074533435740ce0684209d"
+   },
+   "role": "contracts, authenticated selection verification (r08-v2, amendments 1-4), plan and status record",
+   "contract_versions": [
+    "r08-v2 (blob ab66cc0e... see blobs)",
+    "amendment 1",
+    "amendment 2",
+    "amendment 3 (V07 F-01 Runtime-side narrowing)",
+    "amendment 4 (V08 F-A1 authorization pin)",
+    "ADR EXT-S4-0 integration contract",
+    "ocs-policy-binding/1"
+   ],
+   "dependency_pins": {
+    "baseline/execution-runtime": "cogno-us/cognous-execution-runtime ec728da6dc301a664b331ac8986afd6e850a1273 (historical import, byte-identical, MIT+Apache notices retained)",
+    "constitution": "1c2e920f4e58e07a52e8e2408a506cf7dbc1292b"
+   },
+   "merged_prs": {
+    "V01a": "#43 merge 943ab1831e39fadac1eb2a414ae322ccfa09bc6a",
+    "V03": "#44 merge b1def8480135 (docs)",
+    "V07 amendment 3": "#45 merge a1169a05afb917862f4a0f5865e278f4168ed171",
+    "V08 amendment 4": "#46 merge 1a4de32605519c505142b1ba3a57fa5b259b0b2c",
+    "plan v1.5": "#42 merge 17675ee1a6ab",
+    "S01": "#41 merge d1dedf79dfb82a25acdcd590c7d39830fa74ef17",
+    "Ed25519 (SECURITY-HELD)": "#26 51469cbe0642 and #34 06b9ab9568c8"
+   },
+   "ci_at_main_head": {
+    "Registry tests": "40511770702 success",
+    "Push on main": "40511769690 success",
+    "CodeQL Analyze": "success"
+   },
+   "qualification_status": "BUILDER-TESTED; same-organization only; Ed25519 SECURITY-HELD"
+  },
+  {
+   "id": "control_plane",
+   "repository": "cogno-us/cognous-control-plane",
+   "main_commit": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "main_tree": "7459fd97aaabec21a06887211d8ae79198c56047",
+   "merge_parents": [
+    "1bee3696ee6cd8037d142cdbcdb6020e052b0480",
+    "0fd44d03d69aa49f8022472aedd0f8187a8e8ea9"
+   ],
+   "blobs_git_sha1": {
+    "src/agent_control_plane/authorization_pin_export.py": "37c43dcb80e9276c8f12947671a301eb3bbcbabf",
+    "src/agent_control_plane/canonical_policy_binding.py": "d53a5b7e9d6180d1867a7f32061ba67cb0300514",
+    "schemas/runtime_authority_reasons_0_3.json": "b3b822874b7288fdaa015c9cdac960f39d6594bc"
+   },
+   "sha256": {
+    "schemas/runtime_authority_reasons_0_3.json": "58b29ef74b9bd49d3eae7278d8cce73c7cbc6a1095a07f7b9fa44f48a7b8c07f"
+   },
+   "role": "authoritative decision, claim issuance, canonical policy binding, authorization pin export",
+   "contract_versions": [
+    "ocs-policy-binding/1 (15 members)",
+    "policy-binding/0.1",
+    "claim profile local-authority-effect:0.2.0-proposed (non-production)",
+    "runtime-authority-reasons/0.3",
+    "authorization-pin export (Amendment 4, 17 CP-sourced members)"
+   ],
+   "dependency_pins": {
+    "registry_contract": "r08-v2 + amendment 4 at 1a4de32605519c505142b1ba3a57fa5b259b0b2c (interface, no code import)"
+   },
+   "merged_prs": {
+    "V02": "#85 merge 1bee3696ee6cd8037d142cdbcdb6020e052b0480",
+    "V08 F-A1 export": "#86 merge d66ae07fa240510efdcc11ed4b3e1189dcefc822 (PR head 0fd44d03d69aa49f8022472aedd0f8187a8e8ea9; merge tree equals PR-head tree)"
+   },
+   "ci_at_main_head": {
+    "Tests": "40553723040 success",
+    "Push on main": "40553722437 success"
+   },
+   "qualification_status": "BUILDER-TESTED; V02 QUALIFIED WITH LIMITATIONS (same organization); not independently qualified"
+  },
+  {
+   "id": "runtime",
+   "repository": "cogno-us/cognous-execution-runtime",
+   "main_commit": "b5605f525ae73cbb7adcfef4716c67cdd33a5f7d",
+   "main_tree": "e0d7003e279cddad50062cfb111d498cb4e714de",
+   "merge_parents": [
+    "ac247dafbce3aacde37695575d457cf958b22560",
+    "3873a61b5dd1ca2f8102d355888e59b5cd5a5456"
+   ],
+   "blobs_git_sha1": {
+    "engine/safe_executor.py": "2fc880dae37eac76e5074533435740ce0684209d",
+    "engine/authorization_pin.py": "24a6dab51d0864df688bd02802e79c441901da20",
+    "engine/authorization_pin_format.py": "231b5557922d97dbf792bab93ee6173c89ec042b",
+    "engine/local_authority_effect.py": "968782872dae37867ca35e9dc5dfca2d8394ac03",
+    "engine/registry_selection_authority.py": "2881c6d0d2a5d353188ba0c062102cf60bddf7f8",
+    "host/authorization_pin/installer.py": "2b9ddb688bb39f1792c8cb85a3d3500246d723d2",
+    "tests/fixtures/authorization_pin_vectors.json": "8659cda40ae9db9ed3547e5a0b8cd3d450611114",
+    "docs/authorization-pin-interface-freeze.md": "490c1e541a293c881bcd61549f78f547b84152f7",
+    "docs/authorization-pin-integration-record.md": "0ba13b3194240db1a2299ab676275390a7851395",
+    "docs/authorization-pin-f3-acceptance-record.md": "6e1b3daf9be59a6ecca8bb84657bee92a905f50b"
+   },
+   "sha256": {
+    "engine/authorization_pin.py": "ca1fdc1ecc7ab1631422ceae2e1b93b0b3ff1433920d5d51fe835ed77d6e3196",
+    "engine/authorization_pin_format.py": "2fc671e6ee9eacaecd7d1809538e31e8f78a25ab6519c2605f2d955197628bb2",
+    "engine/local_authority_effect.py": "afbb28423d28146956c2c71ea75c3086807018d1f282426c97c6c72f8912d1dc",
+    "engine/registry_selection_authority.py": "eddc41a61be641c88d412545f3f92158e7c586a5a2107364a1c68eb22002a67b",
+    "host/authorization_pin/installer.py": "5f6147c84777f9f4029d86b852d201c26cb9e1443648e35f5e1a3bfc043b421e",
+    "tests/fixtures/authorization_pin_vectors.json": "ac67e0c0d3d6c079021ab81074c692d4f5273f419a10f0a84cea8d6a60d5f9ff"
+   },
+   "role": "effect-time enforcement boundary, durable selection authority, authorization-pin guard and trusted installer; synthetic SQLite destination only",
+   "contract_versions": [
+    "r08-v2 amendments 1-4 consumer side",
+    "authorization-pin/0.1 format (docs/authorization-pin-interface-freeze.md)",
+    "LocalExecutionPolicy five-set containment (Amendment 3)"
+   ],
+   "dependency_pins": {
+    "registry": "tests resolve OCS_REGISTRY_PIN_DIR; qualified at 1a4de32605519c505142b1ba3a57fa5b259b0b2c",
+    "control_plane": "no code import; export format frozen in-repo",
+    "reusable_workflow_pin": "Runtime wrapper workflows still call cognous-stack-qualification workflows at 1c1755ff4ea719cfa12f72bcd8c81dd51cff7fb2 (known gap I01)"
+   },
+   "merged_prs": {
+    "V01": "#145 merge b86fa5db8226a9a93a68d0f42bfa6b5cc5caa5fd",
+    "V04": "#146 merge e55826f41efe",
+    "V05": "#147 merge 4199a6c793cd9ec37a5fd451f7d99265dcf634fd",
+    "V07 F-01": "#148 merge ac247dafbce3aacde37695575d457cf958b22560",
+    "V08 F-A1": "#149 merge b5605f525ae73cbb7adcfef4716c67cdd33a5f7d (second parent 3873a61b5dd1ca2f8102d355888e59b5cd5a5456; tree equals the qualified commit; code tree equals ad1805e22b1dee4f3201a228f85e1c4599bbebe5)"
+   },
+   "ci_at_main_head": {
+    "Python safety boundary": "40575079412 success",
+    "Durable refusal capture": "40575079986 success",
+    "Workflow Sanity": "40575078458 success"
+   },
+   "protected_blob": "engine/safe_executor.py 2fc880dae37eac76e5074533435740ce0684209d (unchanged from the historical baseline)",
+   "qualification_status": "BUILDER-TESTED; SAME-ORGANIZATION QUALIFIED for F-A1 (30 cases, CI gate green at tree-identical commit 3873a61b); F3 re-review by the Architect: not recorded in repository evidence; not independently qualified"
+  },
+  {
+   "id": "stack_qualification",
+   "repository": "cogno-us/cognous-stack-qualification",
+   "main_commit": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "main_tree": "dcb663000706e1b4a5cdb233e6b2603d49eda52b",
+   "merge_parents": [
+    "90e0e56e69448eadb43ea3df2017be189e09e3bb",
+    "ed4f45a525da1a05e5dbb8f0de27ab4bbbd70d3b"
+   ],
+   "blobs_git_sha1": {
+    "results/v06-e2e/README.md": "438bf507f4a779413d067f2d236350a4e8785510",
+    "results/v07-security/FINDINGS.md": "001775d9714d8e32050d7fda8dbb0cad033b9c89",
+    "results/v07-security/historical_findings.json": "c6b3e57168cfd495d8e48f214f6710a3f995fbef",
+    "results/v07-security/accepted_findings.json": "13649479a8c32cd2566800b16592fbe3dd54a196",
+    "results/v07-security/requalification/REQUALIFICATION.md": "5ceaff352e796cbe74e5f5acc9778a0771e36fa8",
+    "results/v08-fa1/README.md": "d4a69b0e281570cb29997ee6eec886dc9347d936",
+    "results/v08-fa1/results.json": "528eb8c1a98704c0c2eb99b9f46f5a34d70dd0a8",
+    "results/v08-fa1/ledger.jsonl": "9f4dd0d872a9c7e6b77724ed0183064d1bf730e6",
+    "suites/tier1-v08-fa1/conftest.py": "18acf4d8961e5410f5e1feece9f791e17cae2c6d",
+    "suites/tier1-v08-fa1/_historical/_wf.py": "3c716f9f40e115ec47dadaaafada48515c86e2ce",
+    "suites/tier1-v08-fa1/gate.py": "2a5f658ae6776993ca66d724a4499fb85c7b6597",
+    "suites/security-v07/test_adversarial.py": "7591dd29054eba34814a392e98ba62f2fd0fe3cc"
+   },
+   "sha256": {
+    "suites/tier1-v08-fa1/_historical/_wf.py": "a36dc8f81f4789cc795abf43f8f510acc68eac5acfee07806c7a0e237c60d2a7"
+   },
+   "role": "retained qualification harnesses, evidence and CI gates (V06, V07, V08 F-A1)",
+   "contract_versions": [
+    "v08-fa1-results/1",
+    "predeclared plans: V06 33 cases, V07 39 cases, V08 F-A1 30 cases"
+   ],
+   "dependency_pins": {
+    "V06 harness": "Registry 943ab183 / CP 1bee3696 / Runtime 4199a6c7 (intentional historical baseline)",
+    "V07 requalification": "Registry a1169a05 / CP 1bee3696 / Runtime ac247daf",
+    "V08 F-A1": "Registry 1a4de326 / CP d66ae07f / Runtime 3873a61b (tree-identical to Runtime main b5605f52)"
+   },
+   "merged_prs": {
+    "V06": "#232 merge ae12221831bc39beea6dbf0ae7fda726baeecf1f",
+    "V07": "#234 merge 90e0e56e69448eadb43ea3df2017be189e09e3bb",
+    "V08 F-A1 successor": "#237 merge bb9b08904192b5f50a49e00ed8de0cab80fd7c19 (PR head ed4f45a525da1a05e5dbb8f0de27ab4bbbd70d3b; merge tree equals PR-head tree)"
+   },
+   "ci_at_main_head": {
+    "Cross-component migration integrity": "40575094573 success",
+    "Catalog validation": "40575094587 success",
+    "Serial local trajectory qualification": "40575094446 success",
+    "Qualification dashboard build": "40575094652 success"
+   },
+   "ci_evidence_runs": {
+    "V08 F-A1 job at #237 head ed4f45a5": "40555193111 success",
+    "V08 F-A1 job first success": "40537952077 success (head 1a9b6a93)",
+    "V08 F-A1 original failed gate": "40537445066 failure (head e5770b1b, harness defect)"
+   },
+   "limitation": "The F-A1 workflow triggers on pull_request and workflow_dispatch only; there is no post-merge F-A1 run on main. The F-A1 evidence is the PR-head run on a tree identical to main.",
+   "qualification_status": "harness and evidence repository; same-organization; not independently qualified"
+  }
+ ],
+ "unmerged_historical_references": [
+  {
+   "ref": "cogno-us/cognous-stack-qualification#235",
+   "head": "7b72de9ac7e4898c0f9bdad3e9b337775cc9c543",
+   "branch": "v08-tier1-qualification",
+   "state": "open, unmerged at preparation",
+   "content": "historical V08 Tier 1 assessment: disposition BLOCK, F-A1 BREACH, original failed gate (CI 37 PASS / 1 FAIL)",
+   "preserve": "never edited; not on main; the Architect decides whether to merge it as a documented failed assessment"
+  },
+  {
+   "ref": "cogno-us/cognous-stack-qualification#236",
+   "head": "1a9b6a933986a51e2cf8d2e5e79679538305e2c2",
+   "state": "open, superseded by #237",
+   "content": "stacked predecessor of #237"
+  }
+ ],
+ "not_in_scope_repositories": [
+  {
+   "repository": "cogno-us/cognous-governance-evidence-pack, replay-bundle, governed-exchange, open-decision-evidence-standard, cognous-open-control-stack (and their workflows hosted in cognous-stack-qualification)",
+   "reason": "Not components of the V01-V08 vertical slice. The adopted V03 cross-component baseline and Plan v1.5 name only Registry, Control Plane, Runtime, Qualification and the Constitution pin. They belong to the earlier MVP tuple and are neither frozen nor qualified by this candidate."
+  }
+ ],
+ "holds": {
+  "V09": "CANDIDATE PREPARATION AUTHORIZED; ACCEPTANCE NOT YET AUTHORIZED",
+  "independent_V07_security_review": "OPEN",
+  "independent_V08_tier1": "NOT STARTED",
+  "Ed25519_26_34": "SECURITY-HELD",
+  "release": "HOLD",
+  "publication": "HOLD",
+  "production": "HOLD"
+ },
+ "qualified_commit_equivalence": [
+  {
+   "component": "control_plane",
+   "qualified_commit": "0fd44d03d69aa49f8022472aedd0f8187a8e8ea9",
+   "ancestor_of_main": true,
+   "tree_equal_to_main": true
+  },
+  {
+   "component": "runtime",
+   "qualified_commit": "3873a61b5dd1ca2f8102d355888e59b5cd5a5456",
+   "ancestor_of_main": true,
+   "tree_equal_to_main": true
+  },
+  {
+   "component": "runtime",
+   "qualified_commit": "ad1805e22b1dee4f3201a228f85e1c4599bbebe5",
+   "ancestor_of_main": true,
+   "tree_equal_to_main": false,
+   "note": "differs from main by exactly one added documentation file (F3 record); code tree identical"
+  },
+  {
+   "component": "stack_qualification",
+   "qualified_commit": "ed4f45a525da1a05e5dbb8f0de27ab4bbbd70d3b",
+   "ancestor_of_main": true,
+   "tree_equal_to_main": true
+  }
+ ]
+}
