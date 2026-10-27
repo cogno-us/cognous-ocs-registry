@@ -1,6 +1,29 @@
 # Sprint status (the only live status document)
 
-## CURRENT STATUS (2026-10-27): V01–V08 merged; V09 FREEZE-CANDIDATE PREPARED, NOT ACCEPTED
+## CURRENT STATUS (2026-10-27, post-merge): V09 FREEZE-CANDIDATE PACKAGE MERGED; FORMAL ACCEPTANCE HELD
+
+Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md) (unchanged); Constitution pin `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`. Detail: [v09/post-merge-record.md](v09/post-merge-record.md). **This is not a release; no tag or version exists.**
+
+**Program status:** V01–V08: bounded engineering implementation merged. V09: freeze-candidate package merged; formal acceptance held. Independent V07 security review: OPEN. Independent V08 Tier 1: NOT STARTED. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+
+| Item | State | Exact revision |
+|---|---|---|
+| V09 freeze-candidate PR | **MERGED** ([#47](https://github.com/cogno-us/cognous-ocs-registry/pull/47)); candidate prepared and merged, **NOT formally accepted** | merge `b695f67d944286c76100ddab36818f926958297f` (parents `1a4de326…`, PR head `ae20e43c915b7a0c9446c544db145bb24e253291`) |
+| Candidate package on `main` | available at [v09/](v09/README.md): manifest, inventory, evidence index, gate matrix, registers, readiness report, handover | candidate component pins unchanged: Registry baseline `1a4de32605519c505142b1ba3a57fa5b259b0b2c`, Control Plane `d66ae07fa240510efdcc11ed4b3e1189dcefc822`, Runtime `b5605f525ae73cbb7adcfef4716c67cdd33a5f7d`, Stack Qualification `bb9b08904192b5f50a49e00ed8de0cab80fd7c19` |
+| Runtime F3 | Architect re-review completed and Runtime #149 accepted for the bounded candidate (Architect statement); record in Runtime PR [#150](https://github.com/cogno-us/cognous-execution-runtime/pull/150) (documentation, open at time of writing). Not independent qualification; not production clearance. | #149 merge `b5605f525ae73cbb7adcfef4716c67cdd33a5f7d` |
+| Stack Qualification #235 | OPEN, UNMERGED, retained as the immutable historical F-A1 BREACH / failed-gate reference | head `7b72de9ac7e4898c0f9bdad3e9b337775cc9c543` |
+| Stack Qualification #236 | CLOSED as superseded by #237 after verification; branch kept | head `1a9b6a933986a51e2cf8d2e5e79679538305e2c2` |
+| Stack Qualification #237 | MERGED; accepted same-organization qualification | merge `bb9b08904192b5f50a49e00ed8de0cab80fd7c19`; CI run 40555193111 |
+| Independent V07 security assignment | prepared, not issued, no reviewer designated | [v09/independent-v07-security-review-assignment.md](v09/independent-v07-security-review-assignment.md) |
+| Independent V08 Tier 1 assignment | prepared, not issued, no reviewer designated | [v09/independent-v08-tier1-assignment.md](v09/independent-v08-tier1-assignment.md) |
+
+**Outstanding decisions for the Architect:** (1) designate the independent cryptographic reviewer and the independent Tier 1 lead and oracle, then issue the two assignments; (2) independent verdicts at the exact pins; (3) Ed25519 #26/#34 independent review (hold lifted only by the Architect); (4) archive the F-A1 CI artifact of run 40555193111 before it expires on 2027-01-25; (5) decision whether #235 is ever merged as a documented failed assessment; (6) formal V09 acceptance.
+
+**Next authorized action:** none for the builder beyond leaving the open documentation PRs for Architect review. V09 formal acceptance, security-hold removal, release, publication and production are not authorized.
+
+---
+
+## HISTORICAL (as prepared, pre-merge, 2026-10-27; superseded by the post-merge status above): V01–V08 merged; V09 FREEZE-CANDIDATE PREPARED, NOT ACCEPTED
 
 Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md) (Constitution pin `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`). Candidate package: [v09/README.md](v09/README.md) (manifest, inventory, evidence index, gate matrix, limitation and exclusion registers, readiness report, independent-review handover). **Release, publication and production: HOLD. This is not a release; no tag or version exists.**
 
