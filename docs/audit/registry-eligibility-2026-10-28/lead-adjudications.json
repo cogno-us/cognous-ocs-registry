@@ -1,0 +1,304 @@
+{
+ "version": 1,
+ "author": "Audit Lead (independent of the migration builder)",
+ "basis": "Each entry cites the worker evidence it relies on and, where marked VERIFIED-BY-LEAD, a source check performed by the Audit Lead at the pinned heads (Registry 2668094d, Runtime f7a55e2a, Control Plane d66ae07f).",
+ "row_rekeys": {
+  "W2-074": {
+   "canonical_key": "RG-C-017/mechanism",
+   "reason": "Worker D2 rated the reaper-forwarding mechanism RETAIN-IN-CODE; the interval value (W8-041) is a separate host-owned parameter. Split so one rule never carries two dispositions."
+  },
+  "W8-052": {
+   "canonical_key": "RG-C-016/mechanism",
+   "reason": "flock poll loop is an implementation detail (RETAIN-IN-CODE); the lease-acquire timeout (W8-040) is the separate host-owned parameter."
+  },
+  "W2-088": {
+   "canonical_key": "RG-B-027/mechanism",
+   "reason": "CLI digest check, process-group kill cleanup and fixed output cap are protected mechanisms (RETAIN-IN-CODE); the OpenShell command timeout (W2-083) is the separate host-owned parameter. Resource-budget scope question stays open (G0 F3)."
+  },
+  "W2-089": {
+   "canonical_key": "RG-B-027/mechanism",
+   "reason": "Scrubbed CLI environment and fixed exec flags are protected mechanisms; see W2-088."
+  },
+  "W8-087": {
+   "canonical_key": "RG-C-012/mechanism",
+   "reason": "Critical-evidence skipping logic is a retained evaluator; the evidence threshold value (W8-011) arrives in the issuer-approved authority context and is issuer-owned."
+  },
+  "W9-040": {
+   "canonical_key": "RG-F11-REDACTION-DEFAULTS/mechanism",
+   "reason": "The redaction mechanism driven by RedactionConfig is retained (confidentiality); the caller-overridable default values are the separate presentation-default rule."
+  },
+  "W3-061": {
+   "canonical_key": "RG-B-015",
+   "reason": "Site is the constructor default of the synthetic reference destination (dedupe_destination.py). Worker D2 viewed it as a provider fact; Worker H1/H2 audit of G0-B-015 judged it a synthetic default outside the production boundary. Lead: the synthetic constructor default is OUT-OF-SCOPE; the provider-declared TTL semantics remain in RG-F7-DEDUPE (W3-062, W3-063, W2-062)."
+  },
+  "W3-065": {
+   "canonical_key": "RG-B-015",
+   "reason": "Reference/qualification destination modelling provider behaviour: synthetic, outside the production boundary (Worker D2 also rated it OUT-OF-SCOPE)."
+  },
+  "W8-014": {
+   "canonical_key": "NEW:runtime-authority-profile-producer-keys",
+   "reason": "Producer keys are host trust roots, not a Registry candidate; separated from the RG-C-013 container group (Worker H1: container record, not one rule)."
+  }
+ },
+ "row_disposition_overrides": {},
+ "rule_overrides": {
+  "LR-MANIFEST-DEFAULT-ACTION": {
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "reason": "Workers H2 audited RG-C-031 CALLER-OR-ISSUER-OWNED and RG-D-003 RETAIN-IN-CODE for the same manifest default_action field. Lead merge: the configured value is issuer-authored manifest data; the omitted-field fallback 'escalate' is a fail-safe literal retained as a child parameter. VERIFIED-BY-LEAD: no Registry slot for default_action exists (grep of Registry code and contracts finds it only in frozen G0 evidence)."
+  },
+  "RG-B-027/mechanism": {
+   "name": "OpenShell/CLI execution mechanisms (digest check, kill cleanup, scrubbed environment, fixed caps)"
+  },
+  "RG-C-016/mechanism": {
+   "name": "Check-lease flock poll loop (mechanism)"
+  },
+  "RG-C-017/mechanism": {
+   "name": "Freshness reaper forwarding onto the per-call view (mechanism)"
+  },
+  "RG-C-012/mechanism": {
+   "name": "Critical-evidence criticality logic (mechanism)"
+  },
+  "RG-F11-REDACTION-DEFAULTS/mechanism": {
+   "name": "Redaction mechanism driven by RedactionConfig (mechanism)"
+  },
+  "NEW:runtime-authority-profile-producer-keys": {
+   "name": "RuntimeAuthorityProfile producer keys (host trust roots)"
+  }
+ },
+ "merges": [
+  {
+   "into": "LR-F4-STATUS-APPROVAL-AGE",
+   "members": [
+    "RG-A-007",
+    "RG-C-003",
+    "RG-C-004"
+   ],
+   "name": "Authority-input status and approval age bounds (F4: status_max_age_seconds, approval_max_age_seconds)",
+   "reason": "Workers H1 and A found RG-A-007 (Registry composer side) and RG-C-003/RG-C-004 (Control Plane consumer-side defaults) are one logical rule viewed from two repositories; the Registry F4 payload carries exactly these two scalars."
+  },
+  {
+   "into": "LR-F5-CLASS-STATUS-AGE",
+   "members": [
+    "RG-A-008",
+    "RG-C-008",
+    "NEW:class-status-age-bound"
+   ],
+   "name": "Per-action-class status age bound (F5 max_status_age_seconds)",
+   "reason": "H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule."
+  },
+  {
+   "into": "LR-MANIFEST-DEFAULT-ACTION",
+   "members": [
+    "RG-C-031",
+    "RG-D-003"
+   ],
+   "name": "Action Manifest default_action (value and omitted-field fallback)",
+   "reason": "Worker H2: RG-C-031 and RG-D-003 are the same manifest field split across two groups."
+  }
+ ],
+ "splits": [
+  {
+   "from": "RG-F1C-MAX-AMOUNT",
+   "new": "RG-D-001",
+   "records": [
+    "G0-D-001"
+   ],
+   "name": "Action Manifest EffectLimits per-action ceilings (max_amount, unit, max_effects): issuer-authored, digest-bound",
+   "reason": "Worker H1: OVER-MERGED. A manifest-authored ceiling is issuer data, distinct from the host LocalExecutionPolicy ceiling that M2 governs."
+  },
+  {
+   "from": "RG-F1D-TARGET-PREFIXES",
+   "new": "RG-D-002",
+   "records": [
+    "G0-D-002"
+   ],
+   "name": "Action Manifest TargetPolicy (allowed_targets, allow_any_target): issuer-authored exact target list",
+   "reason": "Worker H1: OVER-MERGED. Digest-bound manifest content, distinct from the host policy prefixes M3 governs."
+  },
+  {
+   "from": "RG-F11-REDACTION-DEFAULTS",
+   "new": "RG-D-007",
+   "records": [
+    "G0-D-007"
+   ],
+   "name": "Action Manifest RedactionHint.replacement default",
+   "reason": "Worker H1: three unrelated defaults in three repositories grouped by name only."
+  },
+  {
+   "from": "RG-F11-REDACTION-DEFAULTS",
+   "new": "RG-D-012",
+   "records": [
+    "G0-D-012"
+   ],
+   "name": "Replay Bundle redact_replay_bundle defaults",
+   "reason": "Worker H1: see RG-D-007."
+  },
+  {
+   "from": "RG-F6-ACTION-LISTS",
+   "new": "RG-B-014",
+   "records": [
+    "G0-B-014"
+   ],
+   "name": "Legacy AgentEngine permissions.json / PermissionSystem (compatibility only, performs no effect)",
+   "reason": "Worker H2: B-014 is legacy and non-effecting (OUT-OF-SCOPE); D-008 is live manifest content (issuer-owned). Workers A and D4 reached the same split."
+  },
+  {
+   "from": "RG-F7-DEDUPE",
+   "new": "RG-B-015",
+   "records": [
+    "G0-B-015"
+   ],
+   "name": "Synthetic reference destination dedupe_ttl_seconds constructor default",
+   "reason": "Worker H2: B-015 is a synthetic CI/local destination default; C-022 describes provider behaviour."
+  }
+ ],
+ "split_dispositions": {
+  "RG-D-001": {
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "reason": "Manifest-authored, digest-bound per-action ceiling (issuer data)."
+  },
+  "RG-D-002": {
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "reason": "Manifest-authored, digest-bound exact target list (issuer data)."
+  },
+  "RG-D-007": {
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "reason": "Caller-overridable presentation default; no redaction floor exists in code."
+  },
+  "RG-D-012": {
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "reason": "Caller-overridable presentation default; no redaction floor exists in code."
+  },
+  "RG-B-014": {
+   "disposition": "OUT-OF-SCOPE",
+   "reason": "README states compatibility only; performs no effect."
+  },
+  "RG-B-015": {
+   "disposition": "OUT-OF-SCOPE",
+   "reason": "Synthetic reference destination default, outside the production boundary."
+  }
+ },
+ "rule_attributes": {
+  "RG-F1A-ALLOW-SETS-FIVE": {
+   "parameters": 5,
+   "migration_wave": "COMPLETED-IMPLEMENTED: r08-v2 f1ab (Registry PR #29 merge f618cdf5); Runtime effect-time guard (registry_selection_authority.py)",
+   "implementation_status": "IMPLEMENTED"
+  },
+  "RG-F1C-MAX-AMOUNT": {
+   "parameters": 1,
+   "migration_wave": "COMPLETED-IMPLEMENTED: M2 (Registry PR #54 merge ba98dd26; Runtime PR #151 merge 99f5f053, PR #152 merge dabaa770)",
+   "implementation_status": "IMPLEMENTED"
+  },
+  "RG-F1C-MAX-EFFECTS": {
+   "parameters": 1,
+   "migration_wave": "COMPLETED-IMPLEMENTED: M2 (Registry PR #54 merge ba98dd26; Runtime PR #151 merge 99f5f053, PR #152 merge dabaa770)",
+   "implementation_status": "IMPLEMENTED"
+  },
+  "RG-F1D-TARGET-PREFIXES": {
+   "parameters": 1,
+   "migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
+   "implementation_status": "IMPLEMENTED"
+  },
+  "RG-F1D-TARGET-MATCH": {
+   "parameters": 1,
+   "migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
+   "implementation_status": "IMPLEMENTED"
+  },
+  "LR-F4-STATUS-APPROVAL-AGE": {
+   "parameters": 2,
+   "migration_wave": "M11",
+   "implementation_status": "NOT-STARTED",
+   "layers": {
+    "registry_represented": "YES",
+    "enforcement_integrated": "NO",
+    "independently_accepted": "NO"
+   },
+   "coverage": "PARTIAL: Registry r08-v2 f4 composer (registry_successor/v2_age_bounds.py) represents both scalars; the Control Plane has no Registry consumer (VERIFIED-BY-LEAD: policy_binding.py enforces only host-copied age_ceilings)."
+  },
+  "LR-F5-CLASS-STATUS-AGE": {
+   "parameters": 1,
+   "migration_wave": "M12",
+   "implementation_status": "NOT-STARTED",
+   "layers": {
+    "registry_represented": "YES",
+    "enforcement_integrated": "NO",
+    "independently_accepted": "NO"
+   },
+   "coverage": "PARTIAL: Registry f5 composer represents the per-class map; the Control Plane has no consumer; open question how a narrowed class value enters approval_commitment."
+  },
+  "RG-C-021": {
+   "parameters": 1,
+   "migration_wave": "M11/M12 (after the F4/F5 Control Plane consumer)",
+   "implementation_status": "NOT-STARTED",
+   "layers": {
+    "registry_represented": "NO",
+    "enforcement_integrated": "NO",
+    "independently_accepted": "NO"
+   },
+   "coverage": "NONE for the ceiling itself: Control Plane enforces a host-supplied ceiling at construction (policy_binding.py:118-140) but nothing derives it from a Registry record."
+  },
+  "RG-C-018": {
+   "migration_wave": "M11 (proposed; same Control Plane freshness-profile consumer as RG-C-019/RG-C-020)",
+   "implementation_status": "NOT-STARTED"
+  }
+ },
+ "decisions": [
+  {
+   "id": "AUD-D01",
+   "title": "AD-07 is still recorded OPEN, but Registry narrowing of max_amount, max_effects, target prefixes and target_match is merged",
+   "body": "The frozen G0 decision register (docs/family-migration/g0/unresolved-decisions.md, AD-07) asks whether the Registry may ever carry these four fields, given Amendment 3 records them as caller-owned residuals, and lists it OPEN. Registry PRs #54 (r08-v3, merge ba98dd26) and #56 (r08-v4, merge b7e6a173) and Runtime PRs #151, #152 and #153 (merge f7a55e2a) implement exactly that narrowing, and the M2 record treats it as authorized. This audit found no later repository record that closes AD-07, so the register and the merged code disagree. It is a governance-record inconsistency, not a safety defect: the Runtime narrowing adapter was read and enforces subset-of-caller sets and ceilings no higher than the caller's.",
+   "recommendation": "The Architect records an explicit disposition for AD-07 (ratify the merged M2/M3 narrowing, or direct a revert) so the register matches the code."
+  },
+  {
+   "id": "AUD-D02",
+   "title": "Counting rule: represented in the Registry is not governed",
+   "body": "G0 labelled RG-A-007, RG-A-008 (and, in the audit's view, RG-C-021) ALREADY-GOVERNED. The Registry composes the F4 status/approval scalars and the F5 per-class map (registry_successor/v2_age_bounds.py), but the Control Plane imports no Registry code and enforces only host-supplied values; policy_binding.py enforces a host-copied age_ceilings. Three facts are therefore kept separate throughout this audit: represented in the Registry, integrated at an enforcement boundary, independently accepted. Only rules with the first two are REGISTRY-GOVERNED.",
+   "recommendation": "Adopt the three-layer definition for backlog and PASS accounting; carry the F4/F5 age rules as eligible with the Registry half represented until the Control Plane consumer (waves M11/M12) is merged."
+  },
+  {
+   "id": "AUD-D03",
+   "title": "RG-C-018 (freshness nonce toggle) is marginal",
+   "body": "FreshnessProfile.nonce (default True) is host-settable. A Registry overlay could only force True, structurally the same as RG-C-020 (anchor_deadline_to_inputs). Two first-pass workers disagreed: the group audit rated it REGISTRY-ELIGIBLE, the row-level configurable-candidate review rated the same field host-owned. The audit keeps it ELIGIBLE with the disagreement recorded because a forcing-True overlay is monotone and the consumer is the same Control Plane freshness profile as RG-C-019/RG-C-020; it adds little protection unless a host disables the nonce.",
+   "recommendation": "Decide whether to migrate it at all; if the Architect prefers not to migrate safeguards that default to the safe value, reclassify RETAIN-IN-CODE. The eligible count falls by one."
+  },
+  {
+   "id": "AUD-D04",
+   "title": "Two ocs-registry-record/0 formats exist",
+   "body": "Repository-coverage worker I2 found the hub's tools/registry_records.py (lines 18-31) defines a second ocs-registry-record/0 format beside the Registry's r08-v2 record. Which one is the migration target, and whether the hub vocabulary must be reconciled with the Registry successor contracts, is not decidable from source.",
+   "recommendation": "Architect names the authoritative record format; until then the rule NEW:hub-registry-record-profile-vocabulary stays UNRESOLVED."
+  },
+  {
+   "id": "AUD-D05",
+   "title": "Redaction defaults: floor or presentation choice?",
+   "body": "The audit rates the Control Plane, Action Manifest and Replay Bundle redaction defaults CALLER-OR-ISSUER-OWNED (caller-overridable presentation defaults; no redaction floor exists in code), which removes the G0 eligible group RG-F11. A Registry 'minimum redaction' would be a new confidentiality control, not the migration of an existing one.",
+   "recommendation": "If a minimum-redaction floor is wanted, treat it as a new privacy-owned feature (plan wave M10) with its own decision, not as a rule migration."
+  },
+  {
+   "id": "AUD-D06",
+   "title": "How a Registry-narrowed Control Plane class value enters approval_commitment",
+   "body": "The whole ActionClass is hashed into approval_commitment (runtime_authority.py:236-247). Narrowing a per-class age, unreadable posture or revocation-assurance flag through a Registry record changes a committed value, so the commitment coupling must be defined before RG-C-008/C-009/C-010 (and the merged F5 class age rule) can be implemented.",
+   "recommendation": "Decide the coupling in the M12 design before any F5 Control Plane consumer is authorized."
+  },
+  {
+   "id": "AUD-D07",
+   "title": "Coverage gaps the Architect may want closed",
+   "body": "Not reviewed in full: Stack Qualification (about 10 of 28,961 files read), Action Manifest and Governed Exchange schemas/examples/docs/tests, parts of the Stack Orchestrator (store.py, machine.py, observer.py, preserve.py, observations.py, refund_runtime.py and about 20 scenario modules were grepped only), and S02-covered Runtime/Control Plane files that were grep-scanned rather than re-read.",
+   "recommendation": "If an exhaustive denominator is required, commission a second bounded sweep of those areas; the present result should not be described as exhaustive."
+  },
+  {
+   "id": "AUD-D08",
+   "title": "Nothing is independently accepted",
+   "body": "All five governed rules are builder-integrated; the program's own accounting (m2/01-migration-backlog.md) states 0 accepted. V09 independent Tier 1 qualification is open and Ed25519 #26/#34 are security-held. Builder CI and AI review do not establish acceptance.",
+   "recommendation": "Keep acceptance percentages at 0% until an independent Tier 1 qualifier is designated and passes the integrated path."
+  }
+ ],
+ "observations": [
+  "Control Plane bounded.py:2085-2087 caps the `_mono_open` map at 4096 entries with FIFO eviction; eviction drops the secondary monotonic-clock guard (bounded.py:1426) for the oldest open check, while the wall-clock deadline (bounded.py:1421-1432) still applies (worker B).",
+  "Control Plane cli_run.py:511 `allow_test_time=now is not None` lets the `--now` flag set the evaluation clock; the CLI flags it as a test override under a synthetic resolver (worker B).",
+  "Runtime engine/local_authority_effect.py:631-645 `remove_authoritative_state` deletes authority state with no revocation record or authorization; its only callers are tests (worker H1; matches G0 finding G0-B-029).",
+  "Runtime engine/local_authority_effect.py `_selection_guard` is opt-in by design: a claim with no binding and no configured store follows the legacy path unchanged, but a binding or an existing store with no verifiable authority refuses (store_unknown) and a successor claim without its binding refuses. Lead read of lines 815-831.",
+  "evidence-registry app/core/config.py:28 holds a default JWT secret_key; create_access_token/verify_token have no callers, so it is not exposed today (worker I2). The module is a non-authoritative demo.",
+  "Stack Orchestrator observer.py:91 defaults confirmations to 0 and observer.py:120-126 accepts http:// and userinfo URLs; its hard-coded upstream pins (admission.py:102-118, producer_evidence.py:10-11) are stale against the current hub lock. Documented, labelled historical (worker I3).",
+  "Control Plane replay.py from_json uses non-strict json.loads for a fixed-format export (worker F2); not a defect."
+ ]
+}
