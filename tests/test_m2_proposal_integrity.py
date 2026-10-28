@@ -28,16 +28,18 @@ def test_contract_covers_only_the_two_ceilings_and_leaves_v2():
     text = (M2 / "02-m2-successor-contract-proposal.md").read_text()
     assert "max_amount" in text and "max_effects" in text and "r08-v3" in text
     assert "Frozen `r08-v2` is unchanged" in text
+    assert "f1abc-local-execution-limits" in text and "OPTION B" in text
+    assert "2^53 − 1" in text and "composition_caller_invalid" in text
 
 
 def test_test_matrix_has_required_scenarios():
     text = (M2 / "04-m2-test-matrix.md").read_text()
-    for i in range(1, 15):
+    for i in range(1, 24):
         assert "T%02d" % i in text or "T%02da" % i in text, i
     assert "independent qualification" in text
 
 
 def test_holds_preserved():
     text = (M2 / "05-blocking-architectural-decisions.md").read_text()
-    assert "M2 implementation: NOT YET AUTHORIZED" in text
+    assert "M2 implementation: NOT AUTHORIZED" in text
     assert "Release/publication/production: HOLD" in text

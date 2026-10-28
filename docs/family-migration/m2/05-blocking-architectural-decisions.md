@@ -1,21 +1,66 @@
-# M2 — Blocking architectural decisions
+# M2 — Architectural decisions and remaining blockers (corrected)
 
-Status: for Architect ruling. Each item blocks only the stated part; none blocks this proposal. The recommendation lets implementation start without further preparation.
+Status: for Architect confirmation. D-2, D-5 and D-7 are ACCEPTED as ruled. D-1, D-3, D-4 and D-6 are resolved below from source.
 
-| ID | Decision | Options | Recommendation | Blocks |
-|---|---|---|---|---|
-| D-1 | Family architecture (policy binding carries one family) | (a) standalone `f1c-local-execution-ceilings` plus consumer support for two bindings; (b) composite `f1abc-…` carrying the five f1ab sets and both ceilings, one binding | (a) if Control Plane and Runtime accept two bindings at no new grant authority; otherwise (b). Ceiling members are identical in both | PR-1 family id, PR-4 |
-| D-2 | Zero semantics | `max_effects` record 0 = explicit deny-all, `max_amount` 0 = valid ceiling (zero-amount operations pass); or both zero = deny-all | Proposed in `02`: effects 0 = deny-all, amount 0 = ceiling | PR-1 ranges, T06 |
-| D-3 | Caller float ceilings in the governed path | refuse (`composition_caller_invalid`); or accept finite floats and fall back to a non-governed digest | Refuse; the identity preimage is integer-only and canonical JSON refuses floats | PR-1 composer, V12 |
-| D-4 | Registry upper bound for `max_effects` (and confirmation of 2^53 for `max_amount`) | 2^53; or 2147483647 (F4/F5 `AGE_MAX` precedent) | 2^53 for `max_amount` (source); 2^53 for `max_effects` for symmetry | PR-1 ranges |
-| D-5 | Successor mechanism | new `r08-v3` table and signing domain; or additive family in `r08-v2` (excluded by v2 text) | `r08-v3` (Architect-preferred; v2 stays frozen) | PR-1 |
-| D-6 | Control Plane treats family and digest as opaque | confirm; or identify a family allow-list | Confirm opaque (no family constants found in its source) | PR-4 |
-| D-7 | Activation, staleness and revocation | new scope key and fresh ratchet; revoked or withdrawn selection fails closed (refusal) as for f1ab; changed ceiling re-evaluated at effect time | As stated; no silent fallback to caller-only after a revocation | PR-2/3, T09, T10 |
+## D-1 — Family structure: OPTION B (composite) recommended
+
+Requirement: standalone f1c may be adopted only if f1ab and f1c can be simultaneously bound and enforced without six hazards. Source (pinned) shows they cannot, using the existing architecture:
+
+| Source fact | Where |
+|---|---|
+| A binding holds exactly one `family` identifier and one `effective_policy_digest`; the claim carries one `policy_binding` | Control Plane `canonical_policy_binding.MEMBERS`, `IDENTIFIERS`; Runtime `local_authority_effect` (`getattr(claim, "policy_binding")`) |
+| The governed scope key includes `family`; a binding resolves exactly one activation row, one lineage, one epoch, one policy generation, one ratchet bit | Runtime `registry_selection_authority.check_effect` (~1371–1400: `scope = {…, "family": binding["family"]}`, `d.rows.get(gsd)`) |
+| Containment is hardwired to `FAMILY_F1AB` and the five `sa_fields()`; the executor must pass exactly those five sets | `_check_policy_containment` (~1451–1478), `sa_fields` (~1562) |
+| The narrowing adapter replaces only the five set fields and decides one record/selection | `registry_f1a_narrowing._build_narrowed_policy`, `FIELDS` |
+| Unbound claims fall back to caller policy for withdrawn/expired non-ratcheted scopes | `_check_unbound` (~1494–1515) |
+
+| Hazard | Why standalone f1c + f1ab fails on existing source |
+|---|---|
+| Policy substitution | One digest can name one family's policy; the other family's ceilings or sets have no digest binding, so the executor could present any values |
+| Partial activation | Two scopes activate independently; a claim bound to one never reads the other |
+| Independent withdrawal that widens | Withdrawing or revoking the unbound scope has no effect on a claim bound to the other, so the ceilings (or sets) silently drop |
+| Generation / epoch | Per-scope counters; nothing orders them across two scopes |
+| Atomic effect-time evaluation | `check_effect` verifies one row per call; two rows need a new multi-binding guard |
+| Unqualified fallback | A missing second binding is indistinguishable from "not governed" |
+
+Closing these needs a generic multi-family binding subsystem, which the Architect excluded. **Selected: composite `f1abc-local-execution-limits`** (five f1ab sets + `max_amount` + `max_effects`), one record, one selection, one activation, one seven-member digest. Preservation of f1ab semantics, coexistence and transition: `02` §9 and §12.
+
+## D-2 — Zero semantics: ACCEPTED
+
+`max_amount = 0` valid ceiling, evaluator unchanged. `max_effects = 0` explicit deny-all; no `LocalExecutionPolicy` is constructed; no effect is dispatched.
+
+## D-3 — Float compatibility: decision B (explicit refusal)
+
+Characterization and reasoning in `02` §6–§7. Governed path refuses any caller float `max_amount` (identity preimage is integer-only; accommodating floats needs a new float encoding). Registry records are exact ints. Legacy behaviour outside the governed path is unchanged. Documented compatibility limitation: operators using float or integral-float ceilings must express them as exact ints before a governed activation.
+
+## D-4 — Numeric bounds
+
+`max_amount` Registry 0..2^53 (source). `max_effects` Registry 0..2^53 − 1 with 0 = deny-all; derivation in `02` §4: no Runtime/Control Plane constraint below SQLite's 2^63 − 1; the Registry canonical-integer convention supplies 2^53 − 1. Caller `max_effects`: exact int ≥ 1, uncapped (the effective value is bounded by the record). Behaviour at 0, 1, max, max + 1, negative, bool, float and overflow: table in `02` §4. Alternative for the Architect: 2147483647.
+
+## D-5 — Successor contract: ACCEPTED (`r08-v3`; v2 untouched)
+
+## D-6 — Control Plane
+
+Opaque family/digest handling is confirmed by source (identifier pattern admits the new family; digest is opaque sha256; no f1ab constant). Minimum compatibility for the composite: reuse of binding profile `ocs-policy-binding/1`, bindings issued with the new family after cutover. Single binding is not assumed to support multiple families.
+
+## D-7 — Revocation and staleness: ACCEPTED
+
+Governed f1abc activations require participation `required` (existing ratchet) so an unbound claim refuses; revoked, withdrawn, stale, absent, invalid or mismatched selections refuse with no fallback.
+
+## Remaining implementation blockers
+
+| ID | Item | Blocks | Needed |
+|---|---|---|---|
+| R-1 | Confirm the `max_effects` Registry bound 2^53 − 1 (or choose 2147483647) | PR-1 ranges | Architect |
+| R-2 | Confirm reuse of the v2-labelled binding digest-domain constant for an r08-v3 family, or approve one new Control Plane constant | PR-4 only | Architect / Control Plane owner |
+| R-3 | Runtime coexistence rule and `policy_effective_ceilings` plumbing are required Runtime changes (not in PR-1) | PR-2/PR-3 | none; scheduled |
+
+None blocks PR-1 (Registry only) except R-1, which is a one-constant choice.
 
 ## Implementation authorization recommendation
 
-Authorize PR-1 (Registry `r08-v3` family, validation, composition, vectors) once D-1 to D-5 are ruled; PR-2/PR-3 (Runtime) follow without further design once D-7 is ruled. Do not authorize release or production use; Tier 1 independent qualification remains required before acceptance.
+AUTHORIZE PR-1 (Registry `r08-v3` composite family, validation, composition, identity, vectors, tests) upon confirmation of R-1. PR-2/PR-3 follow without further design. Release or production use is not recommended; Tier 1 independent qualification remains required before acceptance.
 
-## Standing holds (unchanged)
+## Standing holds
 
-M2 proposal: AUTHORIZED. M2 implementation: NOT YET AUTHORIZED. V09 independent assurance: separate workstream. Ed25519: SECURITY-HELD. Release/publication/production: HOLD.
+M2 contract correction: AUTHORIZED. M2 implementation: NOT AUTHORIZED. G2–G5: NOT AUTHORIZED. V09 independent assurance: separate workstream. Ed25519: SECURITY-HELD. Release/publication/production: HOLD.
