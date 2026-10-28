@@ -1,0 +1,217 @@
+[
+ [
+  "M01 narrowing not applied (host value kept)",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g01_valid_selection_narrows_bounded_tolerance_to_refuse_and_carries_iden"
+ ],
+ [
+  "M02 narrowing forced to refuse for every class",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g02_the_four_value_pairs_never_widen_and_the_unnamed_class_keeps_its_hos"
+ ],
+ [
+  "M03 widening to bounded_tolerance applied",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g01_valid_selection_narrows_bounded_tolerance_to_refuse_and_carries_iden"
+ ],
+ [
+  "M04 order inverted (looser wins)",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g01_valid_selection_narrows_bounded_tolerance_to_refuse_and_carries_iden"
+ ],
+ [
+  "M05 drop widening guard",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n01_defence_in_depth_refuses_a_registry_result_wider_than_the_host"
+ ],
+ [
+  "M06 drop record-minimum cross-check",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n02_a_registry_result_that_disagrees_with_the_record_minimum_is_refused"
+ ],
+ [
+  "M07 drop unnamed-class host-value check",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05b_a_registry_result_that_changes_a_class_the_record_does_not_name_is_"
+ ],
+ [
+  "M08 heal guard removed",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_i04d_defence_in_depth_direct_derive_still_refuses_a_healing_narrowing"
+ ],
+ [
+  "M09 scoped class coverage not required",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g07_a_record_silent_about_the_scoped_class_governs_nothing_and_is_refuse"
+ ],
+ [
+  "M10 vocabulary check dropped on host",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05c_host_class_vocabulary_is_checked_exactly_on_the_host_side"
+ ],
+ [
+  "M11 ambiguity not detected",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g08_two_actions_sharing_a_class_need_one_host_value_and_both_get_the_nar"
+ ],
+ [
+  "M12 lax record parser (duplicate keys)",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n08_the_record_class_map_parser_is_strict"
+ ],
+ [
+  "M13 optional participation",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g01_valid_selection_narrows_bounded_tolerance_to_refuse_and_carries_iden"
+ ],
+ [
+  "M14 deny_all ignored",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05_an_unexpected_registry_decision_shape_is_refused[<lambda>-registry_d"
+ ],
+ [
+  "M15 hold accepted as applied kind",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05_an_unexpected_registry_decision_shape_is_refused[<lambda>-registry_d"
+ ],
+ [
+  "M16 verifier type not enforced",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g16_optional_participation_and_non_admitted_verifiers_are_refused"
+ ],
+ [
+  "M17 operationally_authorized not required false",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05_an_unexpected_registry_decision_shape_is_refused[<lambda>-registry_d"
+ ],
+ [
+  "M18 no profile-modified check (entry)",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_m05_editing_the_held_profile_to_widen_or_swap_a_class_is_refused"
+ ],
+ [
+  "M19 no profile-modified check (last)",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_c08_a_profile_edited_between_execute_entry_and_the_commit_gate_is_refuse"
+ ],
+ [
+  "M20 drop all change comparisons",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_m03_a_different_effective_policy_cannot_ride_an_approval_issued_for_anot"
+ ],
+ [
+  "M21 drop effective map comparison only",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n03_each_component_of_the_bound_identity_is_compared_on_its_own[effectiv"
+ ],
+ [
+  "M22 drop policy digest comparison only",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n03_each_component_of_the_bound_identity_is_compared_on_its_own[digest-1"
+ ],
+ [
+  "M23 drop age part comparison only",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n04_the_final_profile_digest_and_the_age_part_are_compared_on_their_own"
+ ],
+ [
+  "M24 drop final profile digest comparison only",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n04_the_final_profile_digest_and_the_age_part_are_compared_on_their_own"
+ ],
+ [
+  "M25 destination not gated",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_e07_full_flow_executes_when_selection_stays_valid_with_four_source_calls"
+ ],
+ [
+  "M26 gate raises plain error",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_c01_revoked_after_execute_entry_verification_but_before_the_effect_bound"
+ ],
+ [
+  "M27 no effect-entry check",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_e07_full_flow_executes_when_selection_stays_valid_with_four_source_calls"
+ ],
+ [
+  "M28 no decision-entry check",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_e07_full_flow_executes_when_selection_stays_valid_with_four_source_calls"
+ ],
+ [
+  "M29 policy_binding profile accepted",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g10_a_profile_that_already_carries_an_approval_generation_binding_is_ref"
+ ],
+ [
+  "M30 proposal scope not checked",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_l07_proposals_outside_the_host_fixed_scope_are_refused_before_registry"
+ ],
+ [
+  "M31 execute-entry clock ignored at gate",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_c07_every_boundary_including_the_commit_gate_is_judged_at_the_execute_en"
+ ],
+ [
+  "M32 manifest authority not rechecked",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_l08_manifest_authority_change_after_construction_is_refused"
+ ],
+ [
+  "M33 age component dropped from joint derive",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_j01_both_selections_narrow_one_effective_profile_and_one_bound_identity"
+ ],
+ [
+  "M34 age refusal swallowed",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_j05_either_selection_revoked_after_execute_entry_blocks_the_effect_at_th"
+ ],
+ [
+  "M35 age scope mismatch accepted",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g19_the_class_age_pair_is_all_or_nothing_and_scope_bound"
+ ],
+ [
+  "M36 half-configured age pair accepted",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g19_the_class_age_pair_is_all_or_nothing_and_scope_bound"
+ ],
+ [
+  "M37 age source not consulted at boundaries",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_j01_both_selections_narrow_one_effective_profile_and_one_bound_identity"
+ ],
+ [
+  "M38 gated destination re-wrapped allowed",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_c06_destination_must_be_a_plain_host_destination"
+ ],
+ [
+  "M39 unknown registry class not refused downstream",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05d_a_record_class_unknown_to_the_host_is_refused_even_if_a_registry_re"
+ ],
+ [
+  "M41 host-validity precheck removed",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_i02_an_invalid_host_declaration_is_refused_before_any_registry_call_neve"
+ ],
+ [
+  "M42 host-validity precheck ignores irreversibility",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g01_valid_selection_narrows_bounded_tolerance_to_refuse_and_carries_iden"
+ ],
+ [
+  "M43 host-validity precheck inverted value",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_g01_valid_selection_narrows_bounded_tolerance_to_refuse_and_carries_iden"
+ ],
+ [
+  "M40 unreadable value composed before age (wrong base)",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_j01_both_selections_narrow_one_effective_profile_and_one_bound_identity"
+ ]
+]

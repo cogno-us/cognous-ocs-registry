@@ -1,0 +1,32 @@
+[
+ [
+  "M07 drop unnamed-class host-value check",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05b_a_registry_result_that_changes_a_class_the_record_does_not_name_is_"
+ ],
+ [
+  "M10 vocabulary check dropped on host",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05c_host_class_vocabulary_is_checked_exactly_on_the_host_side"
+ ],
+ [
+  "M14 deny_all ignored",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05_an_unexpected_registry_decision_shape_is_refused[<lambda>-registry_d"
+ ],
+ [
+  "M18 no profile-modified check (entry)",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_m05_editing_the_held_profile_to_widen_or_swap_a_class_is_refused"
+ ],
+ [
+  "M31 execute-entry clock ignored at gate",
+  "SURVIVED",
+  "149 passed in 20.57s"
+ ],
+ [
+  "M39 unknown registry class not refused downstream",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_n05d_a_record_class_unknown_to_the_host_is_refused_even_if_a_registry_re"
+ ]
+]

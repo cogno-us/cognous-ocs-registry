@@ -1,0 +1,7 @@
+[
+ [
+  "M31 execute-entry clock ignored at gate",
+  "KILLED",
+  "FAILED tests/test_f5_class_unreadable_governance.py::test_c07_every_boundary_including_the_commit_gate_is_judged_at_the_execute_en"
+ ]
+]
