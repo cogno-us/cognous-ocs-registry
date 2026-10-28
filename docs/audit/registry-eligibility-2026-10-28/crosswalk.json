@@ -254,7 +254,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-B-001",
+   "canonical_rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
    "child_params": [],
    "confidence": "HIGH",
    "config_owner": "Runtime code (immutable admission floor)",
@@ -270,8 +270,8 @@
      "symbol": "_admit_plain_data"
     }
    ],
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "safe_executor.py:155 if depth > 32 or nodes > 10000; called before snapshot copy",
    "existing_registry_coverage": "NONE: no Registry slot; correct to have none",
    "g0_record_links": [
@@ -298,7 +298,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-B-002",
+   "canonical_rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
    "child_params": [],
    "confidence": "HIGH",
    "config_owner": "Runtime code (immutable admission floor)",
@@ -314,8 +314,8 @@
      "symbol": "_admit_plain_data max_bytes=1048576"
     }
    ],
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "safe_executor.py:147 def _admit_plain_data(..., max_bytes: int = 1048576); :161,:183 checks",
    "existing_registry_coverage": "NONE: no Registry slot; correct to have none",
    "g0_record_links": [
@@ -342,7 +342,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-B-001",
+   "canonical_rule_id": "RG-B-001/number-domain",
    "child_params": [],
    "confidence": "HIGH",
    "config_owner": "Runtime code; consistent admission is part of commitment integrity",
@@ -368,12 +368,12 @@
    "historical_loc": "164-169",
    "historical_tier": "T1",
    "id": "W1-009",
-   "lead_adjudication": null,
+   "lead_adjudication": "Integer bit-length 256 and finite-float rule define the canonical number domain (protocol constant, retained); separated from the size/depth budgets that are the subject of the open admission-budget question.",
    "merge_basis": "same admission-floor literals in _admit_plain_data (G0 B-001)",
    "narrowing_relation": null,
    "reclassified_vs_historical_class": false,
    "registry_appropriate": "NO",
-   "rekeyed_by_lead": false,
+   "rekeyed_by_lead": true,
    "repository": "cogno-us/cognous-execution-runtime",
    "source_status": "FOUND",
    "widening_risk": "MATERIAL: differing budgets let one input admit under one host and not another; no authority owner for a per-tenant knob",
@@ -384,7 +384,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-B-001",
+   "canonical_rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
    "child_params": [],
    "confidence": "HIGH",
    "config_owner": "Runtime code; consistent admission is part of commitment integrity",
@@ -400,8 +400,8 @@
      "symbol": "_admit_plain_data"
     }
    ],
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "safe_executor.py:170-176",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -426,7 +426,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-B-001",
+   "canonical_rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
    "child_params": [],
    "confidence": "HIGH",
    "config_owner": "Runtime code; consistent admission is part of commitment integrity",
@@ -442,8 +442,8 @@
      "symbol": "_admit_plain_data"
     }
    ],
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "safe_executor.py:177-182",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -2860,8 +2860,8 @@
      "symbol": "commit"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_differs_from_worker": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": true,
    "evidence": "safe_executor.py:835-836; control_plane_adapter.py:153 maps partial/lose_ack flags",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -4679,8 +4679,8 @@
      "symbol": "PROFILE (refund_intent)"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_differs_from_worker": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": true,
    "evidence": "engine/refund_intent.py:17",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -5864,8 +5864,8 @@
      "symbol": "adapter capability properties"
     }
    ],
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "control_plane_adapter.py:69-85 getattr(self.destination,...,None)",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -6032,8 +6032,8 @@
      "symbol": "apply"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_differs_from_worker": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": true,
    "evidence": "control_plane_adapter.py:153 simulate=...",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -9075,8 +9075,8 @@
      "symbol": "execute_claim_atomic"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_differs_from_worker": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": true,
    "evidence": "local_authority_effect.py:1037",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -9201,8 +9201,8 @@
      "symbol": "execute_claim_atomic"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_differs_from_worker": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": true,
    "evidence": "local_authority_effect.py:1092-1093",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -9789,8 +9789,8 @@
      "symbol": "CAPABILITY, POINTS (delayed_commit)"
     }
    ],
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_differs_from_worker": true,
    "evidence": "engine/delayed_commit_destination.py:30-31",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -9915,8 +9915,8 @@
      "symbol": "CAPABILITY, IN_PROGRESS (dedupe_destination)"
     }
    ],
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_differs_from_worker": true,
    "evidence": "engine/dedupe_destination.py:27-28",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -10011,8 +10011,8 @@
      "symbol": "DedupeProfile"
     }
    ],
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "dedupe_destination.py:1-14 'CI/local aid... no model of any real provider'; :43-46; dedupe.py:64",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -10060,8 +10060,8 @@
      "symbol": "DedupeTtlMixin._operation_guard"
     }
    ],
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "dedupe_destination.py:76-93 now-committed_at<ttl; :113-118 default 600; ttl int>0 check :36-37",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -12258,8 +12258,8 @@
      "symbol": "authority_records_from_policy_config source default"
     }
    ],
-   "disposition": "CALLER-OR-ISSUER-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_differs_from_worker": true,
    "evidence": "src/agent_control_plane/policy_config.py:60-70",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -13022,8 +13022,8 @@
      "symbol": "refusal_trends"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_differs_from_worker": true,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_differs_from_worker": false,
    "evidence": "reason_vocabulary.py:21-24 kwarg defaults; :52-60 interpretation; no src consumer besides docs",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -13066,7 +13066,7 @@
      "symbol": "refusal_trends/_trend_report"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
+   "disposition": "PROVIDER-OR-HOST-OWNED",
    "disposition_differs_from_worker": true,
    "evidence": "reason_vocabulary.py:31-38,56-58 interpretation string",
    "existing_registry_coverage": "NONE",
@@ -13454,8 +13454,8 @@
      "symbol": "_EFFECTFUL/_HIGH_RISK/_PRIVILEGED"
     }
    ],
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "manifest_validation.py:18-21; docstring :1-14 parity; tests/test_scan6_manifest_validator_parity.py exists",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -13902,7 +13902,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "NEW:manifest-validator-default-action",
+   "canonical_rule_id": "LR-MANIFEST-DEFAULT-ACTION",
    "child_params": [
     {
      "name": "manifest default_action field",
@@ -13930,8 +13930,8 @@
      "symbol": "_manifest_mismatches action_blocked"
     }
    ],
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_differs_from_worker": false,
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "disposition_differs_from_worker": true,
    "evidence": "manifest_validation.py:90,99,121,144,167; bounded.py:2664-2667",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -13942,12 +13942,12 @@
    "historical_loc": "manifest_validation.py:86-88",
    "historical_tier": "Tier1",
    "id": "W5-023",
-   "lead_adjudication": null,
+   "lead_adjudication": "Worker C and the group audit (H2) agree the validator's `default_action` fallback is the same logical field as RG-C-031/RG-D-003; blind reviewer J1a classed it CALLER-OR-ISSUER-OWNED. Lead: merged into LR-MANIFEST-DEFAULT-ACTION.",
    "merge_basis": "Reclass vs G0 ALREADY-GOVERNED group: default literal is validator port, not Registry-governed",
    "narrowing_relation": "none: 'block' would weaken validation; runtime consumes only 'block'",
    "reclassified_vs_historical_class": true,
    "registry_appropriate": "NO",
-   "rekeyed_by_lead": false,
+   "rekeyed_by_lead": true,
    "repository": "cogno-us/cognous-control-plane",
    "source_status": "FOUND",
    "widening_risk": "MATERIAL if default changed to block (disables those checks)",
@@ -20504,8 +20504,8 @@
      "symbol": "check_class_members, effective_reversibility"
     }
    ],
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "REGISTRY-ELIGIBLE",
+   "disposition_differs_from_worker": true,
    "evidence": "reversibility.py:34-35 module doc 'reversible_until and reversal_cost are producer assertions'; :165-181",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -23308,8 +23308,8 @@
      "symbol": "OperationIdentityProfile"
     }
    ],
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_differs_from_worker": true,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_differs_from_worker": false,
    "evidence": "operation_identity.py:44-51; bounded.py:1621-1622 record only",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -24658,8 +24658,8 @@
      "symbol": "flags, _redaction_config_from_args"
     }
    ],
-   "disposition": "CALLER-OR-ISSUER-OWNED",
-   "disposition_differs_from_worker": false,
+   "disposition": "UNRESOLVED",
+   "disposition_differs_from_worker": true,
    "evidence": "models.py:420-451; cli.py:107-114 forces redact_payloads=True; redaction.py:23 config or RedactionConfig()",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [

@@ -38,6 +38,14 @@
   "W8-014": {
    "canonical_key": "NEW:runtime-authority-profile-producer-keys",
    "reason": "Producer keys are host trust roots, not a Registry candidate; separated from the RG-C-013 container group (Worker H1: container record, not one rule)."
+  },
+  "W5-023": {
+   "canonical_key": "LR-MANIFEST-DEFAULT-ACTION",
+   "reason": "Worker C and the group audit (H2) agree the validator's `default_action` fallback is the same logical field as RG-C-031/RG-D-003; blind reviewer J1a classed it CALLER-OR-ISSUER-OWNED. Lead: merged into LR-MANIFEST-DEFAULT-ACTION."
+  },
+  "W1-009": {
+   "canonical_key": "RG-B-001/number-domain",
+   "reason": "Integer bit-length 256 and finite-float rule define the canonical number domain (protocol constant, retained); separated from the size/depth budgets that are the subject of the open admission-budget question."
   }
  },
  "row_disposition_overrides": {},
@@ -63,6 +71,58 @@
   },
   "NEW:runtime-authority-profile-producer-keys": {
    "name": "RuntimeAuthorityProfile producer keys (host trust roots)"
+  },
+  "RG-B-001/number-domain": {
+   "name": "Canonical number domain: int bit length <= 256, finite floats (protocol constant)"
+  },
+  "LR-RUNTIME-ADMISSION-SIZE-BUDGETS": {
+   "disposition": "UNRESOLVED",
+   "name": "Runtime structural input admission budgets (depth 32, 10000 nodes/keys/items, 1 MiB size)",
+   "reason": "Blind reviewers J1a and J1b rated these narrow-only DoS bounds REGISTRY-ELIGIBLE (low value); first-pass workers D1 and J1c rated them non-tunable admission guards; G0 left the F3 Registry-scope question open. A genuine disagreement the evidence does not settle, so it is retained as UNRESOLVED."
+  },
+  "RG-C-032": {
+   "disposition": "UNRESOLVED",
+   "reason": "Blind reviewer J1b: action_type is an open string (models.py:69), so additive stricter membership of custom types in the effectful/high-risk/privileged sets would be monotone. First-pass worker C retained it. Who may add custom action types to the floor sets, and who authorises that classification, is not decidable from source."
+  },
+  "RG-C-011": {
+   "disposition": "REGISTRY-ELIGIBLE",
+   "reason": "Cross-check J3b falsified HOST-OWNED: effective_reversibility (reversibility.py:165-181) already forces `irreversible` for undeclared, protected-read and unobservable classes, so a Registry overlay that can only raise the strictness rank (force irreversible) is monotone with an existing Control Plane consumer. Disagreement retained: first-pass H2/A treated the declaration as a producer assertion of fact. Depends on AUD-D06."
+  },
+  "RG-F11-REDACTION-DEFAULTS": {
+   "disposition": "UNRESOLVED",
+   "reason": "First-pass H1 rated the redaction defaults caller-owned presentation choices; cross-check J3b rated an OR-floor of redaction flags REGISTRY-ELIGIBLE. Whether a minimum-redaction floor is a Registry-owned operator control (plan wave M10) is a privacy-owner decision (AUD-D05)."
+  },
+  "RG-F7-DEDUPE": {
+   "disposition": "UNRESOLVED",
+   "reason": "First-pass H2 rated it PROVIDER-OR-HOST-OWNED; cross-check J3b found the Control Plane DedupeProfile mixes provider horizon, key TTL and escalation deadline. G0 open item C-022 stands: are escalation_deadline and key TTL host policy or provider-declared?"
+  },
+  "RG-B-031": {
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "reason": "J3a: examples/openshell/provision.py is the documented operator step for the opt-in OpenShell adapter (docs/openshell-adapter.md:93); sandbox sizing and gateway pin are host facts."
+  },
+  "RG-C-015": {
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "reason": "J3a: OperationIdentityProfile is on the production RuntimeAuthorityProfile path (runtime_authority.py:204,321,435); resolver_id/resolver_version are host labels."
+  },
+  "RG-C-037": {
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "reason": "J3a: refusal_trends is a documented reporting API with tests, not unused; thresholds are analytics defaults with no authority effect and no enforcement boundary. LOW confidence; either label leaves it outside the manageable set."
+  },
+  "NEW:simulate-fault-injection": {
+   "disposition": "RETAIN-IN-CODE",
+   "reason": "J3a: the `simulate` switch is live on the supported executor path (control_plane_adapter.py:153, safe_executor.py:835): a test hook in production code, not configuration."
+  },
+  "NEW:synthetic-refund-intent-profile": {
+   "disposition": "RETAIN-IN-CODE",
+   "reason": "J3a: the module is opt-in but reachable (control_plane_adapter.py:316-320; safe_executor.py:854; local_authority_effect.py:120 check its tables); the constant is a profile id."
+  },
+  "NEW:destination-capability-identifiers": {
+   "disposition": "OUT-OF-SCOPE",
+   "reason": "J3b: protocol labels of CI/local synthetic destinations, outside the production boundary (label corrected from host-owned)."
+  },
+  "NEW:policy-config-authority-source-label": {
+   "disposition": "OUT-OF-SCOPE",
+   "reason": "J3b: demo-only helper (label corrected from caller-owned)."
   }
  },
  "merges": [
@@ -94,6 +154,15 @@
    ],
    "name": "Action Manifest default_action (value and omitted-field fallback)",
    "reason": "Worker H2: RG-C-031 and RG-D-003 are the same manifest field split across two groups."
+  },
+  {
+   "into": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "members": [
+    "RG-B-001",
+    "RG-B-002"
+   ],
+   "name": "Runtime structural input admission budgets (depth 32, 10000 nodes/keys/items, 1 MiB size)",
+   "reason": "Same admission guard (safe_executor._admit_plain_data and the max_bytes budget); G0 split them into two retain groups. Merged so the open question is carried once."
   }
  ],
  "splits": [
@@ -166,8 +235,8 @@
    "reason": "Caller-overridable presentation default; no redaction floor exists in code."
   },
   "RG-D-012": {
-   "disposition": "CALLER-OR-ISSUER-OWNED",
-   "reason": "Caller-overridable presentation default; no redaction floor exists in code."
+   "disposition": "UNRESOLVED",
+   "reason": "See RG-F11-REDACTION-DEFAULTS: the replay-bundle redaction flags carry the same minimum-redaction-floor ownership question (AUD-D05)."
   },
   "RG-B-014": {
    "disposition": "OUT-OF-SCOPE",
@@ -240,6 +309,37 @@
   "RG-C-018": {
    "migration_wave": "M11 (proposed; same Control Plane freshness-profile consumer as RG-C-019/RG-C-020)",
    "implementation_status": "NOT-STARTED"
+  },
+  "RG-C-011": {
+   "parameters": 1,
+   "migration_wave": "M12",
+   "implementation_status": "NOT-STARTED",
+   "configurable": "YES"
+  },
+  "LR-RUNTIME-ADMISSION-SIZE-BUDGETS": {
+   "blocking": [
+    "May the Registry narrow Runtime structural admission budgets (depth, node/entry count, byte size)? They are Tier 1 admission guards that bound the canonicalization domain; a narrow-only override only rejects more, but the value is low and the ceiling must stay in code (G0 F3 scope question)."
+   ]
+  },
+  "RG-C-032": {
+   "blocking": [
+    "Who may add custom action types to the effectful/high-risk/privileged floor sets, and who authorises that classification? Built-in membership is a fixed floor."
+   ]
+  },
+  "RG-F11-REDACTION-DEFAULTS": {
+   "blocking": [
+    "Is a minimum-redaction floor a Registry-owned operator control (a new privacy feature, plan wave M10), and who is the privacy owner?"
+   ]
+  },
+  "RG-D-012": {
+   "blocking": [
+    "Same minimum-redaction-floor ownership question as RG-F11-REDACTION-DEFAULTS; the replay-bundle library has no Registry consumer."
+   ]
+  },
+  "RG-F7-DEDUPE": {
+   "blocking": [
+    "Are the Control Plane DedupeProfile escalation_deadline and key TTL host policy or provider-declared facts? (G0 C-022)"
+   ]
   }
  },
  "decisions": [
@@ -300,5 +400,172 @@
   "evidence-registry app/core/config.py:28 holds a default JWT secret_key; create_access_token/verify_token have no callers, so it is not exposed today (worker I2). The module is a non-authoritative demo.",
   "Stack Orchestrator observer.py:91 defaults confirmations to 0 and observer.py:120-126 accepts http:// and userinfo URLs; its hard-coded upstream pins (admission.py:102-118, producer_evidence.py:10-11) are stale against the current hub lock. Documented, labelled historical (worker I3).",
   "Control Plane replay.py from_json uses non-strict json.loads for a fixed-format export (worker F2); not a defect."
- ]
+ ],
+ "cross_check_resolutions": [
+  {
+   "item": "W1-007",
+   "resolution": "ADOPTED-AS-UNRESOLVED",
+   "reason": "Blind J1a rated the structural caps eligible (narrow-only, low value); D1/J1c retain. Genuine split, so the merged rule LR-RUNTIME-ADMISSION-SIZE-BUDGETS is UNRESOLVED with a blocking question."
+  },
+  {
+   "item": "W1-008",
+   "resolution": "ADOPTED-AS-UNRESOLVED",
+   "reason": "Same admission-budget question as W1-007 (J1b eligible vs. first-pass retain)."
+  },
+  {
+   "item": "W1-010",
+   "resolution": "ADOPTED-AS-UNRESOLVED",
+   "reason": "J1c retain vs J1a/J1b eligible; carried by the merged UNRESOLVED admission-budget rule."
+  },
+  {
+   "item": "W1-011",
+   "resolution": "ADOPTED-AS-UNRESOLVED",
+   "reason": "As W1-010."
+  },
+  {
+   "item": "W1-038",
+   "resolution": "NO-CHANGE",
+   "reason": "Evaluator row; its parameter is already counted under governed RG-F1A. Row stays a retained mechanism."
+  },
+  {
+   "item": "W7-004",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "Accessor mechanism; a host-owned label does not change the outcome."
+  },
+  {
+   "item": "W9-040",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "Redaction-default mechanism row; ownership is carried by the UNRESOLVED parameter rule RG-F11-REDACTION-DEFAULTS."
+  },
+  {
+   "item": "W3-024",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "Both labels non-manageable."
+  },
+  {
+   "item": "W4-018",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "Both labels non-manageable."
+  },
+  {
+   "item": "W7-025",
+   "resolution": "NO-CHANGE",
+   "reason": "The tunable parameter is already carried by existing eligible freshness rules; this row is the check mechanism."
+  },
+  {
+   "item": "W9-003",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "CLI 1 MiB cap is host-owned or retained; neither is manageable."
+  },
+  {
+   "item": "W9-049",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "Both labels non-manageable."
+  },
+  {
+   "item": "W6-042",
+   "resolution": "NO-CHANGE",
+   "reason": "Parameter already covered by eligible RG-F4-OBSERVATION-POLICY; this row is the presence-requirement mechanism."
+  },
+  {
+   "item": "W7-042",
+   "resolution": "NO-CHANGE",
+   "reason": "Parameter already covered by eligible rule RG-C-007 family; this row is a mechanism."
+  },
+  {
+   "item": "W8-098",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "Both labels non-manageable."
+  },
+  {
+   "item": "W9-006",
+   "resolution": "NO-CHANGE (label-only; both the first-pass and the blind label are non-manageable)",
+   "reason": "Both labels non-manageable."
+  },
+  {
+   "item": "NEW:simulate-fault-injection",
+   "resolution": "ADOPTED",
+   "reason": "RETAIN-IN-CODE (test hook on live path)."
+  },
+  {
+   "item": "NEW:synthetic-refund-intent-profile",
+   "resolution": "ADOPTED",
+   "reason": "RETAIN-IN-CODE (profile id constant)."
+  },
+  {
+   "item": "RG-B-031",
+   "resolution": "ADOPTED",
+   "reason": "PROVIDER-OR-HOST-OWNED (operator provisioning step)."
+  },
+  {
+   "item": "RG-C-015",
+   "resolution": "ADOPTED",
+   "reason": "PROVIDER-OR-HOST-OWNED (host labels)."
+  },
+  {
+   "item": "RG-C-037",
+   "resolution": "ADOPTED",
+   "reason": "PROVIDER-OR-HOST-OWNED, LOW confidence; either label is non-manageable."
+  },
+  {
+   "item": "NEW:destination-capability-identifiers",
+   "resolution": "ADOPTED",
+   "reason": "OUT-OF-SCOPE."
+  },
+  {
+   "item": "NEW:policy-config-authority-source-label",
+   "resolution": "ADOPTED",
+   "reason": "OUT-OF-SCOPE."
+  },
+  {
+   "item": "RG-C-011",
+   "resolution": "ADOPTED-WITH-RETAINED-DISAGREEMENT",
+   "reason": "REGISTRY-ELIGIBLE, MEDIUM. A rank-raising-only overlay is monotone and reversibility.py already forces irreversible for several classes. First-pass workers treated it as a producer assertion of fact. Depends on AUD-D06."
+  },
+  {
+   "item": "RG-D-012",
+   "resolution": "ADOPTED-AS-UNRESOLVED",
+   "reason": "Carries the minimum-redaction-floor ownership question (AUD-D05)."
+  },
+  {
+   "item": "RG-D-021",
+   "resolution": "REJECTED",
+   "reason": "Retained PROVIDER-OR-HOST-OWNED: no hard-coded value exists; the value lives in the hub reference_profiles. Reviewer J3b disagrees (retained disagreement)."
+  },
+  {
+   "item": "RG-F11-REDACTION-DEFAULTS",
+   "resolution": "ADOPTED-AS-UNRESOLVED",
+   "reason": "Caller-owned presentation (H1) vs an OR-floor (J3b): ownership of a minimum-redaction floor is a privacy-owner decision (AUD-D05)."
+  },
+  {
+   "item": "RG-F7-DEDUPE",
+   "resolution": "ADOPTED-AS-UNRESOLVED",
+   "reason": "G0 C-022 stands: horizon/TTL/escalation deadline ownership is open."
+  }
+ ],
+ "cross_check_stats": {
+  "J1_blind_reaudit": {
+   "rows": 178,
+   "risk_selected": 148,
+   "random": 30,
+   "disagreements_with_final": 16,
+   "label_only": 9,
+   "adjudicated_to_unresolved": 4,
+   "no_change_parameter_already_counted": 3
+  },
+  "J3a_out_of_scope_claims": {
+   "claims": 35,
+   "confirmed": 30,
+   "falsified": 5,
+   "falsified_toward_eligible": 0
+  },
+  "J3b_host_caller_claims": {
+   "claims": 40,
+   "confirmed": 33,
+   "falsified": 7,
+   "adopted": 4,
+   "rejected": 1,
+   "to_unresolved": 3
+  }
+ }
 }

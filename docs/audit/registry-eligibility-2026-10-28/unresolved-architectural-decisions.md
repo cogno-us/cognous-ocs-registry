@@ -57,14 +57,19 @@ All five governed rules are builder-integrated; the program's own accounting (m2
 | Rule | Disposition | Blocking question |
 |---|---|---|
 | LR-F5-CLASS-STATUS-AGE | REGISTRY-ELIGIBLE | How does a Registry-narrowed class value enter approval_commitment and the approval-side age_ceilings check, given profile.model_dump is the preimage? |
+| LR-RUNTIME-ADMISSION-SIZE-BUDGETS | UNRESOLVED | May the Registry narrow Runtime structural admission budgets (depth, node/entry count, byte size)? They are Tier 1 admission guards that bound the canonicalization domain; a narrow-only override only rejects more, but the value is low and the ceiling must sta… |
 | NEW:operation-identity-enablement | UNRESOLVED | Is enabling operation-identity a governed policy narrowing, or a host protocol-profile/wiring choice that must be set jointly in Runtime ctor, CP profile and destination capability (and be one-way)? |
 | RG-C-005 | REGISTRY-ELIGIBLE | Is the omission of identity/mandate ages from F4 (DR-CP-AGE-1) a deliberate exclusion or a gap awaiting a new slot? |
 | RG-C-009 | REGISTRY-ELIGIBLE | As RG-C-008: how a narrowed class enum enters the approval commitment. |
 | RG-C-010 | REGISTRY-ELIGIBLE | Is a Registry-forced 'requires_revocation_assurance' meaningful when it holds the class until the host supplies a holder inventory (self-inflicted denial), and does it need profile-commitment handling? |
 | RG-C-024 | UNRESOLVED | Is a host principal allow-list (funded merge authorities) a Registry-narrowable allow-set like F1a, given principal identity namespace and merge profile are host-owned and opt-in? |
+| RG-C-032 | UNRESOLVED | Who may add custom action types to the effectful/high-risk/privileged floor sets, and who authorises that classification? Built-in membership is a fixed floor. |
+| RG-D-012 | UNRESOLVED | Same minimum-redaction-floor ownership question as RG-F11-REDACTION-DEFAULTS; the replay-bundle library has no Registry consumer. |
 | RG-D-022 | UNRESOLVED | Is max_source_age owned by the governance-config authors (anchors/quorum, set once at create) or may Registry overlay it, and does this reference profile count as an enforcement boundary? |
 | RG-D-025 | UNRESOLVED | Do wording/claim scanner term lists belong to the hub declarative-governance registry (OCS-DGR-ARCH) or to cognous-ocs-registry, and is lint-only wording in scope of this program? |
 | RG-D-027 | BLOCKED | Project-owner confirmation of the tier ceilings and a consuming enforcement boundary for delay_limit. |
+| RG-F11-REDACTION-DEFAULTS | UNRESOLVED | Is a minimum-redaction floor a Registry-owned operator control (a new privacy feature, plan wave M10), and who is the privacy owner? |
+| RG-F7-DEDUPE | UNRESOLVED | Are the Control Plane DedupeProfile escalation_deadline and key TTL host policy or provider-declared facts? (G0 C-022) |
 
 ## 3. Observations that are not migration defects
 

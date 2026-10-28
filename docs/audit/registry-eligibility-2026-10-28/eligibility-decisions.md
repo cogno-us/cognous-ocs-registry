@@ -122,6 +122,16 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Blocking decisions: Is a Registry-forced 'requires_revocation_assurance' meaningful when it holds the class until the host supplies a holder inventory (self-inflicted denial), and does it need profile-commitment handling?
 - Historical rows: W8-007; G0 groups: RG-C-010; evidence: cp runtime_authority.py:135; holder_inventory.py (flag consumer not re-read in depth); runtime_authority.py:135,430-433; holder_inventory.py:7-9
 
+### RG-C-011 — Producer assertions on a class: effective_reversibility (reversibility.py 165-181) returns irreversible when undeclared, when reads_protected_data, when counter
+
+- Disposition: **REGISTRY-ELIGIBLE** (basis: LEAD-OVERRIDE: Cross-check J3b falsified HOST-OWNED: effective_reversibility (reversibility.py:165-181) already forces `irreversible` for undeclared, protected-read and unobservable classes, so a Registry overlay that can only raise the strictness rank (force irreversible) is monotone with an existing Control Plane consumer. Disagreement retained: first-pass H2/A treated the declaration as a producer assertion of fact. Depends on AUD-D06.); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
+- Parameters: 1; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'NO'}; proposed wave: M12.
+- Configuration owner: Host RuntimeAuthorityProfile.actions[...]; needs the ReversibilityProfile marker (host) else the profile refuses (runtime_authority.py _profiles_compose).; Host/producer (module: 'producer assertions'); Host/producer asserting real action reversibility facts
+- Value / domain: Producer assertions on a class: effective_reversibility (reversibility.py 165-181) returns irreversible when undeclared, when reads_protected_data, when counterparty_observable is False, or when a reversible_until window has passed. `irreve
+- Narrowing semantics: Order: STRICTNESS rank; registry may only raise rank (reversible_until -> reversible_at_cost -> irreversible) or tighten reversible_until to an earlier instant. Absent/undeclared already resolves irreversible. reads_protected_data False->True and counterparty_observable True->False are strictening o
+- Existing Registry coverage: ['NONE']
+- Historical rows: W8-008; G0 groups: RG-C-011; evidence: cp runtime_authority.py:138-146; reversibility.py:165-181; reversibility.py:34-35 module doc 'reversible_until and reversal_cost are producer assertions'; :165-181
+
 ### RG-C-018 — bool default True. When True and the resolver declares status-nonce/0.1 each resolver read carries a nonce and a mismatch yields status_nonce_mismatch; otherwis
 
 - Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): RETAIN-IN-CODE; confidence MEDIUM.
@@ -174,6 +184,17 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 
 ## Unresolved or blocked
 
+### LR-RUNTIME-ADMISSION-SIZE-BUDGETS — Runtime structural input admission budgets (depth 32, 10000 nodes/keys/items, 1 MiB size)
+
+- Disposition: **UNRESOLVED** (basis: LEAD-OVERRIDE: Blind reviewers J1a and J1b rated these narrow-only DoS bounds REGISTRY-ELIGIBLE (low value); first-pass workers D1 and J1c rated them non-tunable admission guards; G0 left the F3 Registry-scope question open. A genuine disagreement the evidence does not settle, so it is retained as UNRESOLVED.); G0 disposition(s): RETAIN-IN-CODE; confidence HIGH.
+- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: None.
+- Configuration owner: Code (contract constant / protected mechanism); Hard-coded in protected engine/safe_executor.py; not an argument of snapshot_envelope; Runtime code (immutable admission floor); Runtime code; consistent admission is part of commitment integrity
+- Value / domain: literals: depth 32, nodes 10000, dict/list len 10000, int bit_length 256; non-finite float refused; exact builtin types only
+- Narrowing semantics: 
+- Existing Registry coverage: ['NONE', 'NONE: no Registry slot; correct to have none']
+- Blocking decisions: May the Registry narrow Runtime structural admission budgets (depth, node/entry count, byte size)? They are Tier 1 admission guards that bound the canonicalization domain; a narrow-only override only rejects more, but t…
+- Historical rows: W1-007, W1-008, W1-010, W1-011; G0 groups: RG-B-001, RG-B-002; evidence: rt safe_executor.py:147-183; rt safe_executor.py:147-184; safe_executor.py:147 def _admit_plain_data(..., max_bytes: int = 1048576); :161,:183 checks; safe_executor.py:155 if depth > 32 or nodes > 10000; called before snapshot copy; safe_executor.py:170-176; …
+
 ### NEW:hub-registry-record-profile-vocabulary — hub registry record profile vocabulary
 
 - Disposition: **UNRESOLVED** (basis: REPO-COVERAGE WORKER); G0 disposition(s): not in G0 inventory; confidence MEDIUM.
@@ -205,6 +226,28 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Existing Registry coverage: ['NONE']
 - Blocking decisions: Is a host principal allow-list (funded merge authorities) a Registry-narrowable allow-set like F1a, given principal identity namespace and merge profile are host-owned and opt-in?
 - Historical rows: W9-023; G0 groups: RG-C-024; evidence: merge.py:50-57 funded_authorities list min_length 1; merge.py:195 non-member held; subset removal would narrow; merge.py:50-57,195
+
+### RG-C-032 — Three frozensets of action_type strings selecting which validator rules apply (E020-E023 effectful, E014 high risk with default allow, E008 privileged). A type 
+
+- Disposition: **UNRESOLVED** (basis: LEAD-OVERRIDE: Blind reviewer J1b: action_type is an open string (models.py:69), so additive stricter membership of custom types in the effectful/high-risk/privileged sets would be monotone. First-pass worker C retained it. Who may add custom action types to the floor sets, and who authorises that classification, is not decidable from source.); G0 disposition(s): RETAIN-IN-CODE; confidence MEDIUM.
+- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: None.
+- Configuration owner: Action-manifest contract (external); Control Plane holds a parity port; Code (validator vocabulary); Code.
+- Value / domain: Three frozensets of action_type strings selecting which validator rules apply (E020-E023 effectful, E014 high risk with default allow, E008 privileged). A type not in the sets is treated as non-effectful by the validator.
+- Narrowing semantics: 
+- Existing Registry coverage: ['NONE']
+- Blocking decisions: Who may add custom action types to the effectful/high-risk/privileged floor sets, and who authorises that classification? Built-in membership is a fixed floor.
+- Historical rows: W5-012; G0 groups: RG-C-032; evidence: manifest_validation.py:18-21 frozensets; parity with external validator ('same gate, the same codes'); removal widens; manifest_validation.py:18-21; docstring :1-14 parity; tests/test_scan6_manifest_validator_parity.py exists
+
+### RG-D-012 — Replay Bundle redact_replay_bundle defaults
+
+- Disposition: **UNRESOLVED** (basis: LEAD-SPLIT: See RG-F11-REDACTION-DEFAULTS: the replay-bundle redaction flags carry the same minimum-redaction-floor ownership question (AUD-D05).); G0 disposition(s): not in G0 inventory; confidence MEDIUM.
+- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: None.
+- Configuration owner: Caller-overridable code defaults.
+- Value / domain: Keyword defaults: redact_payloads=True; redact_targets/final_output/reasons/task/scope=False; replacement="[REDACTED]"; clear_signature_metadata=False.
+- Narrowing semantics: 
+- Existing Registry coverage: None
+- Blocking decisions: Same minimum-redaction-floor ownership question as RG-F11-REDACTION-DEFAULTS; the replay-bundle library has no Registry consumer.
+- Historical rows: none (G0-current rule); G0 groups: none; evidence: 
 
 ### RG-D-022 — governance config member max_source_age (int>=1) bounds 0<=now-reviewed_at<=max_source_age for each authority fact; also review_due/expires_at intervals and ris
 
@@ -239,6 +282,28 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Blocking decisions: Project-owner confirmation of the tier ceilings and a consuming enforcement boundary for delay_limit.
 - Historical rows: none (G0-current rule); G0 groups: RG-D-027; evidence: authority_context.py:16-17 'Proposed ... Owner to confirm'; CP bounded.py:52,2284 accepts schema versions only, delay_limit not read
 
+### RG-F11-REDACTION-DEFAULTS — Redaction defaults (Control Plane RedactionConfig; action-manifest hint string; replay-bundle keyword defaults)
+
+- Disposition: **UNRESOLVED** (basis: LEAD-OVERRIDE: First-pass H1 rated the redaction defaults caller-owned presentation choices; cross-check J3b rated an OR-floor of redaction flags REGISTRY-ELIGIBLE. Whether a minimum-redaction floor is a Registry-owned operator control (plan wave M10) is a privacy-owner decision (AUD-D05).); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
+- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: M10.
+- Configuration owner: Caller (CLI flags or RedactionConfig argument). No file or env source.; Caller/exporter (CLI flags, API args, manifest author for hints); Exporting caller (library arg or CLI flags)
+- Value / domain: Optional redaction scope (targets, final output, reasons all default off) and replacement text. Library callers pass a RedactionConfig; the CLI exposes --targets/--final-output/--reasons (store_true) and --replacement. Defaults are HARD_COD
+- Narrowing semantics: 
+- Existing Registry coverage: ['NONE']
+- Blocking decisions: Is a minimum-redaction floor a Registry-owned operator control (a new privacy feature, plan wave M10), and who is the privacy owner?
+- Historical rows: W9-002; G0 groups: RG-F11-REDACTION-DEFAULTS; evidence: cp models.py:420-451; cli.py:76-114; manifest models.py:173-175; replay-bundle redaction.py not local; models.py:420-451; cli.py:107-114 forces redact_payloads=True; redaction.py:23 config or RedactionConfig()
+
+### RG-F7-DEDUPE — Dedupe/replay TTL (Runtime dedupe_ttl_seconds; Control Plane DedupeProfile)
+
+- Disposition: **UNRESOLVED** (basis: LEAD-OVERRIDE: First-pass H2 rated it PROVIDER-OR-HOST-OWNED; cross-check J3b found the Control Plane DedupeProfile mixes provider horizon, key TTL and escalation deadline. G0 open item C-022 stands: are escalation_deadline and key TTL host policy or provider-declared?); G0 disposition(s): UNRESOLVED; confidence MEDIUM.
+- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: None.
+- Configuration owner: Destination (provider-declared); Destination/provider (declared capability); CP host profile must stay below it; Destination/provider (models provider dedupe memory); declared via DedupeProfile on CP side; Host RuntimeAuthorityProfile.dedupe; needs operation_…
+- Value / domain: Three required ints > 0 (no defaults) with invariant provider_horizon <= escalation_deadline < dedupe_ttl. Describes destination idempotency-key facts and the escalation deadline of unresolved attempts.
+- Narrowing semantics: 
+- Existing Registry coverage: ['NONE']
+- Blocking decisions: Are the Control Plane DedupeProfile escalation_deadline and key TTL host policy or provider-declared facts? (G0 C-022)
+- Historical rows: W2-062, W3-062, W3-063; G0 groups: RG-F7-DEDUPE; evidence: control_plane_adapter.py:69-85 getattr(self.destination,...,None); cp dedupe.py:54-68; rt dedupe_destination.py:76-105; README.md optional CI/local synthetic destinations; dedupe_destination.py:1-14 'CI/local aid... no model of any real provider'; :43-46; ded…
+
 ## Rules whose disposition differs from G0
 
 | Rule | G0 | Audit | Reason (basis) |
@@ -246,23 +311,26 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 | LR-F4-STATUS-APPROVAL-AGE | ALREADY-GOVERNED, ELIGIBLE-NOT-MIGRATED | REGISTRY-ELIGIBLE | H-WORKER GROUP AUDIT |
 | LR-F5-CLASS-STATUS-AGE | ALREADY-GOVERNED, ELIGIBLE-NOT-MIGRATED | REGISTRY-ELIGIBLE | H-WORKER GROUP AUDIT |
 | LR-MANIFEST-DEFAULT-ACTION | ALREADY-GOVERNED, RETAIN-IN-CODE | CALLER-OR-ISSUER-OWNED | LEAD-OVERRIDE: Workers H2 audited RG-C-031 CALLER-OR-ISSUER-OWNED and RG-D-003 RETAIN-IN-CODE for the same manifest default_action field. Lead merge: the configured value is issue… |
+| LR-RUNTIME-ADMISSION-SIZE-BUDGETS | RETAIN-IN-CODE | UNRESOLVED | LEAD-OVERRIDE: Blind reviewers J1a and J1b rated these narrow-only DoS bounds REGISTRY-ELIGIBLE (low value); first-pass workers D1 and J1c rated them non-tunable admission guards;… |
 | RG-B-016 | ELIGIBLE-NOT-MIGRATED | OUT-OF-SCOPE | H-WORKER GROUP AUDIT |
 | RG-B-018 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-B-019 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-B-021 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-B-027 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
-| RG-C-011 | ELIGIBLE-NOT-MIGRATED | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
+| RG-B-031 | OUT-OF-SCOPE | PROVIDER-OR-HOST-OWNED | LEAD-OVERRIDE: J3a: examples/openshell/provision.py is the documented operator step for the opt-in OpenShell adapter (docs/openshell-adapter.md:93); sandbox sizing and gateway pin… |
 | RG-C-012 | RETAIN-IN-CODE | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
 | RG-C-014 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
+| RG-C-015 | OUT-OF-SCOPE | PROVIDER-OR-HOST-OWNED | LEAD-OVERRIDE: J3a: OperationIdentityProfile is on the production RuntimeAuthorityProfile path (runtime_authority.py:204,321,435); resolver_id/resolver_version are host labels. |
 | RG-C-016 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-C-017 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-C-018 | RETAIN-IN-CODE | REGISTRY-ELIGIBLE | H-WORKER GROUP AUDIT |
 | RG-C-021 | ALREADY-GOVERNED | REGISTRY-ELIGIBLE | H-WORKER GROUP AUDIT |
 | RG-C-024 | RETAIN-IN-CODE | UNRESOLVED | H-WORKER GROUP AUDIT |
 | RG-C-026 | RETAIN-IN-CODE | OUT-OF-SCOPE | H-WORKER GROUP AUDIT |
+| RG-C-032 | RETAIN-IN-CODE | UNRESOLVED | LEAD-OVERRIDE: Blind reviewer J1b: action_type is an open string (models.py:69), so additive stricter membership of custom types in the effectful/high-risk/privileged sets would b… |
 | RG-C-033 | UNRESOLVED | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
 | RG-C-034 | RETAIN-IN-CODE | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
-| RG-C-037 | ELIGIBLE-NOT-MIGRATED | OUT-OF-SCOPE | H-WORKER GROUP AUDIT |
+| RG-C-037 | ELIGIBLE-NOT-MIGRATED | PROVIDER-OR-HOST-OWNED | LEAD-OVERRIDE: J3a: refusal_trends is a documented reporting API with tests, not unused; thresholds are analytics defaults with no authority effect and no enforcement boundary. LO… |
 | RG-D-014 | RETAIN-IN-CODE | OUT-OF-SCOPE | H-WORKER GROUP AUDIT |
 | RG-D-015 | ELIGIBLE-NOT-MIGRATED | OUT-OF-SCOPE | H-WORKER GROUP AUDIT |
 | RG-D-018 | ELIGIBLE-NOT-MIGRATED | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
@@ -270,11 +338,10 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 | RG-D-021 | ELIGIBLE-NOT-MIGRATED | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-D-022 | ELIGIBLE-NOT-MIGRATED | UNRESOLVED | H-WORKER GROUP AUDIT |
 | RG-D-026 | OUT-OF-SCOPE | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
-| RG-F11-REDACTION-DEFAULTS | ELIGIBLE-NOT-MIGRATED | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
+| RG-F11-REDACTION-DEFAULTS | ELIGIBLE-NOT-MIGRATED | UNRESOLVED | LEAD-OVERRIDE: First-pass H1 rated the redaction defaults caller-owned presentation choices; cross-check J3b rated an OR-floor of redaction flags REGISTRY-ELIGIBLE. Whether a mini… |
 | RG-F1C-MAX-AMOUNT | ELIGIBLE-NOT-MIGRATED | REGISTRY-GOVERNED | H-WORKER GROUP AUDIT |
 | RG-F1C-MAX-EFFECTS | ELIGIBLE-NOT-MIGRATED | REGISTRY-GOVERNED | H-WORKER GROUP AUDIT |
 | RG-F1D-TARGET-MATCH | ELIGIBLE-NOT-MIGRATED | REGISTRY-GOVERNED | H-WORKER GROUP AUDIT |
 | RG-F1D-TARGET-PREFIXES | ELIGIBLE-NOT-MIGRATED | REGISTRY-GOVERNED | H-WORKER GROUP AUDIT |
 | RG-F6-ACTION-LISTS | UNRESOLVED | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
-| RG-F7-DEDUPE | UNRESOLVED | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 

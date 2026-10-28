@@ -6,16 +6,16 @@ All numbers below are computed by `tools/reconcile.py` from the ledgers in this 
 
 ## 1. Answer to the Architect's question
 
-Of **441** distinct canonical logical rules reconciled from the 620 historical records, the 97 current groups and the repository-coverage sweep:
+Of **440** distinct canonical logical rules reconciled from the 620 historical records, the 97 current groups and the repository-coverage sweep:
 
 | Measure | Rules | Configuration parameters | Share |
 |---|---|---|---|
-| Registry-governed (implemented and integrated at the Runtime enforcement boundary; NOT independently accepted) | 5 | 9 | 31.2% |
-| Registry-eligible, not yet governed | 11 | 12 | 68.8% |
-| **Registry-manageable total (governed + eligible)** | **16** | **21** | 100% |
-| …as a share of all canonical rules | 16 of 441 |  | 3.6% |
-| …as a share of the 43 configuration-bearing rules (configurable = YES, or a pending decision) | 16 of 43 |  | 37.2% |
-| Unresolved or blocked (decision needed before eligibility can be stated) | 6 |  |  |
+| Registry-governed (implemented and integrated at the Runtime enforcement boundary; NOT independently accepted) | 5 | 9 | 29.4% |
+| Registry-eligible, not yet governed | 12 | 13 | 70.6% |
+| **Registry-manageable total (governed + eligible)** | **17** | **22** | 100% |
+| …as a share of all canonical rules | 17 of 440 |  | 3.9% |
+| …as a share of the 48 configuration-bearing rules (configurable = YES, or a pending decision) | 17 of 48 |  | 35.4% |
+| Unresolved or blocked (decision needed before eligibility can be stated) | 11 |  |  |
 
 The denominator for *all* rules is granularity-dependent (how finely protected mechanisms are split); the manageable count and the configuration-bearing count are the robust figures. See §6.
 
@@ -23,8 +23,8 @@ The denominator for *all* rules is granularity-dependent (how finely protected m
 
 | Layer | Rules | Parameters | Share of manageable rules |
 |---|---|---|---|
-| Represented in the Registry | 7 | 12 | 43.8% |
-| Integrated at an enforcement boundary | 5 | 9 | 31.2% |
+| Represented in the Registry | 7 | 12 | 41.2% |
+| Integrated at an enforcement boundary | 5 | 9 | 29.4% |
 | Independently accepted | 0 | 0 | 0.0% |
 
 Implemented rules are those whose Registry representation AND enforcement-boundary integration are both merged. Nothing is independently accepted: V09 independent qualification is open and builder CI does not establish acceptance.
@@ -50,42 +50,42 @@ Represented in the Registry but not integrated (the Control Plane has no consume
 
 | Historical class (frozen) | Rows | Registry Governed | Registry Eligible | Retain In Code | Caller Or Issuer Owned | Provider Or Host Owned | Out Of Scope | Unresolved | Blocked |
 |---|---|---|---|---|---|---|---|---|---|
-| CONFIGURABLE-CANDIDATE | 43 | 4 | 14 | 10 | 2 | 6 | 7 | 0 | 0 |
-| INCIDENTAL-CONDITIONAL | 51 | 0 | 0 | 31 | 2 | 4 | 12 | 2 | 0 |
-| MANDATORY-INVARIANT | 354 | 0 | 2 | 348 | 1 | 0 | 3 | 0 | 0 |
+| CONFIGURABLE-CANDIDATE | 43 | 4 | 15 | 8 | 1 | 6 | 5 | 4 | 0 |
+| INCIDENTAL-CONDITIONAL | 51 | 0 | 0 | 35 | 2 | 4 | 7 | 3 | 0 |
+| MANDATORY-INVARIANT | 354 | 0 | 2 | 346 | 1 | 0 | 3 | 2 | 0 |
 | REFUSAL-OR-REASON-VOCABULARY | 50 | 0 | 0 | 50 | 0 | 0 | 0 | 0 | 0 |
-| SERIALIZATION-OR-EVIDENCE | 90 | 0 | 0 | 82 | 1 | 2 | 5 | 0 | 0 |
-| UNRESOLVED | 32 | 0 | 0 | 24 | 2 | 2 | 4 | 0 | 0 |
-| **Total** | 620 | 4 | 16 | 545 | 8 | 14 | 31 | 2 | 0 |
+| SERIALIZATION-OR-EVIDENCE | 90 | 0 | 0 | 83 | 0 | 0 | 7 | 0 | 0 |
+| UNRESOLVED | 32 | 0 | 0 | 22 | 3 | 1 | 4 | 2 | 0 |
+| **Total** | 620 | 4 | 17 | 544 | 7 | 11 | 26 | 11 | 0 |
 
 - Every one of the 620 rows appears exactly once as a primary crosswalk row; original IDs and original classes are unchanged (CONFIGURABLE-CANDIDATE 43, INCIDENTAL-CONDITIONAL 51, MANDATORY-INVARIANT 354, REFUSAL-OR-REASON-VOCABULARY 50, SERIALIZATION-OR-EVIDENCE 90, UNRESOLVED 32).
-- 74 rows were reclassified by a worker relative to what their historical class implied; 7 rows carry a final (lead-adjudicated) disposition that differs from the worker's, each with a recorded reason; 9 rows were re-keyed by the lead to separate a mechanism from the parameter it sits beside.
+- 74 rows were reclassified by a worker relative to what their historical class implied; 24 rows carry a final (lead-adjudicated) disposition that differs from the worker's, each with a recorded reason; 11 rows were re-keyed by the lead to separate a mechanism from the parameter it sits beside.
 - Source status: {'FOUND': 499, 'MOVED': 121} (no row is treated as deleted; coordinates that drifted were re-located by symbol).
 
 ## 4. Canonical rules
 
 | Origin | Rules |
 |---|---|
-| G0-CURRENT-ONLY | 42 |
+| G0-CURRENT-ONLY | 41 |
 | HISTORICAL | 307 |
 | HISTORICAL+G0 | 51 |
 | LEAD-SPLIT | 6 |
 | REPO-COVERAGE | 35 |
-| **Total** | 441 |
+| **Total** | 440 |
 
 | Disposition | Rules |
 |---|---|
 | REGISTRY-GOVERNED | 5 |
-| REGISTRY-ELIGIBLE | 11 |
-| RETAIN-IN-CODE | 344 |
-| CALLER-OR-ISSUER-OWNED | 21 |
+| REGISTRY-ELIGIBLE | 12 |
+| RETAIN-IN-CODE | 343 |
+| CALLER-OR-ISSUER-OWNED | 18 |
 | PROVIDER-OR-HOST-OWNED | 19 |
-| OUT-OF-SCOPE | 35 |
-| UNRESOLVED | 5 |
+| OUT-OF-SCOPE | 32 |
+| UNRESOLVED | 10 |
 | BLOCKED | 1 |
-| **Total** | 441 |
+| **Total** | 440 |
 
-359 rules contain at least one historical row; 47 are G0-current rules with no historical row; 35 were discovered by the repository-coverage sweep (none of those is Registry-eligible).
+359 rules contain at least one historical row; 46 are G0-current rules with no historical row; 35 were discovered by the repository-coverage sweep (none of those is Registry-eligible).
 
 ## 5. Reconciliation with the G0 inventory (116 source sites, 97 groups)
 
@@ -97,23 +97,23 @@ The provisional G0 conclusion was 5 already-governed + 23 eligible-not-migrated 
 | ALREADY-GOVERNED -> REGISTRY-ELIGIBLE | 3 |
 | ALREADY-GOVERNED -> REGISTRY-GOVERNED | 1 |
 | BLOCKED -> BLOCKED | 1 |
-| ELIGIBLE-NOT-MIGRATED -> CALLER-OR-ISSUER-OWNED | 2 |
-| ELIGIBLE-NOT-MIGRATED -> OUT-OF-SCOPE | 3 |
+| ELIGIBLE-NOT-MIGRATED -> CALLER-OR-ISSUER-OWNED | 1 |
+| ELIGIBLE-NOT-MIGRATED -> OUT-OF-SCOPE | 2 |
 | ELIGIBLE-NOT-MIGRATED -> PROVIDER-OR-HOST-OWNED | 3 |
-| ELIGIBLE-NOT-MIGRATED -> REGISTRY-ELIGIBLE | 10 |
+| ELIGIBLE-NOT-MIGRATED -> REGISTRY-ELIGIBLE | 11 |
 | ELIGIBLE-NOT-MIGRATED -> REGISTRY-GOVERNED | 4 |
-| ELIGIBLE-NOT-MIGRATED -> UNRESOLVED | 1 |
+| ELIGIBLE-NOT-MIGRATED -> UNRESOLVED | 2 |
 | OUT-OF-SCOPE -> CALLER-OR-ISSUER-OWNED | 1 |
-| OUT-OF-SCOPE -> OUT-OF-SCOPE | 7 |
+| OUT-OF-SCOPE -> OUT-OF-SCOPE | 5 |
+| OUT-OF-SCOPE -> PROVIDER-OR-HOST-OWNED | 2 |
 | RETAIN-IN-CODE -> CALLER-OR-ISSUER-OWNED | 3 |
 | RETAIN-IN-CODE -> OUT-OF-SCOPE | 2 |
 | RETAIN-IN-CODE -> PROVIDER-OR-HOST-OWNED | 7 |
 | RETAIN-IN-CODE -> REGISTRY-ELIGIBLE | 1 |
-| RETAIN-IN-CODE -> RETAIN-IN-CODE | 42 |
-| RETAIN-IN-CODE -> UNRESOLVED | 1 |
+| RETAIN-IN-CODE -> RETAIN-IN-CODE | 39 |
+| RETAIN-IN-CODE -> UNRESOLVED | 4 |
 | UNRESOLVED -> CALLER-OR-ISSUER-OWNED | 2 |
-| UNRESOLVED -> PROVIDER-OR-HOST-OWNED | 1 |
-| UNRESOLVED -> UNRESOLVED | 1 |
+| UNRESOLVED -> UNRESOLVED | 2 |
 
 The audit disagrees with G0 on 30 of 97 groups on the independent group audit (before lead merges and splits). Grouping verdicts: {'OVER-MERGED': 13, 'SUPPORTED': 77, 'UNDER-MERGED': 7}.
 
@@ -122,7 +122,7 @@ Why the headline moved (each item is detailed in `eligibility-decisions.md`):
 1. The four M2/M3 groups (max_amount, max_effects, target prefixes, target match) are no longer *eligible-not-migrated*: they are implemented and integrated at the Runtime effect-time guard on current main. They move to REGISTRY-GOVERNED, not accepted.
 2. G0's ALREADY-GOVERNED label is overstated for the F4/F5 age scalars (RG-A-007, RG-A-008) and for `age_ceilings` (RG-C-021): the Registry composes them, but the Control Plane has no Registry consumer. They are REGISTRY-ELIGIBLE with the Registry half represented.
 3. RG-C-031 (`default_action`) was labelled ALREADY-GOVERNED but has no Registry slot; it is issuer-authored manifest data.
-4. Eight G0 eligible groups are not Registry-manageable on the audit evidence (host/provider facts, issuer data, no enforcement boundary, or synthetic): RG-F11, RG-B-016, RG-C-011, RG-C-037, RG-D-015, RG-D-018, RG-D-020, RG-D-021; RG-D-022 is unresolved on ownership.
+4. Several G0 eligible groups are not Registry-manageable on the audit evidence (host/provider facts, issuer data, no enforcement boundary, or synthetic): RG-B-016, RG-C-037, RG-D-015, RG-D-018, RG-D-020, RG-D-021. RG-F11, RG-D-012, RG-F7-DEDUPE and RG-D-022 are unresolved on ownership; RG-C-011 stays eligible (rank-raising overlay, MEDIUM, retained reviewer disagreement).
 5. Several duplicates collapse: RG-A-007 + RG-C-003 + RG-C-004; RG-A-008 + RG-C-008 (+ a re-discovered class status age bound); RG-C-031 + RG-D-003.
 6. One G0 retain-in-code group (RG-C-018, the freshness nonce toggle) is reclassified eligible as a marginal forcing-True overlay; RG-C-024 (funded merge authorities) moves to unresolved.
 

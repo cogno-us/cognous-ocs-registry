@@ -107,7 +107,7 @@ def build_reports():
              "1. The four M2/M3 groups (max_amount, max_effects, target prefixes, target match) are no longer *eligible-not-migrated*: they are implemented and integrated at the Runtime effect-time guard on current main. They move to REGISTRY-GOVERNED, not accepted.",
              "2. G0's ALREADY-GOVERNED label is overstated for the F4/F5 age scalars (RG-A-007, RG-A-008) and for `age_ceilings` (RG-C-021): the Registry composes them, but the Control Plane has no Registry consumer. They are REGISTRY-ELIGIBLE with the Registry half represented.",
              "3. RG-C-031 (`default_action`) was labelled ALREADY-GOVERNED but has no Registry slot; it is issuer-authored manifest data.",
-             "4. Eight G0 eligible groups are not Registry-manageable on the audit evidence (host/provider facts, issuer data, no enforcement boundary, or synthetic): RG-F11, RG-B-016, RG-C-011, RG-C-037, RG-D-015, RG-D-018, RG-D-020, RG-D-021; RG-D-022 is unresolved on ownership.",
+             "4. Several G0 eligible groups are not Registry-manageable on the audit evidence (host/provider facts, issuer data, no enforcement boundary, or synthetic): RG-B-016, RG-C-037, RG-D-015, RG-D-018, RG-D-020, RG-D-021. RG-F11, RG-D-012, RG-F7-DEDUPE and RG-D-022 are unresolved on ownership; RG-C-011 stays eligible (rank-raising overlay, MEDIUM, retained reviewer disagreement).",
              "5. Several duplicates collapse: RG-A-007 + RG-C-003 + RG-C-004; RG-A-008 + RG-C-008 (+ a re-discovered class status age bound); RG-C-031 + RG-D-003.",
              "6. One G0 retain-in-code group (RG-C-018, the freshness nonce toggle) is reclassified eligible as a marginal forcing-True overlay; RG-C-024 (funded merge authorities) moves to unresolved.", "",
              "## 6. Integrity checks (enforced by `tests/test_audit_registry_eligibility_integrity.py`)", "",
@@ -226,6 +226,7 @@ def build_reports():
          "## E. Corrections to stale labels", "",
          "- Mark RG-A-007, RG-A-008 and RG-C-021 as *represented in the Registry, not governed*: counting them as ALREADY-GOVERNED overstates coverage until a Control Plane consumer exists (wave M11/M12).",
          "- Mark RG-C-031 as issuer-owned manifest data (no Registry slot).",
+         "- Record RG-F11, RG-D-012, RG-F7-DEDUPE, RG-C-032 and the Runtime admission budgets as unresolved pending the owner decisions named in the rule catalogue.",
          "- Record the M2/M3 groups as implemented and integrated, pending independent Tier 1 acceptance.",
          "- Drop RG-B-016 from wave M11: the module is an experimental synthetic ledger no executor imports.",
          "- Bring AD-07 in line with the merged M2/M3 narrowing (see `unresolved-architectural-decisions.md`).", ""]
@@ -244,10 +245,10 @@ def build_reports():
     else:
         L += ["## Independent cross-checks (blind second review / falsification)", "", "Raw outputs: `worker-evidence/J*.jsonl`. Disposition of every disagreement: `lead-adjudications.json` (`cross_check_resolutions`).", ""]
         res = adj.get("cross_check_resolutions", [])
-        L += [table(["Item", "First pass", "Cross-check", "Lead resolution"], [[x["item"], x["first_pass"], x["cross_check"], short(x["resolution"], 220)] for x in res]) if res else "No disagreements recorded.", ""]
+        L += [table(["Item", "Lead resolution", "Reason"], [[x["item"], x["resolution"], short(x["reason"], 220)] for x in res]) if res else "No disagreements recorded.", ""]
         stats = adj.get("cross_check_stats", {})
         for k, v in stats.items():
-            L += [f"- {k}: {v}"]
+            L += [f"- {k}: " + ", ".join(f"{a}={b}" for a, b in v.items())]
         L += [""]
     reports["worker-cross-check-results.md"] = "\n".join(L) + "\n"
     return reports

@@ -232,6 +232,24 @@
   },
   {
    "file": "src/agent_control_plane/manifest_validation.py",
+   "lines": "90, 99",
+   "repo": "cogno-us/cognous-control-plane",
+   "rule_id": "LR-MANIFEST-DEFAULT-ACTION",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "symbol": "_manifest_errors default_action",
+   "via": "historical-row:W5-023"
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "lines": "2664-2667",
+   "repo": "cogno-us/cognous-control-plane",
+   "rule_id": "LR-MANIFEST-DEFAULT-ACTION",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "symbol": "_manifest_mismatches action_blocked",
+   "via": "historical-row:W5-023"
+  },
+  {
+   "file": "src/agent_control_plane/manifest_validation.py",
    "lines": "90, 99; bounded.py 2664-2667",
    "repo": "cogno-us/cognous-control-plane",
    "rule_id": "LR-MANIFEST-DEFAULT-ACTION",
@@ -277,6 +295,60 @@
    "sha": null,
    "symbol": null,
    "via": "missing-consumer-path:RG-D-003"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "147-184 (155)",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "_admit_plain_data",
+   "via": "historical-row:W1-007"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "147,161,183",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "_admit_plain_data max_bytes=1048576",
+   "via": "historical-row:W1-008"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "170-176",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "_admit_plain_data",
+   "via": "historical-row:W1-010"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "177-182",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "_admit_plain_data",
+   "via": "historical-row:W1-011"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "147-184",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "symbol": "_admit_plain_data",
+   "via": "g0-record:G0-B-001"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "147-183",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "symbol": "_admit_plain_data(max_bytes=1048576)",
+   "via": "g0-record:G0-B-002"
   },
   {
    "file": "engine/action_schema.py",
@@ -3006,24 +3078,6 @@
    "via": "historical-row:W5-014"
   },
   {
-   "file": "src/agent_control_plane/manifest_validation.py",
-   "lines": "90, 99",
-   "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "NEW:manifest-validator-default-action",
-   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "_manifest_errors default_action",
-   "via": "historical-row:W5-023"
-  },
-  {
-   "file": "src/agent_control_plane/bounded.py",
-   "lines": "2664-2667",
-   "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "NEW:manifest-validator-default-action",
-   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "_manifest_mismatches action_blocked",
-   "via": "historical-row:W5-023"
-  },
-  {
    "file": "src/agent_action_manifest/validator.py",
    "lines": "134-135; 192; 277-280; 333; 346",
    "repo": "cogno-us/cognous-action-manifest",
@@ -5303,66 +5357,12 @@
   },
   {
    "file": "engine/safe_executor.py",
-   "lines": "147-184 (155)",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-001",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "_admit_plain_data",
-   "via": "historical-row:W1-007"
-  },
-  {
-   "file": "engine/safe_executor.py",
    "lines": "164-169",
    "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-001",
+   "rule_id": "RG-B-001/number-domain",
    "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
    "symbol": "_admit_plain_data",
    "via": "historical-row:W1-009"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "170-176",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-001",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "_admit_plain_data",
-   "via": "historical-row:W1-010"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "177-182",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-001",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "_admit_plain_data",
-   "via": "historical-row:W1-011"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "147-184",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-001",
-   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-   "symbol": "_admit_plain_data",
-   "via": "g0-record:G0-B-001"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "147,161,183",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-002",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "_admit_plain_data max_bytes=1048576",
-   "via": "historical-row:W1-008"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "147-183",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-002",
-   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-   "symbol": "_admit_plain_data(max_bytes=1048576)",
-   "via": "g0-record:G0-B-002"
   },
   {
    "file": "engine/safe_executor.py",
@@ -8000,7 +8000,7 @@
    "file": "engine/safe_executor.py",
    "lines": "147-184",
    "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-001",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
    "symbol": "_admit_plain_data",
    "via": "g0-record:G0-B-001:frozen-inventory"
@@ -8009,7 +8009,7 @@
    "file": "engine/safe_executor.py",
    "lines": "147-183",
    "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-B-002",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
    "symbol": "_admit_plain_data(max_bytes=1048576)",
    "via": "g0-record:G0-B-002:frozen-inventory"

@@ -363,14 +363,31 @@
     "cognous-action-manifest",
     "cognous-control-plane"
    ],
-   "confidence": "HIGH",
+   "confidence": "MEDIUM",
    "configurable": "NO",
    "configuration_owner": [
+    "Control Plane code (validator default, port); manifest field itself is host-authored data",
     "Manifest JSON authored by the host/deployer and passed to the workflow constructor (cli_run reads --manifest, max 1 MiB); proposal binds manifest_id/version/digest. Not Registry-backed.",
     "Manifest author (value); code (fail-safe default)",
     "Manifest author/deployer (digest-bound)"
    ],
    "current_source_locations": [
+    {
+     "file": "src/agent_control_plane/manifest_validation.py",
+     "lines": "90, 99",
+     "repo": "cogno-us/cognous-control-plane",
+     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+     "symbol": "_manifest_errors default_action",
+     "via": "historical-row:W5-023"
+    },
+    {
+     "file": "src/agent_control_plane/bounded.py",
+     "lines": "2664-2667",
+     "repo": "cogno-us/cognous-control-plane",
+     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+     "symbol": "_manifest_mismatches action_blocked",
+     "via": "historical-row:W5-023"
+    },
     {
      "file": "src/agent_control_plane/manifest_validation.py",
      "lines": "90, 99; bounded.py 2664-2667",
@@ -420,10 +437,13 @@
    "disposition_basis": "LEAD-OVERRIDE: Workers H2 audited RG-C-031 CALLER-OR-ISSUER-OWNED and RG-D-003 RETAIN-IN-CODE for the same manifest default_action field. Lead merge: the configured value is issuer-authored manifest data; the omitted-field fallback 'escalate' is a fail-safe literal retained as a child parameter. VERIFIED-BY-LEAD: no Registry slot for default_action exists (grep of Registry code and contracts finds it only in frozen G0 evidence).",
    "evidence_references": [
     "action-manifest models.py:264-266 default escalate; CP bounded.py:2664 and manifest_validation.py:90 same field",
-    "bounded.py:2664-2667 only 'block' consumed; manifest_validation.py:90,99 absent->escalate; Registry has no default_action slot (grep 0 hits)"
+    "bounded.py:2664-2667 only 'block' consumed; manifest_validation.py:90,99 absent->escalate; Registry has no default_action slot (grep 0 hits)",
+    "manifest_validation.py:90,99,121,144,167; bounded.py:2664-2667"
    ],
    "existing_behavior": null,
-   "existing_registry_coverage": null,
+   "existing_registry_coverage": [
+    "NONE"
+   ],
    "g0_dispositions": [
     "ALREADY-GOVERNED",
     "RETAIN-IN-CODE"
@@ -439,7 +459,9 @@
    "grouping_verdicts": [
     "UNDER-MERGED"
    ],
-   "historical_source_ids": [],
+   "historical_source_ids": [
+    "W5-023"
+   ],
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
@@ -447,7 +469,7 @@
    "migration_status": "N/A",
    "name": "Action Manifest default_action (value and omitted-field fallback)",
    "not_applicable_reason": "CALLER-OR-ISSUER-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
-   "origin": "G0-CURRENT-ONLY",
+   "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
@@ -456,6 +478,124 @@
    "split_from": null,
    "valid_domain": null,
    "value_type": null
+  },
+  {
+   "blocking_architectural_decisions": [
+    "May the Registry narrow Runtime structural admission budgets (depth, node/entry count, byte size)? They are Tier 1 admission guards that bound the canonicalization domain; a narrow-only override only rejects more, but the value is low and the ceiling must stay in code (G0 F3 scope question)."
+   ],
+   "component_owner": [
+    "cogno-us/cognous-execution-runtime"
+   ],
+   "confidence": "HIGH",
+   "configurable": "NO",
+   "configuration_owner": [
+    "Code (contract constant / protected mechanism)",
+    "Hard-coded in protected engine/safe_executor.py; not an argument of snapshot_envelope",
+    "Runtime code (immutable admission floor)",
+    "Runtime code; consistent admission is part of commitment integrity"
+   ],
+   "current_source_locations": [
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "147-184 (155)",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "_admit_plain_data",
+     "via": "historical-row:W1-007"
+    },
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "147,161,183",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "_admit_plain_data max_bytes=1048576",
+     "via": "historical-row:W1-008"
+    },
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "170-176",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "_admit_plain_data",
+     "via": "historical-row:W1-010"
+    },
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "177-182",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "_admit_plain_data",
+     "via": "historical-row:W1-011"
+    },
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "147-184",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+     "symbol": "_admit_plain_data",
+     "via": "g0-record:G0-B-001"
+    },
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "147-183",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+     "symbol": "_admit_plain_data(max_bytes=1048576)",
+     "via": "g0-record:G0-B-002"
+    }
+   ],
+   "differs_from_g0": true,
+   "disposition": "UNRESOLVED",
+   "disposition_basis": "LEAD-OVERRIDE: Blind reviewers J1a and J1b rated these narrow-only DoS bounds REGISTRY-ELIGIBLE (low value); first-pass workers D1 and J1c rated them non-tunable admission guards; G0 left the F3 Registry-scope question open. A genuine disagreement the evidence does not settle, so it is retained as UNRESOLVED.",
+   "evidence_references": [
+    "rt safe_executor.py:147-183",
+    "rt safe_executor.py:147-184",
+    "safe_executor.py:147 def _admit_plain_data(..., max_bytes: int = 1048576); :161,:183 checks",
+    "safe_executor.py:155 if depth > 32 or nodes > 10000; called before snapshot copy",
+    "safe_executor.py:170-176",
+    "safe_executor.py:177-182"
+   ],
+   "existing_behavior": "_admit_plain_data called from snapshot_envelope (line ~200) before deepcopy/json.dumps",
+   "existing_registry_coverage": [
+    "NONE",
+    "NONE: no Registry slot; correct to have none"
+   ],
+   "g0_dispositions": [
+    "RETAIN-IN-CODE"
+   ],
+   "g0_group_ids": [
+    "RG-B-001",
+    "RG-B-002"
+   ],
+   "g0_record_ids": [
+    "G0-B-001",
+    "G0-B-002"
+   ],
+   "grouping_verdicts": [
+    "SUPPORTED"
+   ],
+   "historical_source_ids": [
+    "W1-007",
+    "W1-008",
+    "W1-010",
+    "W1-011"
+   ],
+   "implementation_layers": null,
+   "in_g0_inventory": true,
+   "kind": "RULE",
+   "migration_eligibility": "PENDING-DECISION",
+   "migration_status": "NOT-STARTED",
+   "name": "Runtime structural input admission budgets (depth 32, 10000 nodes/keys/items, 1 MiB size)",
+   "not_applicable_reason": null,
+   "origin": "HISTORICAL+G0",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "UNKNOWN",
+   "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": "literals: depth 32, nodes 10000, dict/list len 10000, int bit_length 256; non-finite float refused; exact builtin types only"
   },
   {
    "blocking_architectural_decisions": [],
@@ -5152,8 +5292,8 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_basis": "UNANIMOUS WORKER ROWS",
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_basis": "LEAD-OVERRIDE: J3b: protocol labels of CI/local synthetic destinations, outside the production boundary (label corrected from host-owned).",
    "evidence_references": [
     "engine/dedupe_destination.py:27-28",
     "engine/delayed_commit_destination.py:30-31"
@@ -5176,7 +5316,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "destination capability identifiers",
-   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL",
    "parameter_count": 0,
    "proposed_migration_wave": null,
@@ -11115,68 +11255,6 @@
   {
    "blocking_architectural_decisions": [],
    "component_owner": [
-    "cogno-us/cognous-control-plane"
-   ],
-   "confidence": "MEDIUM",
-   "configurable": "NO",
-   "configuration_owner": [
-    "Control Plane code (validator default, port); manifest field itself is host-authored data"
-   ],
-   "current_source_locations": [
-    {
-     "file": "src/agent_control_plane/manifest_validation.py",
-     "lines": "90, 99",
-     "repo": "cogno-us/cognous-control-plane",
-     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "_manifest_errors default_action",
-     "via": "historical-row:W5-023"
-    },
-    {
-     "file": "src/agent_control_plane/bounded.py",
-     "lines": "2664-2667",
-     "repo": "cogno-us/cognous-control-plane",
-     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "_manifest_mismatches action_blocked",
-     "via": "historical-row:W5-023"
-    }
-   ],
-   "differs_from_g0": false,
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_basis": "UNANIMOUS WORKER ROWS",
-   "evidence_references": [
-    "manifest_validation.py:90,99,121,144,167; bounded.py:2664-2667"
-   ],
-   "existing_behavior": null,
-   "existing_registry_coverage": [
-    "NONE"
-   ],
-   "g0_dispositions": [],
-   "g0_group_ids": [],
-   "g0_record_ids": [],
-   "grouping_verdicts": [],
-   "historical_source_ids": [
-    "W5-023"
-   ],
-   "implementation_layers": null,
-   "in_g0_inventory": false,
-   "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
-   "name": "manifest validator default action",
-   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
-   "origin": "HISTORICAL",
-   "parameter_count": 0,
-   "proposed_migration_wave": null,
-   "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
-   "rule_id": "NEW:manifest-validator-default-action",
-   "split_from": null,
-   "valid_domain": null,
-   "value_type": null
-  },
-  {
-   "blocking_architectural_decisions": [],
-   "component_owner": [
     "cogno-us/cognous-action-manifest"
    ],
    "confidence": "MEDIUM",
@@ -13626,8 +13704,8 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "CALLER-OR-ISSUER-OWNED",
-   "disposition_basis": "UNANIMOUS WORKER ROWS",
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_basis": "LEAD-OVERRIDE: J3b: demo-only helper (label corrected from caller-owned).",
    "evidence_references": [
     "src/agent_control_plane/policy_config.py:60-70"
    ],
@@ -13648,7 +13726,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "policy config authority source label",
-   "not_applicable_reason": "CALLER-OR-ISSUER-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL",
    "parameter_count": 0,
    "proposed_migration_wave": null,
@@ -18348,8 +18426,8 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_basis": "UNANIMOUS WORKER ROWS",
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "LEAD-OVERRIDE: J3a: the `simulate` switch is live on the supported executor path (control_plane_adapter.py:153, safe_executor.py:835): a test hook in production code, not configuration.",
    "evidence_references": [
     "control_plane_adapter.py:153 simulate=...",
     "local_authority_effect.py:1037",
@@ -18376,7 +18454,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "simulate fault injection",
-   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL",
    "parameter_count": 0,
    "proposed_migration_wave": null,
@@ -19199,8 +19277,8 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_basis": "UNANIMOUS WORKER ROWS",
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "LEAD-OVERRIDE: J3a: the module is opt-in but reachable (control_plane_adapter.py:316-320; safe_executor.py:854; local_authority_effect.py:120 check its tables); the constant is a profile id.",
    "evidence_references": [
     "engine/refund_intent.py:17"
    ],
@@ -19221,7 +19299,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "synthetic refund intent profile",
-   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL",
    "parameter_count": 0,
    "proposed_migration_wave": null,
@@ -21002,20 +21080,9 @@
    "confidence": "HIGH",
    "configurable": "NO",
    "configuration_owner": [
-    "Code (contract constant / protected mechanism)",
-    "Hard-coded in protected engine/safe_executor.py; not an argument of snapshot_envelope",
-    "Runtime code (immutable admission floor)",
     "Runtime code; consistent admission is part of commitment integrity"
    ],
    "current_source_locations": [
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "147-184 (155)",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "_admit_plain_data",
-     "via": "historical-row:W1-007"
-    },
     {
      "file": "engine/safe_executor.py",
      "lines": "164-169",
@@ -21023,151 +21090,38 @@
      "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
      "symbol": "_admit_plain_data",
      "via": "historical-row:W1-009"
-    },
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "170-176",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "_admit_plain_data",
-     "via": "historical-row:W1-010"
-    },
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "177-182",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "_admit_plain_data",
-     "via": "historical-row:W1-011"
-    },
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "147-184",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-     "symbol": "_admit_plain_data",
-     "via": "g0-record:G0-B-001"
     }
    ],
    "differs_from_g0": false,
    "disposition": "RETAIN-IN-CODE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "disposition_basis": "UNANIMOUS WORKER ROWS",
    "evidence_references": [
-    "rt safe_executor.py:147-184",
-    "safe_executor.py:155 if depth > 32 or nodes > 10000; called before snapshot copy",
-    "safe_executor.py:164-169; G0 B-001",
-    "safe_executor.py:170-176",
-    "safe_executor.py:177-182"
+    "safe_executor.py:164-169; G0 B-001"
    ],
    "existing_behavior": null,
    "existing_registry_coverage": [
-    "NONE",
-    "NONE: no Registry slot; correct to have none"
+    "NONE"
    ],
-   "g0_dispositions": [
-    "RETAIN-IN-CODE"
-   ],
-   "g0_group_ids": [
-    "RG-B-001"
-   ],
-   "g0_record_ids": [
-    "G0-B-001"
-   ],
-   "grouping_verdicts": [
-    "SUPPORTED"
-   ],
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
    "historical_source_ids": [
-    "W1-007",
-    "W1-009",
-    "W1-010",
-    "W1-011"
+    "W1-009"
    ],
    "implementation_layers": null,
-   "in_g0_inventory": true,
+   "in_g0_inventory": false,
    "kind": "RULE",
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
-   "name": "literals: depth 32, nodes 10000, dict/list len 10000, int bit_length 256; non-finite float refused; exact builtin types only",
+   "name": "Canonical number domain: int bit length <= 256, finite floats (protocol constant)",
    "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
-   "origin": "HISTORICAL+G0",
+   "origin": "HISTORICAL",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
    "registry_appropriate": "NO",
-   "rule_id": "RG-B-001",
-   "split_from": null,
-   "valid_domain": null,
-   "value_type": null
-  },
-  {
-   "blocking_architectural_decisions": [],
-   "component_owner": [
-    "cogno-us/cognous-execution-runtime"
-   ],
-   "confidence": "HIGH",
-   "configurable": "NO",
-   "configuration_owner": [
-    "Code (contract constant / protected mechanism)",
-    "Keyword default only; snapshot_envelope never passes it (call at ~line 200 has one positional arg); OpenShell also calls with default",
-    "Runtime code (immutable admission floor)"
-   ],
-   "current_source_locations": [
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "147,161,183",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "_admit_plain_data max_bytes=1048576",
-     "via": "historical-row:W1-008"
-    },
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "147-183",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-     "symbol": "_admit_plain_data(max_bytes=1048576)",
-     "via": "g0-record:G0-B-002"
-    }
-   ],
-   "differs_from_g0": false,
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
-   "evidence_references": [
-    "rt safe_executor.py:147-183",
-    "safe_executor.py:147 def _admit_plain_data(..., max_bytes: int = 1048576); :161,:183 checks"
-   ],
-   "existing_behavior": null,
-   "existing_registry_coverage": [
-    "NONE: no Registry slot; correct to have none"
-   ],
-   "g0_dispositions": [
-    "RETAIN-IN-CODE"
-   ],
-   "g0_group_ids": [
-    "RG-B-002"
-   ],
-   "g0_record_ids": [
-    "G0-B-002"
-   ],
-   "grouping_verdicts": [
-    "SUPPORTED"
-   ],
-   "historical_source_ids": [
-    "W1-008"
-   ],
-   "implementation_layers": null,
-   "in_g0_inventory": true,
-   "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
-   "name": "max_bytes int default 1048576 (1 MiB) for per-string length (chars) and total accounted size; accounting weights None/bool 5, str utf8+2, number 80",
-   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
-   "origin": "HISTORICAL+G0",
-   "parameter_count": 0,
-   "proposed_migration_wave": null,
-   "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
-   "rule_id": "RG-B-002",
+   "rule_id": "RG-B-001/number-domain",
    "split_from": null,
    "valid_domain": null,
    "value_type": null
@@ -22769,9 +22723,9 @@
      "via": "g0-record:G0-B-031"
     }
    ],
-   "differs_from_g0": false,
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": true,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_basis": "LEAD-OVERRIDE: J3a: examples/openshell/provision.py is the documented operator step for the opt-in OpenShell adapter (docs/openshell-adapter.md:93); sandbox sizing and gateway pin are host facts.",
    "evidence_references": [
     "rt examples/openshell/provision.py:20-38"
    ],
@@ -22796,7 +22750,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "Only CLI in repo: examples/openshell/provision.py (gateway 'local', workspace 'default', timeout_seconds=30, --cpu 1 --memory 256Mi). No os.environ/getenv reads",
-   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "G0-CURRENT-ONLY",
    "parameter_count": 0,
    "proposed_migration_wave": null,
@@ -23261,7 +23215,7 @@
     "cognous-control-plane"
    ],
    "confidence": "MEDIUM",
-   "configurable": "NO",
+   "configurable": "YES",
    "configuration_owner": [
     "Host RuntimeAuthorityProfile.actions[...]; needs the ReversibilityProfile marker (host) else the profile refuses (runtime_authority.py _profiles_compose).",
     "Host/producer (module: 'producer assertions')",
@@ -23311,14 +23265,14 @@
      "via": "missing-consumer-path:RG-C-011"
     }
    ],
-   "differs_from_g0": true,
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": false,
+   "disposition": "REGISTRY-ELIGIBLE",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J3b falsified HOST-OWNED: effective_reversibility (reversibility.py:165-181) already forces `irreversible` for undeclared, protected-read and unobservable classes, so a Registry overlay that can only raise the strictness rank (force irreversible) is monotone with an existing Control Plane consumer. Disagreement retained: first-pass H2/A treated the declaration as a producer assertion of fact. Depends on AUD-D06.",
    "evidence_references": [
     "cp runtime_authority.py:138-146; reversibility.py:165-181",
     "reversibility.py:34-35 module doc 'reversible_until and reversal_cost are producer assertions'; :165-181"
    ],
-   "existing_behavior": null,
+   "existing_behavior": "reversibility.effective_reversibility / effectively_irreversible; BoundedAuthorizationWorkflow cache and extension paths; reversibility.judge_cached_purpose",
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -23337,22 +23291,26 @@
    "historical_source_ids": [
     "W8-008"
    ],
-   "implementation_layers": null,
+   "implementation_layers": {
+    "enforcement_integrated": "NO",
+    "independently_accepted": "NO",
+    "registry_represented": "NO"
+   },
    "in_g0_inventory": true,
-   "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
+   "kind": "PARAMETER",
+   "migration_eligibility": "ELIGIBLE",
+   "migration_status": "NOT-STARTED",
    "name": "Producer assertions on a class: effective_reversibility (reversibility.py 165-181) returns irreversible when undeclared, when reads_protected_data, when counter",
-   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
-   "parameter_count": 0,
+   "parameter_count": 1,
    "proposed_migration_wave": "M12",
-   "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
+   "proposed_narrowing_semantics": "Order: STRICTNESS rank; registry may only raise rank (reversible_until -> reversible_at_cost -> irreversible) or tighten reversible_until to an earlier instant. Absent/undeclared already resolves irreversible. reads_protected_data False->True and counterparty_observable True->False are strictening o",
+   "registry_appropriate": "YES",
    "rule_id": "RG-C-011",
    "split_from": null,
    "valid_domain": null,
-   "value_type": null
+   "value_type": "Producer assertions on a class: effective_reversibility (reversibility.py 165-181) returns irreversible when undeclared, when reads_protected_data, when counterparty_observable is False, or when a reversible_until window has passed. `irreve"
   },
   {
    "blocking_architectural_decisions": [],
@@ -23690,9 +23648,9 @@
      "via": "missing-consumer-path:RG-C-015"
     }
    ],
-   "differs_from_g0": false,
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": true,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_basis": "LEAD-OVERRIDE: J3a: OperationIdentityProfile is on the production RuntimeAuthorityProfile path (runtime_authority.py:204,321,435); resolver_id/resolver_version are host labels.",
    "evidence_references": [
     "operation_identity.py:44-51; bounded.py:1621-1622 record only",
     "operation_identity.py:50-51 labels; bounded.py:1621-1622 recorded on AttemptJoin only; no comparison found in CP"
@@ -23722,7 +23680,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "Two labels recorded on every AttemptJoin row (bounded.py 1624-1627). No authority decision compares them in the code read.",
-   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": null,
@@ -25101,7 +25059,9 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [],
+   "blocking_architectural_decisions": [
+    "Who may add custom action types to the effectful/high-risk/privileged floor sets, and who authorises that classification? Built-in membership is a fixed floor."
+   ],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cognous-action-manifest"
@@ -25140,14 +25100,14 @@
      "via": "missing-consumer-path:RG-C-032"
     }
    ],
-   "differs_from_g0": false,
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": true,
+   "disposition": "UNRESOLVED",
+   "disposition_basis": "LEAD-OVERRIDE: Blind reviewer J1b: action_type is an open string (models.py:69), so additive stricter membership of custom types in the effectful/high-risk/privileged sets would be monotone. First-pass worker C retained it. Who may add custom action types to the floor sets, and who authorises that classification, is not decidable from source.",
    "evidence_references": [
     "manifest_validation.py:18-21 frozensets; parity with external validator ('same gate, the same codes'); removal widens",
     "manifest_validation.py:18-21; docstring :1-14 parity; tests/test_scan6_manifest_validator_parity.py exists"
    ],
-   "existing_behavior": null,
+   "existing_behavior": "manifest_validation.manifest_errors",
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -25169,19 +25129,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
+   "migration_eligibility": "PENDING-DECISION",
+   "migration_status": "NOT-STARTED",
    "name": "Three frozensets of action_type strings selecting which validator rules apply (E020-E023 effectful, E014 high risk with default allow, E008 privileged). A type ",
-   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
+   "registry_appropriate": "UNKNOWN",
    "rule_id": "RG-C-032",
    "split_from": null,
    "valid_domain": null,
-   "value_type": null
+   "value_type": "Three frozensets of action_type strings selecting which validator rules apply (E020-E023 effectful, E014 high risk with default allow, E008 privileged). A type not in the sets is treated as non-effectful by the validator."
   },
   {
    "blocking_architectural_decisions": [],
@@ -25461,8 +25421,8 @@
     }
    ],
    "differs_from_g0": true,
-   "disposition": "OUT-OF-SCOPE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_basis": "LEAD-OVERRIDE: J3a: refusal_trends is a documented reporting API with tests, not unused; thresholds are analytics defaults with no authority effect and no enforcement boundary. LOW confidence; either label leaves it outside the manageable set.",
    "evidence_references": [
     "reason_vocabulary.py:21-24 kwarg defaults; :52-60 interpretation; no src consumer besides docs",
     "reason_vocabulary.py:21-25 kwargs 5/1; grep finds no caller outside tests; output never fed to BoundedAuthorizationWorkflow",
@@ -25494,7 +25454,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "Keyword defaults 5 and 1 (callers may pass any non-negative ints; negative raises ValueError). measured_arity takes period_seconds as a required caller argument",
-   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": "M8",
@@ -26118,7 +26078,9 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [],
+   "blocking_architectural_decisions": [
+    "Same minimum-redaction-floor ownership question as RG-F11-REDACTION-DEFAULTS; the replay-bundle library has no Registry consumer."
+   ],
    "component_owner": [
     "cogno-us/cognous-replay-bundle"
    ],
@@ -26138,10 +26100,10 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "CALLER-OR-ISSUER-OWNED",
-   "disposition_basis": "LEAD-SPLIT: Caller-overridable presentation default; no redaction floor exists in code.",
+   "disposition": "UNRESOLVED",
+   "disposition_basis": "LEAD-SPLIT: See RG-F11-REDACTION-DEFAULTS: the replay-bundle redaction flags carry the same minimum-redaction-floor ownership question (AUD-D05).",
    "evidence_references": [],
-   "existing_behavior": null,
+   "existing_behavior": "redaction.redact_replay_bundle.",
    "existing_registry_coverage": null,
    "g0_dispositions": [],
    "g0_group_ids": [],
@@ -26153,19 +26115,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
+   "migration_eligibility": "PENDING-DECISION",
+   "migration_status": "NOT-STARTED",
    "name": "Replay Bundle redact_replay_bundle defaults",
-   "not_applicable_reason": "CALLER-OR-ISSUER-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": null,
    "origin": "LEAD-SPLIT",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
+   "registry_appropriate": "UNKNOWN",
    "rule_id": "RG-D-012",
    "split_from": "RG-F11-REDACTION-DEFAULTS",
    "valid_domain": null,
-   "value_type": null
+   "value_type": "Keyword defaults: redact_payloads=True; redact_targets/final_output/reasons/task/scope=False; replacement=\"[REDACTED]\"; clear_signature_metadata=False."
   },
   {
    "blocking_architectural_decisions": [],
@@ -27216,7 +27178,9 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [],
+   "blocking_architectural_decisions": [
+    "Is a minimum-redaction floor a Registry-owned operator control (a new privacy feature, plan wave M10), and who is the privacy owner?"
+   ],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cognous-control-plane"
@@ -27282,13 +27246,13 @@
     }
    ],
    "differs_from_g0": true,
-   "disposition": "CALLER-OR-ISSUER-OWNED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "disposition": "UNRESOLVED",
+   "disposition_basis": "LEAD-OVERRIDE: First-pass H1 rated the redaction defaults caller-owned presentation choices; cross-check J3b rated an OR-floor of redaction flags REGISTRY-ELIGIBLE. Whether a minimum-redaction floor is a Registry-owned operator control (plan wave M10) is a privacy-owner decision (AUD-D05).",
    "evidence_references": [
     "cp models.py:420-451; cli.py:76-114; manifest models.py:173-175; replay-bundle redaction.py not local",
     "models.py:420-451; cli.py:107-114 forces redact_payloads=True; redaction.py:23 config or RedactionConfig()"
    ],
-   "existing_behavior": null,
+   "existing_behavior": "redaction._apply_redaction; cli._redaction_config_from_args",
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -27310,19 +27274,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
+   "migration_eligibility": "PENDING-DECISION",
+   "migration_status": "NOT-STARTED",
    "name": "Redaction defaults (Control Plane RedactionConfig; action-manifest hint string; replay-bundle keyword defaults)",
-   "not_applicable_reason": "CALLER-OR-ISSUER-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": "M10",
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
+   "registry_appropriate": "UNKNOWN",
    "rule_id": "RG-F11-REDACTION-DEFAULTS",
    "split_from": null,
    "valid_domain": null,
-   "value_type": null
+   "value_type": "Optional redaction scope (targets, final output, reasons all default off) and replacement text. Library callers pass a RedactionConfig; the CLI exposes --targets/--final-output/--reasons (store_true) and --replacement. Defaults are HARD_COD"
   },
   {
    "blocking_architectural_decisions": [],
@@ -28315,7 +28279,9 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [],
+   "blocking_architectural_decisions": [
+    "Are the Control Plane DedupeProfile escalation_deadline and key TTL host policy or provider-declared facts? (G0 C-022)"
+   ],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cogno-us/cognous-execution-runtime",
@@ -28390,16 +28356,16 @@
      "via": "missing-consumer-path:RG-F7-DEDUPE"
     }
    ],
-   "differs_from_g0": true,
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": false,
+   "disposition": "UNRESOLVED",
+   "disposition_basis": "LEAD-OVERRIDE: First-pass H2 rated it PROVIDER-OR-HOST-OWNED; cross-check J3b found the Control Plane DedupeProfile mixes provider horizon, key TTL and escalation deadline. G0 open item C-022 stands: are escalation_deadline and key TTL host policy or provider-declared?",
    "evidence_references": [
     "control_plane_adapter.py:69-85 getattr(self.destination,...,None)",
     "cp dedupe.py:54-68; rt dedupe_destination.py:76-105; README.md optional CI/local synthetic destinations",
     "dedupe_destination.py:1-14 'CI/local aid... no model of any real provider'; :43-46; dedupe.py:64",
     "dedupe_destination.py:76-93 now-committed_at<ttl; :113-118 default 600; ttl int>0 check :36-37"
    ],
-   "existing_behavior": null,
+   "existing_behavior": "dedupe.unresolved_effects / state evaluation; BoundedAuthorizationWorkflow dedupe paths",
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -28423,19 +28389,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
+   "migration_eligibility": "PENDING-DECISION",
+   "migration_status": "NOT-STARTED",
    "name": "Dedupe/replay TTL (Runtime dedupe_ttl_seconds; Control Plane DedupeProfile)",
-   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
+   "registry_appropriate": "UNKNOWN",
    "rule_id": "RG-F7-DEDUPE",
    "split_from": null,
    "valid_domain": null,
-   "value_type": null
+   "value_type": "Three required ints > 0 (no defaults) with invariant provider_horizon <= escalation_deadline < dedupe_ttl. Describes destination idempotency-key facts and the escalation deadline of unresolved attempts."
   },
   {
    "blocking_architectural_decisions": [],

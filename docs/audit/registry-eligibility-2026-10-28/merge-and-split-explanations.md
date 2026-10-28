@@ -7,6 +7,7 @@
 - **LR-F4-STATUS-APPROVAL-AGE** ← RG-A-007, RG-C-003, RG-C-004: Workers H1 and A found RG-A-007 (Registry composer side) and RG-C-003/RG-C-004 (Control Plane consumer-side defaults) are one logical rule viewed from two repositories; the Registry F4 payload carries exactly these two scalars.
 - **LR-F5-CLASS-STATUS-AGE** ← RG-A-008, RG-C-008, NEW:class-status-age-bound: H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule.
 - **LR-MANIFEST-DEFAULT-ACTION** ← RG-C-031, RG-D-003: Worker H2: RG-C-031 and RG-D-003 are the same manifest field split across two groups.
+- **LR-RUNTIME-ADMISSION-SIZE-BUDGETS** ← RG-B-001, RG-B-002: Same admission guard (safe_executor._admit_plain_data and the max_bytes budget); G0 split them into two retain groups. Merged so the open question is carried once.
 
 ## Lead splits (one G0 group divided because the parts have different dispositions)
 
@@ -28,6 +29,8 @@
 - W3-061 → **RG-B-015**: Site is the constructor default of the synthetic reference destination (dedupe_destination.py). Worker D2 viewed it as a provider fact; Worker H1/H2 audit of G0-B-015 judged it a synthetic default outside the production boundary. Lead: the synthetic constructor default is OUT-OF-SCOPE; the provider-declared TTL semantics remain in RG-F7-DEDUPE (W3-062, W3-063, W2-062).
 - W3-065 → **RG-B-015**: Reference/qualification destination modelling provider behaviour: synthetic, outside the production boundary (Worker D2 also rated it OUT-OF-SCOPE).
 - W8-014 → **NEW:runtime-authority-profile-producer-keys**: Producer keys are host trust roots, not a Registry candidate; separated from the RG-C-013 container group (Worker H1: container record, not one rule).
+- W5-023 → **LR-MANIFEST-DEFAULT-ACTION**: Worker C and the group audit (H2) agree the validator's `default_action` fallback is the same logical field as RG-C-031/RG-D-003; blind reviewer J1a classed it CALLER-OR-ISSUER-OWNED. Lead: merged into LR-MANIFEST-DEFAULT-ACTION.
+- W1-009 → **RG-B-001/number-domain**: Integer bit-length 256 and finite-float rule define the canonical number domain (protocol constant, retained); separated from the size/depth budgets that are the subject of the open admission-budget question.
 
 ## Many-to-one groupings by the first-pass workers (rules with more than one historical row)
 
@@ -54,6 +57,7 @@
 | RG-B-026 | 6 | RETAIN-IN-CODE | G0 group RG-B-026 |
 | NEW:bounded-manifest-conformance | 5 | RETAIN-IN-CODE | same _manifest_mismatches evaluator |
 | NEW:evidence-validation-integrity | 5 | RETAIN-IN-CODE |  |
+| LR-RUNTIME-ADMISSION-SIZE-BUDGETS | 4 | UNRESOLVED | same floor as other admission bounds (F3) |
 | NEW:amount-numeric-validation | 4 | RETAIN-IN-CODE | amount/ceiling numeric validators |
 | NEW:check-recovery-mechanism | 4 | RETAIN-IN-CODE | same mechanism family: check-recovery-mechanism |
 | NEW:effects-count-validation | 4 | RETAIN-IN-CODE | effect count validators |
@@ -62,9 +66,8 @@
 | NEW:local-claim-provisioning-verification | 4 | RETAIN-IN-CODE |  |
 | NEW:operation-identity-admission | 4 | RETAIN-IN-CODE | same mechanism family: operation-identity-admission |
 | NEW:runtime-denial-reason-codes | 4 | RETAIN-IN-CODE | Reason-code literals on denial paths |
-| NEW:simulate-fault-injection | 4 | OUT-OF-SCOPE | Four rows share the fault-injection hook (W1-065,W2-066,W3-040,W3-043) |
+| NEW:simulate-fault-injection | 4 | RETAIN-IN-CODE | Four rows share the fault-injection hook (W1-065,W2-066,W3-040,W3-043) |
 | NEW:validation-issue-codes | 4 | RETAIN-IN-CODE | Validation issue codes |
-| RG-B-001 | 4 | RETAIN-IN-CODE | same floor as other admission bounds (F3) |
 | RG-B-005 | 4 | RETAIN-IN-CODE | evaluator semantics for F1d |
 | RG-B-011 | 4 | RETAIN-IN-CODE | G0 F2 RETAIN (B-011) |
 | RG-B-023 | 4 | RETAIN-IN-CODE | G0 retains closed 4-state set |

@@ -268,6 +268,7 @@ def build():
         for src in [a.get("blocking_decision") for a in audits] + [x["blocking_decision"] for x in rows]:
             if src and src not in blocks:
                 blocks.append(src)
+        blocks = [b for b in spec.get("blocking", [])] + [b for b in blocks if b not in spec.get("blocking", [])]
         sites = []
         seen = set()
         for x in rows:
