@@ -1,0 +1,1040 @@
+{
+ "errors": [],
+ "g0_group_crosswalk": [
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "LR-F4-STATUS-APPROVAL-AGE",
+   "g0_disposition": "ALREADY-GOVERNED",
+   "g0_group_id": "RG-A-007",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "g0_disposition": "ALREADY-GOVERNED",
+   "g0_group_id": "RG-A-008",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-A-009",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-A-009",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-A-010",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-A-010",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-A-011",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-A-011",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-A-012",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-A-012",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-A-013",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-A-013",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-A-014",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-A-014",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-A-015",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-A-015",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-001",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-002",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-005",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-005",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-011",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-011",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-B-016",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-B-016",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-017",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-017",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-B-018",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-018",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-B-019",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-019",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-020",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-020",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-B-021",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-021",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-022",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-022",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-023",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-023",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-024",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-024",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-025",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-025",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-026",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-026",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-B-027",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-027",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-028",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-028",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-029",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-029",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-B-030",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-B-030",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-B-031",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-B-031",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "LR-F4-STATUS-APPROVAL-AGE",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-003",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "LR-F4-STATUS-APPROVAL-AGE",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-004",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "BLOCKED",
+   "audit_rule_id": "RG-C-005",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-005",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "BLOCKED",
+   "audit_rule_id": "RG-C-006",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-006",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-007",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-007",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-008",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "RG-C-009",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-009",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "RG-C-010",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-010",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "RG-C-011",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-011",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "RG-C-012",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-012",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-013",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-013",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-C-014",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-014",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-C-015",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-C-015",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-C-016",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-016",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-C-017",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-017",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-C-018",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-018",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-019",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "RG-C-020",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-020",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "g0_disposition": "ALREADY-GOVERNED",
+   "g0_group_id": "RG-C-021",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-023",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-023",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "UNRESOLVED",
+   "audit_rule_id": "RG-C-024",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-024",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-C-025",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-C-025",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-C-026",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-026",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-C-027",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-C-027",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-028",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-028",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-029",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-029",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-030",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-030",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "LR-MANIFEST-DEFAULT-ACTION",
+   "g0_disposition": "ALREADY-GOVERNED",
+   "g0_group_id": "RG-C-031",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-032",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-032",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "RG-C-033",
+   "g0_disposition": "UNRESOLVED",
+   "g0_group_id": "RG-C-033",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "RG-C-034",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-034",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-036",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-036",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-C-037",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-C-037",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-039",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-039",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-040",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-040",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-C-041",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-C-041",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "LR-MANIFEST-DEFAULT-ACTION",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-003",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-005",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-005",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-006",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-006",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-009",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-009",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-010",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-010",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-013",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-013",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-D-014",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-014",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-D-015",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-D-015",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-016",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-016",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-017",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-017",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-D-018",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-D-018",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-019",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-019",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "RG-D-020",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-D-020",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-D-021",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-D-021",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-D-022",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-D-022",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-D-023",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-D-023",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-024",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-024",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "UNRESOLVED",
+   "audit_rule_id": "RG-D-025",
+   "g0_disposition": "UNRESOLVED",
+   "g0_group_id": "RG-D-025",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "RG-D-026",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-D-026",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-D-027",
+   "g0_disposition": "BLOCKED",
+   "g0_group_id": "RG-D-027",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-D-028",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-D-028",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "OUT-OF-SCOPE",
+   "audit_rule_id": "RG-D-029",
+   "g0_disposition": "OUT-OF-SCOPE",
+   "g0_group_id": "RG-D-029",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "RG-F11-REDACTION-DEFAULTS",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-F11-REDACTION-DEFAULTS",
+   "records_split_out": [
+    "G0-D-007",
+    "G0-D-012"
+   ]
+  },
+  {
+   "audit_disposition": "REGISTRY-GOVERNED",
+   "audit_rule_id": "RG-F1A-ALLOW-SETS-FIVE",
+   "g0_disposition": "ALREADY-GOVERNED",
+   "g0_group_id": "RG-F1A-ALLOW-SETS-FIVE",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-GOVERNED",
+   "audit_rule_id": "RG-F1C-MAX-AMOUNT",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-F1C-MAX-AMOUNT",
+   "records_split_out": [
+    "G0-D-001"
+   ]
+  },
+  {
+   "audit_disposition": "REGISTRY-GOVERNED",
+   "audit_rule_id": "RG-F1C-MAX-EFFECTS",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-F1C-MAX-EFFECTS",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-GOVERNED",
+   "audit_rule_id": "LR-F1D-TARGET-POLICY",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-F1D-TARGET-MATCH",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "REGISTRY-GOVERNED",
+   "audit_rule_id": "LR-F1D-TARGET-POLICY",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-F1D-TARGET-PREFIXES",
+   "records_split_out": [
+    "G0-D-002"
+   ]
+  },
+  {
+   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_rule_id": "RG-F4-OBSERVATION-POLICY",
+   "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
+   "g0_group_id": "RG-F4-OBSERVATION-POLICY",
+   "records_split_out": []
+  },
+  {
+   "audit_disposition": "CALLER-OR-ISSUER-OWNED",
+   "audit_rule_id": "RG-F6-ACTION-LISTS",
+   "g0_disposition": "UNRESOLVED",
+   "g0_group_id": "RG-F6-ACTION-LISTS",
+   "records_split_out": [
+    "G0-B-014"
+   ]
+  },
+  {
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
+   "audit_rule_id": "RG-F7-DEDUPE",
+   "g0_disposition": "UNRESOLVED",
+   "g0_group_id": "RG-F7-DEDUPE",
+   "records_split_out": [
+    "G0-B-015"
+   ]
+  },
+  {
+   "audit_disposition": "RETAIN-IN-CODE",
+   "audit_rule_id": "RG-F9-TENANT-LENGTH",
+   "g0_disposition": "RETAIN-IN-CODE",
+   "g0_group_id": "RG-F9-TENANT-LENGTH",
+   "records_split_out": []
+  }
+ ],
+ "g0_record_crosswalk": {
+  "G0-A-001": "RG-F1A-ALLOW-SETS-FIVE",
+  "G0-A-002": "RG-F1A-ALLOW-SETS-FIVE",
+  "G0-A-003": "RG-F1C-MAX-AMOUNT",
+  "G0-A-004": "RG-F1C-MAX-EFFECTS",
+  "G0-A-005": "LR-F1D-TARGET-POLICY",
+  "G0-A-006": "LR-F1D-TARGET-POLICY",
+  "G0-A-007": "LR-F4-STATUS-APPROVAL-AGE",
+  "G0-A-008": "LR-F5-CLASS-STATUS-AGE",
+  "G0-A-009": "RG-A-009",
+  "G0-A-010": "RG-A-010",
+  "G0-A-011": "RG-A-011",
+  "G0-A-012": "RG-A-012",
+  "G0-A-013": "RG-A-013",
+  "G0-A-014": "RG-A-014",
+  "G0-A-015": "RG-A-015",
+  "G0-B-001": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+  "G0-B-002": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+  "G0-B-003": "RG-F9-TENANT-LENGTH",
+  "G0-B-004": "LR-F1D-TARGET-POLICY",
+  "G0-B-005": "RG-B-005",
+  "G0-B-006": "LR-F1D-TARGET-POLICY",
+  "G0-B-007": "RG-F1C-MAX-AMOUNT",
+  "G0-B-008": "RG-F1C-MAX-EFFECTS",
+  "G0-B-009": "RG-F1A-ALLOW-SETS-FIVE",
+  "G0-B-010": "RG-F1A-ALLOW-SETS-FIVE",
+  "G0-B-011": "RG-B-011",
+  "G0-B-012": "RG-F1A-ALLOW-SETS-FIVE",
+  "G0-B-013": "RG-F1A-ALLOW-SETS-FIVE",
+  "G0-B-014": "RG-B-014",
+  "G0-B-015": "RG-B-015",
+  "G0-B-016": "RG-B-016",
+  "G0-B-017": "RG-B-017",
+  "G0-B-018": "RG-B-018",
+  "G0-B-019": "RG-B-019",
+  "G0-B-020": "RG-B-020",
+  "G0-B-021": "RG-B-021",
+  "G0-B-022": "RG-B-022",
+  "G0-B-023": "RG-B-023",
+  "G0-B-024": "RG-B-024",
+  "G0-B-025": "RG-B-025",
+  "G0-B-026": "RG-B-026",
+  "G0-B-027": "RG-B-027",
+  "G0-B-028": "RG-B-028",
+  "G0-B-029": "RG-B-029",
+  "G0-B-030": "RG-B-030",
+  "G0-B-031": "RG-B-031",
+  "G0-C-001": "RG-F4-OBSERVATION-POLICY",
+  "G0-C-002": "RG-F4-OBSERVATION-POLICY",
+  "G0-C-003": "LR-F4-STATUS-APPROVAL-AGE",
+  "G0-C-004": "LR-F4-STATUS-APPROVAL-AGE",
+  "G0-C-005": "RG-C-005",
+  "G0-C-006": "RG-C-006",
+  "G0-C-007": "RG-C-007",
+  "G0-C-008": "LR-F5-CLASS-STATUS-AGE",
+  "G0-C-009": "RG-C-009",
+  "G0-C-010": "RG-C-010",
+  "G0-C-011": "RG-C-011",
+  "G0-C-012": "RG-C-012",
+  "G0-C-013": "RG-C-013",
+  "G0-C-014": "RG-C-014",
+  "G0-C-015": "RG-C-015",
+  "G0-C-016": "RG-C-016",
+  "G0-C-017": "RG-C-017",
+  "G0-C-018": "RG-C-018",
+  "G0-C-019": "LR-F5-CLASS-STATUS-AGE",
+  "G0-C-020": "RG-C-020",
+  "G0-C-021": "LR-F5-CLASS-STATUS-AGE",
+  "G0-C-022": "RG-F7-DEDUPE",
+  "G0-C-023": "RG-C-023",
+  "G0-C-024": "RG-C-024",
+  "G0-C-025": "RG-C-025",
+  "G0-C-026": "RG-C-026",
+  "G0-C-027": "RG-C-027",
+  "G0-C-028": "RG-C-028",
+  "G0-C-029": "RG-C-029",
+  "G0-C-030": "RG-C-030",
+  "G0-C-031": "LR-MANIFEST-DEFAULT-ACTION",
+  "G0-C-032": "RG-C-032",
+  "G0-C-033": "RG-C-033",
+  "G0-C-034": "RG-C-034",
+  "G0-C-035": "RG-F9-TENANT-LENGTH",
+  "G0-C-036": "RG-C-036",
+  "G0-C-037": "RG-C-037",
+  "G0-C-038": "RG-F11-REDACTION-DEFAULTS",
+  "G0-C-039": "RG-C-039",
+  "G0-C-040": "RG-C-040",
+  "G0-C-041": "RG-C-041",
+  "G0-D-001": "RG-D-001",
+  "G0-D-002": "RG-D-002",
+  "G0-D-003": "LR-MANIFEST-DEFAULT-ACTION",
+  "G0-D-004": "RG-F9-TENANT-LENGTH",
+  "G0-D-005": "RG-D-005",
+  "G0-D-006": "RG-D-006",
+  "G0-D-007": "RG-D-007",
+  "G0-D-008": "RG-F6-ACTION-LISTS",
+  "G0-D-009": "RG-D-009",
+  "G0-D-010": "RG-D-010",
+  "G0-D-011": "RG-F4-OBSERVATION-POLICY",
+  "G0-D-012": "RG-D-012",
+  "G0-D-013": "RG-D-013",
+  "G0-D-014": "RG-D-014",
+  "G0-D-015": "RG-D-015",
+  "G0-D-016": "RG-D-016",
+  "G0-D-017": "RG-D-017",
+  "G0-D-018": "RG-D-018",
+  "G0-D-019": "RG-D-019",
+  "G0-D-020": "RG-D-020",
+  "G0-D-021": "RG-D-021",
+  "G0-D-022": "RG-D-022",
+  "G0-D-023": "RG-D-023",
+  "G0-D-024": "RG-D-024",
+  "G0-D-025": "RG-D-025",
+  "G0-D-026": "RG-D-026",
+  "G0-D-027": "RG-D-027",
+  "G0-D-028": "RG-D-028",
+  "G0-D-029": "RG-D-029"
+ },
+ "schema": "registry-eligibility-audit-reconciliation/1",
+ "summary": {
+  "caller_or_issuer_owned_rules": 20,
+  "canonical_rules_by_disposition": {
+   "BLOCKED": 2,
+   "CALLER-OR-ISSUER-OWNED": 20,
+   "OUT-OF-SCOPE": 37,
+   "PROVIDER-OR-HOST-OWNED": 21,
+   "REGISTRY-ELIGIBLE": 8,
+   "REGISTRY-GOVERNED": 4,
+   "RETAIN-IN-CODE": 350,
+   "UNRESOLVED": 2
+  },
+  "canonical_rules_by_origin": {
+   "G0-CURRENT-ONLY": 39,
+   "HISTORICAL": 308,
+   "HISTORICAL+G0": 50,
+   "LEAD-SPLIT": 6,
+   "REPO-COVERAGE": 41
+  },
+  "canonical_rules_from_historical_rows": 359,
+  "canonical_rules_g0_only_no_historical_row": 44,
+  "canonical_rules_repo_coverage_only": 41,
+  "canonical_rules_total": 444,
+  "expected_s02_class_totals": {
+   "CONFIGURABLE-CANDIDATE": 43,
+   "INCIDENTAL-CONDITIONAL": 51,
+   "MANDATORY-INVARIANT": 354,
+   "REFUSAL-OR-REASON-VOCABULARY": 50,
+   "SERIALIZATION-OR-EVIDENCE": 90,
+   "UNRESOLVED": 32
+  },
+  "g0_group_count_check": 97,
+  "g0_group_final_audit_dispositions": {
+   "BLOCKED": 2,
+   "CALLER-OR-ISSUER-OWNED": 9,
+   "OUT-OF-SCOPE": 12,
+   "PROVIDER-OR-HOST-OWNED": 13,
+   "REGISTRY-ELIGIBLE": 12,
+   "REGISTRY-GOVERNED": 5,
+   "RETAIN-IN-CODE": 42,
+   "UNRESOLVED": 2
+  },
+  "g0_group_grouping_verdicts": {
+   "OVER-MERGED": 13,
+   "SUPPORTED": 77,
+   "UNDER-MERGED": 7
+  },
+  "g0_group_vs_audit_matrix": {
+   "ALREADY-GOVERNED -> CALLER-OR-ISSUER-OWNED": 1,
+   "ALREADY-GOVERNED -> REGISTRY-ELIGIBLE": 3,
+   "ALREADY-GOVERNED -> REGISTRY-GOVERNED": 1,
+   "BLOCKED -> OUT-OF-SCOPE": 1,
+   "ELIGIBLE-NOT-MIGRATED -> BLOCKED": 2,
+   "ELIGIBLE-NOT-MIGRATED -> CALLER-OR-ISSUER-OWNED": 2,
+   "ELIGIBLE-NOT-MIGRATED -> OUT-OF-SCOPE": 4,
+   "ELIGIBLE-NOT-MIGRATED -> PROVIDER-OR-HOST-OWNED": 2,
+   "ELIGIBLE-NOT-MIGRATED -> REGISTRY-ELIGIBLE": 9,
+   "ELIGIBLE-NOT-MIGRATED -> REGISTRY-GOVERNED": 4,
+   "OUT-OF-SCOPE -> CALLER-OR-ISSUER-OWNED": 1,
+   "OUT-OF-SCOPE -> OUT-OF-SCOPE": 5,
+   "OUT-OF-SCOPE -> PROVIDER-OR-HOST-OWNED": 2,
+   "RETAIN-IN-CODE -> CALLER-OR-ISSUER-OWNED": 3,
+   "RETAIN-IN-CODE -> OUT-OF-SCOPE": 2,
+   "RETAIN-IN-CODE -> PROVIDER-OR-HOST-OWNED": 8,
+   "RETAIN-IN-CODE -> RETAIN-IN-CODE": 42,
+   "RETAIN-IN-CODE -> UNRESOLVED": 1,
+   "UNRESOLVED -> CALLER-OR-ISSUER-OWNED": 2,
+   "UNRESOLVED -> PROVIDER-OR-HOST-OWNED": 1,
+   "UNRESOLVED -> UNRESOLVED": 1
+  },
+  "g0_groups_audited": 97,
+  "g0_groups_where_final_audit_differs": [
+   "RG-A-007",
+   "RG-A-008",
+   "RG-B-016",
+   "RG-B-018",
+   "RG-B-019",
+   "RG-B-021",
+   "RG-B-027",
+   "RG-B-031",
+   "RG-C-005",
+   "RG-C-006",
+   "RG-C-012",
+   "RG-C-014",
+   "RG-C-015",
+   "RG-C-016",
+   "RG-C-017",
+   "RG-C-018",
+   "RG-C-021",
+   "RG-C-024",
+   "RG-C-026",
+   "RG-C-031",
+   "RG-C-033",
+   "RG-C-034",
+   "RG-C-037",
+   "RG-D-003",
+   "RG-D-014",
+   "RG-D-015",
+   "RG-D-018",
+   "RG-D-020",
+   "RG-D-021",
+   "RG-D-022",
+   "RG-D-026",
+   "RG-D-027",
+   "RG-F11-REDACTION-DEFAULTS",
+   "RG-F1C-MAX-AMOUNT",
+   "RG-F1C-MAX-EFFECTS",
+   "RG-F1D-TARGET-MATCH",
+   "RG-F1D-TARGET-PREFIXES",
+   "RG-F6-ACTION-LISTS",
+   "RG-F7-DEDUPE"
+  ],
+  "g0_provisional_28_of_97": {
+   "already_governed": 5,
+   "eligible_not_migrated": 23,
+   "groups": 97,
+   "sum": 28
+  },
+  "g0_record_count_check": 116,
+  "historical_rows": 620,
+  "historical_rows_by_class": {
+   "CONFIGURABLE-CANDIDATE": 43,
+   "INCIDENTAL-CONDITIONAL": 51,
+   "MANDATORY-INVARIANT": 354,
+   "REFUSAL-OR-REASON-VOCABULARY": 50,
+   "SERIALIZATION-OR-EVIDENCE": 90,
+   "UNRESOLVED": 32
+  },
+  "migration_state": {
+   "governed_implemented": 4,
+   "governed_integrated_at_enforcement_boundary": 4,
+   "independently_accepted": 0
+  },
+  "omitted_from_g0_97_inventory_configurable_or_pending": [
+   "LR-F5-CLASS-STATUS-AGE/mechanism",
+   "NEW:destination-database-name",
+   "NEW:evidence-registry-governance-quorum",
+   "NEW:evidence-registry-jwt-defaults",
+   "NEW:genfence-refusal-budget",
+   "NEW:hub-context-journal-max-uncommitted",
+   "NEW:hub-operational-state-contract-thresholds",
+   "NEW:revocation-writer-enable-flags",
+   "NEW:sqlite-busy-timeout",
+   "NEW:terminal-revocation-marker"
+  ],
+  "out_of_scope_rules": 37,
+  "pass1_group_audit_dispositions_before_lead_adjudication": {
+   "BLOCKED": 1,
+   "CALLER-OR-ISSUER-OWNED": 8,
+   "OUT-OF-SCOPE": 12,
+   "PROVIDER-OR-HOST-OWNED": 11,
+   "REGISTRY-ELIGIBLE": 14,
+   "REGISTRY-GOVERNED": 5,
+   "RETAIN-IN-CODE": 43,
+   "UNRESOLVED": 3
+  },
+  "pass1_groups_flagged_disagree_before_lead_adjudication": [
+   "RG-A-007",
+   "RG-A-008",
+   "RG-B-016",
+   "RG-B-018",
+   "RG-B-019",
+   "RG-B-021",
+   "RG-B-027",
+   "RG-C-011",
+   "RG-C-012",
+   "RG-C-014",
+   "RG-C-016",
+   "RG-C-017",
+   "RG-C-018",
+   "RG-C-021",
+   "RG-C-024",
+   "RG-C-026",
+   "RG-C-031",
+   "RG-C-033",
+   "RG-C-034",
+   "RG-C-037",
+   "RG-D-014",
+   "RG-D-015",
+   "RG-D-018",
+   "RG-D-020",
+   "RG-D-021",
+   "RG-D-022",
+   "RG-D-026",
+   "RG-F11-REDACTION-DEFAULTS",
+   "RG-F6-ACTION-LISTS",
+   "RG-F7-DEDUPE"
+  ],
+  "provider_or_host_owned_rules": 21,
+  "registry_eligible_parameters": 10,
+  "registry_eligible_represented_in_registry_not_integrated": 2,
+  "registry_eligible_rules": 8,
+  "registry_governed_parameters": 9,
+  "registry_governed_rules": 4,
+  "registry_manageable_parameters_governed_plus_eligible": 19,
+  "registry_manageable_rules_governed_plus_eligible": 12,
+  "retain_in_code_rules": 350,
+  "rows_by_final_disposition": {
+   "BLOCKED": 2,
+   "CALLER-OR-ISSUER-OWNED": 8,
+   "OUT-OF-SCOPE": 28,
+   "PROVIDER-OR-HOST-OWNED": 14,
+   "REGISTRY-ELIGIBLE": 12,
+   "REGISTRY-GOVERNED": 4,
+   "RETAIN-IN-CODE": 551,
+   "UNRESOLVED": 1
+  },
+  "rows_by_worker_disposition": {
+   "CALLER-OR-ISSUER-OWNED": 8,
+   "OUT-OF-SCOPE": 27,
+   "PROVIDER-OR-HOST-OWNED": 18,
+   "REGISTRY-ELIGIBLE": 15,
+   "REGISTRY-GOVERNED": 4,
+   "RETAIN-IN-CODE": 547,
+   "UNRESOLVED": 1
+  },
+  "rows_reclassified_vs_historical_class_by_worker": 74,
+  "rows_rekeyed_by_lead": 15,
+  "rows_source_status": {
+   "FOUND": 499,
+   "MOVED": 121
+  },
+  "rows_where_final_differs_from_worker": 21,
+  "rules_flagged_configurable_pass1_definition": 43,
+  "unresolved_or_blocked_rules": 4
+ }
+}

@@ -1,0 +1,98 @@
+{
+ "repos": [
+  {
+   "repo": "cogno-us/cognous-execution-runtime",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "files_total": 33,
+   "files_reviewed": 33,
+   "files_not_reviewed_note": "Truly uncovered by S02+G0 at file level: audit.py, engine.py, local_authority_effect_recovery.py, operation_identity_*destination.py, registry_f1abc/f1abcd_narrowing.py (new M2/M3), host/__init__; all read. Other files S02/G0-covered and only spot-checked by grep (not re-reviewed line by line). sandbox/ is README only.",
+   "coverage_in_s02_g0": "FULL",
+   "relevance": "MEDIUM"
+  },
+  {
+   "repo": "cogno-us/cognous-control-plane",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "files_total": 37,
+   "files_reviewed": 37,
+   "files_not_reviewed_note": "Only authorization_pin_export.py and canonical_policy_binding.py lack own S02 row (G0 combined row covers canonical_policy_binding). All S02-covered files grep-scanned for limits/TTL/default/tables; not line-by-line re-reviewed. tools/ (adversarial_mutations.py, verify_decision_input_commitment.py) test/verification tooling only, not reviewed for policy.",
+   "coverage_in_s02_g0": "FULL",
+   "relevance": "LOW"
+  },
+  {
+   "repo": "cogno-us/cognous-action-manifest",
+   "sha": "fa170815ef96a54c233d0dd9da821b60debabf8b",
+   "files_total": 43,
+   "files_reviewed": 9,
+   "files_not_reviewed_note": "Reviewed src/ (validator, binding, loader, models, cli, identifiers, openappa_binding) by grep+targeted read; schemas/examples/docs/tests not reviewed. G0 covers models/loader/binding (8 records). validator.py not in G0.",
+   "coverage_in_s02_g0": "PARTIAL",
+   "relevance": "MEDIUM"
+  },
+  {
+   "repo": "cogno-us/cognous-governed-exchange",
+   "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+   "files_total": 41,
+   "files_reviewed": 5,
+   "files_not_reviewed_note": "Reviewed odex_gax_imx_reference/{gax_ref,gax_ref_runtime,generation_fence}.py by grep+targeted read; transport.py covered by G0 (2 records), not re-read; tests/docs not reviewed. Experimental synthetic reference only.",
+   "coverage_in_s02_g0": "PARTIAL",
+   "relevance": "LOW"
+  }
+ ],
+ "candidate_sites": [
+  {
+   "key": "NEW:manifest-validator-risk-class-sets",
+   "repo": "cogno-us/cognous-action-manifest",
+   "sha": "fa170815ef96a54c233d0dd9da821b60debabf8b",
+   "file": "src/agent_action_manifest/validator.py",
+   "lines": "134-135; 192; 277-280; 333; 346",
+   "value": "effectful_types {write,external_send,delete,export,purchase,approve}; high_risk_types {external_send,delete,export,purchase,approve}",
+   "controls": "Which action types require finite target policy, authority context, effect limits, and which default=allow triggers errors/warnings",
+   "owner": "Action-manifest spec maintainer (validation profile)",
+   "preliminary_disposition": "RETAIN-IN-CODE",
+   "configurable": "NO",
+   "why": "Static validation tier table of the manifest schema profile; weakening it would relax mandatory structural invariants. Manifest content itself is the issuer-authored policy artifact.",
+   "in_g0_ledger": "NO",
+   "confidence": "MEDIUM",
+   "evidence": "validator.py:134-147,277-302 (E020-E023,E014 emitted per type set)"
+  },
+  {
+   "key": "NEW:genfence-refusal-budget",
+   "repo": "cogno-us/cognous-governed-exchange",
+   "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+   "file": "experiments/odex_gax_imx_reference/generation_fence.py",
+   "lines": "12-13; 58-65; 140",
+   "value": "DEFAULT_MAX_REFUSALS_PER_CONVERSATION=64; DEFAULT_COUNTER_MAX=1_000_000",
+   "controls": "Per-conversation persisted refusal cap and saturating counter ceiling for generation-fence refusals (suppression after cap)",
+   "owner": "Deploying host (constructor parameters)",
+   "preliminary_disposition": "OUT-OF-SCOPE",
+   "configurable": "YES",
+   "why": "Already a validated constructor argument; experimental bounded reference, not production. If promoted it is host-owned audit/noise budget, not authority.",
+   "in_g0_ledger": "NO",
+   "confidence": "MEDIUM",
+   "evidence": "generation_fence.py:58-65 validates >=1 and counter_max>=cap; README states not production"
+  },
+  {
+   "key": "NEW:gax-ref-fixture-policy",
+   "repo": "cogno-us/cognous-governed-exchange",
+   "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+   "file": "experiments/odex_gax_imx_reference/gax_ref.py",
+   "lines": "217; 311",
+   "value": "max_amount 100.0 USD, max_effects 1, evidence max_age_seconds 300, tier T1, status_max_age_seconds 300",
+   "controls": "Synthetic demo authority context and recipient policy fixtures",
+   "owner": "n/a (demo fixture)",
+   "preliminary_disposition": "OUT-OF-SCOPE",
+   "configurable": "NO",
+   "why": "Hardcoded synthetic refund-exchange fixture values (EVAL fixed date, synthetic URNs); demo/reference only.",
+   "in_g0_ledger": "NO",
+   "confidence": "HIGH",
+   "evidence": "gax_ref.py:20-30 synthetic URNs, EVAL=2026-08-08; README: not production"
+  }
+ ],
+ "coverage_limits": [
+  "Runtime/CP 'not covered' determined at file level against crosswalk current_file and G0 ledger file fields; file coverage does not imply every literal was recorded, so S02-covered files were only grep-scanned for MAX/LIMIT/TTL/DEFAULT/age/window/tables, not re-read in full.",
+  "Runtime: registry_f1abc/f1abcd_narrowing.py (M2/M3, post-G0) read: ceilings checked non-widening (subset, <=caller max_amount/max_effects, bool/float rejected, digest cross-check) at registry_f1abc_narrowing.py ~L95-105; no safety defect found. Registry-side f1abcd composition not reviewed here.",
+  "Runtime/CP: no new policy-bearing values found in uncovered files (audit.py _MAX_FALLBACK_TEXT=200 is bounded diagnostics text, RETAIN; installer 0o644/0o755 and atomic_write 0o600/0o700 are file-permission invariants).",
+  "CP decision_input_profile.py tables (ALLOWED_ASSURANCE_CLASSES, REASON_PRECEDENCE, classification semantics) are protocol/profile constants, RETAIN-IN-CODE if ever in scope; not independently classified into candidate_sites.",
+  "action-manifest: schemas/, examples/, docs/ not reviewed; example manifests are issuer-authored data, not code policy. governed-exchange transport.py left to G0 (G0-D-014/015).",
+  "Cloned depth-1 HEADs only; no tests run; no checkout modified."
+ ]
+}
