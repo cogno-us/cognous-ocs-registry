@@ -1,0 +1,237 @@
+{
+  "registry_sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+  "command": "cd /home/claude/g0/src/registry && PYTHONDONTWRITEBYTECODE=1 /root/.local/bin/pytest --collect-only -q -p no:cacheprovider tests/<file>",
+  "note": "Collection only; no test executed. System python lacks pytest; /root/.local/bin/pytest (9.1.1, uv tool) was used. `python -m pytest` as written in the brief fails with 'No module named pytest'. Counts are parametrised-expanded node ids. pynacl is not installed in this environment: test_v01a_v2_record_path.py (module-level skipif) and the needs_backend tests in test_s01_withdrawal_floor_signing.py would be skipped (NOT RUN) if executed here; collection counts them anyway. Node-dependent test in test_ext_s1_5_vectors.py is skipped without node. git status in the checkout was clean after collection.",
+  "files": [
+    {
+      "file": "tests/test_adapter_ed25519.py",
+      "collected": 708,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_adapter_ed25519_cctv.py",
+      "collected": 1838,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_adapter_ed25519_core_integration.py",
+      "collected": 12,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_conformance_kit.py",
+      "collected": 224,
+      "consulted": "grep only (institution/scope usage); vector files read via JSON listing",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_contract_amendment_1_pins.py",
+      "collected": 8,
+      "consulted": "test-name list, grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_contract_amendment_3_pins.py",
+      "collected": 3,
+      "consulted": "read in full",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_contract_amendment_4_pins.py",
+      "collected": 5,
+      "consulted": "test-name list",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_core_security_mutants.py",
+      "collected": 113,
+      "consulted": "grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_core_security_sig_and_key_admission.py",
+      "collected": 344,
+      "consulted": "grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_ext_s1_4_age_slots.py",
+      "collected": 477,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_ext_s1_5_guard_amendment.py",
+      "collected": 41,
+      "consulted": "read header and test-name list",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_ext_s1_5_identity_module.py",
+      "collected": 194,
+      "consulted": "read L140-150, L922-950; grep for the rest",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_ext_s1_5_reason_mapping_completion.py",
+      "collected": 9,
+      "consulted": "read header",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_ext_s1_5_trust_snapshot_and_identity.py",
+      "collected": 234,
+      "consulted": "grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_ext_s1_5_vectors.py",
+      "collected": 53,
+      "consulted": "read selected ranges (compose reference L735-770, L970-1000, L1075-1090, L2120-2135, L2258-2300); remainder grep only",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_fu_b_identity_order_and_family_tokens.py",
+      "collected": 52,
+      "consulted": "read lines 95-135",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08_compose_decision.py",
+      "collected": 54,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_r08_integrity.py",
+      "collected": 5,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_r08_record.py",
+      "collected": 48,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_r08_regressions.py",
+      "collected": 34,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_r08_selection.py",
+      "collected": 40,
+      "consulted": "grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08_spec_conformance.py",
+      "collected": 104,
+      "consulted": "read L56-70, L265-300",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08_v2_canonical_base64_vectors.py",
+      "collected": 599,
+      "consulted": "collection only (described by Amendment 2)",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08_verify.py",
+      "collected": 25,
+      "consulted": "grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08v2_f1ab_family.py",
+      "collected": 277,
+      "consulted": "read in full",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08v2_family_dispatch.py",
+      "collected": 99,
+      "consulted": "test-name list",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08v2_golden_replay.py",
+      "collected": 14,
+      "consulted": "test-name list; golden JSON scanned for f1ab",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_r08v2_version_dispatch.py",
+      "collected": 37,
+      "consulted": "grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_s01_baseline_local_policy.py",
+      "collected": 63,
+      "consulted": "grep + read L200-220",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_s01_withdrawal_floor_signing.py",
+      "collected": 65,
+      "consulted": "read L395-430, L45-49",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_s03_contract.py",
+      "collected": 170,
+      "consulted": "grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_s04_overlay.py",
+      "collected": 98,
+      "consulted": "read L225-300; grep for the rest",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_s05_equivalence.py",
+      "collected": 16,
+      "consulted": "read header and test-name list; grep",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_s06_integrity.py",
+      "collected": 26,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_v01a_v2_record_path.py",
+      "collected": 100,
+      "consulted": "read lines 1-420 (f1ab V1A-01..16 and F4 start); F4/F5 remainder not read",
+      "consulted_for_topics": true
+    },
+    {
+      "file": "tests/test_v09_candidate_integrity.py",
+      "collected": 12,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    },
+    {
+      "file": "tests/test_v09_post_merge_record.py",
+      "collected": 6,
+      "consulted": "collected only (not consulted for content)",
+      "consulted_for_topics": false
+    }
+  ],
+  "total_collected_all_test_files": 6207,
+  "total_collected_consulted_files": 2987,
+  "non_test_data_consulted": [
+    "docs/ext-implementation/data/ext-s1-5-policy-identity-vectors.json (parsed; sections effective_payloads, effective_payloads_invalid, effective_inputs, token_unicode, scope_projection, identifier_matrix, scope_keys)",
+    "registry_conformance/vectors/01..11 (*.json) (ids/descriptions; scope values scanned)",
+    "tests/golden/r08_v1_golden.json and tests/golden/v1_corpus.py (f1ab occurrences)",
+    "docs/p1-extraction-plan/data/ld02-outcome-map.json and ld02-outcome-map-rev2.json (selected rows)"
+  ]
+}

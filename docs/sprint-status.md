@@ -23,7 +23,25 @@ Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md
 
 ---
 
-## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-27): G0 ARCHITECT CONDITIONALLY ACCEPTED; CLOSEOUT DOCUMENTATION CORRECTIONS PENDING REVIEW
+## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-28): G0 ACCEPTED AFTER VERIFIED MERGE; G1 PREPARATION SUBMITTED, G1 NOT AUTHORIZED
+
+Separate from the V01–V09 status above, which is unchanged. Non-authorizing, builder-side, documentation only. Package: [family-migration/g1-preparation/README.md](family-migration/g1-preparation/README.md); frozen G0 record: [family-migration/g1-preparation/g0-freeze-record.md](family-migration/g1-preparation/g0-freeze-record.md).
+
+| Item | State |
+|---|---|
+| G0 | **ACCEPTED AFTER VERIFIED MERGE.** PR [#50](https://github.com/cogno-us/cognous-ocs-registry/pull/50) merged with a merge commit `7208eb6f53f12677f138fe0c64ec48a2e58292b5` (approved head `e6c57f6980aa71581499b5fcdbc38a647ebbe304`; CI on the merge commit green). G0 is an inventory qualification, not an independent security qualification. |
+| G1 preparation | M1 negative-oracle closure proposal, successor-contract strategy and decision list, submitted in the G1 preparation PR (this change); open for Architect review; not merged by the builder |
+| M1 | Reclassified as negative-oracle closure (AD-01 ACCEPTED). 65 oracle gaps identified (11 HIGH); no oracle exists, none is independent. |
+| Architect decisions | AD-01 ACCEPTED; AD-02 and AD-03 DIRECTION ACCEPTED; AD-04 to AD-24 OPEN; new preparation decisions PD-1 to PD-10 listed in the package |
+| Waves M1–M13 | none started; no migration implemented; no component source changed |
+
+G0: ACCEPTED AFTER VERIFIED MERGE. G1–G5: NOT AUTHORIZED. V09 independent V07 security review: OPEN. V09 independent V08 Tier 1 qualification: NOT STARTED. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+
+**Next authorized action:** none for the builder beyond leaving the G1 preparation PR open for Architect review.
+
+---
+
+## HISTORICAL (superseded by the 2026-10-28 successor status above): SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-27): G0 ARCHITECT CONDITIONALLY ACCEPTED; CLOSEOUT DOCUMENTATION CORRECTIONS PENDING REVIEW
 
 Separate from the V01–V09 status above, which is unchanged. Non-authorizing, builder-side, read-only inventory. Approved plan: [plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md](plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md) (merged in PR [#49](https://github.com/cogno-us/cognous-ocs-registry/pull/49), merge `317eb76acb2847c534c3ce7c2180b89b4aef987d`). Package: [family-migration/g0/g0-exit-report.md](family-migration/g0/g0-exit-report.md).
 
