@@ -63,3 +63,8 @@ Columns: Family; Source owner; Existing value; Existing enforcement evaluator; R
 
 M2 is selected by the Architect directive and is the first increment (F1c ceilings are already `LocalExecutionPolicy` fields consumed by Runtime, so only the governed configuration source changes). The remaining order is the Architect's call; the G0 order (M3, M11, M12, M10, M8, M13) is retained as the default. Each later wave reuses the M2 successor-contract pattern (exact-integer numeric family, `min(caller, registry)`, own signing domain), so it should cost less than M2.
 
+
+
+## Progress accounting (appended 2026-10-28; the baseline above is unchanged)
+
+M2 groups RG-F1C-MAX-AMOUNT and RG-F1C-MAX-EFFECTS: **IMPLEMENTED, pending integrated acceptance** (Registry r08-v3 `ba98dd26`; Runtime selection PR-2 `99f5f053`; Runtime enforcement PR-3 #152 merged `dabaa770`, reviewed head `ebbec2cb`). Counted as migrated only after the acceptance gates pass (independent Tier 1 qualification of the integrated path): **23 eligible-not-migrated now; 21 after acceptance.** Not counted: the Registry schema, or either PR alone.
