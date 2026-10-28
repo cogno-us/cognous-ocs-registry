@@ -193,6 +193,7 @@
    "configuration_owner": [
     "Host RuntimeAuthorityProfile.actions[...]; Registry may only lower via min()",
     "Host operator via profile",
+    "Host profile slot; value narrowed by Registry",
     "Host-authored RuntimeAuthorityProfile (trusted host config); committed in approval",
     "Registry operator (f5 record) narrowing CP host class bounds by min()",
     "Registry record author"
@@ -237,6 +238,14 @@
      "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
      "symbol": "compose_f5 (class_status_max_age_seconds)",
      "via": "g0-record:G0-A-008"
+    },
+    {
+     "file": "src/agent_control_plane/policy_binding.py",
+     "lines": "64-76, 118-138",
+     "repo": "cogno-us/cognous-control-plane",
+     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+     "symbol": "PolicyBinding.age_ceilings",
+     "via": "g0-record:G0-C-021"
     },
     {
      "file": "src/agent_control_plane/bounded.py",
@@ -300,6 +309,33 @@
      "sha": null,
      "symbol": null,
      "via": "missing-consumer-path:RG-C-008"
+    },
+    {
+     "file": "registry_successor/v2_age_bounds.py",
+     "lines": "1-60",
+     "note": "F4/F5 age values represented, no consumer wiring",
+     "repo": "cognous-ocs-registry",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-C-021"
+    },
+    {
+     "file": "docs/family-migration/m2/01-migration-backlog.md",
+     "lines": "36",
+     "note": "CP consumer wiring listed as future work (M11/M12)",
+     "repo": "cognous-ocs-registry",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-C-021"
+    },
+    {
+     "file": "src/agent_control_plane/runtime_authority.py",
+     "lines": "217-228,245,323,448-454",
+     "note": "consumer sites",
+     "repo": "cognous-control-plane",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-C-021"
     }
    ],
    "differs_from_g0": true,
@@ -307,6 +343,7 @@
    "disposition_basis": "H-WORKER GROUP AUDIT",
    "evidence_references": [
     "cp runtime_authority.py:131; bounded.py:1366-1373; policy_binding.py:133",
+    "policy_binding.py:64-76,118-138 CP-side check (profile-fed); no Registry reader: grep age_ceilings/age_bounds in Runtime main and registry_consumer finds no feed; m2 backlog rows 12 defer to M11/M12",
     "registry v2_age_bounds.py:213-227; cp runtime_authority.py:131; no Registry import in CP",
     "runtime_authority.py:126-135; registry v2_age_bounds.py:1-40",
     "runtime_authority.py:131; policy_binding.py:18-20,118-140; approval_commitment 237-250",
@@ -320,13 +357,16 @@
    ],
    "g0_group_ids": [
     "RG-A-008",
-    "RG-C-008"
+    "RG-C-008",
+    "RG-C-021"
    ],
    "g0_record_ids": [
     "G0-A-008",
-    "G0-C-008"
+    "G0-C-008",
+    "G0-C-021"
    ],
    "grouping_verdicts": [
+    "SUPPORTED",
     "UNDER-MERGED"
    ],
    "historical_source_ids": [
@@ -9125,8 +9165,8 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "REPO-COVERAGE WORKER",
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2: vocabulary of the registry record format itself (wire contract); no blocking decision is named, so UNRESOLVED is unsupported.",
    "evidence_references": [
     "registry_records.py:18-31; G0 worker-D notes.md finding 7"
    ],
@@ -9140,15 +9180,15 @@
    "implementation_layers": null,
    "in_g0_inventory": false,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "hub registry record profile vocabulary",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "REPO-COVERAGE",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "NEW:hub-registry-record-profile-vocabulary",
    "split_from": null,
    "valid_domain": null,
@@ -22763,6 +22803,7 @@
   },
   {
    "blocking_architectural_decisions": [
+    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.",
     "Is the omission of identity/mandate ages from F4 (DR-CP-AGE-1) a deliberate exclusion or a gap awaiting a new slot?"
    ],
    "component_owner": [
@@ -22803,9 +22844,9 @@
      "via": "missing-consumer-path:RG-C-005"
     }
    ],
-   "differs_from_g0": false,
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": true,
+   "disposition": "BLOCKED",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.",
    "evidence_references": [
     "bounded.py:2352-2368 self.identity_max_age_seconds / mandate_max_age_seconds",
     "cp bounded.py:1272-1273,1296-1297,2352,2366; registry v2_age_bounds.py docstring excludes these keys"
@@ -22829,29 +22870,27 @@
    "historical_source_ids": [
     "W7-040"
    ],
-   "implementation_layers": {
-    "enforcement_integrated": "NO",
-    "independently_accepted": "NO",
-    "registry_represented": "NO"
-   },
+   "implementation_layers": null,
    "in_g0_inventory": true,
-   "kind": "PARAMETER",
-   "migration_eligibility": "ELIGIBLE",
+   "kind": "RULE",
+   "migration_eligibility": "PENDING-DECISION",
    "migration_status": "NOT-STARTED",
    "name": "Two ints, HARD_CODED_LITERAL default 60 each; host may override at construction. Unvalidated.",
    "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
-   "parameter_count": 1,
+   "parameter_count": 0,
    "proposed_migration_wave": "M11",
-   "proposed_narrowing_semantics": "Smaller is stricter; min(host, registry); absent/malformed leaves host value.",
-   "registry_appropriate": "YES",
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "UNKNOWN",
    "rule_id": "RG-C-005",
    "split_from": null,
    "valid_domain": null,
    "value_type": "Two ints, HARD_CODED_LITERAL default 60 each; host may override at construction. Unvalidated."
   },
   {
-   "blocking_architectural_decisions": [],
+   "blocking_architectural_decisions": [
+    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+   ],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cognous-control-plane"
@@ -22890,9 +22929,9 @@
      "via": "missing-consumer-path:RG-C-006"
     }
    ],
-   "differs_from_g0": false,
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": true,
+   "disposition": "BLOCKED",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.",
    "evidence_references": [
     "bounded.py:1275; _fresh (2013-2022) observed > now+tolerance; _record_check passes it",
     "cp bounded.py:1275,1299,1430,2022-2024; all uses fail closed when smaller"
@@ -22916,22 +22955,18 @@
    "historical_source_ids": [
     "W6-041"
    ],
-   "implementation_layers": {
-    "enforcement_integrated": "NO",
-    "independently_accepted": "NO",
-    "registry_represented": "NO"
-   },
+   "implementation_layers": null,
    "in_g0_inventory": true,
-   "kind": "PARAMETER",
-   "migration_eligibility": "ELIGIBLE",
+   "kind": "RULE",
+   "migration_eligibility": "PENDING-DECISION",
    "migration_status": "NOT-STARTED",
    "name": "int, HARD_CODED_LITERAL default 5; unvalidated. Used (a) in _fresh to reject future-dated authority-input observations (bounded.py 2022), (b) as tolerance_secon",
    "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
-   "parameter_count": 1,
+   "parameter_count": 0,
    "proposed_migration_wave": "M11",
-   "proposed_narrowing_semantics": "Smaller is stricter; floor 0; min(host, registry); a registry value larger than host is ignored.",
-   "registry_appropriate": "YES",
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "UNKNOWN",
    "rule_id": "RG-C-006",
    "split_from": null,
    "valid_domain": null,
@@ -23970,13 +24005,13 @@
     }
    ],
    "differs_from_g0": true,
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2: nonce use depends on resolver capability (bounded.py:2090,2214) and no refusal occurs when it is absent; default is already True (freshness.py:65-66); False only weakens evidence. A Registry cannot enforce it. Reverses the lead's earlier marginal-eligible call; G0 had RETAIN-IN-CODE.",
    "evidence_references": [
     "freshness.py:65-66 bool default True; bounded.py:2090 nonce=uuid if fr.nonce; Registry can only force True (monotone)",
     "freshness.py:66; header limits on nonce_bound vs source_asserted"
    ],
-   "existing_behavior": "BoundedAuthorizationWorkflow reads (_JournalInputs nonce)",
+   "existing_behavior": null,
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -23995,26 +24030,22 @@
    "historical_source_ids": [
     "W8-042"
    ],
-   "implementation_layers": {
-    "enforcement_integrated": "NO",
-    "independently_accepted": "NO",
-    "registry_represented": "NO"
-   },
+   "implementation_layers": null,
    "in_g0_inventory": true,
-   "kind": "PARAMETER",
-   "migration_eligibility": "ELIGIBLE",
-   "migration_status": "NOT-STARTED",
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "bool default True. When True and the resolver declares status-nonce/0.1 each resolver read carries a nonce and a mismatch yields status_nonce_mismatch; otherwis",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL+G0",
-   "parameter_count": 1,
-   "proposed_migration_wave": "M11 (proposed; same Control Plane freshness-profile consumer as RG-C-019/RG-C-020)",
-   "proposed_narrowing_semantics": "Registry could at most keep True; setting False would widen.",
-   "registry_appropriate": "YES",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
    "rule_id": "RG-C-018",
    "split_from": null,
    "valid_domain": null,
-   "value_type": "bool default True. When True and the resolver declares status-nonce/0.1 each resolver read carries a nonce and a mismatch yields status_nonce_mismatch; otherwise age basis is source_asserted."
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -24199,98 +24230,6 @@
    "split_from": null,
    "valid_domain": null,
    "value_type": "bool default False, omitted from dumps while False. True anchors the dispatch deadline to the earliest of opened+class bound and observed_at+own bound over every judged input; False permits status age at dispatch up to twice the bound (docs"
-  },
-  {
-   "blocking_architectural_decisions": [],
-   "component_owner": [
-    "cogno-us/cognous-control-plane",
-    "cognous-control-plane",
-    "cognous-ocs-registry"
-   ],
-   "confidence": "HIGH",
-   "configurable": "YES",
-   "configuration_owner": [
-    "Host RuntimeAuthorityProfile.policy_binding (docstring: 'registry-narrowed freshness ceilings per action id'; binding is TRUSTED host configuration; CP does not read a Registry record). 'No maximum age is adopted here (the Architect has not adopted one).'",
-    "Host profile slot; value narrowed by Registry"
-   ],
-   "current_source_locations": [
-    {
-     "file": "src/agent_control_plane/policy_binding.py",
-     "lines": "64-76, 118-138",
-     "repo": "cogno-us/cognous-control-plane",
-     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "PolicyBinding.age_ceilings",
-     "via": "g0-record:G0-C-021"
-    },
-    {
-     "file": "registry_successor/v2_age_bounds.py",
-     "lines": "1-60",
-     "note": "F4/F5 age values represented, no consumer wiring",
-     "repo": "cognous-ocs-registry",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-C-021"
-    },
-    {
-     "file": "docs/family-migration/m2/01-migration-backlog.md",
-     "lines": "36",
-     "note": "CP consumer wiring listed as future work (M11/M12)",
-     "repo": "cognous-ocs-registry",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-C-021"
-    },
-    {
-     "file": "src/agent_control_plane/runtime_authority.py",
-     "lines": "217-228,245,323,448-454",
-     "note": "consumer sites",
-     "repo": "cognous-control-plane",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-C-021"
-    }
-   ],
-   "differs_from_g0": true,
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
-   "evidence_references": [
-    "policy_binding.py:64-76,118-138 CP-side check (profile-fed); no Registry reader: grep age_ceilings/age_bounds in Runtime main and registry_consumer finds no feed; m2 backlog rows 12 defer to M11/M12"
-   ],
-   "existing_behavior": "policy_binding.policy_binding_defects; runtime_authority.validate_extensions",
-   "existing_registry_coverage": "NONE for the ceiling itself: Control Plane enforces a host-supplied ceiling at construction (policy_binding.py:118-140) but nothing derives it from a Registry record.",
-   "g0_dispositions": [
-    "ALREADY-GOVERNED"
-   ],
-   "g0_group_ids": [
-    "RG-C-021"
-   ],
-   "g0_record_ids": [
-    "G0-C-021"
-   ],
-   "grouping_verdicts": [
-    "SUPPORTED"
-   ],
-   "historical_source_ids": [],
-   "implementation_layers": {
-    "enforcement_integrated": "NO",
-    "independently_accepted": "NO",
-    "registry_represented": "NO"
-   },
-   "in_g0_inventory": true,
-   "kind": "PARAMETER",
-   "migration_eligibility": "ELIGIBLE",
-   "migration_status": "NOT-STARTED",
-   "name": "Host-configured per-action upper bound on class base + max_age_extension_seconds; ints >= 1. Requires freshness/0.1 with anchor_deadline_to_inputs True and ever",
-   "not_applicable_reason": null,
-   "origin": "G0-CURRENT-ONLY",
-   "parameter_count": 1,
-   "proposed_migration_wave": "M11/M12 (after the F4/F5 Control Plane consumer)",
-   "proposed_narrowing_semantics": "Order: a ceiling is an upper bound on class bound; absent => no ceiling (baseline = class values); smaller ceiling = stricter. Withdrawn disposition carries no ceilings (member_defects). Malformed binding refused with policy_binding_invalid.",
-   "registry_appropriate": "YES",
-   "rule_id": "RG-C-021",
-   "split_from": null,
-   "valid_domain": null,
-   "value_type": "Host-configured per-action upper bound on class base + max_age_extension_seconds; ints >= 1. Requires freshness/0.1 with anchor_deadline_to_inputs True and every key an action in the profile; violations yield freshness_ceiling_exceeded / fr"
   },
   {
    "blocking_architectural_decisions": [],
@@ -26694,12 +26633,12 @@
     }
    ],
    "differs_from_g0": true,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2 (LOW): federated_governance.py is synthetic SQLite only and open-control-stack README:155 says synthetic references grant no authority; config is fixed at create with trust anchors. If designated production it becomes caller-owned governance config.",
    "evidence_references": [
     "federated_governance.py:22-34 create() stores governance incl anchors, quorum, max_source_age; :69 AUTHORITY_STALE check"
    ],
-   "existing_behavior": "federated_governance.py lines 23-34, 69.",
+   "existing_behavior": null,
    "existing_registry_coverage": null,
    "g0_dispositions": [
     "ELIGIBLE-NOT-MIGRATED"
@@ -26717,19 +26656,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "governance config member max_source_age (int>=1) bounds 0<=now-reviewed_at<=max_source_age for each authority fact; also review_due/expires_at intervals and ris",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "G0-CURRENT-ONLY",
    "parameter_count": 0,
    "proposed_migration_wave": "M11",
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "RG-D-022",
    "split_from": null,
    "valid_domain": null,
-   "value_type": "governance config member max_source_age (int>=1) bounds 0<=now-reviewed_at<=max_source_age for each authority fact; also review_due/expires_at intervals and risk_ceiling/quorum members in the same config."
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -28200,7 +28139,7 @@
    "name": "Destination observation age/tolerance (300/5 literal in acp run; required ctor field; importer-recorded copy)",
    "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
-   "parameter_count": 1,
+   "parameter_count": 2,
    "proposed_migration_wave": "M11",
    "proposed_narrowing_semantics": "Order: smaller max_age_seconds and smaller clock_tolerance_seconds are stricter (more observations rejected). Floor/baseline: the host-constructed value; a Registry value must satisfy min(host, registry) and must never supply a policy where host passed None (absent policy must stay observation_polic",
    "registry_appropriate": "YES",

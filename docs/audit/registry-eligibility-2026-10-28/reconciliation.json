@@ -219,14 +219,14 @@
    "records_split_out": []
   },
   {
-   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_disposition": "BLOCKED",
    "audit_rule_id": "RG-C-005",
    "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
    "g0_group_id": "RG-C-005",
    "records_split_out": []
   },
   {
-   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_disposition": "BLOCKED",
    "audit_rule_id": "RG-C-006",
    "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
    "g0_group_id": "RG-C-006",
@@ -310,7 +310,7 @@
    "records_split_out": []
   },
   {
-   "audit_disposition": "REGISTRY-ELIGIBLE",
+   "audit_disposition": "PROVIDER-OR-HOST-OWNED",
    "audit_rule_id": "RG-C-018",
    "g0_disposition": "RETAIN-IN-CODE",
    "g0_group_id": "RG-C-018",
@@ -332,7 +332,7 @@
   },
   {
    "audit_disposition": "REGISTRY-ELIGIBLE",
-   "audit_rule_id": "RG-C-021",
+   "audit_rule_id": "LR-F5-CLASS-STATUS-AGE",
    "g0_disposition": "ALREADY-GOVERNED",
    "g0_group_id": "RG-C-021",
    "records_split_out": []
@@ -555,7 +555,7 @@
    "records_split_out": []
   },
   {
-   "audit_disposition": "UNRESOLVED",
+   "audit_disposition": "OUT-OF-SCOPE",
    "audit_rule_id": "RG-D-022",
    "g0_disposition": "ELIGIBLE-NOT-MIGRATED",
    "g0_group_id": "RG-D-022",
@@ -759,7 +759,7 @@
   "G0-C-018": "RG-C-018",
   "G0-C-019": "RG-C-019",
   "G0-C-020": "RG-C-020",
-  "G0-C-021": "RG-C-021",
+  "G0-C-021": "LR-F5-CLASS-STATUS-AGE",
   "G0-C-022": "RG-F7-DEDUPE",
   "G0-C-023": "RG-C-023",
   "G0-C-024": "RG-C-024",
@@ -814,27 +814,27 @@
  "summary": {
   "caller_or_issuer_owned_rules": 18,
   "canonical_rules_by_disposition": {
-   "BLOCKED": 1,
+   "BLOCKED": 3,
    "CALLER-OR-ISSUER-OWNED": 18,
-   "OUT-OF-SCOPE": 32,
-   "PROVIDER-OR-HOST-OWNED": 19,
-   "REGISTRY-ELIGIBLE": 12,
+   "OUT-OF-SCOPE": 33,
+   "PROVIDER-OR-HOST-OWNED": 20,
+   "REGISTRY-ELIGIBLE": 8,
    "REGISTRY-GOVERNED": 5,
-   "RETAIN-IN-CODE": 343,
-   "UNRESOLVED": 10
+   "RETAIN-IN-CODE": 344,
+   "UNRESOLVED": 8
   },
   "canonical_rules_by_origin": {
-   "G0-CURRENT-ONLY": 41,
+   "G0-CURRENT-ONLY": 40,
    "HISTORICAL": 307,
    "HISTORICAL+G0": 51,
    "LEAD-SPLIT": 6,
    "REPO-COVERAGE": 35
   },
   "canonical_rules_from_historical_rows": 359,
-  "canonical_rules_g0_only_no_historical_row": 46,
+  "canonical_rules_g0_only_no_historical_row": 45,
   "canonical_rules_repo_coverage_only": 35,
-  "canonical_rules_total": 440,
-  "configuration_relevant_rules_denominator": 48,
+  "canonical_rules_total": 439,
+  "configuration_relevant_rules_denominator": 47,
   "expected_s02_class_totals": {
    "CONFIGURABLE-CANDIDATE": 43,
    "INCIDENTAL-CONDITIONAL": 51,
@@ -864,19 +864,19 @@
    "ALREADY-GOVERNED -> REGISTRY-ELIGIBLE": 3,
    "ALREADY-GOVERNED -> REGISTRY-GOVERNED": 1,
    "BLOCKED -> BLOCKED": 1,
+   "ELIGIBLE-NOT-MIGRATED -> BLOCKED": 2,
    "ELIGIBLE-NOT-MIGRATED -> CALLER-OR-ISSUER-OWNED": 1,
-   "ELIGIBLE-NOT-MIGRATED -> OUT-OF-SCOPE": 2,
+   "ELIGIBLE-NOT-MIGRATED -> OUT-OF-SCOPE": 3,
    "ELIGIBLE-NOT-MIGRATED -> PROVIDER-OR-HOST-OWNED": 3,
-   "ELIGIBLE-NOT-MIGRATED -> REGISTRY-ELIGIBLE": 11,
+   "ELIGIBLE-NOT-MIGRATED -> REGISTRY-ELIGIBLE": 9,
    "ELIGIBLE-NOT-MIGRATED -> REGISTRY-GOVERNED": 4,
-   "ELIGIBLE-NOT-MIGRATED -> UNRESOLVED": 2,
+   "ELIGIBLE-NOT-MIGRATED -> UNRESOLVED": 1,
    "OUT-OF-SCOPE -> CALLER-OR-ISSUER-OWNED": 1,
    "OUT-OF-SCOPE -> OUT-OF-SCOPE": 5,
    "OUT-OF-SCOPE -> PROVIDER-OR-HOST-OWNED": 2,
    "RETAIN-IN-CODE -> CALLER-OR-ISSUER-OWNED": 3,
    "RETAIN-IN-CODE -> OUT-OF-SCOPE": 2,
-   "RETAIN-IN-CODE -> PROVIDER-OR-HOST-OWNED": 7,
-   "RETAIN-IN-CODE -> REGISTRY-ELIGIBLE": 1,
+   "RETAIN-IN-CODE -> PROVIDER-OR-HOST-OWNED": 8,
    "RETAIN-IN-CODE -> RETAIN-IN-CODE": 39,
    "RETAIN-IN-CODE -> UNRESOLVED": 4,
    "UNRESOLVED -> CALLER-OR-ISSUER-OWNED": 2,
@@ -943,26 +943,26 @@
    "NEW:genfence-refusal-budget",
    "NEW:hub-context-journal-max-uncommitted",
    "NEW:hub-operational-state-contract-thresholds",
-   "NEW:hub-registry-record-profile-vocabulary",
    "NEW:operation-identity-enablement",
    "NEW:revocation-writer-enable-flags",
    "NEW:sqlite-busy-timeout"
   ],
-  "out_of_scope_rules": 32,
-  "provider_or_host_owned_rules": 19,
-  "registry_eligible_parameters": 13,
+  "out_of_scope_rules": 33,
+  "provider_or_host_owned_rules": 20,
+  "registry_eligible_parameters": 10,
   "registry_eligible_represented_in_registry_not_integrated": 2,
-  "registry_eligible_rules": 12,
+  "registry_eligible_rules": 8,
   "registry_governed_parameters": 9,
   "registry_governed_rules": 5,
-  "registry_manageable_parameters_governed_plus_eligible": 22,
-  "registry_manageable_rules_governed_plus_eligible": 17,
-  "retain_in_code_rules": 343,
+  "registry_manageable_parameters_governed_plus_eligible": 19,
+  "registry_manageable_rules_governed_plus_eligible": 13,
+  "retain_in_code_rules": 344,
   "rows_by_final_disposition": {
+   "BLOCKED": 2,
    "CALLER-OR-ISSUER-OWNED": 7,
    "OUT-OF-SCOPE": 26,
-   "PROVIDER-OR-HOST-OWNED": 11,
-   "REGISTRY-ELIGIBLE": 17,
+   "PROVIDER-OR-HOST-OWNED": 12,
+   "REGISTRY-ELIGIBLE": 14,
    "REGISTRY-GOVERNED": 4,
    "RETAIN-IN-CODE": 544,
    "UNRESOLVED": 11
@@ -982,7 +982,7 @@
    "FOUND": 499,
    "MOVED": 121
   },
-  "rows_where_final_differs_from_worker": 24,
+  "rows_where_final_differs_from_worker": 25,
   "unresolved_or_blocked_rules": 11
  }
 }

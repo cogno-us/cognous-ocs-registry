@@ -5,7 +5,7 @@
 ## Lead merges (many-to-one, explained)
 
 - **LR-F4-STATUS-APPROVAL-AGE** ← RG-A-007, RG-C-003, RG-C-004: Workers H1 and A found RG-A-007 (Registry composer side) and RG-C-003/RG-C-004 (Control Plane consumer-side defaults) are one logical rule viewed from two repositories; the Registry F4 payload carries exactly these two scalars.
-- **LR-F5-CLASS-STATUS-AGE** ← RG-A-008, RG-C-008, NEW:class-status-age-bound: H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule.
+- **LR-F5-CLASS-STATUS-AGE** ← RG-A-008, RG-C-008, NEW:class-status-age-bound, RG-C-021: H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule. RG-C-021 (age_ceilings) added after cross-check J2: it is the Control Plane carrier of the F5 values (policy_binding.py:3-5,70-76), not an independent parameter.
 - **LR-MANIFEST-DEFAULT-ACTION** ← RG-C-031, RG-D-003: Worker H2: RG-C-031 and RG-D-003 are the same manifest field split across two groups.
 - **LR-RUNTIME-ADMISSION-SIZE-BUDGETS** ← RG-B-001, RG-B-002: Same admission guard (safe_executor._admit_plain_data and the max_bytes budget); G0 split them into two retain groups. Merged so the open question is carried once.
 

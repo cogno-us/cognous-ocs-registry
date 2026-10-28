@@ -49,8 +49,17 @@ Raw outputs: `worker-evidence/J*.jsonl`. Disposition of every disagreement: `lea
 | RG-D-021 | REJECTED | Retained PROVIDER-OR-HOST-OWNED: no hard-coded value exists; the value lives in the hub reference_profiles. Reviewer J3b disagrees (retained disagreement). |
 | RG-F11-REDACTION-DEFAULTS | ADOPTED-AS-UNRESOLVED | Caller-owned presentation (H1) vs an OR-floor (J3b): ownership of a minimum-redaction floor is a privacy-owner decision (AUD-D05). |
 | RG-F7-DEDUPE | ADOPTED-AS-UNRESOLVED | G0 C-022 stands: horizon/TTL/escalation deadline ownership is open. |
+| NEW:hub-registry-record-profile-vocabulary | ADOPTED | RETAIN-IN-CODE (wire contract). |
+| RG-C-005 | ADOPTED | BLOCKED on DR-CP-AGE-1; parameter count corrected to 2. |
+| RG-C-006 | ADOPTED | BLOCKED on DR-CP-AGE-1. |
+| RG-C-018 | ADOPTED | PROVIDER-OR-HOST-OWNED; supersedes the lead's earlier marginal-eligible call. |
+| RG-C-021 | ADOPTED (MERGE) | Merged into LR-F5-CLASS-STATUS-AGE; counted once. |
+| RG-D-022 | ADOPTED | OUT-OF-SCOPE, LOW confidence. |
+| RG-F4-OBSERVATION-POLICY | ADOPTED | Parameter count corrected to 2 (max_age_seconds, clock_tolerance_seconds); disposition unchanged. |
+| LR-MANIFEST-DEFAULT-ACTION | NO-CHANGE (label-only) | J2 prefers RETAIN-IN-CODE, lead keeps CALLER-OR-ISSUER-OWNED (manifest-authored data); both non-manageable. J2 confirms G0's ALREADY-GOVERNED for RG-C-031 was wrong. |
 
 - J1_blind_reaudit: rows=178, risk_selected=148, random=30, disagreements_with_final=16, label_only=9, adjudicated_to_unresolved=4, no_change_parameter_already_counted=3
 - J3a_out_of_scope_claims: claims=35, confirmed=30, falsified=5, falsified_toward_eligible=0
 - J3b_host_caller_claims: claims=40, confirmed=33, falsified=7, adopted=4, rejected=1, to_unresolved=3
+- J2_verification_of_governed_eligible_unresolved_blocked: rules_verified=22, confirmed=16, downgraded=5, merged=1, duplicate_site_candidate_review=36 sites: 27 legitimate, 4 merge candidates, 5 double-counts (raw: worker-evidence/J2_sites.json). Site-level duplicates affect source-site counts only, not rule or parameter counts; not re-keyed.
 

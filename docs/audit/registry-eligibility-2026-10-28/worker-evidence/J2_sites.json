@@ -1,0 +1,269 @@
+{
+ "duplicate_sites": [
+  {
+   "file": "src/agent_control_plane/runtime_authority.py",
+   "symbol": "validate_extensions",
+   "verdict": "LEGITIMATE",
+   "note": "Distinct line ranges/gates (373-389, 392-402, 405-416, 429-433, 319-362); no overlap. LR-F5 holds only the class-bound age read at 405-416."
+  },
+  {
+   "file": "engine/control_plane_adapter.py",
+   "symbol": "execute",
+   "verdict": "LEGITIMATE",
+   "note": "347-351 reaper carry vs 365-377 PermissionError mapping: different statements."
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "symbol": "validate_snapshot",
+   "verdict": "LEGITIMATE",
+   "note": "Helper/line ranges 252-259, 262-283, 289-303, 316-317 are disjoint; effects-count 427-428 is handled at the check site."
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "symbol": "_resolve_inputs",
+   "verdict": "LEGITIMATE",
+   "note": "14 sub-rules over disjoint ranges 2264-2575. Ages (status/approval/identity/mandate) must be counted only at LR-F4 / RG-C-005; the evaluator rules are RETAIN-IN-CODE and must not carry them as counted parameters."
+  },
+  {
+   "file": "engine/atomic_local_control_plane_executor.py",
+   "symbol": "execute",
+   "verdict": "LEGITIMATE",
+   "note": "Four disjoint gates (69-83, 85-94, 98-138, 139-140)."
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "symbol": "commit",
+   "verdict": "LEGITIMATE",
+   "note": "commit lifecycle vs simulate fault injection (835-836) are disjoint."
+  },
+  {
+   "file": "engine/local_authority_effect.py",
+   "symbol": "_activate_profile",
+   "verdict": "LEGITIMATE",
+   "note": "Disjoint gates 118-123, 131-142, 214-218, 223-238."
+  },
+  {
+   "file": "src/agent_control_plane/records.py",
+   "symbol": "RunRecorder.evaluate_action",
+   "verdict": "LEGITIMATE",
+   "note": "208-215 and 360-363 state gates vs 231-240 block recording: disjoint."
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "symbol": "execute",
+   "verdict": "LEGITIMATE",
+   "note": "capability gate 1711-1718 is nested inside effect-time-reresolution 1682-1720; narrow the latter to 1682-1710. Distinct checks, same disposition, no count impact."
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "symbol": "_manifest_mismatches",
+   "verdict": "LEGITIMATE",
+   "note": "Disjoint ranges 2608-2641, 2643-2700, 2702-2723, 2725-2753."
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "symbol": "store",
+   "verdict": "LEGITIMATE",
+   "note": "568-601 durability floor vs 696-727 lease/check-id: disjoint."
+  },
+  {
+   "file": "src/agent_control_plane/local_authority_effect.py",
+   "symbol": "_validate_issuance_snapshot",
+   "verdict": "LEGITIMATE",
+   "note": "359-389 projection currency vs 75-248 claim model: distinct lines."
+  },
+  {
+   "file": "src/agent_control_plane/decision_input_profile.py",
+   "symbol": "verify_record",
+   "verdict": "LEGITIMATE",
+   "note": "Disjoint ranges 257-260, 313-326, 339-344, 365-368."
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "symbol": "_reconcile_observation",
+   "verdict": "LEGITIMATE",
+   "note": "Evaluator (1894-1968) vs the ObservationPolicy parameters (411-415, consumed in 1890-1968): rule vs its parameter. Keep the parameters only in RG-F4-OBSERVATION-POLICY."
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "symbol": "check",
+   "verdict": "DOUBLE-COUNT",
+   "note": "safe_executor.py:427-428 (effects != 1) is inside RG-B-011 413-430 (whole check order, G0-B-011 lists it). Assign the site to RG-B-011; keep effects-count-validation to 252-259, 316-317."
+  },
+  {
+   "file": "src/agent_control_plane/runtime_authority.py",
+   "symbol": "validate_evidence",
+   "verdict": "LEGITIMATE",
+   "note": "Disjoint ranges 259-267 vs 268-290."
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "symbol": "_resolve_journal",
+   "verdict": "LEGITIMATE",
+   "note": "Disjoint: 2085-2087 cap, 2108-2128 order, 2131-2144 anchoring."
+  },
+  {
+   "file": "src/agent_control_plane/local_authority_effect.py",
+   "symbol": "_materialize_under_handoff",
+   "verdict": "LEGITIMATE",
+   "note": "404-600 envelope of provisioning-verification nests budget default (540, CALLER-OR-ISSUER-OWNED) and validity-windows (474-485): distinct rules; narrow the envelope."
+  },
+  {
+   "file": "engine/local_authority_effect.py",
+   "symbol": "execute_claim_atomic",
+   "verdict": "LEGITIMATE",
+   "note": "RG-B-017 (999-1010) vs lae-atomic-execute (917-1020 sub-ranges) and simulate (1037,1092): disjoint lines."
+  },
+  {
+   "file": "engine/local_authority_effect.py",
+   "symbol": "_validate_claim_state",
+   "verdict": "DOUBLE-COUNT",
+   "note": "Grant validity window (761-762) is counted in lae-validity-intervals and inside lae-authoritative-state-checks 747-762. Assign 761-762 to validity-intervals; trim authoritative-state-checks to 747-760."
+  },
+  {
+   "file": "engine/local_authority_effect.py",
+   "symbol": "provision_claim",
+   "verdict": "LEGITIMATE",
+   "note": "355-440 grant handling vs RG-B-017 budget immutability 442-452: adjacent, disjoint."
+  },
+  {
+   "file": "src/agent_control_plane/manifest_validation.py",
+   "symbol": "_manifest_errors",
+   "verdict": "LEGITIMATE",
+   "note": "Disjoint ranges 70-118, 121-135, 142-145."
+  },
+  {
+   "file": "src/agent_control_plane/merge.py",
+   "symbol": "resolve_merge",
+   "verdict": "LEGITIMATE",
+   "note": "182-194/204 evaluator vs 211-217 compensation obligation: disjoint. RG-C-024 funded_authorities (195) is a parameter."
+  },
+  {
+   "file": "engine/revocation_closeout.py",
+   "symbol": "close_original_attempt",
+   "verdict": "LEGITIMATE",
+   "note": "365-373, 374-379, 386 are distinct statements."
+  },
+  {
+   "file": "engine/openshell_environment.py",
+   "symbol": "OpenShellConfig.__post_init__",
+   "verdict": "LEGITIMATE",
+   "note": "Revision pins 95-99 vs sandbox equality pins/timeout 20-32, 89-91, 104-107: disjoint."
+  },
+  {
+   "file": "src/agent_control_plane/policy_gate.py",
+   "symbol": "_apply_rules",
+   "verdict": "MERGE",
+   "note": "policy-gate-rule-order (173-238, 237) and RG-C-029 (168-243 ordered rule table, W4-007) are the same ordered rule table. Merge into one RETAIN-IN-CODE rule."
+  },
+  {
+   "file": "engine/recovery_resolution.py",
+   "symbol": "append",
+   "verdict": "DOUBLE-COUNT",
+   "note": "recovery_resolution.py:305-308 (receipt reason selection) lies inside recovery-resolution-rule 286-315 and is also attributed to recovery-conflict-rule; assign to resolution-rule, keep conflict-rule to 272-285. Append-chain 238-263 is disjoint."
+  },
+  {
+   "file": "engine/refund_intent.py",
+   "symbol": "business_commitment",
+   "verdict": "LEGITIMATE",
+   "note": "commitment fields (55-65) vs RG-B-024 effect_class pin/action-id set (19-35, 51-54): narrow B-024 to those lines; commitment composition is the other rule."
+  },
+  {
+   "file": "src/agent_control_plane/rule_revision.py",
+   "symbol": "append_rule_revision",
+   "verdict": "MERGE",
+   "note": "unsigned-row retention (149-163) is the append-side of RG-C-023 'unsigned rows never count' (revision_defects 87-97, counting_rows 100-110, append 139-177). Same logical rule: merge into RG-C-023."
+  },
+  {
+   "file": "src/agent_control_plane/validation.py",
+   "symbol": "_validate_run_consistency",
+   "verdict": "MERGE",
+   "note": "run-consistency-validation (157-162 blocked action needs block decision) is one check inside validation-issue-codes, whose range 106-207 spans the whole function. Merge (or restrict issue-codes to the code vocabulary)."
+  },
+  {
+   "file": "src/agent_control_plane/runtime_authority.py",
+   "symbol": "RuntimeAuthorityProfile",
+   "verdict": "DOUBLE-COUNT",
+   "note": "producer_keys is a child_param of RG-C-013 and the whole of NEW:runtime-authority-profile-producer-keys, same lines 194-217. H2 already ruled RG-C-013 OVER-MERGED: count producer_keys once, in the NEW rule."
+  },
+  {
+   "file": "src/agent_control_plane/tools.py",
+   "symbol": "execute_with_control",
+   "verdict": "MERGE",
+   "note": "tool-execution-gate (43-44, 57-69) is a strict subset of tool-execution-guard (43-93). Merge into one RETAIN-IN-CODE rule."
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "symbol": "consumers",
+   "verdict": "LEGITIMATE",
+   "note": "'consumers' is a placeholder, not a symbol. RG-C-009 (bounded.py 2111, 2189) and RG-C-020 (1416, 2105) are different parameters on different lines."
+  },
+  {
+   "file": "registry_successor/v3_f1abc.py",
+   "symbol": "compose_f1abc",
+   "verdict": "LEGITIMATE",
+   "note": "compose_f1abc line 137 is the def: max_amount and max_effects are separate min() statements (different parameters, same symbol)."
+  },
+  {
+   "file": "engine/registry_selection_authority.py",
+   "symbol": "_check_policy_containment_f1abc",
+   "verdict": "LEGITIMATE",
+   "note": "_check_policy_containment_f1abc loops F1ABC_CEILINGS (1679-1680): two parameters at one construct."
+  },
+  {
+   "file": "registry_successor/v2_f1ab.py",
+   "symbol": "payload_validator (field_unknown on sixth key)",
+   "verdict": "DOUBLE-COUNT",
+   "note": "v2_f1ab.py:44-54 validates only the five f1ab keys (F1A rule). F1C/F1D rules cite it as the old 'sixth key refused' no-slot evidence, superseded by v3_f1abc.py:64 / v4_f1abcd.py:106. Remove as a site for those four rules."
+  }
+ ],
+ "merge_checks": [
+  {
+   "merge": "RG-A-007+RG-C-003+RG-C-004",
+   "verdict": "SUPPORTED",
+   "note": "A-007 is Registry F4 (v2_age_bounds.py:197-208) carrying exactly status_max_age_seconds and approval_max_age_seconds; C-003/C-004 are the CP ctor consumers (bounded.py:1271,1274). One rule, 2 parameters. Keep identity/mandate (C-005) out. Registry side is represented, not integrated."
+  },
+  {
+   "merge": "RG-A-008+RG-C-008+class-status-age-bound",
+   "verdict": "SUPPORTED",
+   "note": "A-008 is F5 map (v2_age_bounds.py:213); C-008 is ActionClass.max_status_age_seconds (runtime_authority.py:131); W8-004/W8-031 are the same parameter read at 2398/405-416. One parameter, several readers. policy_binding age_ceilings (C-021) is the carrier of the same Registry value."
+  },
+  {
+   "merge": "RG-C-031+RG-D-003",
+   "verdict": "SUPPORTED",
+   "note": "Both are the manifest default_action posture: model default escalate (action-manifest models.py:264) and CP validator/gate (manifest_validation.py:90,99; bounded.py:2664-2667, only block refuses). Merged disposition must be RETAIN-IN-CODE: G0 ALREADY-GOVERNED for C-031 is wrong, F1a narrows Runtime action ids, not manifest posture."
+  }
+ ],
+ "split_checks": [
+  {
+   "record": "G0-D-001",
+   "verdict": "SUPPORTED",
+   "note": "Manifest EffectLimits (models.py:167-171) are authored per action by the manifest author and digest-bound; Registry f1c governs Runtime LocalExecutionPolicy ceilings only. Different owner and consumer; includes unit and the max_effects=1 default."
+  },
+  {
+   "record": "G0-D-002",
+   "verdict": "SUPPORTED",
+   "note": "Manifest allowed_targets are exact identifiers (E020/E024/E025) with an allow_any_target escape hatch, vs Runtime allowed_target_prefixes with segment/exact/legacy-prefix semantics. Not governed by f1abcd; allow_any_target must stay unrepresentable."
+  },
+  {
+   "record": "G0-D-007",
+   "verdict": "SUPPORTED",
+   "note": "RedactionHint.replacement default '[REDACTED]' is a cosmetic manifest-model default; it shares no consumer with CP RedactionConfig (G0-C-038 RETAIN-IN-CODE) and G0 held conflicting dispositions inside one group."
+  },
+  {
+   "record": "G0-D-012",
+   "verdict": "SUPPORTED",
+   "note": "redact_replay_bundle keyword defaults (redaction.py:16-29) are caller-overridable export options in another repo, including redact_payloads=True, a confidentiality floor that must not be registry-lowered. Separate from CP RedactionConfig."
+  },
+  {
+   "record": "G0-B-014",
+   "verdict": "SUPPORTED",
+   "note": "permissions.py/permissions.json is a legacy non-effecting shell keyed by unauthenticated agent_id (engine.py:19), not a manifest authority_required/tools.allowed table (G0-D-008). Different semantics, OUT-OF-SCOPE."
+  },
+  {
+   "record": "G0-B-015",
+   "verdict": "SUPPORTED",
+   "note": "dedupe_ttl_seconds on the synthetic destination (dedupe_destination.py:76-93) models provider behaviour; CP DedupeProfile (G0-C-022) is a host-declared triple with an invariant. Related by forwarding, not one rule. Destination TTL is not Runtime policy."
+  }
+ ]
+}

@@ -16905,8 +16905,8 @@
      "symbol": "clock_tolerance_seconds ctor default; _fresh 2022"
     }
    ],
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_differs_from_worker": false,
+   "disposition": "BLOCKED",
+   "disposition_differs_from_worker": true,
    "evidence": "bounded.py:1275; _fresh (2013-2022) observed > now+tolerance; _record_check passes it",
    "existing_registry_coverage": "NONE: F4 docstring excludes clock tolerance; no CP consumer",
    "g0_record_links": [
@@ -18993,8 +18993,8 @@
      "symbol": "_resolve_inputs identity/mandate _fresh"
     }
    ],
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_differs_from_worker": false,
+   "disposition": "BLOCKED",
+   "disposition_differs_from_worker": true,
    "evidence": "bounded.py:2352-2368 self.identity_max_age_seconds / mandate_max_age_seconds",
    "existing_registry_coverage": "NONE: Registry f4 excludes identity/mandate keys; no CP consumer",
    "g0_record_links": [
@@ -21972,8 +21972,8 @@
      "symbol": "FreshnessProfile.nonce"
     }
    ],
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_differs_from_worker": true,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_differs_from_worker": false,
    "evidence": "freshness.py:66; header limits on nonce_bound vs source_asserted",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [

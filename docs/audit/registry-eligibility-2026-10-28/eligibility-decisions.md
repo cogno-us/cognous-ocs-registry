@@ -72,33 +72,12 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 
 - Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): ALREADY-GOVERNED, ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
 - Parameters: 1; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'YES'}; proposed wave: M12.
-- Configuration owner: Host RuntimeAuthorityProfile.actions[...]; Registry may only lower via min(); Host operator via profile; Host-authored RuntimeAuthorityProfile (trusted host config); committed in approval; Registry operator (f5 record) narrowing CP host class bounds by min();…
+- Configuration owner: Host RuntimeAuthorityProfile.actions[...]; Registry may only lower via min(); Host operator via profile; Host profile slot; value narrowed by Registry; Host-authored RuntimeAuthorityProfile (trusted host config); committed in approval; Registry operator (f5 r…
 - Value / domain: object action_class->int 1..2147483647, <=256 sorted token keys
 - Narrowing semantics: per-class min()
 - Existing Registry coverage: PARTIAL: Registry f5 composer represents the per-class map; the Control Plane has no consumer; open question how a narrowed class value enters approval_commitment.
 - Blocking decisions: How does a Registry-narrowed class value enter approval_commitment and the approval-side age_ceilings check, given profile.model_dump is the preimage?
-- Historical rows: W8-004, W8-005, W8-031; G0 groups: RG-A-008, RG-C-008; evidence: cp runtime_authority.py:131; bounded.py:1366-1373; policy_binding.py:133; registry v2_age_bounds.py:213-227; cp runtime_authority.py:131; no Registry import in CP; runtime_authority.py:126-135; registry v2_age_bounds.py:1-40; runtime_authority.py:131; policy_…
-
-### RG-C-005 — Two ints, HARD_CODED_LITERAL default 60 each; host may override at construction. Unvalidated.
-
-- Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
-- Parameters: 1; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'NO'}; proposed wave: M11.
-- Configuration owner: Host constructor of BoundedAuthorizationWorkflow; cli_run passes none.; Host constructor values; Host ctor; Registry may only lower via min()
-- Value / domain: Two ints, HARD_CODED_LITERAL default 60 each; host may override at construction. Unvalidated.
-- Narrowing semantics: Smaller is stricter; min(host, registry); absent/malformed leaves host value.
-- Existing Registry coverage: ['NONE: Registry f4 excludes identity/mandate keys; no CP consumer']
-- Blocking decisions: Is the omission of identity/mandate ages from F4 (DR-CP-AGE-1) a deliberate exclusion or a gap awaiting a new slot?
-- Historical rows: W7-040; G0 groups: RG-C-005; evidence: bounded.py:2352-2368 self.identity_max_age_seconds / mandate_max_age_seconds; cp bounded.py:1272-1273,1296-1297,2352,2366; registry v2_age_bounds.py docstring excludes these keys
-
-### RG-C-006 — int, HARD_CODED_LITERAL default 5; unvalidated. Used (a) in _fresh to reject future-dated authority-input observations (bounded.py 2022), (b) as tolerance_secon
-
-- Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
-- Parameters: 1; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'NO'}; proposed wave: M11.
-- Configuration owner: Host constructor; Host constructor; cli_run uses the default 5.; Host ctor (clock quality); Registry may only lower via min()
-- Value / domain: int, HARD_CODED_LITERAL default 5; unvalidated. Used (a) in _fresh to reject future-dated authority-input observations (bounded.py 2022), (b) as tolerance_seconds passed to record_resolution_check (1332), (c) to reject a recorded_at earlier
-- Narrowing semantics: Smaller is stricter; floor 0; min(host, registry); a registry value larger than host is ignored.
-- Existing Registry coverage: ['NONE: F4 docstring excludes clock tolerance; no CP consumer']
-- Historical rows: W6-041; G0 groups: RG-C-006; evidence: bounded.py:1275; _fresh (2013-2022) observed > now+tolerance; _record_check passes it; cp bounded.py:1275,1299,1430,2022-2024; all uses fail closed when smaller
+- Historical rows: W8-004, W8-005, W8-031; G0 groups: RG-A-008, RG-C-008, RG-C-021; evidence: cp runtime_authority.py:131; bounded.py:1366-1373; policy_binding.py:133; policy_binding.py:64-76,118-138 CP-side check (profile-fed); no Registry reader: grep age_ceilings/age_bounds in Runtime main and registry_consumer finds no feed; m2 backlog rows 12 def…
 
 ### RG-C-009 — Closed enum, default "refuse" (strict). "bounded_tolerance" is accepted only for a class that is not effectively irreversible: bounded.py 2111 refuses an irreve
 
@@ -132,16 +111,6 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Existing Registry coverage: ['NONE']
 - Historical rows: W8-008; G0 groups: RG-C-011; evidence: cp runtime_authority.py:138-146; reversibility.py:165-181; reversibility.py:34-35 module doc 'reversible_until and reversal_cost are producer assertions'; :165-181
 
-### RG-C-018 — bool default True. When True and the resolver declares status-nonce/0.1 each resolver read carries a nonce and a mismatch yields status_nonce_mismatch; otherwis
-
-- Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): RETAIN-IN-CODE; confidence MEDIUM.
-- Parameters: 1; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'NO'}; proposed wave: M11 (proposed; same Control Plane freshness-profile consumer as RG-C-019/RG-C-020).
-- Configuration owner: Host (depends on resolver capability); Host (freshness profile); Host RuntimeAuthorityProfile.freshness
-- Value / domain: bool default True. When True and the resolver declares status-nonce/0.1 each resolver read carries a nonce and a mismatch yields status_nonce_mismatch; otherwise age basis is source_asserted.
-- Narrowing semantics: Registry could at most keep True; setting False would widen.
-- Existing Registry coverage: ['NONE']
-- Historical rows: W8-042; G0 groups: RG-C-018; evidence: freshness.py:65-66 bool default True; bounded.py:2090 nonce=uuid if fr.nonce; Registry can only force True (monotone); freshness.py:66; header limits on nonce_bound vs source_asserted
-
 ### RG-C-019 — int >= 0, default 0 (refuses every extension). Limits the extra seconds a signed AgeBoundExtension may add to a class bound (extension_defects, freshness.py 155
 
 - Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
@@ -162,20 +131,10 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Existing Registry coverage: ['NONE: no Registry slot']
 - Historical rows: W8-044; G0 groups: RG-C-020; evidence: freshness.py:69-72 bool default False; bounded.py:1416,2105 anchor logic; policy_binding.py:126 requires True when ceilings present; freshness.py:72; policy_binding.py:126; bounded.py:1416,2105
 
-### RG-C-021 — Host-configured per-action upper bound on class base + max_age_extension_seconds; ints >= 1. Requires freshness/0.1 with anchor_deadline_to_inputs True and ever
-
-- Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): ALREADY-GOVERNED; confidence HIGH.
-- Parameters: 1; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'NO'}; proposed wave: M11/M12 (after the F4/F5 Control Plane consumer).
-- Configuration owner: Host RuntimeAuthorityProfile.policy_binding (docstring: 'registry-narrowed freshness ceilings per action id'; binding is TRUSTED host configuration; CP does not read a Registry record). 'No maximum age is adopted here (the Architect has not adopted one).'; Ho…
-- Value / domain: Host-configured per-action upper bound on class base + max_age_extension_seconds; ints >= 1. Requires freshness/0.1 with anchor_deadline_to_inputs True and every key an action in the profile; violations yield freshness_ceiling_exceeded / fr
-- Narrowing semantics: Order: a ceiling is an upper bound on class bound; absent => no ceiling (baseline = class values); smaller ceiling = stricter. Withdrawn disposition carries no ceilings (member_defects). Malformed binding refused with policy_binding_invalid.
-- Existing Registry coverage: NONE for the ceiling itself: Control Plane enforces a host-supplied ceiling at construction (policy_binding.py:118-140) but nothing derives it from a Registry record.
-- Historical rows: none (G0-current rule); G0 groups: RG-C-021; evidence: policy_binding.py:64-76,118-138 CP-side check (profile-fed); no Registry reader: grep age_ceilings/age_bounds in Runtime main and registry_consumer finds no feed; m2 backlog rows 12 defer to M11/M12
-
 ### RG-F4-OBSERVATION-POLICY — Destination observation age/tolerance (300/5 literal in acp run; required ctor field; importer-recorded copy)
 
 - Disposition: **REGISTRY-ELIGIBLE** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
-- Parameters: 1; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'NO'}; proposed wave: M11.
+- Parameters: 2; migration status NOT-STARTED; layers {'enforcement_integrated': 'NO', 'independently_accepted': 'NO', 'registry_represented': 'NO'}; proposed wave: M11.
 - Configuration owner: Evaluator in code; values from host ObservationPolicy; Host (BoundedAuthorizationWorkflow constructor); Registry may only lower via min(); Host constructor of BoundedAuthorizationWorkflow; absent policy refuses; Host/CLI wiring (reference host); Host/construc…
 - Value / domain: max_age_seconds: required int > 0 (no default; model refuses absence); clock_tolerance_seconds: int >= 0, HARD_CODED_LITERAL default 5. Judged in _reconcile_observation: future if observed_at > max(evaluation_time,_now() under freshness) + 
 - Narrowing semantics: Order: smaller max_age_seconds and smaller clock_tolerance_seconds are stricter (more observations rejected). Floor/baseline: the host-constructed value; a Registry value must satisfy min(host, registry) and must never supply a policy where host passed None (absent policy must stay observation_polic
@@ -195,16 +154,6 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Blocking decisions: May the Registry narrow Runtime structural admission budgets (depth, node/entry count, byte size)? They are Tier 1 admission guards that bound the canonicalization domain; a narrow-only override only rejects more, but t…
 - Historical rows: W1-007, W1-008, W1-010, W1-011; G0 groups: RG-B-001, RG-B-002; evidence: rt safe_executor.py:147-183; rt safe_executor.py:147-184; safe_executor.py:147 def _admit_plain_data(..., max_bytes: int = 1048576); :161,:183 checks; safe_executor.py:155 if depth > 32 or nodes > 10000; called before snapshot copy; safe_executor.py:170-176; …
 
-### NEW:hub-registry-record-profile-vocabulary — hub registry record profile vocabulary
-
-- Disposition: **UNRESOLVED** (basis: REPO-COVERAGE WORKER); G0 disposition(s): not in G0 inventory; confidence MEDIUM.
-- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: None.
-- Configuration owner: 
-- Value / domain: 
-- Narrowing semantics: 
-- Existing Registry coverage: None
-- Historical rows: none (G0-current rule); G0 groups: none; evidence: registry_records.py:18-31; G0 worker-D notes.md finding 7
-
 ### NEW:operation-identity-enablement — operation identity enablement
 
 - Disposition: **UNRESOLVED** (basis: UNANIMOUS WORKER ROWS); G0 disposition(s): not in G0 inventory; confidence MEDIUM.
@@ -215,6 +164,28 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Existing Registry coverage: ['NONE']
 - Blocking decisions: Is enabling operation-identity a governed policy narrowing, or a host protocol-profile/wiring choice that must be set jointly in Runtime ctor, CP profile and destination capability (and be one-way)?
 - Historical rows: W3-046; G0 groups: none; evidence: atomic_local_control_plane_executor.py:14-24; CP bounded.py:1455-1458 _identity
+
+### RG-C-005 — Two ints, HARD_CODED_LITERAL default 60 each; host may override at construction. Unvalidated.
+
+- Disposition: **BLOCKED** (basis: LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
+- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: M11.
+- Configuration owner: Host constructor of BoundedAuthorizationWorkflow; cli_run passes none.; Host constructor values; Host ctor; Registry may only lower via min()
+- Value / domain: Two ints, HARD_CODED_LITERAL default 60 each; host may override at construction. Unvalidated.
+- Narrowing semantics: 
+- Existing Registry coverage: ['NONE: Registry f4 excludes identity/mandate keys; no CP consumer']
+- Blocking decisions: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone,…; Is the omission of identity/mandate ages from F4 (DR-CP-AGE-1) a deliberate exclusion or a gap awaiting a new slot?
+- Historical rows: W7-040; G0 groups: RG-C-005; evidence: bounded.py:2352-2368 self.identity_max_age_seconds / mandate_max_age_seconds; cp bounded.py:1272-1273,1296-1297,2352,2366; registry v2_age_bounds.py docstring excludes these keys
+
+### RG-C-006 — int, HARD_CODED_LITERAL default 5; unvalidated. Used (a) in _fresh to reject future-dated authority-input observations (bounded.py 2022), (b) as tolerance_secon
+
+- Disposition: **BLOCKED** (basis: LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
+- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: M11.
+- Configuration owner: Host constructor; Host constructor; cli_run uses the default 5.; Host ctor (clock quality); Registry may only lower via min()
+- Value / domain: int, HARD_CODED_LITERAL default 5; unvalidated. Used (a) in _fresh to reject future-dated authority-input observations (bounded.py 2022), (b) as tolerance_seconds passed to record_resolution_check (1332), (c) to reject a recorded_at earlier
+- Narrowing semantics: 
+- Existing Registry coverage: ['NONE: F4 docstring excludes clock tolerance; no CP consumer']
+- Blocking decisions: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone,…
+- Historical rows: W6-041; G0 groups: RG-C-006; evidence: bounded.py:1275; _fresh (2013-2022) observed > now+tolerance; _record_check passes it; cp bounded.py:1275,1299,1430,2022-2024; all uses fail closed when smaller
 
 ### RG-C-024 — Principals funded to fold operations; an authority outside the set holds (merge_authority_unfunded).
 
@@ -248,17 +219,6 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 - Existing Registry coverage: None
 - Blocking decisions: Same minimum-redaction-floor ownership question as RG-F11-REDACTION-DEFAULTS; the replay-bundle library has no Registry consumer.
 - Historical rows: none (G0-current rule); G0 groups: none; evidence: 
-
-### RG-D-022 — governance config member max_source_age (int>=1) bounds 0<=now-reviewed_at<=max_source_age for each authority fact; also review_due/expires_at intervals and ris
-
-- Disposition: **UNRESOLVED** (basis: H-WORKER GROUP AUDIT); G0 disposition(s): ELIGIBLE-NOT-MIGRATED; confidence MEDIUM.
-- Parameters: 0; migration status NOT-STARTED; layers None; proposed wave: M11.
-- Configuration owner: Governance config author (authenticated governance object); Governance config object authenticated by registry/anchors members in the config.
-- Value / domain: governance config member max_source_age (int>=1) bounds 0<=now-reviewed_at<=max_source_age for each authority fact; also review_due/expires_at intervals and risk_ceiling/quorum members in the same config.
-- Narrowing semantics: 
-- Existing Registry coverage: None
-- Blocking decisions: Is max_source_age owned by the governance-config authors (anchors/quorum, set once at create) or may Registry overlay it, and does this reference profile count as an enforcement boundary?
-- Historical rows: none (G0-current rule); G0 groups: RG-D-022; evidence: federated_governance.py:22-34 create() stores governance incl anchors, quorum, max_source_age; :69 AUTHORITY_STALE check
 
 ### RG-D-025 — Four regex rules over normalised text: certified, compliant, production-ready, attested (SOC 1/2/3), with separator and fold tables (PRE_FOLD, EXTRA_DASHES).
 
@@ -318,13 +278,14 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 | RG-B-021 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-B-027 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-B-031 | OUT-OF-SCOPE | PROVIDER-OR-HOST-OWNED | LEAD-OVERRIDE: J3a: examples/openshell/provision.py is the documented operator step for the opt-in OpenShell adapter (docs/openshell-adapter.md:93); sandbox sizing and gateway pin… |
+| RG-C-005 | ELIGIBLE-NOT-MIGRATED | BLOCKED | LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as h… |
+| RG-C-006 | ELIGIBLE-NOT-MIGRATED | BLOCKED | LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as h… |
 | RG-C-012 | RETAIN-IN-CODE | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
 | RG-C-014 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-C-015 | OUT-OF-SCOPE | PROVIDER-OR-HOST-OWNED | LEAD-OVERRIDE: J3a: OperationIdentityProfile is on the production RuntimeAuthorityProfile path (runtime_authority.py:204,321,435); resolver_id/resolver_version are host labels. |
 | RG-C-016 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-C-017 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
-| RG-C-018 | RETAIN-IN-CODE | REGISTRY-ELIGIBLE | H-WORKER GROUP AUDIT |
-| RG-C-021 | ALREADY-GOVERNED | REGISTRY-ELIGIBLE | H-WORKER GROUP AUDIT |
+| RG-C-018 | RETAIN-IN-CODE | PROVIDER-OR-HOST-OWNED | LEAD-OVERRIDE: Cross-check J2: nonce use depends on resolver capability (bounded.py:2090,2214) and no refusal occurs when it is absent; default is already True (freshness.py:65-66… |
 | RG-C-024 | RETAIN-IN-CODE | UNRESOLVED | H-WORKER GROUP AUDIT |
 | RG-C-026 | RETAIN-IN-CODE | OUT-OF-SCOPE | H-WORKER GROUP AUDIT |
 | RG-C-032 | RETAIN-IN-CODE | UNRESOLVED | LEAD-OVERRIDE: Blind reviewer J1b: action_type is an open string (models.py:69), so additive stricter membership of custom types in the effectful/high-risk/privileged sets would b… |
@@ -336,7 +297,7 @@ Every canonical rule that is governed, eligible, unresolved or blocked is listed
 | RG-D-018 | ELIGIBLE-NOT-MIGRATED | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
 | RG-D-020 | ELIGIBLE-NOT-MIGRATED | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
 | RG-D-021 | ELIGIBLE-NOT-MIGRATED | PROVIDER-OR-HOST-OWNED | H-WORKER GROUP AUDIT |
-| RG-D-022 | ELIGIBLE-NOT-MIGRATED | UNRESOLVED | H-WORKER GROUP AUDIT |
+| RG-D-022 | ELIGIBLE-NOT-MIGRATED | OUT-OF-SCOPE | LEAD-OVERRIDE: Cross-check J2 (LOW): federated_governance.py is synthetic SQLite only and open-control-stack README:155 says synthetic references grant no authority; config is fix… |
 | RG-D-026 | OUT-OF-SCOPE | CALLER-OR-ISSUER-OWNED | H-WORKER GROUP AUDIT |
 | RG-F11-REDACTION-DEFAULTS | ELIGIBLE-NOT-MIGRATED | UNRESOLVED | LEAD-OVERRIDE: First-pass H1 rated the redaction defaults caller-owned presentation choices; cross-check J3b rated an OR-floor of redaction flags REGISTRY-ELIGIBLE. Whether a mini… |
 | RG-F1C-MAX-AMOUNT | ELIGIBLE-NOT-MIGRATED | REGISTRY-GOVERNED | H-WORKER GROUP AUDIT |

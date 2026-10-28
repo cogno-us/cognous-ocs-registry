@@ -123,6 +123,26 @@
   "NEW:policy-config-authority-source-label": {
    "disposition": "OUT-OF-SCOPE",
    "reason": "J3b: demo-only helper (label corrected from caller-owned)."
+  },
+  "RG-C-005": {
+   "disposition": "BLOCKED",
+   "reason": "Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+  },
+  "RG-C-006": {
+   "disposition": "BLOCKED",
+   "reason": "Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+  },
+  "RG-C-018": {
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "reason": "Cross-check J2: nonce use depends on resolver capability (bounded.py:2090,2214) and no refusal occurs when it is absent; default is already True (freshness.py:65-66); False only weakens evidence. A Registry cannot enforce it. Reverses the lead's earlier marginal-eligible call; G0 had RETAIN-IN-CODE."
+  },
+  "RG-D-022": {
+   "disposition": "OUT-OF-SCOPE",
+   "reason": "Cross-check J2 (LOW): federated_governance.py is synthetic SQLite only and open-control-stack README:155 says synthetic references grant no authority; config is fixed at create with trust anchors. If designated production it becomes caller-owned governance config."
+  },
+  "NEW:hub-registry-record-profile-vocabulary": {
+   "disposition": "RETAIN-IN-CODE",
+   "reason": "Cross-check J2: vocabulary of the registry record format itself (wire contract); no blocking decision is named, so UNRESOLVED is unsupported."
   }
  },
  "merges": [
@@ -141,10 +161,11 @@
    "members": [
     "RG-A-008",
     "RG-C-008",
-    "NEW:class-status-age-bound"
+    "NEW:class-status-age-bound",
+    "RG-C-021"
    ],
    "name": "Per-action-class status age bound (F5 max_status_age_seconds)",
-   "reason": "H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule."
+   "reason": "H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule. RG-C-021 (age_ceilings) added after cross-check J2: it is the Control Plane carrier of the F5 values (policy_binding.py:3-5,70-76), not an independent parameter."
   },
   {
    "into": "LR-MANIFEST-DEFAULT-ACTION",
@@ -295,21 +316,6 @@
    },
    "coverage": "PARTIAL: Registry f5 composer represents the per-class map; the Control Plane has no consumer; open question how a narrowed class value enters approval_commitment."
   },
-  "RG-C-021": {
-   "parameters": 1,
-   "migration_wave": "M11/M12 (after the F4/F5 Control Plane consumer)",
-   "implementation_status": "NOT-STARTED",
-   "layers": {
-    "registry_represented": "NO",
-    "enforcement_integrated": "NO",
-    "independently_accepted": "NO"
-   },
-   "coverage": "NONE for the ceiling itself: Control Plane enforces a host-supplied ceiling at construction (policy_binding.py:118-140) but nothing derives it from a Registry record."
-  },
-  "RG-C-018": {
-   "migration_wave": "M11 (proposed; same Control Plane freshness-profile consumer as RG-C-019/RG-C-020)",
-   "implementation_status": "NOT-STARTED"
-  },
   "RG-C-011": {
    "parameters": 1,
    "migration_wave": "M12",
@@ -340,6 +346,20 @@
    "blocking": [
     "Are the Control Plane DedupeProfile escalation_deadline and key TTL host policy or provider-declared facts? (G0 C-022)"
    ]
+  },
+  "RG-C-005": {
+   "parameters": 2,
+   "blocking": [
+    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+   ]
+  },
+  "RG-C-006": {
+   "blocking": [
+    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+   ]
+  },
+  "RG-F4-OBSERVATION-POLICY": {
+   "parameters": 2
   }
  },
  "decisions": [
@@ -541,6 +561,46 @@
    "item": "RG-F7-DEDUPE",
    "resolution": "ADOPTED-AS-UNRESOLVED",
    "reason": "G0 C-022 stands: horizon/TTL/escalation deadline ownership is open."
+  },
+  {
+   "item": "NEW:hub-registry-record-profile-vocabulary",
+   "resolution": "ADOPTED",
+   "reason": "RETAIN-IN-CODE (wire contract)."
+  },
+  {
+   "item": "RG-C-005",
+   "resolution": "ADOPTED",
+   "reason": "BLOCKED on DR-CP-AGE-1; parameter count corrected to 2."
+  },
+  {
+   "item": "RG-C-006",
+   "resolution": "ADOPTED",
+   "reason": "BLOCKED on DR-CP-AGE-1."
+  },
+  {
+   "item": "RG-C-018",
+   "resolution": "ADOPTED",
+   "reason": "PROVIDER-OR-HOST-OWNED; supersedes the lead's earlier marginal-eligible call."
+  },
+  {
+   "item": "RG-C-021",
+   "resolution": "ADOPTED (MERGE)",
+   "reason": "Merged into LR-F5-CLASS-STATUS-AGE; counted once."
+  },
+  {
+   "item": "RG-D-022",
+   "resolution": "ADOPTED",
+   "reason": "OUT-OF-SCOPE, LOW confidence."
+  },
+  {
+   "item": "RG-F4-OBSERVATION-POLICY",
+   "resolution": "ADOPTED",
+   "reason": "Parameter count corrected to 2 (max_age_seconds, clock_tolerance_seconds); disposition unchanged."
+  },
+  {
+   "item": "LR-MANIFEST-DEFAULT-ACTION",
+   "resolution": "NO-CHANGE (label-only)",
+   "reason": "J2 prefers RETAIN-IN-CODE, lead keeps CALLER-OR-ISSUER-OWNED (manifest-authored data); both non-manageable. J2 confirms G0's ALREADY-GOVERNED for RG-C-031 was wrong."
   }
  ],
  "cross_check_stats": {
@@ -566,6 +626,13 @@
    "adopted": 4,
    "rejected": 1,
    "to_unresolved": 3
+  },
+  "J2_verification_of_governed_eligible_unresolved_blocked": {
+   "rules_verified": 22,
+   "confirmed": 16,
+   "downgraded": 5,
+   "merged": 1,
+   "duplicate_site_candidate_review": "36 sites: 27 legitimate, 4 merge candidates, 5 double-counts (raw: worker-evidence/J2_sites.json). Site-level duplicates affect source-site counts only, not rule or parameter counts; not re-keyed."
   }
  }
 }

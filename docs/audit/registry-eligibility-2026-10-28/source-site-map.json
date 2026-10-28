@@ -161,6 +161,15 @@
    "via": "g0-record:G0-A-008"
   },
   {
+   "file": "src/agent_control_plane/policy_binding.py",
+   "lines": "64-76, 118-138",
+   "repo": "cogno-us/cognous-control-plane",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "symbol": "PolicyBinding.age_ceilings",
+   "via": "g0-record:G0-C-021"
+  },
+  {
    "file": "src/agent_control_plane/bounded.py",
    "lines": "1366-1373, 1623, 2398-2399",
    "note": "class-age consumers (= RG-C-008)",
@@ -229,6 +238,36 @@
    "sha": null,
    "symbol": null,
    "via": "missing-consumer-path:RG-C-008"
+  },
+  {
+   "file": "registry_successor/v2_age_bounds.py",
+   "lines": "1-60",
+   "note": "F4/F5 age values represented, no consumer wiring",
+   "repo": "cognous-ocs-registry",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-C-021"
+  },
+  {
+   "file": "docs/family-migration/m2/01-migration-backlog.md",
+   "lines": "36",
+   "note": "CP consumer wiring listed as future work (M11/M12)",
+   "repo": "cognous-ocs-registry",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-C-021"
+  },
+  {
+   "file": "src/agent_control_plane/runtime_authority.py",
+   "lines": "217-228,245,323,448-454",
+   "note": "consumer sites",
+   "repo": "cognous-control-plane",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-C-021"
   },
   {
    "file": "src/agent_control_plane/manifest_validation.py",
@@ -6320,45 +6359,6 @@
    "via": "missing-consumer-path:RG-C-020"
   },
   {
-   "file": "src/agent_control_plane/policy_binding.py",
-   "lines": "64-76, 118-138",
-   "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "RG-C-021",
-   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "PolicyBinding.age_ceilings",
-   "via": "g0-record:G0-C-021"
-  },
-  {
-   "file": "registry_successor/v2_age_bounds.py",
-   "lines": "1-60",
-   "note": "F4/F5 age values represented, no consumer wiring",
-   "repo": "cognous-ocs-registry",
-   "rule_id": "RG-C-021",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-C-021"
-  },
-  {
-   "file": "docs/family-migration/m2/01-migration-backlog.md",
-   "lines": "36",
-   "note": "CP consumer wiring listed as future work (M11/M12)",
-   "repo": "cognous-ocs-registry",
-   "rule_id": "RG-C-021",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-C-021"
-  },
-  {
-   "file": "src/agent_control_plane/runtime_authority.py",
-   "lines": "217-228,245,323,448-454",
-   "note": "consumer sites",
-   "repo": "cognous-control-plane",
-   "rule_id": "RG-C-021",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-C-021"
-  },
-  {
    "file": "src/agent_control_plane/rule_revision.py",
    "lines": "14,72-80",
    "repo": "cogno-us/cognous-control-plane",
@@ -8459,7 +8459,7 @@
    "file": "src/agent_control_plane/policy_binding.py",
    "lines": "64-76, 118-138",
    "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "RG-C-021",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
    "symbol": "PolicyBinding.age_ceilings",
    "via": "g0-record:G0-C-021:frozen-inventory"
