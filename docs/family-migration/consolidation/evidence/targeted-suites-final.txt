@@ -1,0 +1,8 @@
+== f4_age_governance
+73 passed in 4.09s
+== f5_class_age_governance
+111 passed in 20.68s
+== f5_class_unreadable_governance
+148 passed in 29.18s
+== governed_policy_composition
+89 passed in 15.37s
