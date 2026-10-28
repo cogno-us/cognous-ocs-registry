@@ -1,0 +1,9 @@
+P1 equal  -> True
+P1 narrow -> False
+P1b roundtrip dump equal -> True
+P2 old approval vs narrowed profile -> hold ['runtime_authority_approval_mismatch']
+P2 re-issued approval -> authorized []
+P3 catalogue_digest differs: True
+P4 narrowed base 30, limit 300, ext to 330 defects: [] bound: 330
+P4b old row (from 60) vs narrowed base 30 defects: ['age_extension_invalid']
+P4c composed limit 0 on ext to 40 defects: ['age_extension_exceeds_limit']
