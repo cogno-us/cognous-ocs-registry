@@ -3,6 +3,187 @@
   {
    "blocking_architectural_decisions": [],
    "component_owner": [
+    "cogno-us/cognous-execution-runtime",
+    "cogno-us/cognous-ocs-registry",
+    "cognous-control-plane",
+    "cognous-execution-runtime",
+    "cognous-ocs-registry"
+   ],
+   "confidence": "MEDIUM",
+   "configurable": "YES",
+   "configuration_owner": [
+    "Host/caller policy",
+    "Host/caller policy; Registry may only narrow by accepted-set containment",
+    "Host/caller policy; Registry may only narrow via signed selection",
+    "Host/caller policy; Registry may only select stricter mode (exact>segment>legacy-prefix)"
+   ],
+   "current_source_locations": [
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "358-372",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "LocalExecutionPolicy fields",
+     "via": "historical-row:W1-033"
+    },
+    {
+     "file": "engine/registry_f1abcd_narrowing.py",
+     "lines": "1-121",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "evaluate_with_registry_selection_f1abcd",
+     "via": "historical-row:W1-033"
+    },
+    {
+     "file": "registry_successor/v4_f1abcd.py",
+     "lines": "84,170",
+     "repo": "cogno-us/cognous-ocs-registry",
+     "sha": "2668094dd6caac1a397dce7f6d6c3b5a194e9d8e",
+     "symbol": "compose_targets, compose_f1abcd",
+     "via": "historical-row:W1-033"
+    },
+    {
+     "file": "registry_successor/v2_f1ab.py",
+     "lines": "44-54",
+     "repo": "cogno-us/cognous-ocs-registry",
+     "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+     "symbol": "payload_validator (field_unknown on sixth key)",
+     "via": "g0-record:G0-A-005"
+    },
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "358-408",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+     "symbol": "LocalExecutionPolicy.allowed_target_prefixes",
+     "via": "g0-record:G0-B-006"
+    },
+    {
+     "file": "engine/safe_executor.py",
+     "lines": "343, 359-372, 393-394",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+     "symbol": "_TARGET_MATCH_MODES; LocalExecutionPolicy.target_match",
+     "via": "g0-record:G0-B-004"
+    },
+    {
+     "file": "registry_successor/v4_f1abcd.py",
+     "lines": "compose_targets, contained",
+     "note": "M3 slot exists (r08-v4); A-005 stale",
+     "repo": "cognous-ocs-registry",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+    },
+    {
+     "file": "engine/registry_selection_authority.py",
+     "lines": "1683-1748",
+     "note": "_check_policy_containment_f1abcd: prefix containment at effect time",
+     "repo": "cognous-execution-runtime",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+    },
+    {
+     "file": "src/agent_control_plane/bounded.py",
+     "lines": "2637-2643",
+     "note": "CP checks proposal.target in manifest allowed_targets (exact list; allow_any_target); no Registry input",
+     "repo": "cognous-control-plane",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+    },
+    {
+     "file": "src/agent_control_plane/manifest_validation.py",
+     "lines": "111, 122",
+     "note": "allowed_targets validation",
+     "repo": "cognous-control-plane",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+    },
+    {
+     "file": "registry_successor/v4_f1abcd.py",
+     "lines": "stricter, contained, matches",
+     "note": "mode composition; modes alone do not order (list,mode) pairs",
+     "repo": "cognous-ocs-registry",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
+    },
+    {
+     "file": "engine/registry_selection_authority.py",
+     "lines": "1744-1748",
+     "note": "mode validity + containment at effect time",
+     "repo": "cognous-execution-runtime",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
+    },
+    {
+     "file": "src/agent_control_plane/bounded.py",
+     "lines": "2637-2643",
+     "note": "allow_any_target / exact-membership semantics in CP are a separate matcher",
+     "repo": "cognous-control-plane",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
+    }
+   ],
+   "differs_from_g0": true,
+   "disposition": "REGISTRY-GOVERNED",
+   "disposition_basis": "LEAD-OVERRIDE: Merged governed pair (pass 2).",
+   "evidence_references": [
+    "docs/r08-v4-contract.md s1-4; safe_executor.py:359-408; registry_f1abcd_narrowing.py:48; registry_selection_authority.py:1706",
+    "rt safe_executor.py:343,359-372,393-394; registry v4_f1abcd.py:60-95,3 modes; backlog:75",
+    "rt safe_executor.py:358-408; registry v4_f1abcd.py:70-95; backlog m2/01-migration-backlog.md:75"
+   ],
+   "existing_behavior": "Runtime LocalExecutionPolicy._target_allowed (protected)",
+   "existing_registry_coverage": "FULL for represented+integrated (r08-v4 f1abcd composer; Runtime effect-time containment guard); NOT independently accepted. Stale text 'Registry: no slot' and 'containment order undefined' are superseded.",
+   "g0_dispositions": [
+    "ELIGIBLE-NOT-MIGRATED"
+   ],
+   "g0_group_ids": [
+    "RG-F1D-TARGET-MATCH",
+    "RG-F1D-TARGET-PREFIXES"
+   ],
+   "g0_record_ids": [
+    "G0-A-005",
+    "G0-A-006",
+    "G0-B-004",
+    "G0-B-006"
+   ],
+   "grouping_verdicts": [
+    "OVER-MERGED",
+    "SUPPORTED"
+   ],
+   "historical_source_ids": [
+    "W1-033"
+   ],
+   "implementation_layers": {
+    "enforcement_integrated": "YES",
+    "independently_accepted": "NO",
+    "registry_represented": "YES"
+   },
+   "in_g0_inventory": true,
+   "kind": "PARAMETER",
+   "migration_eligibility": "ELIGIBLE",
+   "migration_status": "IMPLEMENTED",
+   "name": "Runtime LocalExecutionPolicy target scope: allowed_target_prefixes + target_match (Registry-governed via r08-v4 f1abcd, M3; one joint containment relation)",
+   "not_applicable_reason": null,
+   "origin": "HISTORICAL+G0",
+   "parameter_count": 2,
+   "proposed_migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
+   "proposed_narrowing_semantics": "Joint containment over (prefix list, match mode) pairs (v4_f1abcd.py:7-14,63-93): the Registry pair is accepted only if every host-supplied (list, mode) entry is contained in a Registry entry under the sound accepted-set rule; effective policy never exceeds the host policy. Absent or invalid Registry input never adds permission.",
+   "registry_appropriate": "YES",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": "allowed_target_prefixes: caller-owned LocalExecutionPolicy field; no Registry slot"
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
     "cogno-us/cognous-control-plane",
     "cogno-us/cognous-ocs-registry",
     "cognous-control-plane",
@@ -134,7 +315,7 @@
     "registry v2_age_bounds.py:197-208; grep src of CP: no registry_successor import; backlog: M11 CP F4 consumer is active wave, unimplemented"
    ],
    "existing_behavior": "Control Plane BoundedAuthorizationWorkflow (not read)",
-   "existing_registry_coverage": "PARTIAL: Registry r08-v2 f4 composer (registry_successor/v2_age_bounds.py) represents both scalars; the Control Plane has no Registry consumer (VERIFIED-BY-LEAD: policy_binding.py enforces only host-copied age_ceilings).",
+   "existing_registry_coverage": "PARTIAL: Registry r08-v2 f4 composer (registry_successor/v2_age_bounds.py) represents both scalars; the Control Plane has no Registry consumer (VERIFIED-BY-LEAD: policy_binding.py enforces only host-copied age_ceilings). Note: when a RuntimeAuthorityProfile is present the grant-status bound is the per-class max_status_age_seconds (bounded.py:2398-2399), so the F4 status scalar then bounds only conflict and policy status.",
    "g0_dispositions": [
     "ALREADY-GOVERNED",
     "ELIGIBLE-NOT-MIGRATED"
@@ -191,8 +372,9 @@
    "confidence": "MEDIUM",
    "configurable": "YES",
    "configuration_owner": [
+    "Host (freshness profile), narrowed by Registry",
     "Host RuntimeAuthorityProfile.actions[...]; Registry may only lower via min()",
-    "Host operator via profile",
+    "Host freshness profile; extension signers are rule-revision trust",
     "Host profile slot; value narrowed by Registry",
     "Host-authored RuntimeAuthorityProfile (trusted host config); committed in approval",
     "Registry operator (f5 record) narrowing CP host class bounds by min()",
@@ -216,20 +398,12 @@
      "via": "historical-row:W8-005"
     },
     {
-     "file": "src/agent_control_plane/runtime_authority.py",
-     "lines": "126-135",
-     "repo": "cognous-control-plane",
+     "file": "src/agent_control_plane/freshness.py",
+     "lines": "67-68, 155-179",
+     "repo": "cogno-us/cognous-control-plane",
      "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "pydantic model; consumed by bounded.py (not my file)",
-     "via": "historical-row:W8-004"
-    },
-    {
-     "file": "src/agent_control_plane/runtime_authority.py",
-     "lines": "405-416",
-     "repo": "cognous-control-plane",
-     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "validate_extensions",
-     "via": "historical-row:W8-031"
+     "symbol": "max_age_extension_seconds, extension_defects",
+     "via": "historical-row:W8-043"
     },
     {
      "file": "registry_successor/v2_age_bounds.py",
@@ -238,6 +412,14 @@
      "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
      "symbol": "compose_f5 (class_status_max_age_seconds)",
      "via": "g0-record:G0-A-008"
+    },
+    {
+     "file": "src/agent_control_plane/freshness.py",
+     "lines": "67-68",
+     "repo": "cogno-us/cognous-control-plane",
+     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+     "symbol": "FreshnessProfile.max_age_extension_seconds",
+     "via": "g0-record:G0-C-019"
     },
     {
      "file": "src/agent_control_plane/policy_binding.py",
@@ -311,6 +493,24 @@
      "via": "missing-consumer-path:RG-C-008"
     },
     {
+     "file": "src/agent_control_plane/policy_binding.py",
+     "lines": "126-138",
+     "note": "ceiling check uses max_age_extension_seconds",
+     "repo": "cognous-control-plane",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-C-019"
+    },
+    {
+     "file": "registry_successor/v2_age_bounds.py",
+     "lines": "1-30",
+     "note": "F4 closed to 2 keys",
+     "repo": "cognous-ocs-registry",
+     "sha": null,
+     "symbol": null,
+     "via": "missing-consumer-path:RG-C-019"
+    },
+    {
      "file": "registry_successor/v2_age_bounds.py",
      "lines": "1-60",
      "note": "F4/F5 age values represented, no consumer wiring",
@@ -343,11 +543,11 @@
    "disposition_basis": "H-WORKER GROUP AUDIT",
    "evidence_references": [
     "cp runtime_authority.py:131; bounded.py:1366-1373; policy_binding.py:133",
+    "freshness.py:67-68 int>=0 default 0; used bounded.py:1369,1395 and policy_binding.py:128; min(host,registry) monotone, floor 0",
+    "freshness.py:68; bounded.py:1369,1395; policy_binding.py:127-140",
     "policy_binding.py:64-76,118-138 CP-side check (profile-fed); no Registry reader: grep age_ceilings/age_bounds in Runtime main and registry_consumer finds no feed; m2 backlog rows 12 defer to M11/M12",
     "registry v2_age_bounds.py:213-227; cp runtime_authority.py:131; no Registry import in CP",
-    "runtime_authority.py:126-135; registry v2_age_bounds.py:1-40",
-    "runtime_authority.py:131; policy_binding.py:18-20,118-140; approval_commitment 237-250",
-    "runtime_authority.py:405-416"
+    "runtime_authority.py:131; policy_binding.py:18-20,118-140; approval_commitment 237-250"
    ],
    "existing_behavior": "Control Plane ActionClass.max_status_age_seconds (not read)",
    "existing_registry_coverage": "PARTIAL: Registry f5 composer represents the per-class map; the Control Plane has no consumer; open question how a narrowed class value enters approval_commitment.",
@@ -358,11 +558,13 @@
    "g0_group_ids": [
     "RG-A-008",
     "RG-C-008",
+    "RG-C-019",
     "RG-C-021"
    ],
    "g0_record_ids": [
     "G0-A-008",
     "G0-C-008",
+    "G0-C-019",
     "G0-C-021"
    ],
    "grouping_verdicts": [
@@ -370,9 +572,8 @@
     "UNDER-MERGED"
    ],
    "historical_source_ids": [
-    "W8-004",
     "W8-005",
-    "W8-031"
+    "W8-043"
    ],
    "implementation_layers": {
     "enforcement_integrated": "NO",
@@ -394,6 +595,72 @@
    "split_from": null,
    "valid_domain": null,
    "value_type": "object action_class->int 1..2147483647, <=256 sorted token keys"
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
+    "cogno-us/cognous-control-plane",
+    "cognous-control-plane"
+   ],
+   "confidence": "MEDIUM",
+   "configurable": "YES",
+   "configuration_owner": [
+    "Host operator via profile"
+   ],
+   "current_source_locations": [
+    {
+     "file": "src/agent_control_plane/runtime_authority.py",
+     "lines": "126-135",
+     "repo": "cognous-control-plane",
+     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+     "symbol": "pydantic model; consumed by bounded.py (not my file)",
+     "via": "historical-row:W8-004"
+    },
+    {
+     "file": "src/agent_control_plane/runtime_authority.py",
+     "lines": "405-416",
+     "repo": "cognous-control-plane",
+     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+     "symbol": "validate_extensions",
+     "via": "historical-row:W8-031"
+    }
+   ],
+   "differs_from_g0": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "LEAD-OVERRIDE: Mechanism rows separated from the eligible F5 parameter, as done for 13 other rows.",
+   "evidence_references": [
+    "runtime_authority.py:126-135; registry v2_age_bounds.py:1-40",
+    "runtime_authority.py:405-416"
+   ],
+   "existing_behavior": null,
+   "existing_registry_coverage": [
+    "PARTIAL: Registry f5 composer exists (class->age, min()); no Control Plane consumer found (EXT-S4 pending)",
+    "PARTIAL: Registry f5 composer exists; no CP consumer wired"
+   ],
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
+   "historical_source_ids": [
+    "W8-004",
+    "W8-031"
+   ],
+   "implementation_layers": null,
+   "in_g0_inventory": false,
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
+   "name": "Per-class age evaluator, irreversible default and class-id mechanism (protected code beside the F5 parameter)",
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "origin": "HISTORICAL",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE/mechanism",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -520,9 +787,7 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [
-    "May the Registry narrow Runtime structural admission budgets (depth, node/entry count, byte size)? They are Tier 1 admission guards that bound the canonicalization domain; a narrow-only override only rejects more, but the value is low and the ceiling must stay in code (G0 F3 scope question)."
-   ],
+   "blocking_architectural_decisions": [],
    "component_owner": [
     "cogno-us/cognous-execution-runtime"
    ],
@@ -584,9 +849,9 @@
      "via": "g0-record:G0-B-002"
     }
    ],
-   "differs_from_g0": true,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "LEAD-OVERRIDE: Blind reviewers J1a and J1b rated these narrow-only DoS bounds REGISTRY-ELIGIBLE (low value); first-pass workers D1 and J1c rated them non-tunable admission guards; G0 left the F3 Registry-scope question open. A genuine disagreement the evidence does not settle, so it is retained as UNRESOLVED.",
+   "differs_from_g0": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker E, MEDIUM-HIGH): the budgets are literals with no configuration surface (no caller passes max_bytes to _admit_plain_data); they are re-run at effect time (safe_executor.py:889) and inside the sandbox worker image (openshell_worker.py:18), so a host-side value would split admission; plan M6 lists them as 'not mandatory admission floors' tuning limits that are not adjudicated configuration (AD-08, 'confirm F3 limits stay floors', is itself still OPEN and is not relied on). Retained disagreement: Worker G and blind reviewers J1a/J1b rated narrow-only reduction eligible or unresolved.",
    "evidence_references": [
     "rt safe_executor.py:147-183",
     "rt safe_executor.py:147-184",
@@ -595,7 +860,7 @@
     "safe_executor.py:170-176",
     "safe_executor.py:177-182"
    ],
-   "existing_behavior": "_admit_plain_data called from snapshot_envelope (line ~200) before deepcopy/json.dumps",
+   "existing_behavior": null,
    "existing_registry_coverage": [
     "NONE",
     "NONE: no Registry slot; correct to have none"
@@ -623,19 +888,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "Runtime structural input admission budgets (depth 32, 10000 nodes/keys/items, 1 MiB size)",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
    "split_from": null,
    "valid_domain": null,
-   "value_type": "literals: depth 32, nodes 10000, dict/list len 10000, int bit_length 256; non-finite float refused; exact builtin types only"
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -8393,6 +8658,54 @@
    "configuration_owner": [],
    "current_source_locations": [
     {
+     "file": "experiments/governed_message_transport/transport.py",
+     "lines": "experiments/governed_message_transport/transport.py:47-48,297,306",
+     "repo": "cogno-us/cognous-governed-exchange",
+     "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+     "symbol": null,
+     "via": "coverage-worker:I4"
+    }
+   ],
+   "differs_from_g0": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "REPO-COVERAGE WORKER",
+   "evidence_references": [
+    "transport.py:297 informational returns early; :306 not in EXECUTION_ELIGIBLE_TYPES refuses"
+   ],
+   "existing_behavior": null,
+   "existing_registry_coverage": null,
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
+   "historical_source_ids": [],
+   "implementation_layers": null,
+   "in_g0_inventory": false,
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
+   "name": "gax message type sets",
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "origin": "REPO-COVERAGE",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
+   "rule_id": "NEW:gax-message-type-sets",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": null
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
+    "cogno-us/cognous-governed-exchange"
+   ],
+   "confidence": "HIGH",
+   "configurable": "NO",
+   "configuration_owner": [],
+   "current_source_locations": [
+    {
      "file": "experiments/odex_gax_imx_reference/gax_ref.py",
      "lines": "217; 311",
      "repo": "cogno-us/cognous-governed-exchange",
@@ -8427,6 +8740,54 @@
    "proposed_narrowing_semantics": null,
    "registry_appropriate": "NO",
    "rule_id": "NEW:gax-ref-fixture-policy",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": null
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
+    "cogno-us/cognous-governed-exchange"
+   ],
+   "confidence": "HIGH",
+   "configurable": "NO",
+   "configuration_owner": [],
+   "current_source_locations": [
+    {
+     "file": "experiments/odex_gax_imx_reference/gax_ref_runtime.py",
+     "lines": "experiments/odex_gax_imx_reference/gax_ref_runtime.py:49-104,113-120,420",
+     "repo": "cogno-us/cognous-governed-exchange",
+     "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+     "symbol": null,
+     "via": "coverage-worker:I4"
+    }
+   ],
+   "differs_from_g0": false,
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_basis": "REPO-COVERAGE WORKER",
+   "evidence_references": [
+    "gax_ref_runtime.py:44-49 'explicit opt-in compatibility selection', :102-104 profile sets, :113-120 refuses options outside security profiles"
+   ],
+   "existing_behavior": null,
+   "existing_registry_coverage": null,
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
+   "historical_source_ids": [],
+   "implementation_layers": null,
+   "in_g0_inventory": false,
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
+   "name": "gax runtime compatibility profile switch",
+   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "origin": "REPO-COVERAGE",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
+   "rule_id": "NEW:gax-runtime-compatibility-profile-switch",
    "split_from": null,
    "valid_domain": null,
    "value_type": null
@@ -9400,6 +9761,54 @@
    "proposed_narrowing_semantics": null,
    "registry_appropriate": "NO",
    "rule_id": "NEW:institution-binding",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": null
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
+    "cogno-us/cognous-institutional-governance"
+   ],
+   "confidence": "HIGH",
+   "configurable": "NO",
+   "configuration_owner": [],
+   "current_source_locations": [
+    {
+     "file": "constitutional-design/INITIAL_SCHEDULE_O.yaml",
+     "lines": "constitutional-design/INITIAL_SCHEDULE_O.yaml:1-40",
+     "repo": "cogno-us/cognous-institutional-governance",
+     "sha": "03a90c14c4a178997df2b6e527f67452b9c6bb7a",
+     "symbol": null,
+     "via": "coverage-worker:I4"
+    }
+   ],
+   "differs_from_g0": false,
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_basis": "REPO-COVERAGE WORKER",
+   "evidence_references": [
+    "INITIAL_SCHEDULE_O.yaml head: status ARCHITECTURE_DECIDED_PENDING_HUMAN_POPULATION; not in first audit"
+   ],
+   "existing_behavior": null,
+   "existing_registry_coverage": null,
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
+   "historical_source_ids": [],
+   "implementation_layers": null,
+   "in_g0_inventory": false,
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
+   "name": "institutional schedule o draft",
+   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "origin": "REPO-COVERAGE",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
+   "rule_id": "NEW:institutional-schedule-o-draft",
    "split_from": null,
    "valid_domain": null,
    "value_type": null
@@ -12020,6 +12429,54 @@
    "configuration_owner": [],
    "current_source_locations": [
     {
+     "file": "src/odes/exporter.py",
+     "lines": "src/odes/exporter.py:296-302",
+     "repo": "cogno-us/open-decision-evidence-standard",
+     "sha": "1a5e1d300250d832e611633f0bf8f762e398c0ec",
+     "symbol": null,
+     "via": "coverage-worker:I4"
+    }
+   ],
+   "differs_from_g0": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "REPO-COVERAGE WORKER",
+   "evidence_references": [
+    "exporter.py:296 returns when env=='1' and revision undeterminable; :302 same for dirty checkout. Not read beyond these lines"
+   ],
+   "existing_behavior": null,
+   "existing_registry_coverage": null,
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
+   "historical_source_ids": [],
+   "implementation_layers": null,
+   "in_g0_inventory": false,
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
+   "name": "odes allow unverified replay env",
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "origin": "REPO-COVERAGE",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
+   "rule_id": "NEW:odes-allow-unverified-replay-env",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": null
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
+    "cogno-us/open-decision-evidence-standard"
+   ],
+   "confidence": "MEDIUM",
+   "configurable": "NO",
+   "configuration_owner": [],
+   "current_source_locations": [
+    {
      "file": "contracts/*/validate.py",
      "lines": "e.g. control-plane-journal:633-652; effect-reversibility:437-442; bounded-deferral:378-380; freshness-clocks:325-339",
      "repo": "cogno-us/open-decision-evidence-standard",
@@ -13041,8 +13498,8 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "UNANIMOUS WORKER ROWS",
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker E): a three-way protocol-profile selection that changes identity semantics; it is not a strictness-only, one-way toggle that only adds refusals (the test applied to RG-C-009/C-010/C-020 and terminal-revocation).",
    "evidence_references": [
     "atomic_local_control_plane_executor.py:14-24; CP bounded.py:1455-1458 _identity"
    ],
@@ -13060,15 +13517,15 @@
    "implementation_layers": null,
    "in_g0_inventory": false,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "operation identity enablement",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "NEW:operation-identity-enablement",
    "split_from": null,
    "valid_domain": null,
@@ -15889,6 +16346,102 @@
    "proposed_narrowing_semantics": null,
    "registry_appropriate": "NO",
    "rule_id": "NEW:reopen-conditions",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": null
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
+    "cogno-us/cognous-replay-bundle"
+   ],
+   "confidence": "HIGH",
+   "configurable": "NO",
+   "configuration_owner": [],
+   "current_source_locations": [
+    {
+     "file": "src/agent_replay_bundle/cli.py",
+     "lines": "src/agent_replay_bundle/cli.py:366-376; signing.py:175-192",
+     "repo": "cogno-us/cognous-replay-bundle",
+     "sha": "40012b8c174c6f25685bd5d9bc93ff46cc9a5842",
+     "symbol": null,
+     "via": "coverage-worker:I4"
+    }
+   ],
+   "differs_from_g0": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "REPO-COVERAGE WORKER",
+   "evidence_references": [
+    "signing.py:192 coverage=='envelope_and_bundle' or (bundle_only and allow_unbound_envelope); cli.py:368-376"
+   ],
+   "existing_behavior": null,
+   "existing_registry_coverage": null,
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
+   "historical_source_ids": [],
+   "implementation_layers": null,
+   "in_g0_inventory": false,
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
+   "name": "replay allow unbound envelope",
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "origin": "REPO-COVERAGE",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
+   "rule_id": "NEW:replay-allow-unbound-envelope",
+   "split_from": null,
+   "valid_domain": null,
+   "value_type": null
+  },
+  {
+   "blocking_architectural_decisions": [],
+   "component_owner": [
+    "cogno-us/cognous-replay-bundle"
+   ],
+   "confidence": "MEDIUM",
+   "configurable": "NO",
+   "configuration_owner": [],
+   "current_source_locations": [
+    {
+     "file": "src/agent_replay_bundle/importers.py",
+     "lines": "src/agent_replay_bundle/importers.py:96,682-687; evidence-pack importer.py:109-115",
+     "repo": "cogno-us/cognous-replay-bundle",
+     "sha": "40012b8c174c6f25685bd5d9bc93ff46cc9a5842",
+     "symbol": null,
+     "via": "coverage-worker:I4"
+    }
+   ],
+   "differs_from_g0": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "REPO-COVERAGE WORKER",
+   "evidence_references": [
+    "importers.py:682 'control_plane_revision not in {...}'; pack importer.py:109-115 SUPPORTED_REVISION_SETS; alpha scaffolding"
+   ],
+   "existing_behavior": null,
+   "existing_registry_coverage": null,
+   "g0_dispositions": [],
+   "g0_group_ids": [],
+   "g0_record_ids": [],
+   "grouping_verdicts": [],
+   "historical_source_ids": [],
+   "implementation_layers": null,
+   "in_g0_inventory": false,
+   "kind": "RULE",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
+   "name": "replay and pack importer supported revisions",
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "origin": "REPO-COVERAGE",
+   "parameter_count": 0,
+   "proposed_migration_wave": null,
+   "proposed_narrowing_semantics": null,
+   "registry_appropriate": "NO",
+   "rule_id": "NEW:replay-and-pack-importer-supported-revisions",
    "split_from": null,
    "valid_domain": null,
    "value_type": null
@@ -19459,13 +20012,15 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [],
+   "blocking_architectural_decisions": [
+    "How does a Registry-forced profile section enter the approval commitment (the AUD-D06 question shared with RG-C-010)?"
+   ],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cognous-control-plane"
    ],
    "confidence": "HIGH",
-   "configurable": "NO",
+   "configurable": "YES",
    "configuration_owner": [
     "Cognous protected code (no config owner)"
    ],
@@ -19480,15 +20035,13 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "RETAIN-IN-CODE",
-   "disposition_basis": "UNANIMOUS WORKER ROWS",
+   "disposition": "REGISTRY-ELIGIBLE",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker G-01 proposal, verified by the lead): the profile is an opt-in safeguard (runtime_authority.py:182-191,214) with a single consumer (bounded.py:2390-2392). Its only variation is off to on, the same shape as RG-C-010 and RG-C-020. Registry may only force on; absent or a withdrawn record returns the host baseline. MEDIUM confidence.",
    "evidence_references": [
     "runtime_authority.py:182-191"
    ],
    "existing_behavior": null,
-   "existing_registry_coverage": [
-    "NONE"
-   ],
+   "existing_registry_coverage": "NONE",
    "g0_dispositions": [],
    "g0_group_ids": [],
    "g0_record_ids": [],
@@ -19496,18 +20049,22 @@
    "historical_source_ids": [
     "W8-013"
    ],
-   "implementation_layers": null,
+   "implementation_layers": {
+    "enforcement_integrated": "NO",
+    "independently_accepted": "NO",
+    "registry_represented": "NO"
+   },
    "in_g0_inventory": false,
-   "kind": "RULE",
-   "migration_eligibility": "NOT-ELIGIBLE",
-   "migration_status": "N/A",
-   "name": "terminal revocation marker",
-   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "kind": "PARAMETER",
+   "migration_eligibility": "ELIGIBLE",
+   "migration_status": "NOT-STARTED",
+   "name": "Terminal-revocation opt-in enablement (terminal-revocation/0.1 profile off/on)",
+   "not_applicable_reason": null,
    "origin": "HISTORICAL",
-   "parameter_count": 0,
-   "proposed_migration_wave": null,
-   "proposed_narrowing_semantics": null,
-   "registry_appropriate": "NO",
+   "parameter_count": 1,
+   "proposed_migration_wave": "not scheduled (same Control Plane profile-consumer family as RG-C-010/RG-C-020; not authorized)",
+   "proposed_narrowing_semantics": "Order: on is stricter than off. Registry may only set off to on (a grant observed revoked for (grant_id, revision) is then refused even if the status read says active). Absent: host value. Memory is the control plane's own record store, so a revocation it never observed cannot be remembered.",
+   "registry_appropriate": "YES",
    "rule_id": "NEW:terminal-revocation-marker",
    "split_from": null,
    "valid_domain": null,
@@ -21430,16 +21987,35 @@
   {
    "blocking_architectural_decisions": [],
    "component_owner": [
+    "cogno-us/cognous-control-plane",
     "cogno-us/cognous-execution-runtime"
    ],
    "confidence": "MEDIUM",
    "configurable": "YES",
    "configuration_owner": [
     "Constructor argument of a synthetic test/CI destination; adapter forwards declared value, never infers",
+    "Destination/provider (declared capability); CP host profile must stay below it",
+    "Destination/provider (models provider dedupe memory); declared via DedupeProfile on CP side",
     "Provider fact (modeled in test double); default ttl 600",
     "destination/provider"
    ],
    "current_source_locations": [
+    {
+     "file": "engine/dedupe_destination.py",
+     "lines": "105",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "DedupeTtlOperationDestination.__init__ dedupe_ttl_seconds=600",
+     "via": "historical-row:W3-062"
+    },
+    {
+     "file": "src/agent_control_plane/dedupe.py",
+     "lines": "53-67",
+     "repo": "cogno-us/cognous-control-plane",
+     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+     "symbol": "DedupeProfile",
+     "via": "historical-row:W3-062"
+    },
     {
      "file": "engine/dedupe_destination.py",
      "lines": "62-99",
@@ -21447,6 +22023,14 @@
      "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
      "symbol": "commit/land/_operation_guard/_operation_record",
      "via": "historical-row:W3-065"
+    },
+    {
+     "file": "engine/dedupe_destination.py",
+     "lines": "76-96",
+     "repo": "cogno-us/cognous-execution-runtime",
+     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+     "symbol": "DedupeTtlMixin._operation_guard",
+     "via": "historical-row:W3-063"
     },
     {
      "file": "engine/dedupe_destination.py",
@@ -21469,7 +22053,9 @@
    "disposition": "OUT-OF-SCOPE",
    "disposition_basis": "LEAD-SPLIT: Synthetic reference destination default, outside the production boundary.",
    "evidence_references": [
+    "dedupe_destination.py:1-14 'CI/local aid... no model of any real provider'; :43-46; dedupe.py:64",
     "dedupe_destination.py:62-99,105 (dedupe_ttl_seconds=600 ctor default)",
+    "dedupe_destination.py:76-93 now-committed_at<ttl; :113-118 default 600; ttl int>0 check :36-37",
     "engine/dedupe_destination.py:44-46,105-109"
    ],
    "existing_behavior": null,
@@ -21485,6 +22071,8 @@
    "grouping_verdicts": [],
    "historical_source_ids": [
     "W3-061",
+    "W3-062",
+    "W3-063",
     "W3-065"
    ],
    "implementation_layers": null,
@@ -22803,7 +23391,7 @@
   },
   {
    "blocking_architectural_decisions": [
-    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.",
+    "Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4).",
     "Is the omission of identity/mandate ages from F4 (DR-CP-AGE-1) a deliberate exclusion or a gap awaiting a new slot?"
    ],
    "component_owner": [
@@ -22846,7 +23434,7 @@
    ],
    "differs_from_g0": true,
    "disposition": "BLOCKED",
-   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4).",
    "evidence_references": [
     "bounded.py:2352-2368 self.identity_max_age_seconds / mandate_max_age_seconds",
     "cp bounded.py:1272-1273,1296-1297,2352,2366; registry v2_age_bounds.py docstring excludes these keys"
@@ -22889,7 +23477,7 @@
   },
   {
    "blocking_architectural_decisions": [
-    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+    "Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4)."
    ],
    "component_owner": [
     "cogno-us/cognous-control-plane",
@@ -22931,7 +23519,7 @@
    ],
    "differs_from_g0": true,
    "disposition": "BLOCKED",
-   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot.",
+   "disposition_basis": "LEAD-OVERRIDE: Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4).",
    "evidence_references": [
     "bounded.py:1275; _fresh (2013-2022) observed > now+tolerance; _record_check passes it",
     "cp bounded.py:1275,1299,1430,2022-2024; all uses fail closed when smaller"
@@ -23302,7 +23890,7 @@
    ],
    "differs_from_g0": false,
    "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_basis": "LEAD-OVERRIDE: Cross-check J3b falsified HOST-OWNED: effective_reversibility (reversibility.py:165-181) already forces `irreversible` for undeclared, protected-read and unobservable classes, so a Registry overlay that can only raise the strictness rank (force irreversible) is monotone with an existing Control Plane consumer. Disagreement retained: first-pass H2/A treated the declaration as a producer assertion of fact. Depends on AUD-D06.",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker H C-08, verified): the declared `reversibility` member needs the reversibility/0.1 profile (runtime_authority.py:223-225), which a Registry must never enable. The profile-free monotone lever is the legacy ActionClass.irreversible flag (default True, runtime_authority.py:130; consumers bounded.py:2111, 2189 via effectively_irreversible): a Registry may only force False to True per class. LOW-MEDIUM confidence; shares the approval_commitment dependency (AUD-D06). Retained disagreement: first-pass workers treated the declaration as a producer assertion of fact.",
    "evidence_references": [
     "cp runtime_authority.py:138-146; reversibility.py:165-181",
     "reversibility.py:34-35 module doc 'reversible_until and reversal_cost are producer assertions'; :165-181"
@@ -23340,7 +23928,7 @@
    "origin": "HISTORICAL+G0",
    "parameter_count": 1,
    "proposed_migration_wave": "M12",
-   "proposed_narrowing_semantics": "Order: STRICTNESS rank; registry may only raise rank (reversible_until -> reversible_at_cost -> irreversible) or tighten reversible_until to an earlier instant. Absent/undeclared already resolves irreversible. reads_protected_data False->True and counterparty_observable True->False are strictening o",
+   "proposed_narrowing_semantics": "Order: irreversible=True is stricter than False. Registry may only set ActionClass.irreversible False to True for a class (never enable the reversibility/0.1 profile, never edit reversible_until, reversal_cost, reads_protected_data or counterparty_observable). Absent: host value.",
    "registry_appropriate": "YES",
    "rule_id": "RG-C-011",
    "split_from": null,
@@ -24046,103 +24634,6 @@
    "split_from": null,
    "valid_domain": null,
    "value_type": null
-  },
-  {
-   "blocking_architectural_decisions": [],
-   "component_owner": [
-    "cogno-us/cognous-control-plane",
-    "cognous-control-plane",
-    "cognous-ocs-registry"
-   ],
-   "confidence": "MEDIUM",
-   "configurable": "YES",
-   "configuration_owner": [
-    "Host (freshness profile), narrowed by Registry",
-    "Host RuntimeAuthorityProfile.freshness",
-    "Host freshness profile; extension signers are rule-revision trust"
-   ],
-   "current_source_locations": [
-    {
-     "file": "src/agent_control_plane/freshness.py",
-     "lines": "67-68, 155-179",
-     "repo": "cogno-us/cognous-control-plane",
-     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "max_age_extension_seconds, extension_defects",
-     "via": "historical-row:W8-043"
-    },
-    {
-     "file": "src/agent_control_plane/freshness.py",
-     "lines": "67-68",
-     "repo": "cogno-us/cognous-control-plane",
-     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "FreshnessProfile.max_age_extension_seconds",
-     "via": "g0-record:G0-C-019"
-    },
-    {
-     "file": "src/agent_control_plane/policy_binding.py",
-     "lines": "126-138",
-     "note": "ceiling check uses max_age_extension_seconds",
-     "repo": "cognous-control-plane",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-C-019"
-    },
-    {
-     "file": "registry_successor/v2_age_bounds.py",
-     "lines": "1-30",
-     "note": "F4 closed to 2 keys",
-     "repo": "cognous-ocs-registry",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-C-019"
-    }
-   ],
-   "differs_from_g0": false,
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
-   "evidence_references": [
-    "freshness.py:67-68 int>=0 default 0; used bounded.py:1369,1395 and policy_binding.py:128; min(host,registry) monotone, floor 0",
-    "freshness.py:68; bounded.py:1369,1395; policy_binding.py:127-140"
-   ],
-   "existing_behavior": "freshness.extension_defects / effective_age_bound; policy_binding_defects (class base + extension may not exceed a ceiling)",
-   "existing_registry_coverage": [
-    "NONE: no Registry slot; CP age_ceilings already bounds base+extension from host-copied value"
-   ],
-   "g0_dispositions": [
-    "ELIGIBLE-NOT-MIGRATED"
-   ],
-   "g0_group_ids": [
-    "RG-C-019"
-   ],
-   "g0_record_ids": [
-    "G0-C-019"
-   ],
-   "grouping_verdicts": [
-    "SUPPORTED"
-   ],
-   "historical_source_ids": [
-    "W8-043"
-   ],
-   "implementation_layers": {
-    "enforcement_integrated": "NO",
-    "independently_accepted": "NO",
-    "registry_represented": "NO"
-   },
-   "in_g0_inventory": true,
-   "kind": "PARAMETER",
-   "migration_eligibility": "ELIGIBLE",
-   "migration_status": "NOT-STARTED",
-   "name": "int >= 0, default 0 (refuses every extension). Limits the extra seconds a signed AgeBoundExtension may add to a class bound (extension_defects, freshness.py 155",
-   "not_applicable_reason": null,
-   "origin": "HISTORICAL+G0",
-   "parameter_count": 1,
-   "proposed_migration_wave": "M11",
-   "proposed_narrowing_semantics": "Smaller is stricter; floor 0 (no extensions). min(host, registry). Absent: host value.",
-   "registry_appropriate": "YES",
-   "rule_id": "RG-C-019",
-   "split_from": null,
-   "valid_domain": null,
-   "value_type": "int >= 0, default 0 (refuses every extension). Limits the extra seconds a signed AgeBoundExtension may add to a class bound (extension_defects, freshness.py 155-179; effective_age_bound 182-200). Measured from the trusted class base, not th"
   },
   {
    "blocking_architectural_decisions": [],
@@ -24998,9 +25489,7 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [
-    "Who may add custom action types to the effectful/high-risk/privileged floor sets, and who authorises that classification? Built-in membership is a fixed floor."
-   ],
+   "blocking_architectural_decisions": [],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cognous-action-manifest"
@@ -25039,14 +25528,14 @@
      "via": "missing-consumer-path:RG-C-032"
     }
    ],
-   "differs_from_g0": true,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "LEAD-OVERRIDE: Blind reviewer J1b: action_type is an open string (models.py:69), so additive stricter membership of custom types in the effectful/high-risk/privileged sets would be monotone. First-pass worker C retained it. Who may add custom action types to the floor sets, and who authorises that classification, is not decidable from source.",
+   "differs_from_g0": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Workers E and G): the manifest action_type is a closed 9-member enum (action-manifest models.py:45-54); the open string the blind reviewer cited is ActionProposal.action_type in the Control Plane (models.py:69). The Control Plane sets are a parity port of the manifest validator. The pass-1 UNRESOLVED premise was wrong.",
    "evidence_references": [
     "manifest_validation.py:18-21 frozensets; parity with external validator ('same gate, the same codes'); removal widens",
     "manifest_validation.py:18-21; docstring :1-14 parity; tests/test_scan6_manifest_validator_parity.py exists"
    ],
-   "existing_behavior": "manifest_validation.manifest_errors",
+   "existing_behavior": null,
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -25068,19 +25557,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "Three frozensets of action_type strings selecting which validator rules apply (E020-E023 effectful, E014 high risk with default allow, E008 privileged). A type ",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "RETAIN-IN-CODE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "RG-C-032",
    "split_from": null,
    "valid_domain": null,
-   "value_type": "Three frozensets of action_type strings selecting which validator rules apply (E020-E023 effectful, E014 high risk with default allow, E008 privileged). A type not in the sets is treated as non-effectful by the validator."
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -26017,9 +26506,7 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [
-    "Same minimum-redaction-floor ownership question as RG-F11-REDACTION-DEFAULTS; the replay-bundle library has no Registry consumer."
-   ],
+   "blocking_architectural_decisions": [],
    "component_owner": [
     "cogno-us/cognous-replay-bundle"
    ],
@@ -26039,10 +26526,10 @@
     }
    ],
    "differs_from_g0": false,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "LEAD-SPLIT: See RG-F11-REDACTION-DEFAULTS: the replay-bundle redaction flags carry the same minimum-redaction-floor ownership question (AUD-D05).",
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "disposition_basis": "LEAD-SPLIT: Same as RG-F11-REDACTION-DEFAULTS (pass 2).",
    "evidence_references": [],
-   "existing_behavior": "redaction.redact_replay_bundle.",
+   "existing_behavior": null,
    "existing_registry_coverage": null,
    "g0_dispositions": [],
    "g0_group_ids": [],
@@ -26054,19 +26541,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "Replay Bundle redact_replay_bundle defaults",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "CALLER-OR-ISSUER-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "LEAD-SPLIT",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "RG-D-012",
    "split_from": "RG-F11-REDACTION-DEFAULTS",
    "valid_domain": null,
-   "value_type": "Keyword defaults: redact_payloads=True; redact_targets/final_output/reasons/task/scope=False; replacement=\"[REDACTED]\"; clear_signature_metadata=False."
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -26572,8 +27059,8 @@
     }
    ],
    "differs_from_g0": true,
-   "disposition": "PROVIDER-OR-HOST-OWNED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker E): the hub checker is not wired into any gate and uses a fixture key. Label-only change from PROVIDER-OR-HOST-OWNED; both non-manageable.",
    "evidence_references": [
     "resolver_assurance.py:37-56 SourceProfile frozen dataclass, no defaults; synthetic HMAC fixture key"
    ],
@@ -26598,7 +27085,7 @@
    "migration_eligibility": "NOT-ELIGIBLE",
    "migration_status": "N/A",
    "name": "Trusted per-source profile: max_age float>=0 finite, clock_skew float>=0 finite, minimum_revision int>=0, key >=32 bytes; no defaults. Observation is STALE if n",
-   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
+   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "G0-CURRENT-ONLY",
    "parameter_count": 0,
    "proposed_migration_wave": "M11",
@@ -26960,13 +27447,13 @@
      "via": "missing-consumer-path:RG-D-027"
     }
    ],
-   "differs_from_g0": false,
-   "disposition": "BLOCKED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
+   "differs_from_g0": true,
+   "disposition": "OUT-OF-SCOPE",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker H C-03, verified by the lead): TIER_DELAY_CEILING_SECONDS lives in cognous-institutional-governance testing/harness/authority_context.py, whose docstring says 'Local reference checks only' and whose comment says the ceilings are 'Proposed ... Owner to confirm: no value is validated or derived from the constitution'. It is used only by tests; no runtime boundary reads delay_limit (Control Plane bounded.py accepts schema versions only). The pass-1 BLOCKED label and Worker A's 'constitutional invariant' dissent both rested on a misquote.",
    "evidence_references": [
     "authority_context.py:16-17 'Proposed ... Owner to confirm'; CP bounded.py:52,2284 accepts schema versions only, delay_limit not read"
    ],
-   "existing_behavior": "testing/harness/authority_context.py reference checker (declaration comparison only: \"measures no elapsed time ... enforces no response\"). Control Plane bounded.py:52 accepts schema 0.1.0 and 0.2.0 and says delay_limit is \"neither read nor ",
+   "existing_behavior": null,
    "existing_registry_coverage": null,
    "g0_dispositions": [
     "BLOCKED"
@@ -26984,19 +27471,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "T0 4h, T1 24h, T2 3d, T3 7d, T4 30d: maximum delay_limit.max_pending_seconds a context may declare per consequence tier. Docs mark the values \"proposed ... for ",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "OUT-OF-SCOPE: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "G0-CURRENT-ONLY",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "RG-D-027",
    "split_from": null,
    "valid_domain": null,
-   "value_type": "T0 4h, T1 24h, T2 3d, T3 7d, T4 30d: maximum delay_limit.max_pending_seconds a context may declare per consequence tier. Docs mark the values \"proposed ... for project-owner confirmation\"; the reference check flags delay_limit_exceeds_tier_"
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -27117,9 +27604,7 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [
-    "Is a minimum-redaction floor a Registry-owned operator control (a new privacy feature, plan wave M10), and who is the privacy owner?"
-   ],
+   "blocking_architectural_decisions": [],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cognous-control-plane"
@@ -27185,13 +27670,13 @@
     }
    ],
    "differs_from_g0": true,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "LEAD-OVERRIDE: First-pass H1 rated the redaction defaults caller-owned presentation choices; cross-check J3b rated an OR-floor of redaction flags REGISTRY-ELIGIBLE. Whether a minimum-redaction floor is a Registry-owned operator control (plan wave M10) is a privacy-owner decision (AUD-D05).",
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker E): redaction is an optional export command (cli.py:51-59,155-168), so a minimum floor cannot be enforced; it also trades against evidence verifiability.",
    "evidence_references": [
     "cp models.py:420-451; cli.py:76-114; manifest models.py:173-175; replay-bundle redaction.py not local",
     "models.py:420-451; cli.py:107-114 forces redact_payloads=True; redaction.py:23 config or RedactionConfig()"
    ],
-   "existing_behavior": "redaction._apply_redaction; cli._redaction_config_from_args",
+   "existing_behavior": null,
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -27213,19 +27698,19 @@
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "Redaction defaults (Control Plane RedactionConfig; action-manifest hint string; replay-bundle keyword defaults)",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "CALLER-OR-ISSUER-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": "M10",
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "RG-F11-REDACTION-DEFAULTS",
    "split_from": null,
    "valid_domain": null,
-   "value_type": "Optional redaction scope (targets, final output, reasons all default off) and replacement text. Library callers pass a RedactionConfig; the CLI exposes --targets/--final-output/--reasons (store_true) and --replacement. Defaults are HARD_COD"
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],
@@ -27569,9 +28054,7 @@
     "rt safe_executor.py:262-276,425-426; registry v3_f1abc.py; docs/family-migration/m2/01-migration-backlog.md:70-72 (M2 implemented, 0 accepted)"
    ],
    "existing_behavior": "Runtime LocalExecutionPolicy.check (_strict_finite_number); not read",
-   "existing_registry_coverage": [
-    "FULL: represented r08-v3 f1abc (M2 PR-1) AND integrated at Runtime enforcement boundary (PR-3 #152 dabaa770, effect-time guard 1652-1680; f7a55e2a); implemented, pending acceptance"
-   ],
+   "existing_registry_coverage": "FULL for represented+integrated (r08-v3 f1abc composer; Runtime effect-time guard); NOT independently accepted. Earlier 'Registry: no slot' and 'NaN undecided' descriptions are superseded by merged M2.",
    "g0_dispositions": [
     "ELIGIBLE-NOT-MIGRATED"
    ],
@@ -27597,12 +28080,12 @@
    "kind": "PARAMETER",
    "migration_eligibility": "ELIGIBLE",
    "migration_status": "IMPLEMENTED",
-   "name": "max_amount numeric ceiling (Registry: no slot; Runtime: caller-owned; action-manifest: per-action ceiling)",
+   "name": "Runtime LocalExecutionPolicy max_amount ceiling (host policy; Registry-governed via r08-v3 f1abc, M2)",
    "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
    "parameter_count": 1,
    "proposed_migration_wave": "COMPLETED-IMPLEMENTED: M2 (Registry PR #54 merge ba98dd26; Runtime PR #151 merge 99f5f053, PR #152 merge dabaa770)",
-   "proposed_narrowing_semantics": "Ceiling: min(caller, registry), order <= on finite binary64/integers; floor = Runtime baseline; absent record -> caller value; NaN/inf/-0 policy undecided (v2 int rules exist for F4/F5 as precedent: exact int 1..2147483647, min composer)",
+   "proposed_narrowing_semantics": "effective ceiling = min(host LocalExecutionPolicy ceiling, Registry ceiling), exact int 0..2^53; bool, float and NaN input are refused (r08-v3 f1abc). Absent Registry input keeps the host value.",
    "registry_appropriate": "YES",
    "rule_id": "RG-F1C-MAX-AMOUNT",
    "split_from": null,
@@ -27730,9 +28213,7 @@
     "rt safe_executor.py:411-412,429-430; registry_selection_authority.py:1632-1680; backlog m2/01-migration-backlog.md:70-72"
    ],
    "existing_behavior": "Runtime LocalExecutionPolicy.check (_strict_finite_number); not read",
-   "existing_registry_coverage": [
-    "FULL: represented r08-v3 f1abc AND integrated at Runtime effect-time guard (PR-3 #152; f7a55e2a); implemented, pending acceptance"
-   ],
+   "existing_registry_coverage": "FULL for represented+integrated (r08-v3 f1abc composer; Runtime effect-time guard); NOT independently accepted. Earlier 'Registry: no slot' and 'NaN undecided' descriptions are superseded by merged M2.",
    "g0_dispositions": [
     "ELIGIBLE-NOT-MIGRATED"
    ],
@@ -27758,262 +28239,17 @@
    "kind": "PARAMETER",
    "migration_eligibility": "ELIGIBLE",
    "migration_status": "IMPLEMENTED",
-   "name": "max_effects numeric ceiling (Registry: no slot; Runtime: caller-owned)",
+   "name": "Runtime LocalExecutionPolicy max_effects ceiling (host policy; Registry-governed via r08-v3 f1abc, M2)",
    "not_applicable_reason": null,
    "origin": "HISTORICAL+G0",
    "parameter_count": 1,
    "proposed_migration_wave": "COMPLETED-IMPLEMENTED: M2 (Registry PR #54 merge ba98dd26; Runtime PR #151 merge 99f5f053, PR #152 merge dabaa770)",
-   "proposed_narrowing_semantics": "Ceiling: min(caller, registry), order <= on finite binary64/integers; floor = Runtime baseline; absent record -> caller value; NaN/inf/-0 policy undecided (v2 int rules exist for F4/F5 as precedent: exact int 1..2147483647, min composer)",
+   "proposed_narrowing_semantics": "effective ceiling = min(host LocalExecutionPolicy ceiling, Registry ceiling), exact int 0..2^53-1 (r08-v3 f1abc). Absent Registry input keeps the host value.",
    "registry_appropriate": "YES",
    "rule_id": "RG-F1C-MAX-EFFECTS",
    "split_from": null,
    "valid_domain": null,
    "value_type": "max_effects: numeric ceiling, caller-owned LocalExecutionPolicy field; no Registry slot"
-  },
-  {
-   "blocking_architectural_decisions": [],
-   "component_owner": [
-    "cogno-us/cognous-execution-runtime",
-    "cogno-us/cognous-ocs-registry",
-    "cognous-control-plane",
-    "cognous-execution-runtime",
-    "cognous-ocs-registry"
-   ],
-   "confidence": "MEDIUM",
-   "configurable": "YES",
-   "configuration_owner": [
-    "Host/caller policy",
-    "Host/caller policy; Registry may only select stricter mode (exact>segment>legacy-prefix)"
-   ],
-   "current_source_locations": [
-    {
-     "file": "registry_successor/v2_f1ab.py",
-     "lines": "44-54",
-     "repo": "cogno-us/cognous-ocs-registry",
-     "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
-     "symbol": "payload_validator (field_unknown on sixth key)",
-     "via": "g0-record:G0-A-006"
-    },
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "343, 359-372, 393-394",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-     "symbol": "_TARGET_MATCH_MODES; LocalExecutionPolicy.target_match",
-     "via": "g0-record:G0-B-004"
-    },
-    {
-     "file": "registry_successor/v4_f1abcd.py",
-     "lines": "stricter, contained, matches",
-     "note": "mode composition; modes alone do not order (list,mode) pairs",
-     "repo": "cognous-ocs-registry",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
-    },
-    {
-     "file": "engine/registry_selection_authority.py",
-     "lines": "1744-1748",
-     "note": "mode validity + containment at effect time",
-     "repo": "cognous-execution-runtime",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
-    },
-    {
-     "file": "src/agent_control_plane/bounded.py",
-     "lines": "2637-2643",
-     "note": "allow_any_target / exact-membership semantics in CP are a separate matcher",
-     "repo": "cognous-control-plane",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
-    }
-   ],
-   "differs_from_g0": true,
-   "disposition": "REGISTRY-GOVERNED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
-   "evidence_references": [
-    "rt safe_executor.py:343,359-372,393-394; registry v4_f1abcd.py:60-95,3 modes; backlog:75"
-   ],
-   "existing_behavior": "Runtime LocalExecutionPolicy._target_allowed (protected)",
-   "existing_registry_coverage": null,
-   "g0_dispositions": [
-    "ELIGIBLE-NOT-MIGRATED"
-   ],
-   "g0_group_ids": [
-    "RG-F1D-TARGET-MATCH"
-   ],
-   "g0_record_ids": [
-    "G0-A-006",
-    "G0-B-004"
-   ],
-   "grouping_verdicts": [
-    "SUPPORTED"
-   ],
-   "historical_source_ids": [],
-   "implementation_layers": {
-    "enforcement_integrated": "YES",
-    "independently_accepted": "NO",
-    "registry_represented": "YES"
-   },
-   "in_g0_inventory": true,
-   "kind": "PARAMETER",
-   "migration_eligibility": "ELIGIBLE",
-   "migration_status": "IMPLEMENTED",
-   "name": "target_match mode choice (segment|exact|legacy-prefix); the closed vocabulary itself is F2 and stays in code",
-   "not_applicable_reason": null,
-   "origin": "G0-CURRENT-ONLY",
-   "parameter_count": 1,
-   "proposed_migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
-   "proposed_narrowing_semantics": "Prefix/segment containment order undefined in Registry; set-intersection composer is NOT valid here",
-   "registry_appropriate": "YES",
-   "rule_id": "RG-F1D-TARGET-MATCH",
-   "split_from": null,
-   "valid_domain": null,
-   "value_type": "target_match: caller-owned LocalExecutionPolicy field; no Registry slot"
-  },
-  {
-   "blocking_architectural_decisions": [],
-   "component_owner": [
-    "cogno-us/cognous-execution-runtime",
-    "cogno-us/cognous-ocs-registry",
-    "cognous-control-plane",
-    "cognous-execution-runtime",
-    "cognous-ocs-registry"
-   ],
-   "confidence": "MEDIUM",
-   "configurable": "YES",
-   "configuration_owner": [
-    "Host/caller policy",
-    "Host/caller policy; Registry may only narrow by accepted-set containment",
-    "Host/caller policy; Registry may only narrow via signed selection"
-   ],
-   "current_source_locations": [
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "358-372",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "LocalExecutionPolicy fields",
-     "via": "historical-row:W1-033"
-    },
-    {
-     "file": "engine/registry_f1abcd_narrowing.py",
-     "lines": "1-121",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "evaluate_with_registry_selection_f1abcd",
-     "via": "historical-row:W1-033"
-    },
-    {
-     "file": "registry_successor/v4_f1abcd.py",
-     "lines": "84,170",
-     "repo": "cogno-us/cognous-ocs-registry",
-     "sha": "2668094dd6caac1a397dce7f6d6c3b5a194e9d8e",
-     "symbol": "compose_targets, compose_f1abcd",
-     "via": "historical-row:W1-033"
-    },
-    {
-     "file": "registry_successor/v2_f1ab.py",
-     "lines": "44-54",
-     "repo": "cogno-us/cognous-ocs-registry",
-     "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
-     "symbol": "payload_validator (field_unknown on sixth key)",
-     "via": "g0-record:G0-A-005"
-    },
-    {
-     "file": "engine/safe_executor.py",
-     "lines": "358-408",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-     "symbol": "LocalExecutionPolicy.allowed_target_prefixes",
-     "via": "g0-record:G0-B-006"
-    },
-    {
-     "file": "registry_successor/v4_f1abcd.py",
-     "lines": "compose_targets, contained",
-     "note": "M3 slot exists (r08-v4); A-005 stale",
-     "repo": "cognous-ocs-registry",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-    },
-    {
-     "file": "engine/registry_selection_authority.py",
-     "lines": "1683-1748",
-     "note": "_check_policy_containment_f1abcd: prefix containment at effect time",
-     "repo": "cognous-execution-runtime",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-    },
-    {
-     "file": "src/agent_control_plane/bounded.py",
-     "lines": "2637-2643",
-     "note": "CP checks proposal.target in manifest allowed_targets (exact list; allow_any_target); no Registry input",
-     "repo": "cognous-control-plane",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-    },
-    {
-     "file": "src/agent_control_plane/manifest_validation.py",
-     "lines": "111, 122",
-     "note": "allowed_targets validation",
-     "repo": "cognous-control-plane",
-     "sha": null,
-     "symbol": null,
-     "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-    }
-   ],
-   "differs_from_g0": true,
-   "disposition": "REGISTRY-GOVERNED",
-   "disposition_basis": "H-WORKER GROUP AUDIT",
-   "evidence_references": [
-    "docs/r08-v4-contract.md s1-4; safe_executor.py:359-408; registry_f1abcd_narrowing.py:48; registry_selection_authority.py:1706",
-    "rt safe_executor.py:358-408; registry v4_f1abcd.py:70-95; backlog m2/01-migration-backlog.md:75"
-   ],
-   "existing_behavior": "Runtime LocalExecutionPolicy._target_allowed (protected)",
-   "existing_registry_coverage": [
-    "FULL: represented (r08-v2 f1ab; r08-v3 f1abc; r08-v4 f1abcd, merged) AND integrated at Runtime effect-time guard (registry_selection_authority.py:1706 f1abcd containment, PR #153 f7a55e2a); implemented, pending independent Tier 1 acceptance"
-   ],
-   "g0_dispositions": [
-    "ELIGIBLE-NOT-MIGRATED"
-   ],
-   "g0_group_ids": [
-    "RG-F1D-TARGET-PREFIXES"
-   ],
-   "g0_record_ids": [
-    "G0-A-005",
-    "G0-B-006"
-   ],
-   "grouping_verdicts": [
-    "OVER-MERGED"
-   ],
-   "historical_source_ids": [
-    "W1-033"
-   ],
-   "implementation_layers": {
-    "enforcement_integrated": "YES",
-    "independently_accepted": "NO",
-    "registry_represented": "YES"
-   },
-   "in_g0_inventory": true,
-   "kind": "PARAMETER",
-   "migration_eligibility": "ELIGIBLE",
-   "migration_status": "IMPLEMENTED",
-   "name": "allowed_target_prefixes / allowed targets (Registry: no slot; Runtime: caller-owned; action-manifest: allowed_targets)",
-   "not_applicable_reason": null,
-   "origin": "HISTORICAL+G0",
-   "parameter_count": 1,
-   "proposed_migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
-   "proposed_narrowing_semantics": "Prefix/segment containment order undefined in Registry; set-intersection composer is NOT valid here",
-   "registry_appropriate": "YES",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "split_from": null,
-   "valid_domain": null,
-   "value_type": "allowed_target_prefixes: caller-owned LocalExecutionPolicy field; no Registry slot"
   },
   {
    "blocking_architectural_decisions": [],
@@ -28218,9 +28454,7 @@
    "value_type": null
   },
   {
-   "blocking_architectural_decisions": [
-    "Are the Control Plane DedupeProfile escalation_deadline and key TTL host policy or provider-declared facts? (G0 C-022)"
-   ],
+   "blocking_architectural_decisions": [],
    "component_owner": [
     "cogno-us/cognous-control-plane",
     "cogno-us/cognous-execution-runtime",
@@ -28230,28 +28464,10 @@
    "configurable": "NO",
    "configuration_owner": [
     "Destination (provider-declared)",
-    "Destination/provider (declared capability); CP host profile must stay below it",
-    "Destination/provider (models provider dedupe memory); declared via DedupeProfile on CP side",
     "Host RuntimeAuthorityProfile.dedupe; needs operation_identity profile",
     "Host profile asserting destination/provider dedupe facts; Runtime default is synthetic CI destination"
    ],
    "current_source_locations": [
-    {
-     "file": "engine/dedupe_destination.py",
-     "lines": "105",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "DedupeTtlOperationDestination.__init__ dedupe_ttl_seconds=600",
-     "via": "historical-row:W3-062"
-    },
-    {
-     "file": "src/agent_control_plane/dedupe.py",
-     "lines": "53-67",
-     "repo": "cogno-us/cognous-control-plane",
-     "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-     "symbol": "DedupeProfile",
-     "via": "historical-row:W3-062"
-    },
     {
      "file": "engine/control_plane_adapter.py",
      "lines": "69-85",
@@ -28259,14 +28475,6 @@
      "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
      "symbol": "adapter capability properties",
      "via": "historical-row:W2-062"
-    },
-    {
-     "file": "engine/dedupe_destination.py",
-     "lines": "76-96",
-     "repo": "cogno-us/cognous-execution-runtime",
-     "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-     "symbol": "DedupeTtlMixin._operation_guard",
-     "via": "historical-row:W3-063"
     },
     {
      "file": "src/agent_control_plane/dedupe.py",
@@ -28295,16 +28503,14 @@
      "via": "missing-consumer-path:RG-F7-DEDUPE"
     }
    ],
-   "differs_from_g0": false,
-   "disposition": "UNRESOLVED",
-   "disposition_basis": "LEAD-OVERRIDE: First-pass H2 rated it PROVIDER-OR-HOST-OWNED; cross-check J3b found the Control Plane DedupeProfile mixes provider horizon, key TTL and escalation deadline. G0 open item C-022 stands: are escalation_deadline and key TTL host policy or provider-declared?",
+   "differs_from_g0": true,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_basis": "LEAD-OVERRIDE: Pass 2 (Worker E): dispatch gating depends only on the dedupe profile being present (bounded.py:1578-1580); the horizon, TTL and escalation numbers classify attempts and time escalation records, are coupled by an ordering invariant, and horizon and TTL are provider facts.",
    "evidence_references": [
     "control_plane_adapter.py:69-85 getattr(self.destination,...,None)",
-    "cp dedupe.py:54-68; rt dedupe_destination.py:76-105; README.md optional CI/local synthetic destinations",
-    "dedupe_destination.py:1-14 'CI/local aid... no model of any real provider'; :43-46; dedupe.py:64",
-    "dedupe_destination.py:76-93 now-committed_at<ttl; :113-118 default 600; ttl int>0 check :36-37"
+    "cp dedupe.py:54-68; rt dedupe_destination.py:76-105; README.md optional CI/local synthetic destinations"
    ],
-   "existing_behavior": "dedupe.unresolved_effects / state evaluation; BoundedAuthorizationWorkflow dedupe paths",
+   "existing_behavior": null,
    "existing_registry_coverage": [
     "NONE"
    ],
@@ -28321,26 +28527,24 @@
     "OVER-MERGED"
    ],
    "historical_source_ids": [
-    "W2-062",
-    "W3-062",
-    "W3-063"
+    "W2-062"
    ],
    "implementation_layers": null,
    "in_g0_inventory": true,
    "kind": "RULE",
-   "migration_eligibility": "PENDING-DECISION",
-   "migration_status": "NOT-STARTED",
+   "migration_eligibility": "NOT-ELIGIBLE",
+   "migration_status": "N/A",
    "name": "Dedupe/replay TTL (Runtime dedupe_ttl_seconds; Control Plane DedupeProfile)",
-   "not_applicable_reason": null,
+   "not_applicable_reason": "PROVIDER-OR-HOST-OWNED: value/domain/narrowing attributes are not defined because the rule is not Registry-manageable",
    "origin": "HISTORICAL+G0",
    "parameter_count": 0,
    "proposed_migration_wave": null,
    "proposed_narrowing_semantics": null,
-   "registry_appropriate": "UNKNOWN",
+   "registry_appropriate": "NO",
    "rule_id": "RG-F7-DEDUPE",
    "split_from": null,
    "valid_domain": null,
-   "value_type": "Three required ints > 0 (no defaults) with invariant provider_horizon <= escalation_deadline < dedupe_ttl. Describes destination idempotency-key facts and the escalation deadline of unresolved attempts."
+   "value_type": null
   },
   {
    "blocking_architectural_decisions": [],

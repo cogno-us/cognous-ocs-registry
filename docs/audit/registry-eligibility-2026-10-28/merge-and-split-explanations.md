@@ -5,9 +5,10 @@
 ## Lead merges (many-to-one, explained)
 
 - **LR-F4-STATUS-APPROVAL-AGE** ← RG-A-007, RG-C-003, RG-C-004: Workers H1 and A found RG-A-007 (Registry composer side) and RG-C-003/RG-C-004 (Control Plane consumer-side defaults) are one logical rule viewed from two repositories; the Registry F4 payload carries exactly these two scalars.
-- **LR-F5-CLASS-STATUS-AGE** ← RG-A-008, RG-C-008, NEW:class-status-age-bound, RG-C-021: H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule. RG-C-021 (age_ceilings) added after cross-check J2: it is the Control Plane carrier of the F5 values (policy_binding.py:3-5,70-76), not an independent parameter.
+- **LR-F5-CLASS-STATUS-AGE** ← RG-A-008, RG-C-008, NEW:class-status-age-bound, RG-C-021, RG-C-019: H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule. RG-C-021 (age_ceilings) added after cross-check J2: it is the Control Plane carrier of the F5 values (policy_binding.py:3-5,70-76), not an independent parameter. RG-C-019 (max_age_extension_seconds) added after Worker H challenge C-02: accepted DR-CP-AGE-1 decision 5 already defines it as DERIVED from the narrowed F5 ceilings in the host factory (EXT-S3-4), so a stand-alone Registry slot would give one field two narrowing sources.
 - **LR-MANIFEST-DEFAULT-ACTION** ← RG-C-031, RG-D-003: Worker H2: RG-C-031 and RG-D-003 are the same manifest field split across two groups.
 - **LR-RUNTIME-ADMISSION-SIZE-BUDGETS** ← RG-B-001, RG-B-002: Same admission guard (safe_executor._admit_plain_data and the max_bytes budget); G0 split them into two retain groups. Merged so the open question is carried once.
+- **LR-F1D-TARGET-POLICY** ← RG-F1D-TARGET-PREFIXES, RG-F1D-TARGET-MATCH: Pass 2 (Worker B, confirmed by Worker A): the pair is narrowed by ONE relation over (list, mode) pairs (v4_f1abcd.py:7-14,63-93: mode names alone do not order two pairs; Runtime registry_selection_authority.py:1706+), so the members cannot be narrowed independently. G0 split them and the first audit inherited that.
 
 ## Lead splits (one G0 group divided because the parts have different dispositions)
 
@@ -31,6 +32,10 @@
 - W8-014 → **NEW:runtime-authority-profile-producer-keys**: Producer keys are host trust roots, not a Registry candidate; separated from the RG-C-013 container group (Worker H1: container record, not one rule).
 - W5-023 → **LR-MANIFEST-DEFAULT-ACTION**: Worker C and the group audit (H2) agree the validator's `default_action` fallback is the same logical field as RG-C-031/RG-D-003; blind reviewer J1a classed it CALLER-OR-ISSUER-OWNED. Lead: merged into LR-MANIFEST-DEFAULT-ACTION.
 - W1-009 → **RG-B-001/number-domain**: Integer bit-length 256 and finite-float rule define the canonical number domain (protocol constant, retained); separated from the size/depth budgets that are the subject of the open admission-budget question.
+- W3-062 → **RG-B-015**: Pass 2 (Worker B): rows are exactly G0-B-015's lines (dedupe_destination.py:76-105); W3-061 and W3-065 were moved in pass 1 but these two stayed under RG-F7-DEDUPE.
+- W3-063 → **RG-B-015**: As W3-062.
+- W8-004 → **LR-F5-CLASS-STATUS-AGE/mechanism**: Pass 2 (Worker H C-14): the irreversible default and class-id mechanism are protected code, not the F5 per-class age parameter.
+- W8-031 → **LR-F5-CLASS-STATUS-AGE/mechanism**: Pass 2 (Worker H C-14): the age<0 refusal evaluator is protected code.
 
 ## Many-to-one groupings by the first-pass workers (rules with more than one historical row)
 
@@ -57,7 +62,7 @@
 | RG-B-026 | 6 | RETAIN-IN-CODE | G0 group RG-B-026 |
 | NEW:bounded-manifest-conformance | 5 | RETAIN-IN-CODE | same _manifest_mismatches evaluator |
 | NEW:evidence-validation-integrity | 5 | RETAIN-IN-CODE |  |
-| LR-RUNTIME-ADMISSION-SIZE-BUDGETS | 4 | UNRESOLVED | same floor as other admission bounds (F3) |
+| LR-RUNTIME-ADMISSION-SIZE-BUDGETS | 4 | RETAIN-IN-CODE | same floor as other admission bounds (F3) |
 | NEW:amount-numeric-validation | 4 | RETAIN-IN-CODE | amount/ceiling numeric validators |
 | NEW:check-recovery-mechanism | 4 | RETAIN-IN-CODE | same mechanism family: check-recovery-mechanism |
 | NEW:effects-count-validation | 4 | RETAIN-IN-CODE | effect count validators |
@@ -70,9 +75,9 @@
 | NEW:validation-issue-codes | 4 | RETAIN-IN-CODE | Validation issue codes |
 | RG-B-005 | 4 | RETAIN-IN-CODE | evaluator semantics for F1d |
 | RG-B-011 | 4 | RETAIN-IN-CODE | G0 F2 RETAIN (B-011) |
+| RG-B-015 | 4 | OUT-OF-SCOPE | G0 group RG-F7-DEDUPE |
 | RG-B-023 | 4 | RETAIN-IN-CODE | G0 retains closed 4-state set |
 | LR-F4-STATUS-APPROVAL-AGE | 3 | REGISTRY-ELIGIBLE | row is a ctor spanning four params; keyed to status, others as children |
-| LR-F5-CLASS-STATUS-AGE | 3 | REGISTRY-ELIGIBLE | consumer site of ActionClass.max_status_age_seconds (W8-004) |
 | NEW:authority-state-status-vocabularies | 3 | RETAIN-IN-CODE | Closed status enums + terminal revocation |
 | NEW:cli-run-input-contract | 3 | RETAIN-IN-CODE | Merged with W9-048/W9-050 |
 | NEW:cp-contract-version-constants | 3 | RETAIN-IN-CODE | Merged with W8-001/W8-076: version/profile id constants |

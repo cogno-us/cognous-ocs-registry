@@ -42,6 +42,14 @@ def jl(path):
     return [json.loads(x) for x in path.read_text().splitlines() if x.strip()]
 
 
+def pass2(name):
+    f = WE / "pass2" / name
+    if not f.exists():
+        return None
+    txt = f.read_text()
+    return [json.loads(x) for x in txt.splitlines()] if name.endswith(".jsonl") else json.loads(txt)
+
+
 def build_reports():
     cw = load("crosswalk.json")["rows"]
     cat = load("rule-catalogue.json")["rules"]
@@ -57,7 +65,9 @@ def build_reports():
     total_rules = s["canonical_rules_total"]
     manage = len(gov) + len(elig)
     manage_p = s["registry_manageable_parameters_governed_plus_eligible"]
-    cfgrel = s["configuration_relevant_rules_denominator"]
+    pc = load("parameter-catalogue.json")["summary"]
+    pc_rules_with_params = pc["rules_with_at_least_one_counted_parameter"]
+    cfgrel = pc_rules_with_params
     represented_only = [r for r in elig if (r["implementation_layers"] or {}).get("registry_represented") == "YES"]
     integrated = [r for r in gov if r["implementation_layers"]["enforcement_integrated"] == "YES"]
 
@@ -75,8 +85,10 @@ def build_reports():
                     ["Registry-eligible, not yet governed", len(elig), s["registry_eligible_parameters"], pct(len(elig), manage)],
                     ["**Registry-manageable total (governed + eligible)**", f"**{manage}**", f"**{manage_p}**", "100%"],
                     ["…as a share of all canonical rules", f"{manage} of {total_rules}", "", pct(manage, total_rules)],
-                    [f"…as a share of the {cfgrel} configuration-bearing rules (configurable = YES, or a pending decision)", f"{manage} of {cfgrel}", "", pct(manage, cfgrel)],
+                    [f"…as a share of the {cfgrel} rules that carry at least one configurable parameter (parameter ledger)", f"{manage} of {cfgrel}", "", pct(manage, cfgrel)],
                     ["Unresolved or blocked (decision needed before eligibility can be stated)", len(pend), "", ""]]), "",
+             "### Pass 2 correction (parameter level)", "",
+             f"Pass 2 re-derived the denominator at parameter level (`parameter-reconciliation.md`, `parameter-catalogue.json`). Of **{pc['distinct_configurable_parameters']}** distinct configurable parameters carried by **{pc['rules_with_at_least_one_counted_parameter']}** of the {total_rules} canonical rules, **{pc['manageable_parameters']}** are Registry-manageable ({pc['manageable_governed_parameters']} governed + {pc['manageable_eligible_parameters']} eligible; {pc['manageable_rules']} rules; {pc['manageable_narrowing_units']} narrowing units) = **{pct(pc['manageable_parameters'], pc['distinct_configurable_parameters'])}** of configurable parameters and {pct(pc['manageable_rules'], total_rules)} of all canonical rules. {pc['represented_in_registry_parameters']} are represented in the Registry, {pc['enforcement_integrated_parameters']} are integrated at an enforcement boundary, {pc['independently_accepted_parameters']} are independently accepted. {pc['blocked_parameters']} blocked and {pc['unresolved_parameters']} unresolved parameters are reported separately and excluded from the numerator. The percentages by rule depend on how rules are partitioned; the percentages by parameter are the stable figures.", "",
              "The denominator for *all* rules is granularity-dependent (how finely protected mechanisms are split); the manageable count and the configuration-bearing count are the robust figures. See §6.", "",
              "## 2. Implementation state of the manageable rules (three separate facts)", "",
              table(["Layer", "Rules", "Parameters", "Share of manageable rules"],
@@ -102,7 +114,7 @@ def build_reports():
              "## 5. Reconciliation with the G0 inventory (116 source sites, 97 groups)", "",
              "The provisional G0 conclusion was 5 already-governed + 23 eligible-not-migrated = 28 of 97 groups. Group-level movement:", "",
              table(["G0 disposition -> audit disposition", "G0 groups"], [[k, v] for k, v in s["g0_group_vs_audit_matrix"].items()]), "",
-             f"The audit disagrees with G0 on {len(s['g0_groups_where_audit_disagrees'])} of 97 groups on the independent group audit (before lead merges and splits). Grouping verdicts: {s['g0_group_grouping_verdicts']}.", "",
+             f"The audit disagrees with G0 on {len(s['g0_groups_where_final_audit_differs'])} of 97 groups after lead adjudication (the independent pass-1 group audit flagged {len(s['pass1_groups_flagged_disagree_before_lead_adjudication'])} before merges, splits and cross-checks). Grouping verdicts: {s['g0_group_grouping_verdicts']}.", "",
              "Why the headline moved (each item is detailed in `eligibility-decisions.md`):", "",
              "1. The four M2/M3 groups (max_amount, max_effects, target prefixes, target match) are no longer *eligible-not-migrated*: they are implemented and integrated at the Runtime effect-time guard on current main. They move to REGISTRY-GOVERNED, not accepted.",
              "2. G0's ALREADY-GOVERNED label is overstated for the F4/F5 age scalars (RG-A-007, RG-A-008) and for `age_ceilings` (RG-C-021): the Registry composes them, but the Control Plane has no Registry consumer. They are REGISTRY-ELIGIBLE with the Registry half represented.",
@@ -123,6 +135,12 @@ def build_reports():
              "- Repository coverage: Runtime and Control Plane files already covered by S02/G0 were grep-scanned, not re-read. Action Manifest and Governed Exchange schemas, examples, docs and tests, the Stack Qualification repository (about 10 of 28,961 files read) and parts of the Stack Orchestrator were not reviewed in full.",
              "- The count of *all* canonical rules depends on how finely protected mechanisms are split; only the Registry-manageable and configuration-bearing counts are decision-grade.",
              "- Observations that are not migration defects: see `unresolved-architectural-decisions.md` §3."]
+    F = pass2("F.json")
+    if F:
+        lines += ["", "### Pass 2 repository coverage (Worker F)", "",
+                  table(["Repository", "Pinned commit", "Production files", "Examined", "Confidence", "Unexamined surfaces"],
+                        [[x["repo"], (x.get("sha") or "")[:8], x.get("production_files", ""), len(x.get("examined", [])), x.get("coverage_confidence", ""), short("; ".join(x.get("unexamined_surfaces", [])), 200)] for x in F["repos"]]), "",
+                  "No repository is claimed to be exhaustively covered. Worker F found no missed eligible or unresolved parameter; six non-eligible catalogue entries were added (`worker-evidence/I4.json`).", ""]
     reports["reconciliation-report.md"] = "\n".join(lines) + "\n"
 
     # ------------------------------------------------------------------ eligibility-decisions.md
@@ -191,6 +209,17 @@ def build_reports():
          "## 1. Decisions raised by the lead", ""]
     for d in adj["decisions"]:
         L += [f"### {d['id']} — {d['title']}", "", d["body"], "", f"*Recommendation:* {d['recommendation']}", ""]
+    C = pass2("C.json")
+    if C:
+        L += ["## 1b. DR-CP-AGE-1 and AD-07 decision reconciliation (pass 2, Worker C; no decision is reversed here)", "",
+              "**What DR-CP-AGE-1 prohibits:**", ""] + [f"- {x}" for x in C["dr_cp_age_1"]["prohibits"]] + ["", "**What it permits:**", ""] + [f"- {x}" for x in C["dr_cp_age_1"]["permits"]] + ["",
+              table(["Field", "Rule", "Registry slot", "Decision status", "Touched by PR #58/#87", "Conflict", "Needs reversal", "Could proceed without reversal"],
+                    [[m["field"], m["rule_id"], short(m["registry_slot_exists"], 90), short(m["decision_status"], 150), short(m["pr_58_or_87_touches"], 110), short(m["conflict"], 200), m["requires_reversal"], m["could_proceed_without_reversal"]] for m in C["matrix"]]), "",
+              "**AD-07.** " + C["ad07"]["text"], "", "Superseded in substance: " + C["ad07"]["supersession_in_substance"], "", "Recommended additive correction (a new dated decision file; the old row and the frozen G0 records are not edited): " + C["ad07"]["recommended_additive_correction"], "",
+              "**Minimum Architect rulings** (from Worker C; recommendations are the worker's, adopted by the lead where stated in `pass2_resolutions`):", ""]
+        for r in C["architect_rulings"]:
+            L += [f"- **{r['id']}** {r['question']} Options: " + " ".join(r["options"]) + f" *Recommendation:* {r['recommendation']}"]
+        L += ["", "Limits: " + " ".join(C.get("limitations", [])), ""]
     L += ["## 2. Blocking decisions attached to individual rules", ""]
     rows = []
     for r in cat:
@@ -229,7 +258,11 @@ def build_reports():
          "- Record RG-F11, RG-D-012, RG-F7-DEDUPE, RG-C-032 and the Runtime admission budgets as unresolved pending the owner decisions named in the rule catalogue.",
          "- Record the M2/M3 groups as implemented and integrated, pending independent Tier 1 acceptance.",
          "- Drop RG-B-016 from wave M11: the module is an experimental synthetic ledger no executor imports.",
-         "- Bring AD-07 in line with the merged M2/M3 narrowing (see `unresolved-architectural-decisions.md`).", ""]
+         "- Bring AD-07 in line with the merged M2/M3 narrowing by an additive dated decision file (the old OPEN row and the frozen G0 records stay untouched); the Architect supplies the M2/M3 ruling texts (see `unresolved-architectural-decisions.md` §1b).",
+         "- Correct the progress accounting in unmerged PR #59: RG-C-006 (clock tolerance) is counted as implemented although its own item 6.B is open and the cited basis (Amendment 1 §2) is the section that excludes the field. Show M11 as two groups implemented plus one pending ruling only after AR-1/AR-2 are answered.",
+         "- Correct stale text: `docs/sprint-status.md:40` still says M3 is not authorized; the catalogue descriptions 'Registry: no slot' for max_amount, max_effects and target prefixes are superseded by merged M2/M3 (corrected in this audit's catalogue).",
+         "- Treat M12 and later waves as not authorized: they are unchanged by this audit.",
+         "- Add the newly found eligible rule (terminal-revocation enablement) to the Control Plane profile-consumer family with RG-C-010 and RG-C-020, behind the AUD-D06 commitment-coupling decision. It is not scheduled.", ""]
     reports["proposed-backlog-additions.md"] = "\n".join(L) + "\n"
 
     # ------------------------------------------------------------------ worker-cross-check-results.md
@@ -245,11 +278,24 @@ def build_reports():
     else:
         L += ["## Independent cross-checks (blind second review / falsification)", "", "Raw outputs: `worker-evidence/J*.jsonl`. Disposition of every disagreement: `lead-adjudications.json` (`cross_check_resolutions`).", ""]
         res = adj.get("cross_check_resolutions", [])
-        L += [table(["Item", "Lead resolution", "Reason"], [[x["item"], x["resolution"], short(x["reason"], 220)] for x in res]) if res else "No disagreements recorded.", ""]
+        L += [table(["Item", "Lead resolution", "Reason"], [[x["item"], ("[SUPERSEDED BY PASS 2] " if x.get("superseded_by_pass2") else "") + x["resolution"], short(x["reason"], 220)] for x in res]) if res else "No disagreements recorded.", ""]
         stats = adj.get("cross_check_stats", {})
         for k, v in stats.items():
             L += [f"- {k}: " + ", ".join(f"{a}={b}" for a, b in v.items())]
         L += [""]
+    pr = adj.get("pass2_resolutions", [])
+    if pr:
+        L += ["## Pass 2 workers (correction pass, 2026-10-28)", "",
+              table(["Worker", "Scope", "Raw output"], [["A", "Parameter denominator", "worker-evidence/pass2/A.jsonl"], ["B", "G0 group merge/split audit", "B.jsonl"], ["C", "M11 / DR-CP-AGE-1 / AD-07 decision conflict", "C.json"],
+                    ["D", "Current implementation truth (represented / integrated / accepted)", "D.jsonl"], ["E", "Configurability challenge (ten disagreements)", "E.jsonl"], ["F", "Missed source coverage", "F.json (+ I4.json)"],
+                    ["G", "Retain-in-code challenge", "G.jsonl"], ["H", "Independent reconciliation of the lead's ledgers", "H.json"]]), "",
+              "### Lead adjudication of pass-2 findings", "",
+              table(["Worker", "Item", "Lead decision", "Reason"], [[x["worker"], x["item"], x["lead_decision"], short(x["reason"], 300)] for x in pr]), ""]
+        H = pass2("H.json")
+        hr = adj.get("pass2_h_resolutions", [])
+        if H:
+            L += ["### Worker H independent reconciliation", "", "Worker H recomputed the totals independently from the JSON ledgers as drafted before its challenges (so some figures below predate the lead's fixes; the final figures are in `parameter-reconciliation.md`). Its recomputation reproduced the draft ledger exactly. Raw: `worker-evidence/pass2/H.json`.", "",
+                  table(["Challenge", "Severity", "Finding", "Lead response"], [[c["id"], c["severity"], short(c["finding"], 260), short(next((y["response"] for y in hr if y["id"] == c["id"]), "UNANSWERED"), 260)] for c in H.get("challenges", [])]) if H.get("challenges") else "No challenges.", ""]
     reports["worker-cross-check-results.md"] = "\n".join(L) + "\n"
     return reports
 

@@ -46,9 +46,30 @@
   "W1-009": {
    "canonical_key": "RG-B-001/number-domain",
    "reason": "Integer bit-length 256 and finite-float rule define the canonical number domain (protocol constant, retained); separated from the size/depth budgets that are the subject of the open admission-budget question."
+  },
+  "W3-062": {
+   "canonical_key": "RG-B-015",
+   "reason": "Pass 2 (Worker B): rows are exactly G0-B-015's lines (dedupe_destination.py:76-105); W3-061 and W3-065 were moved in pass 1 but these two stayed under RG-F7-DEDUPE."
+  },
+  "W3-063": {
+   "canonical_key": "RG-B-015",
+   "reason": "As W3-062."
+  },
+  "W8-004": {
+   "canonical_key": "LR-F5-CLASS-STATUS-AGE/mechanism",
+   "reason": "Pass 2 (Worker H C-14): the irreversible default and class-id mechanism are protected code, not the F5 per-class age parameter."
+  },
+  "W8-031": {
+   "canonical_key": "LR-F5-CLASS-STATUS-AGE/mechanism",
+   "reason": "Pass 2 (Worker H C-14): the age<0 refusal evaluator is protected code."
   }
  },
- "row_disposition_overrides": {},
+ "row_disposition_overrides": {
+  "W8-013": {
+   "disposition": "RETAIN-IN-CODE",
+   "reason": "The marker-profile mechanism stays in code; only the on/off enablement is the Registry-manageable parameter."
+  }
+ },
  "rule_overrides": {
   "LR-MANIFEST-DEFAULT-ACTION": {
    "disposition": "CALLER-OR-ISSUER-OWNED",
@@ -76,25 +97,25 @@
    "name": "Canonical number domain: int bit length <= 256, finite floats (protocol constant)"
   },
   "LR-RUNTIME-ADMISSION-SIZE-BUDGETS": {
-   "disposition": "UNRESOLVED",
+   "disposition": "RETAIN-IN-CODE",
    "name": "Runtime structural input admission budgets (depth 32, 10000 nodes/keys/items, 1 MiB size)",
-   "reason": "Blind reviewers J1a and J1b rated these narrow-only DoS bounds REGISTRY-ELIGIBLE (low value); first-pass workers D1 and J1c rated them non-tunable admission guards; G0 left the F3 Registry-scope question open. A genuine disagreement the evidence does not settle, so it is retained as UNRESOLVED."
+   "reason": "Pass 2 (Worker E, MEDIUM-HIGH): the budgets are literals with no configuration surface (no caller passes max_bytes to _admit_plain_data); they are re-run at effect time (safe_executor.py:889) and inside the sandbox worker image (openshell_worker.py:18), so a host-side value would split admission; plan M6 lists them as 'not mandatory admission floors' tuning limits that are not adjudicated configuration (AD-08, 'confirm F3 limits stay floors', is itself still OPEN and is not relied on). Retained disagreement: Worker G and blind reviewers J1a/J1b rated narrow-only reduction eligible or unresolved."
   },
   "RG-C-032": {
-   "disposition": "UNRESOLVED",
-   "reason": "Blind reviewer J1b: action_type is an open string (models.py:69), so additive stricter membership of custom types in the effectful/high-risk/privileged sets would be monotone. First-pass worker C retained it. Who may add custom action types to the floor sets, and who authorises that classification, is not decidable from source."
+   "disposition": "RETAIN-IN-CODE",
+   "reason": "Pass 2 (Workers E and G): the manifest action_type is a closed 9-member enum (action-manifest models.py:45-54); the open string the blind reviewer cited is ActionProposal.action_type in the Control Plane (models.py:69). The Control Plane sets are a parity port of the manifest validator. The pass-1 UNRESOLVED premise was wrong."
   },
   "RG-C-011": {
    "disposition": "REGISTRY-ELIGIBLE",
-   "reason": "Cross-check J3b falsified HOST-OWNED: effective_reversibility (reversibility.py:165-181) already forces `irreversible` for undeclared, protected-read and unobservable classes, so a Registry overlay that can only raise the strictness rank (force irreversible) is monotone with an existing Control Plane consumer. Disagreement retained: first-pass H2/A treated the declaration as a producer assertion of fact. Depends on AUD-D06."
+   "reason": "Pass 2 (Worker H C-08, verified): the declared `reversibility` member needs the reversibility/0.1 profile (runtime_authority.py:223-225), which a Registry must never enable. The profile-free monotone lever is the legacy ActionClass.irreversible flag (default True, runtime_authority.py:130; consumers bounded.py:2111, 2189 via effectively_irreversible): a Registry may only force False to True per class. LOW-MEDIUM confidence; shares the approval_commitment dependency (AUD-D06). Retained disagreement: first-pass workers treated the declaration as a producer assertion of fact."
   },
   "RG-F11-REDACTION-DEFAULTS": {
-   "disposition": "UNRESOLVED",
-   "reason": "First-pass H1 rated the redaction defaults caller-owned presentation choices; cross-check J3b rated an OR-floor of redaction flags REGISTRY-ELIGIBLE. Whether a minimum-redaction floor is a Registry-owned operator control (plan wave M10) is a privacy-owner decision (AUD-D05)."
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "reason": "Pass 2 (Worker E): redaction is an optional export command (cli.py:51-59,155-168), so a minimum floor cannot be enforced; it also trades against evidence verifiability."
   },
   "RG-F7-DEDUPE": {
-   "disposition": "UNRESOLVED",
-   "reason": "First-pass H2 rated it PROVIDER-OR-HOST-OWNED; cross-check J3b found the Control Plane DedupeProfile mixes provider horizon, key TTL and escalation deadline. G0 open item C-022 stands: are escalation_deadline and key TTL host policy or provider-declared?"
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "reason": "Pass 2 (Worker E): dispatch gating depends only on the dedupe profile being present (bounded.py:1578-1580); the horizon, TTL and escalation numbers classify attempts and time escalation records, are coupled by an ordering invariant, and horizon and TTL are provider facts."
   },
   "RG-B-031": {
    "disposition": "PROVIDER-OR-HOST-OWNED",
@@ -126,11 +147,11 @@
   },
   "RG-C-005": {
    "disposition": "BLOCKED",
-   "reason": "Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+   "reason": "Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4)."
   },
   "RG-C-006": {
    "disposition": "BLOCKED",
-   "reason": "Cross-check J2: DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+   "reason": "Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4)."
   },
   "RG-C-018": {
    "disposition": "PROVIDER-OR-HOST-OWNED",
@@ -143,6 +164,39 @@
   "NEW:hub-registry-record-profile-vocabulary": {
    "disposition": "RETAIN-IN-CODE",
    "reason": "Cross-check J2: vocabulary of the registry record format itself (wire contract); no blocking decision is named, so UNRESOLVED is unsupported."
+  },
+  "LR-F1D-TARGET-POLICY": {
+   "disposition": "REGISTRY-GOVERNED",
+   "name": "Runtime LocalExecutionPolicy target scope: allowed_target_prefixes + target_match (Registry-governed via r08-v4 f1abcd, M3; one joint containment relation)",
+   "reason": "Merged governed pair (pass 2)."
+  },
+  "RG-F1C-MAX-AMOUNT": {
+   "name": "Runtime LocalExecutionPolicy max_amount ceiling (host policy; Registry-governed via r08-v3 f1abc, M2)"
+  },
+  "RG-F1C-MAX-EFFECTS": {
+   "name": "Runtime LocalExecutionPolicy max_effects ceiling (host policy; Registry-governed via r08-v3 f1abc, M2)"
+  },
+  "RG-D-021": {
+   "disposition": "OUT-OF-SCOPE",
+   "reason": "Pass 2 (Worker E): the hub checker is not wired into any gate and uses a fixture key. Label-only change from PROVIDER-OR-HOST-OWNED; both non-manageable."
+  },
+  "NEW:operation-identity-enablement": {
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "reason": "Pass 2 (Worker E): a three-way protocol-profile selection that changes identity semantics; it is not a strictness-only, one-way toggle that only adds refusals (the test applied to RG-C-009/C-010/C-020 and terminal-revocation)."
+  },
+  "NEW:terminal-revocation-marker": {
+   "disposition": "REGISTRY-ELIGIBLE",
+   "name": "Terminal-revocation opt-in enablement (terminal-revocation/0.1 profile off/on)",
+   "reason": "Pass 2 (Worker G-01 proposal, verified by the lead): the profile is an opt-in safeguard (runtime_authority.py:182-191,214) with a single consumer (bounded.py:2390-2392). Its only variation is off to on, the same shape as RG-C-010 and RG-C-020. Registry may only force on; absent or a withdrawn record returns the host baseline. MEDIUM confidence."
+  },
+  "RG-D-027": {
+   "disposition": "OUT-OF-SCOPE",
+   "reason": "Pass 2 (Worker H C-03, verified by the lead): TIER_DELAY_CEILING_SECONDS lives in cognous-institutional-governance testing/harness/authority_context.py, whose docstring says 'Local reference checks only' and whose comment says the ceilings are 'Proposed ... Owner to confirm: no value is validated or derived from the constitution'. It is used only by tests; no runtime boundary reads delay_limit (Control Plane bounded.py accepts schema versions only). The pass-1 BLOCKED label and Worker A's 'constitutional invariant' dissent both rested on a misquote."
+  },
+  "LR-F5-CLASS-STATUS-AGE/mechanism": {
+   "disposition": "RETAIN-IN-CODE",
+   "name": "Per-class age evaluator, irreversible default and class-id mechanism (protected code beside the F5 parameter)",
+   "reason": "Mechanism rows separated from the eligible F5 parameter, as done for 13 other rows."
   }
  },
  "merges": [
@@ -162,10 +216,11 @@
     "RG-A-008",
     "RG-C-008",
     "NEW:class-status-age-bound",
-    "RG-C-021"
+    "RG-C-021",
+    "RG-C-019"
    ],
    "name": "Per-action-class status age bound (F5 max_status_age_seconds)",
-   "reason": "H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule. RG-C-021 (age_ceilings) added after cross-check J2: it is the Control Plane carrier of the F5 values (policy_binding.py:3-5,70-76), not an independent parameter."
+   "reason": "H1 found RG-A-008 and RG-C-008 are one rule; Worker D4 independently re-discovered it as NEW:class-status-age-bound (W8-004, W8-031). Merged so it is counted once and is not reported as a newly discovered rule. RG-C-021 (age_ceilings) added after cross-check J2: it is the Control Plane carrier of the F5 values (policy_binding.py:3-5,70-76), not an independent parameter. RG-C-019 (max_age_extension_seconds) added after Worker H challenge C-02: accepted DR-CP-AGE-1 decision 5 already defines it as DERIVED from the narrowed F5 ceilings in the host factory (EXT-S3-4), so a stand-alone Registry slot would give one field two narrowing sources."
   },
   {
    "into": "LR-MANIFEST-DEFAULT-ACTION",
@@ -184,6 +239,15 @@
    ],
    "name": "Runtime structural input admission budgets (depth 32, 10000 nodes/keys/items, 1 MiB size)",
    "reason": "Same admission guard (safe_executor._admit_plain_data and the max_bytes budget); G0 split them into two retain groups. Merged so the open question is carried once."
+  },
+  {
+   "into": "LR-F1D-TARGET-POLICY",
+   "members": [
+    "RG-F1D-TARGET-PREFIXES",
+    "RG-F1D-TARGET-MATCH"
+   ],
+   "name": "Runtime LocalExecutionPolicy target scope: allowed_target_prefixes + target_match (Registry-governed via r08-v4 f1abcd, M3; one joint containment relation)",
+   "reason": "Pass 2 (Worker B, confirmed by Worker A): the pair is narrowed by ONE relation over (list, mode) pairs (v4_f1abcd.py:7-14,63-93: mode names alone do not order two pairs; Runtime registry_selection_authority.py:1706+), so the members cannot be narrowed independently. G0 split them and the first audit inherited that."
   }
  ],
  "splits": [
@@ -256,8 +320,8 @@
    "reason": "Caller-overridable presentation default; no redaction floor exists in code."
   },
   "RG-D-012": {
-   "disposition": "UNRESOLVED",
-   "reason": "See RG-F11-REDACTION-DEFAULTS: the replay-bundle redaction flags carry the same minimum-redaction-floor ownership question (AUD-D05)."
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "reason": "Same as RG-F11-REDACTION-DEFAULTS (pass 2)."
   },
   "RG-B-014": {
    "disposition": "OUT-OF-SCOPE",
@@ -277,22 +341,16 @@
   "RG-F1C-MAX-AMOUNT": {
    "parameters": 1,
    "migration_wave": "COMPLETED-IMPLEMENTED: M2 (Registry PR #54 merge ba98dd26; Runtime PR #151 merge 99f5f053, PR #152 merge dabaa770)",
-   "implementation_status": "IMPLEMENTED"
+   "implementation_status": "IMPLEMENTED",
+   "coverage": "FULL for represented+integrated (r08-v3 f1abc composer; Runtime effect-time guard); NOT independently accepted. Earlier 'Registry: no slot' and 'NaN undecided' descriptions are superseded by merged M2.",
+   "narrowing": "effective ceiling = min(host LocalExecutionPolicy ceiling, Registry ceiling), exact int 0..2^53; bool, float and NaN input are refused (r08-v3 f1abc). Absent Registry input keeps the host value."
   },
   "RG-F1C-MAX-EFFECTS": {
    "parameters": 1,
    "migration_wave": "COMPLETED-IMPLEMENTED: M2 (Registry PR #54 merge ba98dd26; Runtime PR #151 merge 99f5f053, PR #152 merge dabaa770)",
-   "implementation_status": "IMPLEMENTED"
-  },
-  "RG-F1D-TARGET-PREFIXES": {
-   "parameters": 1,
-   "migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
-   "implementation_status": "IMPLEMENTED"
-  },
-  "RG-F1D-TARGET-MATCH": {
-   "parameters": 1,
-   "migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
-   "implementation_status": "IMPLEMENTED"
+   "implementation_status": "IMPLEMENTED",
+   "coverage": "FULL for represented+integrated (r08-v3 f1abc composer; Runtime effect-time guard); NOT independently accepted. Earlier 'Registry: no slot' and 'NaN undecided' descriptions are superseded by merged M2.",
+   "narrowing": "effective ceiling = min(host LocalExecutionPolicy ceiling, Registry ceiling), exact int 0..2^53-1 (r08-v3 f1abc). Absent Registry input keeps the host value."
   },
   "LR-F4-STATUS-APPROVAL-AGE": {
    "parameters": 2,
@@ -303,7 +361,7 @@
     "enforcement_integrated": "NO",
     "independently_accepted": "NO"
    },
-   "coverage": "PARTIAL: Registry r08-v2 f4 composer (registry_successor/v2_age_bounds.py) represents both scalars; the Control Plane has no Registry consumer (VERIFIED-BY-LEAD: policy_binding.py enforces only host-copied age_ceilings)."
+   "coverage": "PARTIAL: Registry r08-v2 f4 composer (registry_successor/v2_age_bounds.py) represents both scalars; the Control Plane has no Registry consumer (VERIFIED-BY-LEAD: policy_binding.py enforces only host-copied age_ceilings). Note: when a RuntimeAuthorityProfile is present the grant-status bound is the per-class max_status_age_seconds (bounded.py:2398-2399), so the F4 status scalar then bounds only conflict and policy status."
   },
   "LR-F5-CLASS-STATUS-AGE": {
    "parameters": 1,
@@ -320,46 +378,51 @@
    "parameters": 1,
    "migration_wave": "M12",
    "implementation_status": "NOT-STARTED",
-   "configurable": "YES"
+   "configurable": "YES",
+   "narrowing": "Order: irreversible=True is stricter than False. Registry may only set ActionClass.irreversible False to True for a class (never enable the reversibility/0.1 profile, never edit reversible_until, reversal_cost, reads_protected_data or counterparty_observable). Absent: host value."
   },
-  "LR-RUNTIME-ADMISSION-SIZE-BUDGETS": {
-   "blocking": [
-    "May the Registry narrow Runtime structural admission budgets (depth, node/entry count, byte size)? They are Tier 1 admission guards that bound the canonicalization domain; a narrow-only override only rejects more, but the value is low and the ceiling must stay in code (G0 F3 scope question)."
-   ]
-  },
-  "RG-C-032": {
-   "blocking": [
-    "Who may add custom action types to the effectful/high-risk/privileged floor sets, and who authorises that classification? Built-in membership is a fixed floor."
-   ]
-  },
-  "RG-F11-REDACTION-DEFAULTS": {
-   "blocking": [
-    "Is a minimum-redaction floor a Registry-owned operator control (a new privacy feature, plan wave M10), and who is the privacy owner?"
-   ]
-  },
-  "RG-D-012": {
-   "blocking": [
-    "Same minimum-redaction-floor ownership question as RG-F11-REDACTION-DEFAULTS; the replay-bundle library has no Registry consumer."
-   ]
-  },
-  "RG-F7-DEDUPE": {
-   "blocking": [
-    "Are the Control Plane DedupeProfile escalation_deadline and key TTL host policy or provider-declared facts? (G0 C-022)"
-   ]
-  },
+  "LR-RUNTIME-ADMISSION-SIZE-BUDGETS": {},
+  "RG-C-032": {},
+  "RG-F11-REDACTION-DEFAULTS": {},
+  "RG-D-012": {},
+  "RG-F7-DEDUPE": {},
   "RG-C-005": {
    "parameters": 2,
    "blocking": [
-    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+    "Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4)."
    ]
   },
   "RG-C-006": {
    "blocking": [
-    "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) excludes identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as host-owned and never registry-managed. Narrowing them would be monotone, but needs an Architect reversal of that decision plus a new family slot."
+    "Cross-check J2 and pass 2 (Worker C): DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) declares identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds 'out of scope and not covered'; it does not expressly prohibit them, but nothing authorizes a Registry slot. Narrowing them would be monotone; adoption needs an Architect ruling (AR-1, AR-4)."
    ]
   },
   "RG-F4-OBSERVATION-POLICY": {
    "parameters": 2
+  },
+  "LR-F1D-TARGET-POLICY": {
+   "parameters": 2,
+   "migration_wave": "COMPLETED-IMPLEMENTED: M3 (Registry PR #56 merge b7e6a173; Runtime PR #153 merge f7a55e2a)",
+   "implementation_status": "IMPLEMENTED",
+   "coverage": "FULL for represented+integrated (r08-v4 f1abcd composer; Runtime effect-time containment guard); NOT independently accepted. Stale text 'Registry: no slot' and 'containment order undefined' are superseded.",
+   "narrowing": "Joint containment over (prefix list, match mode) pairs (v4_f1abcd.py:7-14,63-93): the Registry pair is accepted only if every host-supplied (list, mode) entry is contained in a Registry entry under the sound accepted-set rule; effective policy never exceeds the host policy. Absent or invalid Registry input never adds permission."
+  },
+  "NEW:terminal-revocation-marker": {
+   "parameters": 1,
+   "configurable": "YES",
+   "registry_appropriate": "YES",
+   "implementation_status": "NOT-STARTED",
+   "migration_wave": "not scheduled (same Control Plane profile-consumer family as RG-C-010/RG-C-020; not authorized)",
+   "narrowing": "Order: on is stricter than off. Registry may only set off to on (a grant observed revoked for (grant_id, revision) is then refused even if the status read says active). Absent: host value. Memory is the control plane's own record store, so a revocation it never observed cannot be remembered.",
+   "layers": {
+    "registry_represented": "NO",
+    "enforcement_integrated": "NO",
+    "independently_accepted": "NO"
+   },
+   "coverage": "NONE",
+   "blocking": [
+    "How does a Registry-forced profile section enter the approval commitment (the AUD-D06 question shared with RG-C-010)?"
+   ]
   }
  },
  "decisions": [
@@ -377,9 +440,9 @@
   },
   {
    "id": "AUD-D03",
-   "title": "RG-C-018 (freshness nonce toggle) is marginal",
-   "body": "FreshnessProfile.nonce (default True) is host-settable. A Registry overlay could only force True, structurally the same as RG-C-020 (anchor_deadline_to_inputs). Two first-pass workers disagreed: the group audit rated it REGISTRY-ELIGIBLE, the row-level configurable-candidate review rated the same field host-owned. The audit keeps it ELIGIBLE with the disagreement recorded because a forcing-True overlay is monotone and the consumer is the same Control Plane freshness profile as RG-C-019/RG-C-020; it adds little protection unless a host disables the nonce.",
-   "recommendation": "Decide whether to migrate it at all; if the Architect prefers not to migrate safeguards that default to the safe value, reclassify RETAIN-IN-CODE. The eligible count falls by one."
+   "title": "RG-C-018 (freshness nonce toggle) is not Registry-enforceable (superseded finding)",
+   "body": "FreshnessProfile.nonce (default True) is host-settable and a forcing-True overlay would be monotone, but the resolver silently falls back to a plain read when it lacks nonce support (bounded.py:2208-2223), so a Registry cannot enforce it. Pass 1 first kept it ELIGIBLE (marginal); cross-check J2 and pass-2 Worker E reclassified it PROVIDER-OR-HOST-OWNED, which is the final disposition.",
+   "recommendation": "None needed; recorded so the earlier ELIGIBLE reading is not relied on."
   },
   {
    "id": "AUD-D04",
@@ -419,28 +482,34 @@
   "Runtime engine/local_authority_effect.py `_selection_guard` is opt-in by design: a claim with no binding and no configured store follows the legacy path unchanged, but a binding or an existing store with no verifiable authority refuses (store_unknown) and a successor claim without its binding refuses. Lead read of lines 815-831.",
   "evidence-registry app/core/config.py:28 holds a default JWT secret_key; create_access_token/verify_token have no callers, so it is not exposed today (worker I2). The module is a non-authoritative demo.",
   "Stack Orchestrator observer.py:91 defaults confirmations to 0 and observer.py:120-126 accepts http:// and userinfo URLs; its hard-coded upstream pins (admission.py:102-118, producer_evidence.py:10-11) are stale against the current hub lock. Documented, labelled historical (worker I3).",
-  "Control Plane replay.py from_json uses non-strict json.loads for a fixed-format export (worker F2); not a defect."
+  "Control Plane replay.py from_json uses non-strict json.loads for a fixed-format export (worker F2); not a defect.",
+  "RG-B-016, RG-D-014 and RG-D-015 are OUT-OF-SCOPE on the strength of README and docstring labels ('experimental', 'no executor imports this module'); like RG-D-022, designating any of them production would reopen the question (pass 2, Worker H U-07).",
+  "Worker F recorded a lockstep note: replay-bundle recovery_inspection.py:172 (0..86400 cap) mirrors RG-B-016, and uncounted members restart_quorum (RG-D-022 family) and governance_quadratic_scaling (evidence-registry quorum family); all non-manageable. The hub collateral_evidence_snapshot.py:73-84 claim-scanner vocabulary is not catalogued as its own rule."
  ],
  "cross_check_resolutions": [
   {
    "item": "W1-007",
    "resolution": "ADOPTED-AS-UNRESOLVED",
-   "reason": "Blind J1a rated the structural caps eligible (narrow-only, low value); D1/J1c retain. Genuine split, so the merged rule LR-RUNTIME-ADMISSION-SIZE-BUDGETS is UNRESOLVED with a blocking question."
+   "reason": "Blind J1a rated the structural caps eligible (narrow-only, low value); D1/J1c retain. Genuine split, so the merged rule LR-RUNTIME-ADMISSION-SIZE-BUDGETS is UNRESOLVED with a blocking question.",
+   "superseded_by_pass2": true
   },
   {
    "item": "W1-008",
    "resolution": "ADOPTED-AS-UNRESOLVED",
-   "reason": "Same admission-budget question as W1-007 (J1b eligible vs. first-pass retain)."
+   "reason": "Same admission-budget question as W1-007 (J1b eligible vs. first-pass retain).",
+   "superseded_by_pass2": true
   },
   {
    "item": "W1-010",
    "resolution": "ADOPTED-AS-UNRESOLVED",
-   "reason": "J1c retain vs J1a/J1b eligible; carried by the merged UNRESOLVED admission-budget rule."
+   "reason": "J1c retain vs J1a/J1b eligible; carried by the merged UNRESOLVED admission-budget rule.",
+   "superseded_by_pass2": true
   },
   {
    "item": "W1-011",
    "resolution": "ADOPTED-AS-UNRESOLVED",
-   "reason": "As W1-010."
+   "reason": "As W1-010.",
+   "superseded_by_pass2": true
   },
   {
    "item": "W1-038",
@@ -540,27 +609,32 @@
   {
    "item": "RG-C-011",
    "resolution": "ADOPTED-WITH-RETAINED-DISAGREEMENT",
-   "reason": "REGISTRY-ELIGIBLE, MEDIUM. A rank-raising-only overlay is monotone and reversibility.py already forces irreversible for several classes. First-pass workers treated it as a producer assertion of fact. Depends on AUD-D06."
+   "reason": "REGISTRY-ELIGIBLE, MEDIUM. A rank-raising-only overlay is monotone and reversibility.py already forces irreversible for several classes. First-pass workers treated it as a producer assertion of fact. Depends on AUD-D06.",
+   "superseded_by_pass2": true
   },
   {
    "item": "RG-D-012",
    "resolution": "ADOPTED-AS-UNRESOLVED",
-   "reason": "Carries the minimum-redaction-floor ownership question (AUD-D05)."
+   "reason": "Carries the minimum-redaction-floor ownership question (AUD-D05).",
+   "superseded_by_pass2": true
   },
   {
    "item": "RG-D-021",
    "resolution": "REJECTED",
-   "reason": "Retained PROVIDER-OR-HOST-OWNED: no hard-coded value exists; the value lives in the hub reference_profiles. Reviewer J3b disagrees (retained disagreement)."
+   "reason": "Retained PROVIDER-OR-HOST-OWNED: no hard-coded value exists; the value lives in the hub reference_profiles. Reviewer J3b disagrees (retained disagreement).",
+   "superseded_by_pass2": true
   },
   {
    "item": "RG-F11-REDACTION-DEFAULTS",
    "resolution": "ADOPTED-AS-UNRESOLVED",
-   "reason": "Caller-owned presentation (H1) vs an OR-floor (J3b): ownership of a minimum-redaction floor is a privacy-owner decision (AUD-D05)."
+   "reason": "Caller-owned presentation (H1) vs an OR-floor (J3b): ownership of a minimum-redaction floor is a privacy-owner decision (AUD-D05).",
+   "superseded_by_pass2": true
   },
   {
    "item": "RG-F7-DEDUPE",
    "resolution": "ADOPTED-AS-UNRESOLVED",
-   "reason": "G0 C-022 stands: horizon/TTL/escalation deadline ownership is open."
+   "reason": "G0 C-022 stands: horizon/TTL/escalation deadline ownership is open.",
+   "superseded_by_pass2": true
   },
   {
    "item": "NEW:hub-registry-record-profile-vocabulary",
@@ -580,7 +654,8 @@
   {
    "item": "RG-C-018",
    "resolution": "ADOPTED",
-   "reason": "PROVIDER-OR-HOST-OWNED; supersedes the lead's earlier marginal-eligible call."
+   "reason": "PROVIDER-OR-HOST-OWNED; supersedes the lead's earlier marginal-eligible call.",
+   "superseded_by_pass2": true
   },
   {
    "item": "RG-C-021",
@@ -601,6 +676,12 @@
    "item": "LR-MANIFEST-DEFAULT-ACTION",
    "resolution": "NO-CHANGE (label-only)",
    "reason": "J2 prefers RETAIN-IN-CODE, lead keeps CALLER-OR-ISSUER-OWNED (manifest-authored data); both non-manageable. J2 confirms G0's ALREADY-GOVERNED for RG-C-031 was wrong."
+  },
+  {
+   "item": "W5-012",
+   "resolution": "ADOPTED (RETAIN-IN-CODE, superseding the pass-1 UNRESOLVED)",
+   "reason": "Blind reviewer J1b rated the custom action-type sets eligible on the premise that action_type is an open string; pass-2 Workers E and G showed the manifest action_type is a closed 9-member enum (action-manifest models.py:45-54) and the open string is the Control Plane ActionProposal field (models.py:69).",
+   "superseded_by_pass2": true
   }
  ],
  "cross_check_stats": {
@@ -634,5 +715,371 @@
    "merged": 1,
    "duplicate_site_candidate_review": "36 sites: 27 legitimate, 4 merge candidates, 5 double-counts (raw: worker-evidence/J2_sites.json). Site-level duplicates affect source-site counts only, not rule or parameter counts; not re-keyed."
   }
- }
+ },
+ "pass2_resolutions": [
+  {
+   "worker": "B",
+   "item": "RG-F1D-TARGET-PREFIXES + RG-F1D-TARGET-MATCH",
+   "lead_decision": "ADOPTED (merge)",
+   "reason": "One joint narrowing relation; governed rules 5 to 4; parameters unchanged."
+  },
+  {
+   "worker": "B",
+   "item": "W3-062/W3-063 row keys",
+   "lead_decision": "ADOPTED (re-key)",
+   "reason": "No count effect."
+  },
+  {
+   "worker": "B",
+   "item": "RG-B-022 and RG-D-019 split proposals",
+   "lead_decision": "NOT ADOPTED",
+   "reason": "MEDIUM-LOW confidence, retain-only effect; the timeouts are carried as host-owned parameters in the parameter ledger instead of creating a rule. Recorded as an alternative partition."
+  },
+  {
+   "worker": "B",
+   "item": "F1a (five allow-sets), F4 (two ages), F5 merges",
+   "lead_decision": "JUSTIFIED (kept)",
+   "reason": "Each shares owner, consumer, relation and record slot."
+  },
+  {
+   "worker": "B",
+   "item": "max_amount / max_effects kept as two rules",
+   "lead_decision": "KEPT; sensitivity reported",
+   "reason": "EITHER_DEFENSIBLE. Rule-level coverage is partition-dependent, so parameters are the headline and rule-level results are reported under three stated partitions."
+  },
+  {
+   "worker": "B",
+   "item": "RG-C-021 folded into LR-F5",
+   "lead_decision": "KEPT",
+   "reason": "age_ceilings is a host-copied carrier of the F5 value, counted as a site not a parameter (Worker A agrees)."
+  },
+  {
+   "worker": "E",
+   "item": "Structural admission budgets",
+   "lead_decision": "ADOPTED: RETAIN-IN-CODE (disagreement retained)",
+   "reason": "See rule override."
+  },
+  {
+   "worker": "E",
+   "item": "RG-C-011 reversibility",
+   "lead_decision": "KEPT ELIGIBLE (LOW-MEDIUM)",
+   "reason": "Re-specified after Worker H C-08 as the profile-free ActionClass.irreversible False-to-True lever; LOW-MEDIUM; gated on AUD-D06."
+  },
+  {
+   "worker": "E",
+   "item": "RG-D-021 resolver SourceProfile",
+   "lead_decision": "ADOPTED: OUT-OF-SCOPE",
+   "reason": "Label only."
+  },
+  {
+   "worker": "E",
+   "item": "RG-C-018 nonce toggle",
+   "lead_decision": "KEPT PROVIDER-OR-HOST-OWNED",
+   "reason": "Resolver silently falls back to a plain read when it lacks nonce support (bounded.py:2208-2223)."
+  },
+  {
+   "worker": "E",
+   "item": "Redaction minimum floor",
+   "lead_decision": "ADOPTED: CALLER-OR-ISSUER-OWNED",
+   "reason": "Unresolved in pass 1."
+  },
+  {
+   "worker": "E",
+   "item": "Dedupe TTL ownership",
+   "lead_decision": "ADOPTED: PROVIDER-OR-HOST-OWNED",
+   "reason": "Unresolved in pass 1."
+  },
+  {
+   "worker": "E",
+   "item": "High-risk/custom action-type sets",
+   "lead_decision": "ADOPTED: RETAIN-IN-CODE",
+   "reason": "Factual premise corrected."
+  },
+  {
+   "worker": "E",
+   "item": "Operation-identity enablement",
+   "lead_decision": "ADOPTED: PROVIDER-OR-HOST-OWNED",
+   "reason": "Unresolved in pass 1."
+  },
+  {
+   "worker": "E",
+   "item": "Funded merge authority lists (RG-C-024)",
+   "lead_decision": "KEPT UNRESOLVED",
+   "reason": "The roster is checked only against an unauthenticated, asserted merged_by name and deny-all is inexpressible. Blocking decision: is a roster checked against an unauthenticated name acceptable as a Registry-narrowable control now, or must merger identity be authenticated first?"
+  },
+  {
+   "worker": "E",
+   "item": "Claim-scanner terms (RG-D-025)",
+   "lead_decision": "KEPT UNRESOLVED on AD-21",
+   "reason": "Are claim-scanner term tables in scope of cognous-ocs-registry or only of the hub OCS-DGR-ARCH registry? Term lists already differ between the verifier and hub copies. The hub collateral_evidence_snapshot.py:73-84 vocabulary is not separately catalogued (recorded as an uncatalogued sibling)."
+  },
+  {
+   "worker": "G",
+   "item": "G-01 terminal-revocation enablement",
+   "lead_decision": "ADOPTED as a newly discovered ELIGIBLE rule (1 parameter)",
+   "reason": "Verified in source by the lead. Missed by G0 and by pass-1 because the row was classed 'no tunable value'."
+  },
+  {
+   "worker": "G",
+   "item": "G-02 recovery writer_enabled",
+   "lead_decision": "ADOPTED: host-owned parameter of the retained rule; not counted separately",
+   "reason": "Synthetic ledger."
+  },
+  {
+   "worker": "G",
+   "item": "G-03 anchor LOCK_TIMEOUT_SECONDS",
+   "lead_decision": "ADOPTED: host-owned parameter carried under RG-B-022",
+   "reason": "Class constant; no host-supplied path today."
+  },
+  {
+   "worker": "G",
+   "item": "G-04 five uncovered sqlite timeout sites",
+   "lead_decision": "ADOPTED as source sites of NEW:sqlite-busy-timeout",
+   "reason": "Site coverage gap, no new parameter."
+  },
+  {
+   "worker": "G",
+   "item": "G-05/G-06 risk-class sets in four copies",
+   "lead_decision": "ADOPTED as sites of RG-C-032 (RETAIN-IN-CODE)",
+   "reason": "Zero parameters."
+  },
+  {
+   "worker": "G",
+   "item": "Remaining 47 of 55 clusters",
+   "lead_decision": "RETAIN CONFIRMED",
+   "reason": "No retained numeric limit that a Registry should narrow was found beyond G-01 (cluster-level review, not all 544 rows opened)."
+  },
+  {
+   "worker": "F",
+   "item": "Stack Qualification, Orchestrator, Action Manifest, Governed Exchange, hub and evidence repos",
+   "lead_decision": "NO NEW ELIGIBLE OR UNRESOLVED PARAMETER",
+   "reason": "Six new non-eligible catalogue entries added from I4.json; seven candidates are duplicates of existing rules; coverage statements per repo in worker-evidence/pass2/F.json."
+  },
+  {
+   "worker": "F",
+   "item": "F-07 replay recovery_inspection 0..86400 cap",
+   "lead_decision": "RECORDED AS LOCKSTEP NOTE",
+   "reason": "Mirrors RG-B-016: both must change together if either becomes configurable."
+  },
+  {
+   "worker": "F",
+   "item": "F-01 restart_quorum and F-15 governance_quadratic_scaling",
+   "lead_decision": "RECORDED AS UNCOUNTED MEMBERS",
+   "reason": "Under OUT-OF-SCOPE synthetic/reference rules; non-manageable either way."
+  },
+  {
+   "worker": "D",
+   "item": "Stale descriptions (14)",
+   "lead_decision": "ADOPTED",
+   "reason": "Catalogue names and coverage for the F1C/F1D rules corrected; 'Control Plane imports no Registry code' and 'no default_action slot' remain TRUE on main and are not changed; PRs #58/#87 are unmerged and not governed."
+  },
+  {
+   "worker": "D",
+   "item": "RG-C-019 partly derived from F5 ceilings",
+   "lead_decision": "CHANGED after Worker H C-02: derived, merged into LR-F5-CLASS-STATUS-AGE",
+   "reason": "DR-CP-AGE-1 decision 5 defines it as derived from the narrowed F5 ceilings."
+  },
+  {
+   "worker": "D",
+   "item": "RG-C-005 identity/mandate exclusion wording",
+   "lead_decision": "ADOPTED (wording)",
+   "reason": "Worker C: DR-CP-AGE-1 declares these 'out of scope and not covered'; it does not expressly prohibit. BLOCKED stands because nothing authorizes them (AR-4)."
+  },
+  {
+   "worker": "D",
+   "item": "Safety observations",
+   "lead_decision": "RECORDED",
+   "reason": "No material safety defect in the merged M2/M3 path or in M11 PRs."
+  },
+  {
+   "worker": "A",
+   "item": "19 Registry-manageable parameters",
+   "lead_decision": "VERIFIED: 9 governed + 10 eligible (before pass-2 additions)",
+   "reason": "Nine f1abcd members counted once (Runtime LocalExecutionPolicy fields): nine fields in eight narrowing units. After pass 2 the manageable set is 19 parameters in 18 narrowing units."
+  },
+  {
+   "worker": "A",
+   "item": "RG-D-027 tier ceilings INVARIANT rather than BLOCKED",
+   "lead_decision": "SUPERSEDED by Worker H C-03: RG-D-027 is OUT-OF-SCOPE",
+   "reason": "The tier ceilings are a reference-harness constant used only by tests; the pass-1 BLOCKED label and the A dissent both rested on a misquote."
+  },
+  {
+   "worker": "A",
+   "item": "RG-C-010 and RG-C-011 LOW confidence",
+   "lead_decision": "KEPT, tiered",
+   "reason": "Reported as the 'qualified' eligible tier; confirmed-core count excludes them."
+  }
+ ],
+ "parameter_adjudications": {
+  "narrowing_units": {
+   "P-RG-F1D-TARGET-PREFIXES-allowed_target_prefixes": "NU-F1D-TARGET-SCOPE",
+   "P-RG-F1D-TARGET-MATCH-target_match": "NU-F1D-TARGET-SCOPE"
+  },
+  "overrides": {
+   "P-RG-F1D-TARGET-MATCH-target_match": {
+    "unit_type": "PARAMETER",
+    "note": "Pass 2: counted as a payload field; shares narrowing unit NU-F1D-TARGET-SCOPE with allowed_target_prefixes (Worker A tagged it COMPOSITE_MEMBER for the narrowing-unit view)."
+   },
+   "P-RG-C-010-requires_revocation_assurance": {
+    "tier": "QUALIFIED"
+   },
+   "P-RG-C-011-reversibility": {
+    "tier": "QUALIFIED",
+    "name": "ActionClass.irreversible (profile-free one-way False to True per class)",
+    "consumer": "bounded.py:2111,2189; reversibility.py effectively_irreversible",
+    "narrowing_relation": "False to True only; absent returns host value",
+    "source_path": "src/agent_control_plane/runtime_authority.py:130,138-146",
+    "note": "Re-specified in pass 2 (Worker H C-08). Four producer-fact members are COMPOSITE_MEMBER rows and are never Registry-managed. Eligibility rests on a lead override (AUD-D06)."
+   },
+   "P-RG-D-027-delay_limit.max_pending_seconds": {
+    "eligibility": "CALLER-OR-ISSUER-OWNED",
+    "note": "The per-context value is issuer data; the tier ceiling table is carried separately as a BLOCKED parameter."
+   },
+   "P-RG-C-005-identity_max_age_seconds": {
+    "blocking_decision": "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) lists identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as 'out of scope and not covered'; it does not expressly prohibit them (Worker C), but nothing authorizes a Registry slot for them. Needs an Architect ruling (AR-1, AR-4)."
+   },
+   "P-RG-C-005-mandate_max_age_seconds": {
+    "blocking_decision": "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) lists identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as 'out of scope and not covered'; it does not expressly prohibit them (Worker C), but nothing authorizes a Registry slot for them. Needs an Architect ruling (AR-1, AR-4)."
+   },
+   "P-RG-C-006-clock_tolerance_seconds": {
+    "blocking_decision": "DR-CP-AGE-1 (docs/decisions/2026-10-25-dr-cp-age-1.md:8) lists identity_max_age_seconds, mandate_max_age_seconds and clock_tolerance_seconds as 'out of scope and not covered'; it does not expressly prohibit them (Worker C), but nothing authorizes a Registry slot for them. Needs an Architect ruling (AR-1, AR-4). PR #58 and Control Plane PR #87 (both unmerged) already implement it; adoption, range (AR-2) and family atomicity (handoff 6.A) are open. On pinned Registry main there is no f4t family; the only representation is unmerged PR #58.",
+    "registry_represented": "NO"
+   },
+   "P-RG-C-019-max_age_extension_seconds": {
+    "unit_type": "COMPOSITE_MEMBER",
+    "note": "Derived from the narrowed F5 ceilings (DR-CP-AGE-1 decision 5, host factory EXT-S3-4); not an independent Registry parameter. Merged into LR-F5-CLASS-STATUS-AGE."
+   },
+   "P-RG-D-027-tier_delay_ceilings": {
+    "unit_type": "PARAMETER",
+    "owner": "Proposed by the institutional-governance reference harness; owner to confirm (no value is validated or derived from the constitution)",
+    "evidence": "testing/harness/authority_context.py:12-15 (cognous-institutional-governance @ 03a90c14); used only by tests",
+    "note": "Reference-harness constant; no runtime consumer."
+   },
+   "P-RG-F4-OBS-clock_tolerance_seconds": {
+    "tier": "QUALIFIED",
+    "note": "Pass 2 adjudication: ObservationPolicy.clock_tolerance_seconds (bounded.py:415) is a different field from the constructor tolerance RG-C-006, but DR-CP-AGE-1 line 8 lists 'clock_tolerance_seconds' (unqualified) as out of scope and decision 4 calls clock-tolerance behaviour host-owned. Kept ELIGIBLE (no decision forbids it) but QUALIFIED until AR-1 says whether the exclusion extends to the observation tolerance. Sensitivity: -1 manageable parameter."
+   },
+   "P-RG-C-020-anchor_deadline_to_inputs": {
+    "tier": "COUPLED",
+    "note": "policy_binding.py:126 already requires this True whenever Registry-narrowed ceilings are present, so it is coupled to the F5 ceilings (same dependency that made RG-C-019 derived)."
+   }
+  },
+  "additions": [
+   {
+    "canonical_rule_id": "NEW:terminal-revocation-marker",
+    "historical_ids": [
+     "W8-013"
+    ],
+    "g0_group_ids": [],
+    "owner": "Control Plane host (opt-in safeguard)",
+    "source_repo": "cogno-us/cognous-control-plane",
+    "source_commit": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+    "consumer": "bounded.py:2390-2392 (_recorded_grant_denial)",
+    "current_value": "absent (off)",
+    "valid_domain": "off | on",
+    "registry_contract": null,
+    "registry_family": null,
+    "independently_accepted": "NO",
+    "confidence": "MEDIUM",
+    "parameter_id": "P-RG-C-TERMINAL-REVOCATION-enabled",
+    "name": "terminal-revocation/0.1 profile enablement",
+    "unit_type": "PARAMETER",
+    "source_path": "src/agent_control_plane/runtime_authority.py:182-191,214",
+    "narrowing_relation": "off<on; Registry may only force on; absent returns host value",
+    "registry_represented": "NO",
+    "enforcement_integrated": "NO",
+    "eligibility": "REGISTRY-ELIGIBLE",
+    "tier": "QUALIFIED",
+    "blocking_decision": "approval_commitment coupling (AUD-D06)",
+    "evidence": "runtime_authority.py:182-191,214; bounded.py:2390-2392; Worker G G-01; lead-verified",
+    "note": "Newly discovered by pass 2; missing from G0."
+   },
+   {
+    "canonical_rule_id": "RG-B-022",
+    "historical_ids": [],
+    "g0_group_ids": [
+     "RG-B-022"
+    ],
+    "owner": "Runtime host (availability tuning)",
+    "source_repo": "cogno-us/cognous-execution-runtime",
+    "source_commit": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+    "consumer": "anchor lock acquire",
+    "current_value": "10.0",
+    "valid_domain": "positive seconds",
+    "registry_contract": null,
+    "registry_family": null,
+    "independently_accepted": "NO",
+    "confidence": "MEDIUM",
+    "parameter_id": "P-RG-B-022-anchor_lock_timeout_seconds",
+    "name": "selection-store anchor LOCK_TIMEOUT_SECONDS",
+    "unit_type": "PARAMETER",
+    "source_path": "registry_selection_authority.py:584,601",
+    "narrowing_relation": "none (availability, not authority)",
+    "registry_represented": "NO",
+    "enforcement_integrated": "NO",
+    "eligibility": "PROVIDER-OR-HOST-OWNED",
+    "blocking_decision": null,
+    "evidence": "Worker G G-03; registry_selection_authority.py:584,601",
+    "note": "Class constant, no host-supplied path today; carried under the retained RG-B-022 rule."
+   }
+  ]
+ },
+ "pass2_h_resolutions": [
+  {
+   "id": "C-01",
+   "response": "ACCEPTED. All reports regenerated from the final ledgers; the integrity test fails if any rendered file differs from a fresh recomputation."
+  },
+  {
+   "id": "C-02",
+   "response": "ACCEPTED. RG-C-019 is derived under DR-CP-AGE-1 decision 5 and merged into LR-F5-CLASS-STATUS-AGE (not an independent parameter). Manageable 19 parameters, 12 rules."
+  },
+  {
+   "id": "C-03",
+   "response": "ACCEPTED. Misquote corrected; RG-D-027 is OUT-OF-SCOPE (test-harness reference constant). Worker A's dissent withdrawn as unsupported."
+  },
+  {
+   "id": "C-04",
+   "response": "ACCEPTED. The builder now honours an addition's own eligibility; the lock timeout is PROVIDER-OR-HOST-OWNED."
+  },
+  {
+   "id": "C-05",
+   "response": "ACCEPTED IN PART. Explicit adjudication recorded: kept ELIGIBLE as QUALIFIED pending AR-1; sensitivity row added (-1 parameter)."
+  },
+  {
+   "id": "C-06",
+   "response": "ACCEPTED. Group-level fields in reconciliation.json are now derived from the final g0_group_crosswalk; the pass-1 flags are relabelled; one configuration-bearing denominator (rules with at least one counted parameter) is used in the headline."
+  },
+  {
+   "id": "C-07",
+   "response": "ACCEPTED. The eligibility test is stated in the method section: ELIGIBLE = strictness-only, one-way, fail-closed, adds only refusals, with a design gate; BLOCKED = an accepted decision stands in the way; operation-identity enablement fails the test because it is a three-way protocol selection."
+  },
+  {
+   "id": "C-08",
+   "response": "ACCEPTED. RG-C-011 re-specified to the profile-free ActionClass.irreversible lever; QUALIFIED; LOW-MEDIUM."
+  },
+  {
+   "id": "C-09",
+   "response": "ACCEPTED. Narrowing text rewritten for the three governed rules; the stale-description count is 14. The narrowing-adapter observation is recorded as test-only in the observations."
+  },
+  {
+   "id": "C-10",
+   "response": "ACCEPTED. `parameter_count` in rule-catalogue.json counts Registry-manageable parameters only and `configurable` is the pass-1 rule-level flag; both are documented as such and superseded for denominators by parameter-catalogue.json."
+  },
+  {
+   "id": "C-11",
+   "response": "ACCEPTED. The ledger is relabelled 'candidate configurable parameters' and reports a strict count excluding parameters the audit retains in code, with both percentages."
+  },
+  {
+   "id": "C-12",
+   "response": "ACCEPTED. registry_represented is NO with a note that only unmerged PR #58 represents it."
+  },
+  {
+   "id": "C-13",
+   "response": "ACCEPTED. RG-C-020 tiered COUPLED."
+  },
+  {
+   "id": "C-14",
+   "response": "ACCEPTED. W8-004 and W8-031 re-keyed to LR-F5-CLASS-STATUS-AGE/mechanism (RETAIN-IN-CODE); W8-013 stays the single documented row whose disposition differs from its rule."
+  }
+ ]
 }

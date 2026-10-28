@@ -50,7 +50,7 @@ def load_inputs():
         for h in jl(WE / f"{s}.jsonl"):
             h["_shard"] = s
             hgroups[h["group_id"]] = h
-    icov = {n: json.loads((WE / f"{n}.json").read_text()) for n in ("I1", "I2", "I3")}
+    icov = {n: json.loads((WE / f"{n}.json").read_text()) for n in ("I1", "I2", "I3", "I4") if (WE / f"{n}.json").exists()}
     return cw, led, adj, worker, hgroups, icov
 
 
@@ -375,13 +375,13 @@ def build():
         "registry_eligible_represented_in_registry_not_integrated": len(represented_only),
         "registry_manageable_rules_governed_plus_eligible": len(gov) + len(elig),
         "registry_manageable_parameters_governed_plus_eligible": sum(e["parameter_count"] for e in gov + elig),
-        "configuration_relevant_rules_denominator": len(cfg_relevant),
+        "rules_flagged_configurable_pass1_definition": len(cfg_relevant),  # superseded as a denominator by parameter-catalogue.json (rules with >=1 counted parameter)
         "unresolved_or_blocked_rules": by_disp.get("UNRESOLVED", 0) + by_disp.get("BLOCKED", 0),
         "retain_in_code_rules": by_disp.get("RETAIN-IN-CODE", 0), "caller_or_issuer_owned_rules": by_disp.get("CALLER-OR-ISSUER-OWNED", 0),
         "provider_or_host_owned_rules": by_disp.get("PROVIDER-OR-HOST-OWNED", 0), "out_of_scope_rules": by_disp.get("OUT-OF-SCOPE", 0),
         "omitted_from_g0_97_inventory_configurable_or_pending": [e["rule_id"] for e in omitted],
-        "g0_groups_audited": len(hgroups), "g0_group_audit_dispositions_normalized": dict(sorted(g0_groups_audit.items())),
-        "g0_groups_where_audit_disagrees": sorted(h["group_id"] for h in hgroups.values() if not h["agrees_with_g0"]),
+        "g0_groups_audited": len(hgroups), "pass1_group_audit_dispositions_before_lead_adjudication": dict(sorted(g0_groups_audit.items())),
+        "pass1_groups_flagged_disagree_before_lead_adjudication": sorted(h["group_id"] for h in hgroups.values() if not h["agrees_with_g0"]),
         "g0_group_grouping_verdicts": dict(sorted(collections.Counter(h["grouping_verdict"] for h in hgroups.values()).items())),
         "g0_provisional_28_of_97": {"already_governed": 5, "eligible_not_migrated": 23, "sum": 28, "groups": 97},
         "migration_state": {"governed_implemented": len(gov), "governed_integrated_at_enforcement_boundary": sum(1 for e in gov if e["implementation_layers"]["enforcement_integrated"] == "YES"),
@@ -394,6 +394,9 @@ def build():
         g0_group_crosswalk.append({"g0_group_id": gid, "g0_disposition": g["lead_disposition"], "audit_rule_id": tgt, "audit_disposition": rules[tgt]["disposition"],
                                    "records_split_out": sorted(x for x in g["record_ids"] if x in split_of)})
     g0_record_crosswalk = {rec["rule_id"]: (split_of.get(rec["rule_id"]) or resolve(rec_to_group[rec["rule_id"]])) for rec in led["records"]}
+    g0_equiv = {"ALREADY-GOVERNED": "REGISTRY-GOVERNED", "ELIGIBLE-NOT-MIGRATED": "REGISTRY-ELIGIBLE", "RETAIN": "RETAIN-IN-CODE"}
+    summary["g0_groups_where_final_audit_differs"] = sorted(x["g0_group_id"] for x in g0_group_crosswalk if g0_equiv.get(x["g0_disposition"], x["g0_disposition"]) != x["audit_disposition"])
+    summary["g0_group_final_audit_dispositions"] = dict(sorted(collections.Counter(x["audit_disposition"] for x in g0_group_crosswalk).items()))
     summary["g0_group_vs_audit_matrix"] = {f"{a} -> {b}": n for (a, b), n in sorted(collections.Counter(
         (x["g0_disposition"], x["audit_disposition"]) for x in g0_group_crosswalk).items())}
     return {"crosswalk": crosswalk, "catalogue": catalogue, "sites": site_map, "summary": summary, "errors": errors, "row_to_rule": row_to_rule,

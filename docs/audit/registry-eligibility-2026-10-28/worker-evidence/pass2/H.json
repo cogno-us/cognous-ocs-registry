@@ -1,0 +1,447 @@
+{
+ "meta": {
+  "worker": "H (independent reconciliation, read-only)",
+  "commits": {
+   "cognous-ocs-registry main": "2668094dd6caac1a397dce7f6d6c3b5a194e9d8e",
+   "cognous-ocs-registry audit branch HEAD (working tree has uncommitted pass-2 edits)": "60d7cc750e91620d85f9d3f0916713f9e5a7a1f3 (registry_successor/ identical to main; only tests/test_audit_registry_eligibility_integrity.py differs)",
+   "registry pr58": "1a67d5396a3cf81512fdfa98c5cea9c6db70aede",
+   "registry pr59": "e716eb78710812851807f1e1ee29418718247106",
+   "cognous-execution-runtime": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "cognous-control-plane": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "cognous-control-plane pr87": "56ddb5f5cabab5c8c37155ae3a0ad1b586d0c354 (confirmed not ancestor of CP main)",
+   "cognous-institutional-governance": "03a90c14c4a178997df2b6e527f67452b9c6bb7a",
+   "cognous-open-control-stack": "51c579a3208149922649a31a6eb041106a4121c3"
+  },
+  "files_examined": [
+   "docs/audit/registry-eligibility-2026-10-28/parameter-catalogue.json (all 106 records, recomputed with python3 -I)",
+   "docs/audit/registry-eligibility-2026-10-28/rule-catalogue.json (444 rules)",
+   "docs/audit/registry-eligibility-2026-10-28/reconciliation.json (summary, 97 g0_group_crosswalk)",
+   "docs/audit/registry-eligibility-2026-10-28/lead-adjudications.json (all sections)",
+   "docs/audit/registry-eligibility-2026-10-28/crosswalk.json (620 rows: counts, W8-004/W8-031/W8-013)",
+   "docs/audit/registry-eligibility-2026-10-28/parameter-reconciliation.md",
+   "docs/audit/registry-eligibility-2026-10-28/reconciliation-report.md",
+   "docs/audit/registry-eligibility-2026-10-28/unresolved-architectural-decisions.md",
+   "docs/audit/registry-eligibility-2026-10-28/worker-cross-check-results.md",
+   "docs/audit/registry-eligibility-2026-10-28/tools/build_parameters.py (eligibility inheritance), tools/reconcile.py:355-384",
+   "docs/audit/registry-eligibility-2026-10-28/worker-evidence/pass2/{A.jsonl,B.jsonl,C.json,D.jsonl,E.jsonl,G.jsonl}",
+   "docs/audit/registry-eligibility-2026-10-28/worker-evidence/{H1,H2}.jsonl",
+   "g0/current-candidate-ledger.json (RG-C-031, RG-D-003, RG-C-021, RG-A-007, RG-C-011, RG-C-024, RG-B-016, RG-C-005)",
+   "docs/decisions/2026-10-25-dr-cp-age-1.md",
+   "docs/plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md (M6 row)",
+   "refs/audit/pr58 registry_successor/v5_f4t.py",
+   "refs/audit/pr59 m11/00-pause-handoff",
+   "refs/audit/pr87 registry_freshness_narrowing.py",
+   "Runtime engine/safe_executor.py:140-190,355-440; engine/registry_selection_authority.py:1560-1790; engine/atomic_local_control_plane_executor.py:85-110; engine/local_authority_effect.py:960-990",
+   "Control Plane bounded.py:405-420,1262-1302,1570-1584,2015-2026,2204-2226,2380-2400; runtime_authority.py:80-260,425-440; freshness.py:55-80; policy_binding.py:120-140; reversibility.py:140-200; dedupe.py:50-70; cli.py:48-170; docs/opt-in-profiles.md",
+   "cognous-institutional-governance testing/harness/authority_context.py:1-30 and tests/test_tier_delay_limit.py"
+  ],
+  "limitations": [
+   "Static read only; no tests run (brief). Did not re-open all 620 crosswalk rows or all 106 parameter sources; spot-read the manageable parameters, every changed G0 group's worker record, and the contested exclusions.",
+   "Architect ruling texts (Batch 3/4/6, M2/M3/M11 authorizations, AD-07 closure) are not in any repo; claims resting on them could not be verified (same as Worker C).",
+   "Brief says 439 rules; the current rule-catalogue.json has 444 (see C-01). I recomputed from the JSON, not the brief.",
+   "I did not independently recompute the blind J1/J2/J3 cross-check statistics (178/35/40/22 sets); I only checked the lead's prose against the pass-2 overrides for contradictions."
+  ]
+ },
+ "recomputed": {
+  "method": "python3 -I over parameter-catalogue.json, rule-catalogue.json, reconciliation.json, crosswalk.json; cross-checked against pass2/A.jsonl",
+  "records": {
+   "total_parameter_catalogue_records": 106,
+   "unique_parameter_ids": 106,
+   "counted_PARAMETER": 81,
+   "COMPOSITE_MEMBER": 4,
+   "INVARIANT_NOT_PARAMETER": 16,
+   "SITE_DUPLICATE": 5
+  },
+  "distinct_configurable_parameters": 81,
+  "narrowing_units_all": 80,
+  "narrowing_units_manageable": 19,
+  "manageable_parameters": {
+   "total": 20,
+   "governed": 9,
+   "eligible": 11,
+   "core": 16,
+   "qualified_or_coupled": 4
+  },
+  "manageable_rules": {
+   "total": 13,
+   "governed": 4,
+   "eligible": 9,
+   "rules_with_counted_params": 53
+  },
+  "per_category": {
+   "A": 20,
+   "B": 15,
+   "C": 4,
+   "D": 37,
+   "E": 5,
+   "note": "C includes P-RG-B-022 only because build_parameters.py inherited the rule disposition; lead addition says PROVIDER-OR-HOST-OWNED (C-04) so lead-intended C=3, D=38"
+  },
+  "parameters_by_eligibility": {
+   "REGISTRY-GOVERNED": 9,
+   "REGISTRY-ELIGIBLE": 11,
+   "BLOCKED": 4,
+   "UNRESOLVED": 1,
+   "RETAIN-IN-CODE": 4,
+   "CALLER-OR-ISSUER-OWNED": 15,
+   "PROVIDER-OR-HOST-OWNED": 23,
+   "OUT-OF-SCOPE": 14
+  },
+  "layers_manageable": {
+   "represented_in_registry": 12,
+   "integrated_at_enforcement_boundary": 9,
+   "independently_accepted": 0,
+   "eligible_represented_not_integrated": 3,
+   "eligible_not_represented": 8
+  },
+  "canonical_rules_by_disposition": {
+   "RETAIN-IN-CODE": 349,
+   "OUT-OF-SCOPE": 36,
+   "PROVIDER-OR-HOST-OWNED": 21,
+   "CALLER-OR-ISSUER-OWNED": 20,
+   "REGISTRY-ELIGIBLE": 9,
+   "REGISTRY-GOVERNED": 4,
+   "BLOCKED": 3,
+   "UNRESOLVED": 2,
+   "total": 444
+  },
+  "rule_integrity": {
+   "every_parameter_maps_to_exactly_one_existing_rule": true,
+   "every_manageable_rule_has_ge1_manageable_param": true,
+   "no_param_has_a_manageable_eligibility_under_a_non_manageable_rule": true,
+   "duplicate_historical_ids_across_rules": 0,
+   "duplicate_g0_group_ids_across_rules": 0,
+   "nine_f1abcd_members_counted_once": true,
+   "shared_narrowing_unit": "only NU-F1D-TARGET-SCOPE (prefixes+match)",
+   "param_vs_rule_disposition_mismatch": "only P-RG-D-027-delay_limit.max_pending_seconds (CALLER under BLOCKED rule; documented override)"
+  },
+  "worker_A_crosscheck": {
+   "A_records": 104,
+   "A_PARAMETER": 77,
+   "catalogue_PARAMETER": 81,
+   "delta_explained": "+1 target_match (COMPOSITE_MEMBER->PARAMETER), +1 RG-D-027 tier ceilings (INVARIANT->PARAMETER, still BLOCKED), +1 terminal-revocation (new), +1 B-022 lock timeout (new) = 81; all arithmetic reconciles; A manageable 19 + TR = 20"
+  },
+  "g0_crosswalk": {
+   "groups": 97,
+   "records": 116,
+   "groups_whose_final_disposition_differs_from_G0": 38,
+   "summary_json_list_g0_groups_where_audit_disagrees": 30,
+   "matrix_in_json_matches_my_recompute": true,
+   "final_group_counts": {
+    "RETAIN-IN-CODE": 42,
+    "PROVIDER-OR-HOST-OWNED": 13,
+    "REGISTRY-ELIGIBLE": 12,
+    "OUT-OF-SCOPE": 11,
+    "CALLER-OR-ISSUER-OWNED": 9,
+    "REGISTRY-GOVERNED": 5,
+    "BLOCKED": 3,
+    "UNRESOLVED": 2
+   },
+   "differing_groups": [
+    "RG-A-007",
+    "RG-A-008",
+    "RG-B-016",
+    "RG-B-018",
+    "RG-B-019",
+    "RG-B-021",
+    "RG-B-027",
+    "RG-B-031",
+    "RG-C-005",
+    "RG-C-006",
+    "RG-C-012",
+    "RG-C-014",
+    "RG-C-015",
+    "RG-C-016",
+    "RG-C-017",
+    "RG-C-018",
+    "RG-C-021",
+    "RG-C-024",
+    "RG-C-026",
+    "RG-C-031",
+    "RG-C-033",
+    "RG-C-034",
+    "RG-C-037",
+    "RG-D-003",
+    "RG-D-014",
+    "RG-D-015",
+    "RG-D-018",
+    "RG-D-020",
+    "RG-D-021",
+    "RG-D-022",
+    "RG-D-026",
+    "RG-F11-REDACTION-DEFAULTS",
+    "RG-F1C-MAX-AMOUNT",
+    "RG-F1C-MAX-EFFECTS",
+    "RG-F1D-TARGET-MATCH",
+    "RG-F1D-TARGET-PREFIXES",
+    "RG-F6-ACTION-LISTS",
+    "RG-F7-DEDUPE"
+   ]
+  },
+  "percentages_recomputed_all_match_lead": {
+   "20/81": 24.7,
+   "16/81": 19.8,
+   "9/20": 45.0,
+   "12/20": 60.0,
+   "13/53": 24.5,
+   "13/444": 2.9,
+   "19/80": 23.8
+  },
+  "denominator_sensitivity_not_in_lead_ledger": {
+   "exclude_4_RETAIN-IN-CODE_params_(admission budgets x3 + B-022)": "20/77 = 26.0%",
+   "also_treat_RG-D-027_ceilings_as_non-parameter_(A) or OUT-OF-SCOPE_harness (C-03)": "20/76 = 26.3%",
+   "admission budgets 3 (lead/A/E) vs 4 (G R-01) vs up to 5 (B watch item)": "denominator 81..83",
+   "numerator_if_C-019_derived_and_OBS_clock_tolerance_blocked_with_ctor_tolerance": "18/81 = 22.2% (see C-02, C-05)"
+  },
+  "G0_vs_audit_8_pass2_edge": {
+   "note": "Group-level 'agrees_with_g0' flags in reconciliation.json summary are pass-1 worker flags, not final (C-06)."
+  }
+ },
+ "agree_with_lead": [
+  {
+   "id": "AG-01",
+   "item": "All lead percentages and totals (81, 80, 20, 19, 9+11, 16, 12, 9, 0, 13/53, 444) reproduce exactly from parameter-catalogue.json; parameter-reconciliation.md sensitivities (19, 16, 20/blocked 3, 23) are arithmetically right."
+  },
+  {
+   "id": "AG-02",
+   "item": "Nine f1abcd members counted once; five allow-sets, max_amount, max_effects, prefixes, target_match = 9 governed params in 4 rules; no composite or site duplicate in the 81.",
+   "evidence": "safe_executor.py:359-372; v4_f1abcd.py; registry_selection_authority.py:1706-1747"
+  },
+  {
+   "id": "AG-03",
+   "item": "Governed = represented AND integrated. Integration verified: atomic executor passes digest, sets, limits and targets (atomic_local_control_plane_executor.py:94-102); guard recomputes the 9-member digest and checks subset, ceilings and per-entry containment (registry_selection_authority.py:1573-1581,1706-1747). Merge SHAs ba98dd26, b7e6a173, f618cdf5, 99f5f053, dabaa770, f7a55e2a are ancestors of the pinned mains. Nothing independently accepted.",
+   "evidence": "git merge-base --is-ancestor"
+  },
+  {
+   "id": "AG-04",
+   "item": "F4 (2) and F5 (1) are represented-only, not integrated: CP main has no Registry import, PR #87 is not an ancestor of CP main, Registry composers exist (families.py:77,87; v2_age_bounds.py:197-229)."
+  },
+  {
+   "id": "AG-05",
+   "item": "RG-F1D merge (Worker B SHOULD_MERGE) adopted correctly: joint containment relation over (prefix,mode) pairs, narrowing unit shared; params unchanged.",
+   "evidence": "registry_selection_authority.py:1739-1746; v4_f1abcd.py:84-92"
+  },
+  {
+   "id": "AG-06",
+   "item": "Terminal-revocation enablement (G-01) newly ELIGIBLE: DISAGREE with G0's omission but AGREE with the lead on eligibility (qualified, MEDIUM). Single consumer bounded.py:2390-2392; profile has one field (version) so only off->on exists; on strictly adds refusals; profile section is in the approval-commitment preimage (runtime_authority.py:236-247, 214) so AUD-D06 gate applies. See C-07 for a consistency caveat.",
+   "evidence": "runtime_authority.py:182-191,214; bounded.py:1473-1476,2390-2392; docs/opt-in-profiles.md terminal-revocation row"
+  },
+  {
+   "id": "AG-07",
+   "item": "RG-C-018 nonce reclassified PROVIDER-OR-HOST-OWNED: when resolver lacks nonce capability the read silently falls back to plain (bounded.py:2208-2223), so a Registry cannot enforce it.",
+   "evidence": "bounded.py:2208-2223; freshness.py:65-66"
+  },
+  {
+   "id": "AG-08",
+   "item": "RG-C-010 consumer verified (the audit itself said not re-read): True adds holder_inventory_missing hold only (runtime_authority.py:430-433); monotone; QUALIFIED tier is right.",
+   "evidence": "runtime_authority.py:430-433"
+  },
+  {
+   "id": "AG-09",
+   "item": "RG-C-005/RG-C-006 stay BLOCKED (not eligible) and the softened wording (Worker C: line 8 'out of scope and not covered'; decision 4 'untouched and host-owned') is a fair reading; PR #58 f4t only covers ctor tolerance (v5_f4t.py:1-8) and is unmerged, so nothing is governed.",
+   "evidence": "dr-cp-age-1.md:8,22; v5_f4t.py"
+  },
+  {
+   "id": "AG-10",
+   "item": "RG-F11 -> CALLER-OR-ISSUER-OWNED (redaction is an optional export command, cli.py:51-59,155-168); RG-F7-DEDUPE -> HOST (dedupe.py:58-65 ordering invariant couples horizon/escalation/ttl; bounded.py:1578-1580 gating only needs the profile); RG-C-032 -> RETAIN (premise corrected by E/G); RG-C-031/RG-D-003 merge and CALLER (G0's ALREADY-GOVERNED contradicted its own record text 'registry_coverage NONE')."
+  },
+  {
+   "id": "AG-11",
+   "item": "Admission budgets RETAIN-IN-CODE supported by plan M6 row ('not mandatory admission floors (depth/node/text/process limits)') and by effect-time re-run (safe_executor.py:200,289) and the sandbox worker re-validation (openshell_worker.py); but see U-04 on the AD-08 citation.",
+   "evidence": "REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md:56"
+  },
+  {
+   "id": "AG-12",
+   "item": "G0 -> audit changes for 19 groups labelled only 'H-WORKER GROUP AUDIT' in rule-catalogue.json are each backed by a reasoned record in worker-evidence/H1.jsonl/H2.jsonl (owner, unsupported_decisions, evidence). Checked B-016, B-018, C-012, D-018 and read the remaining reasons; the changes only move rules between non-manageable labels or out of ELIGIBLE where the owner is host/issuer or the module is a declared experimental/synthetic reference. None adds to the denominator of manageable.",
+   "evidence": "H1.jsonl/H2.jsonl"
+  },
+  {
+   "id": "AG-13",
+   "item": "No site duplicate counted twice: 620 unique historical ids across 359 rules, 0 duplicate g0 group ids across rules, 0 duplicate parameter ids; SITE_DUPLICATE (5) and COMPOSITE_MEMBER (4) records are uncounted."
+  }
+ ],
+ "challenges": [
+  {
+   "id": "C-01",
+   "severity": "MATERIAL",
+   "claim_challenged": "reconciliation-report.md (README 'numerical reconciliation') and sibling prose files give the headline answer.",
+   "finding": "The pass-1 prose was not regenerated after pass 2. reconciliation-report.md still says 439 rules, 5 governed rules, 8 eligible, 19 parameters, 13 of 439 = 3.0%, 13 of 47 configuration-bearing, 11 unresolved-or-blocked, RG-D-021/RG-C-011 pass-1 labels, F1D TARGET-MATCH and PREFIXES as separate governed rules. The JSON says 444, 4 governed, 9 eligible, 20 parameters, 13/444 = 2.9%, 43 (reconciliation.json) or 53 (parameter-catalogue) configuration-bearing, 5 unresolved-or-blocked. worker-cross-check-results.md, unresolved-architectural-decisions.md and eligibility-decisions.md are also pass-1 (all timestamped 15:25 vs JSON 18:08).",
+   "evidence": "reconciliation-report.md:9-17,63-86 vs reconciliation.json summary (canonical_rules_total 444, registry_governed_rules 4); unresolved-architectural-decisions.md:19-21; README.md contents table",
+   "suggested_correction": "Re-run tools/render_reports.py and have the integrity test fail when any rendered .md number differs from the JSON; do not publish the PR with the stale prose."
+  },
+  {
+   "id": "C-02",
+   "severity": "MATERIAL",
+   "claim_challenged": "RG-C-019 max_age_extension_seconds counted as a manageable (eligible, COUPLED) parameter.",
+   "finding": "DR-CP-AGE-1 decision 5 (accepted) already assigns the composition of this exact field: max_age_extension_seconds := min(original, min over classes max(0, ceiling_c - narrowed_base_c)) in a later host factory EXT-S3-4. A second, stand-alone Registry slot would create two narrowing sources for one field. Worker A said do not count as an independent parameter; the lead's own blocking_decision text says 'decide whether a separate Registry slot is needed or the derivation suffices', which by the audit's own BLOCKED rule (open Architect decision) is not ELIGIBLE. Lead recorded only a sensitivity (-1).",
+   "evidence": "dr-cp-age-1.md decision 5 (line 23); parameter-catalogue P-RG-C-019 blocking_decision; A.jsonl summary disagreements; freshness.py:67-68",
+   "suggested_correction": "Reclassify as derived from LR-F5 (not a separate parameter; manageable 19, rules 12) or BLOCKED pending the Architect choice; keep the +/-1 in the headline range, not only in the sensitivity table."
+  },
+  {
+   "id": "C-03",
+   "severity": "MATERIAL",
+   "claim_challenged": "P-RG-D-027-tier_delay_ceilings: owner 'Constitutional-authority document (derived from the constitution ...)', evidence quoting 'derived from the constitution'; counted as a BLOCKED configurable parameter.",
+   "finding": "The source says the opposite. authority_context.py:12-15: 'Proposed per-tier ceilings ... Owner to confirm: no value is validated or derived from the constitution.' The quoted evidence drops the negation. The constant lives in testing/harness/authority_context.py whose module docstring is 'Local reference checks only. No credentials, network, grants or effects.' and it is referenced only by tests. So the Worker A dissent (constitutional invariant) is not supported by source, and 'BLOCKED' on a consuming boundary is the wrong frame: the unit is a harness constant, consistent with how the audit treated D-021/D-022 (OUT-OF-SCOPE reference code). It also inflates the denominator (81) and blocked count (4).",
+   "evidence": "cognous-institutional-governance@03a90c14 testing/harness/authority_context.py:1-5,12-16; tests/test_tier_delay_limit.py:11,36; parameter-catalogue P-RG-D-027-tier_delay_ceilings.owner/evidence",
+   "suggested_correction": "Correct the evidence/owner text; classify RG-D-027 tier ceilings OUT-OF-SCOPE (reference harness) or UNRESOLVED(owner confirm); denominator 80, blocked 3 (or leave BLOCKED but fix the misquote and drop the 'constitutional' framing). Remove the A-dissent sentence or mark it contradicted."
+  },
+  {
+   "id": "C-04",
+   "severity": "MINOR",
+   "claim_challenged": "lead-adjudications parameter_adjudications.additions: P-RG-B-022-anchor_lock_timeout_seconds is PROVIDER-OR-HOST-OWNED ('host-owned parameter carried under RG-B-022').",
+   "finding": "The built catalogue has it RETAIN-IN-CODE (category C 'mandatory invariant'). tools/build_parameters.py:54-57 inherits the rule disposition unless an 'overrides' entry exists, and 'additions' do not count as overrides, so the lead's stated classification was silently overwritten. Category C is therefore 4 (should be 3) and D 37 (should be 38); also contradicts the pass2_resolutions G-03 line.",
+   "evidence": "parameter-catalogue.json P-RG-B-022...; lead-adjudications.json parameter_adjudications.additions[1]; build_parameters.py:54-57",
+   "suggested_correction": "Add an eligibility override for P-RG-B-022 or change the builder to honour additions; regenerate."
+  },
+  {
+   "id": "C-05",
+   "severity": "MATERIAL",
+   "claim_challenged": "P-RG-F4-OBS-clock_tolerance_seconds is REGISTRY-ELIGIBLE (CORE) with no decision conflict, while RG-C-006 (same name) is BLOCKED.",
+   "finding": "Worker D classified ObservationPolicy.clock_tolerance_seconds as BLOCKED (decision conflict). DR-CP-AGE-1 line 8 lists 'clock_tolerance_seconds' (unqualified) as out of scope and decision 4 calls 'Clock-tolerance behaviour ... untouched and host-owned'; the decision does separately say ObservationPolicy.max_age_seconds is not an F4/F5 field, so the argument that the observation fields are different is defensible but not recorded. No pass2_resolutions entry resolves D's BLOCKED vs the lead's ELIGIBLE for this field (D items listed: stale descriptions, C-019, C-005 wording, safety only). It is also the weakest of the 'CORE' eligibles: not represented, no consumer, and the sibling max_age has an unresolved 60-vs-300 relationship.",
+   "evidence": "bounded.py:414-415,1922 (observation) vs 1275,1299,2022 (ctor); dr-cp-age-1.md:8,22; D.jsonl ObservationPolicy.clock_tolerance_seconds row; parameter-catalogue P-RG-F4-OBS-clock_tolerance_seconds",
+   "suggested_correction": "Record an explicit adjudication; either BLOCK it with RG-C-006 (AR-4) or state why the observation tolerance is outside line 8. Sensitivity: manageable 19, or 18 with C-02."
+  },
+  {
+   "id": "C-06",
+   "severity": "MATERIAL",
+   "claim_challenged": "reconciliation.json summary: g0_groups_where_audit_disagrees (30 groups), g0_group_audit_dispositions_normalized (BLOCKED 1, ELIGIBLE 14, GOVERNED 5, UNRESOLVED 3, RETAIN 43, OOS 12, HOST 11, CALLER 8), g0_group_grouping_verdicts, configuration_relevant_rules_denominator 43.",
+   "finding": "These come from the pass-1 Worker H group flags (h['agrees_with_g0']), not from the final g0_group_crosswalk beside them. Final crosswalk: 38 groups differ from G0 (list omits RG-B-031, RG-C-005, RG-C-006, RG-C-015, RG-D-003, RG-F1C-MAX-AMOUNT, RG-F1C-MAX-EFFECTS, RG-F1D-TARGET-MATCH, RG-F1D-TARGET-PREFIXES and wrongly lists RG-C-011, whose final ELIGIBLE equals G0's); final group dispositions are BLOCKED 3, ELIGIBLE 12, GOVERNED 5, UNRESOLVED 2, RETAIN 42, OOS 11, HOST 13, CALLER 9. The matrix g0_group_vs_audit_matrix IS consistent with the crosswalk, so the same summary is internally contradictory. Three different 'configuration-bearing' denominators now exist: 43 (reconciliation.json), 47 (stale report), 53 (parameter-catalogue/parameter-reconciliation.md).",
+   "evidence": "tools/reconcile.py:355,383-385; reconciliation.json summary vs g0_group_crosswalk (my recompute)",
+   "suggested_correction": "Derive the three fields from g0_group_crosswalk; define one configuration-bearing denominator (53 = rules with >=1 counted parameter) and delete or relabel the others."
+  },
+  {
+   "id": "C-07",
+   "severity": "MINOR",
+   "claim_challenged": "Consistent rationale for ELIGIBLE (terminal-revocation, C-010, C-020) vs non-manageable (operation-identity enablement 'a Registry record that later disappears would silently revert to off').",
+   "finding": "The 'disappearing record reverts to host baseline' objection applies to every Registry narrowing (F1a withdrawal returns the caller policy) and is not what distinguishes op-identity (a 3-way protocol selection that changes identity semantics, not a strictness-only toggle). The lead's text should state the actual distinguishing test (strictness-only, one-way, profile adds only refusals) so TR/C-010/C-020 versus op-identity is principled. All 10 non-governed eligible parameters carry an open blocking_decision (AUD-D06 / M11 6.A,6.E / 60-vs-300) yet are ELIGIBLE, while RG-C-005/006 with an open Architect decision are BLOCKED; the difference (prior contrary decision vs open design question) is not stated.",
+   "evidence": "lead-adjudications pass2_resolutions (NEW:operation-identity-enablement, G-01); parameter-catalogue blocking_decision fields",
+   "suggested_correction": "State the ELIGIBLE/BLOCKED test in the method section: BLOCKED = an accepted decision conflicts; ELIGIBLE = design gate only."
+  },
+  {
+   "id": "C-08",
+   "severity": "MINOR",
+   "claim_challenged": "P-RG-C-011-reversibility defined as 'ActionClass.reversibility' rank parameter, consumer reversibility.py:165-181.",
+   "finding": "A Registry cannot force reversibility='irreversible' without the reversibility/0.1 profile: runtime_authority.py (model_validator _profiles_compose) raises 'reversibility values need the reversibility/0.1 profile' for any declared class, and the lead's own text says a Registry must never enable that profile. The profile-free monotone lever is the legacy ActionClass.irreversible bool (default True; consumers bounded.py:2111,2189, reversibility.py:179-181 effectively_irreversible), which the catalogue records only as invariant I-W8-004. The eligible parameter is therefore mis-specified; confidence LOW is honest, but the rule-level confidence (MEDIUM) and 'REGISTRY-ELIGIBLE' headline overstate it.",
+   "evidence": "runtime_authority.py:134-143 and _profiles_compose; reversibility.py:165-181; bounded.py:2111,2189",
+   "suggested_correction": "Re-specify C-011 as the one-way False->True of ActionClass.irreversible (no profile) or demote to UNRESOLVED; align rule confidence to LOW."
+  },
+  {
+   "id": "C-09",
+   "severity": "MINOR",
+   "claim_challenged": "Lead pass2_resolutions D: 'Stale descriptions (15) ADOPTED ... Catalogue names and coverage for the F1C/F1D rules corrected'.",
+   "finding": "(a) D lists 14 stale items, not 15. (b) Stale text remains in rule-catalogue.json proposed_narrowing_semantics: LR-F1D-TARGET-POLICY 'containment order undefined in Registry; set-intersection composer is NOT valid here'; RG-F1C-MAX-AMOUNT/MAX-EFFECTS 'NaN/inf/-0 policy undecided' (D explicitly flagged both fields). (c) D's item that the narrowing adapters (engine/registry_f1a/f1abc/f1abcd_narrowing.py) have no production caller is not applied: RG-F1A name still lists 'narrowing adapter' as part of the integrated path and the F1x source locations list registry_f1abcd_narrowing.py. I confirmed no non-test caller (git grep at f7a55e2a).",
+   "evidence": "rule-catalogue.json LR-F1D-TARGET-POLICY/RG-F1C-* proposed_narrowing_semantics; D.jsonl stale_descriptions_found; git grep evaluate_with_registry_selection at runtime f7a55e2a",
+   "suggested_correction": "Rewrite proposed_narrowing_semantics for the three governed rules; drop 'narrowing adapter' from the integrated-path description or mark it test-only; fix '15'."
+  },
+  {
+   "id": "C-10",
+   "severity": "MINOR",
+   "claim_challenged": "rule-catalogue.json fields parameter_count and configurable are reliable rule-level attributes.",
+   "finding": "parameter_count is 0 for 40 rules that own counted parameters (sums to 20, i.e. only the manageable ones); 'configurable'=NO for 14 rules that own counted parameters (LR-MANIFEST-DEFAULT-ACTION, RG-D-001, RG-F7-DEDUPE, RG-D-018 ...), YES for 33 vs 53 rules with parameters. Worker A flagged parameter_count=0 and it was not fixed. reconcile.py still derives its 43 'configuration-relevant' set from this field.",
+   "evidence": "rule-catalogue.json (my count); A.jsonl summary 'parameter_count=0'",
+   "suggested_correction": "Populate parameter_count from parameter-catalogue.json and derive configurable from it."
+  },
+  {
+   "id": "C-11",
+   "severity": "MINOR",
+   "claim_challenged": "parameter-reconciliation.md 'Distinct configurable parameters: independently variable fields a legitimate owner could meaningfully set ... invariants are excluded' (81).",
+   "finding": "The 81 includes 4 records whose own disposition is RETAIN-IN-CODE with 'no configuration surface' (admission depth, nodes, max_bytes; B-022 lock timeout) and the RG-D-027 harness constant (see C-03). The denominator is therefore not the stated unit; 20/81 = 24.7% becomes 26.0% (77) or 26.3% (76) on the stated definition. The admission-budget parameter count itself differs by worker: A/E/lead 3, G R-01 4, B up to 5.",
+   "evidence": "parameter-catalogue category C/E records; G.jsonl R-01 proposed_parameter_count 4; B.jsonl summary watch item",
+   "suggested_correction": "Either rename the denominator 'candidate configurable fields (any owner, incl. retained)' or exclude retained/invariant records; publish the 76..83 range."
+  },
+  {
+   "id": "C-12",
+   "severity": "MINOR",
+   "claim_challenged": "parameter-catalogue registry_represented value PARTIAL for P-RG-C-006-clock_tolerance_seconds.",
+   "finding": "On pinned Registry main there is no f4t family; v2_age_bounds.py:6 documents that the F4 payload has NO clock_tolerance key. The only representation is unmerged PR #58. The other 105 records use YES/NO; PARTIAL (unmerged) invites miscounting. Not in the 12 represented, so no numerator effect.",
+   "evidence": "git ls-tree main (no v5_*), v2_age_bounds.py:4-6, refs/audit/pr58 v5_f4t.py",
+   "suggested_correction": "Use NO with note 'unmerged PR #58'."
+  },
+  {
+   "id": "C-13",
+   "severity": "MINOR",
+   "claim_challenged": "C-020 tier CORE vs C-019 tier COUPLED; '16 core'.",
+   "finding": "P-RG-C-020's own note says 'Coupled to F5 ceilings: mandatory True when ceilings present' (policy_binding.py:126-127 emits 'unanchored' otherwise), the same dependency used to mark C-019 COUPLED. Tiering is inconsistent; core count could be 15 and qualified/coupled 5.",
+   "evidence": "parameter-catalogue P-RG-C-020 note; policy_binding.py:123-127",
+   "suggested_correction": "Tier C-020 COUPLED or explain the difference."
+  },
+  {
+   "id": "C-14",
+   "severity": "MINOR",
+   "claim_challenged": "reconciliation-report.md section 6 / README integrity claim: 'No retained mandatory control is mapped into an eligible or governed rule'.",
+   "finding": "Two MANDATORY-INVARIANT historical rows (W8-004 irreversible default/class_id/on_unreadable; W8-031 age<0 refusal evaluator) are mapped to the eligible LR-F5-CLASS-STATUS-AGE with row disposition REGISTRY-ELIGIBLE; W8-013 maps to eligible TR rule but is RETAIN-IN-CODE (the only row whose disposition differs from its rule). The rows carry child_params notes (the invariant parts 'stay code'), so no parameter is wrongly counted, but the integrity statement is overstated at row level and 'rows_by_final_disposition REGISTRY-ELIGIBLE: 14' includes mixed rows.",
+   "evidence": "crosswalk.json W8-004, W8-031, W8-013",
+   "suggested_correction": "Re-key the mechanism parts to the '/mechanism' rules as done for 13 other rows, or reword the integrity claim."
+  }
+ ],
+ "arithmetic_errors": [
+  {
+   "id": "AE-01",
+   "where": "reconciliation.json summary.g0_groups_where_audit_disagrees (30) and g0_group_audit_dispositions_normalized",
+   "error": "Final crosswalk has 38 groups differing from G0 and different group totals (see C-06). Matrix field in the same summary is correct."
+  },
+  {
+   "id": "AE-02",
+   "where": "lead-adjudications.json pass2_resolutions D 'Stale descriptions (15)'",
+   "error": "D.jsonl stale_descriptions_found has 14 entries."
+  },
+  {
+   "id": "AE-03",
+   "where": "reconciliation-report.md (all counts)",
+   "error": "439/5/8/19/47/11 and 13 of 439 = 3.0% are superseded; the ledgers give 444/4/9/20/43-or-53/5 and 13/444 = 2.9%."
+  },
+  {
+   "id": "AE-04",
+   "where": "lead-adjudications pass2_resolutions A: 'prefixes+target_match are 19 fields but 18 narrowing units'",
+   "error": "Counts the 19 manageable parameters as 19 'fields' and then 18 units; the 9 f1abcd members are 9 fields in 8 units. Post-pass-2 the correct statement is 20 parameters / 19 units (parameter-reconciliation.md is right)."
+  },
+  {
+   "id": "AE-05",
+   "where": "parameter-reconciliation.md categories: C=4, D=37",
+   "error": "If P-RG-B-022 follows the lead's own PROVIDER-OR-HOST-OWNED call, C=3, D=38 (C-04)."
+  }
+ ],
+ "unsupported_assertions": [
+  {
+   "id": "U-01",
+   "where": "parameter-catalogue P-RG-D-027-tier_delay_ceilings owner/evidence",
+   "assertion": "'derived from the constitution'; owner = constitutional-authority document",
+   "why": "Source says no value is derived from the constitution (C-03)."
+  },
+  {
+   "id": "U-02",
+   "where": "rule_overrides RG-C-005 / RG-C-006 reason (and rule-catalogue disposition_basis)",
+   "assertion": "DR-CP-AGE-1:8 'excludes ... as host-owned and never registry-managed'",
+   "why": "Contradicts the lead's own parameter_adjudications text (and Worker C): line 8 says 'out of scope and not covered' for identity/mandate/clock tolerance; the 'host-owned, unvalidated, never registry-managed' parenthetical most naturally attaches to the evidence-obligation ages. Two incompatible readings of one decision are published; the BLOCKED label survives either, but the quote should not be asserted as an exclusion."
+  },
+  {
+   "id": "U-03",
+   "where": "unresolved-architectural-decisions.md AUD-D03 and lead-adjudications.json decisions[AUD-D03]",
+   "assertion": "'The audit keeps [RG-C-018] ELIGIBLE'",
+   "why": "rule-catalogue/rule_overrides have it PROVIDER-OR-HOST-OWNED (J2 reversal); AUD-D03 was not superseded."
+  },
+  {
+   "id": "U-04",
+   "where": "rule_overrides LR-RUNTIME-ADMISSION-SIZE-BUDGETS",
+   "assertion": "'plan M6 and AD-08 keep them as floors'",
+   "why": "Plan M6 does say these are not adjudicated configuration, but AD-08 ('Confirm F3 limits stay floors') is itself OPEN in g0/unresolved-decisions.md:59; it cannot be cited as settling the question."
+  },
+  {
+   "id": "U-05",
+   "where": "lead-adjudications cross_check_resolutions (36 entries)",
+   "assertion": "W1-007/008/010/011 ADOPTED-AS-UNRESOLVED; RG-C-011 MEDIUM; RG-D-012/RG-F11/RG-F7 ADOPTED-AS-UNRESOLVED; RG-D-021 REJECTED (HOST)",
+   "why": "Each is superseded by pass2_resolutions/rule_overrides (RETAIN, LOW, CALLER, HOST, OUT-OF-SCOPE) without a 'superseded' marker; a reader of worker-cross-check-results.md gets the old answer."
+  },
+  {
+   "id": "U-06",
+   "where": "D-fact in lead/parameter ledgers: F4 status_max_age_seconds narrowing 'bounds grant status'",
+   "assertion": "F4 status scalar narrows authority-input status age",
+   "why": "Worker A (and bounded.py:2398-2399) show that when a RuntimeAuthorityProfile exists the grant-status bound is the per-class max_status_age_seconds, so the F4 scalar then bounds only conflict/policy status. Verified in source; not recorded in LR-F4 or in the lead resolutions."
+  },
+  {
+   "id": "U-07",
+   "where": "RG-B-016 / RG-D-014 / RG-D-015 -> OUT-OF-SCOPE",
+   "assertion": "synthetic/experimental so outside the production boundary",
+   "why": "Rests on README/docstring labels ('experimental draft', 'no executor imports this module'). Unlike RG-D-022 the ledger does not state that designation as production would reopen the question. Low impact (neither is manageable)."
+  }
+ ]
+}

@@ -2,6 +2,130 @@
  "schema": "registry-eligibility-audit-source-site-map/1",
  "sites": [
   {
+   "file": "engine/safe_executor.py",
+   "lines": "358-372",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "LocalExecutionPolicy fields",
+   "via": "historical-row:W1-033"
+  },
+  {
+   "file": "engine/registry_f1abcd_narrowing.py",
+   "lines": "1-121",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "evaluate_with_registry_selection_f1abcd",
+   "via": "historical-row:W1-033"
+  },
+  {
+   "file": "registry_successor/v4_f1abcd.py",
+   "lines": "84,170",
+   "repo": "cogno-us/cognous-ocs-registry",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": "2668094dd6caac1a397dce7f6d6c3b5a194e9d8e",
+   "symbol": "compose_targets, compose_f1abcd",
+   "via": "historical-row:W1-033"
+  },
+  {
+   "file": "registry_successor/v2_f1ab.py",
+   "lines": "44-54",
+   "repo": "cogno-us/cognous-ocs-registry",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+   "symbol": "payload_validator (field_unknown on sixth key)",
+   "via": "g0-record:G0-A-005"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "358-408",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "symbol": "LocalExecutionPolicy.allowed_target_prefixes",
+   "via": "g0-record:G0-B-006"
+  },
+  {
+   "file": "engine/safe_executor.py",
+   "lines": "343, 359-372, 393-394",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "symbol": "_TARGET_MATCH_MODES; LocalExecutionPolicy.target_match",
+   "via": "g0-record:G0-B-004"
+  },
+  {
+   "file": "registry_successor/v4_f1abcd.py",
+   "lines": "compose_targets, contained",
+   "note": "M3 slot exists (r08-v4); A-005 stale",
+   "repo": "cognous-ocs-registry",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+  },
+  {
+   "file": "engine/registry_selection_authority.py",
+   "lines": "1683-1748",
+   "note": "_check_policy_containment_f1abcd: prefix containment at effect time",
+   "repo": "cognous-execution-runtime",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "lines": "2637-2643",
+   "note": "CP checks proposal.target in manifest allowed_targets (exact list; allow_any_target); no Registry input",
+   "repo": "cognous-control-plane",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+  },
+  {
+   "file": "src/agent_control_plane/manifest_validation.py",
+   "lines": "111, 122",
+   "note": "allowed_targets validation",
+   "repo": "cognous-control-plane",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
+  },
+  {
+   "file": "registry_successor/v4_f1abcd.py",
+   "lines": "stricter, contained, matches",
+   "note": "mode composition; modes alone do not order (list,mode) pairs",
+   "repo": "cognous-ocs-registry",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
+  },
+  {
+   "file": "engine/registry_selection_authority.py",
+   "lines": "1744-1748",
+   "note": "mode validity + containment at effect time",
+   "repo": "cognous-execution-runtime",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
+  },
+  {
+   "file": "src/agent_control_plane/bounded.py",
+   "lines": "2637-2643",
+   "note": "allow_any_target / exact-membership semantics in CP are a separate matcher",
+   "repo": "cognous-control-plane",
+   "rule_id": "LR-F1D-TARGET-POLICY",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
+  },
+  {
    "file": "src/agent_control_plane/bounded.py",
    "lines": "1264-1280",
    "repo": "cogno-us/cognous-control-plane",
@@ -134,22 +258,13 @@
    "via": "historical-row:W8-005"
   },
   {
-   "file": "src/agent_control_plane/runtime_authority.py",
-   "lines": "126-135",
-   "repo": "cognous-control-plane",
+   "file": "src/agent_control_plane/freshness.py",
+   "lines": "67-68, 155-179",
+   "repo": "cogno-us/cognous-control-plane",
    "rule_id": "LR-F5-CLASS-STATUS-AGE",
    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "pydantic model; consumed by bounded.py (not my file)",
-   "via": "historical-row:W8-004"
-  },
-  {
-   "file": "src/agent_control_plane/runtime_authority.py",
-   "lines": "405-416",
-   "repo": "cognous-control-plane",
-   "rule_id": "LR-F5-CLASS-STATUS-AGE",
-   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "validate_extensions",
-   "via": "historical-row:W8-031"
+   "symbol": "max_age_extension_seconds, extension_defects",
+   "via": "historical-row:W8-043"
   },
   {
    "file": "registry_successor/v2_age_bounds.py",
@@ -159,6 +274,15 @@
    "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
    "symbol": "compose_f5 (class_status_max_age_seconds)",
    "via": "g0-record:G0-A-008"
+  },
+  {
+   "file": "src/agent_control_plane/freshness.py",
+   "lines": "67-68",
+   "repo": "cogno-us/cognous-control-plane",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "symbol": "FreshnessProfile.max_age_extension_seconds",
+   "via": "g0-record:G0-C-019"
   },
   {
    "file": "src/agent_control_plane/policy_binding.py",
@@ -240,6 +364,26 @@
    "via": "missing-consumer-path:RG-C-008"
   },
   {
+   "file": "src/agent_control_plane/policy_binding.py",
+   "lines": "126-138",
+   "note": "ceiling check uses max_age_extension_seconds",
+   "repo": "cognous-control-plane",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-C-019"
+  },
+  {
+   "file": "registry_successor/v2_age_bounds.py",
+   "lines": "1-30",
+   "note": "F4 closed to 2 keys",
+   "repo": "cognous-ocs-registry",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "sha": null,
+   "symbol": null,
+   "via": "missing-consumer-path:RG-C-019"
+  },
+  {
    "file": "registry_successor/v2_age_bounds.py",
    "lines": "1-60",
    "note": "F4/F5 age values represented, no consumer wiring",
@@ -268,6 +412,24 @@
    "sha": null,
    "symbol": null,
    "via": "missing-consumer-path:RG-C-021"
+  },
+  {
+   "file": "src/agent_control_plane/runtime_authority.py",
+   "lines": "126-135",
+   "repo": "cognous-control-plane",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE/mechanism",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "symbol": "pydantic model; consumed by bounded.py (not my file)",
+   "via": "historical-row:W8-004"
+  },
+  {
+   "file": "src/agent_control_plane/runtime_authority.py",
+   "lines": "405-416",
+   "repo": "cognous-control-plane",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE/mechanism",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "symbol": "validate_extensions",
+   "via": "historical-row:W8-031"
   },
   {
    "file": "src/agent_control_plane/manifest_validation.py",
@@ -2334,6 +2496,15 @@
    "via": "historical-row:W1-004"
   },
   {
+   "file": "experiments/governed_message_transport/transport.py",
+   "lines": "experiments/governed_message_transport/transport.py:47-48,297,306",
+   "repo": "cogno-us/cognous-governed-exchange",
+   "rule_id": "NEW:gax-message-type-sets",
+   "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+   "symbol": null,
+   "via": "coverage-worker:I4"
+  },
+  {
    "file": "experiments/odex_gax_imx_reference/gax_ref.py",
    "lines": "217; 311",
    "repo": "cogno-us/cognous-governed-exchange",
@@ -2341,6 +2512,15 @@
    "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
    "symbol": null,
    "via": "coverage-worker:I1"
+  },
+  {
+   "file": "experiments/odex_gax_imx_reference/gax_ref_runtime.py",
+   "lines": "experiments/odex_gax_imx_reference/gax_ref_runtime.py:49-104,113-120,420",
+   "repo": "cogno-us/cognous-governed-exchange",
+   "rule_id": "NEW:gax-runtime-compatibility-profile-switch",
+   "sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+   "symbol": null,
+   "via": "coverage-worker:I4"
   },
   {
    "file": "experiments/odex_gax_imx_reference/generation_fence.py",
@@ -2512,6 +2692,15 @@
    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
    "symbol": "_same_institution",
    "via": "historical-row:W7-026"
+  },
+  {
+   "file": "constitutional-design/INITIAL_SCHEDULE_O.yaml",
+   "lines": "constitutional-design/INITIAL_SCHEDULE_O.yaml:1-40",
+   "repo": "cogno-us/cognous-institutional-governance",
+   "rule_id": "NEW:institutional-schedule-o-draft",
+   "sha": "03a90c14c4a178997df2b6e527f67452b9c6bb7a",
+   "symbol": null,
+   "via": "coverage-worker:I4"
   },
   {
    "file": "engine/local_authority_effect.py",
@@ -3295,6 +3484,15 @@
    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
    "symbol": "BoundedAuthorizationWorkflow.__init__ observation_policy",
    "via": "historical-row:W6-042"
+  },
+  {
+   "file": "src/odes/exporter.py",
+   "lines": "src/odes/exporter.py:296-302",
+   "repo": "cogno-us/open-decision-evidence-standard",
+   "rule_id": "NEW:odes-allow-unverified-replay-env",
+   "sha": "1a5e1d300250d832e611633f0bf8f762e398c0ec",
+   "symbol": null,
+   "via": "coverage-worker:I4"
   },
   {
    "file": "contracts/*/validate.py",
@@ -4150,6 +4348,24 @@
    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
    "symbol": "reopen_conditions",
    "via": "historical-row:W8-038"
+  },
+  {
+   "file": "src/agent_replay_bundle/cli.py",
+   "lines": "src/agent_replay_bundle/cli.py:366-376; signing.py:175-192",
+   "repo": "cogno-us/cognous-replay-bundle",
+   "rule_id": "NEW:replay-allow-unbound-envelope",
+   "sha": "40012b8c174c6f25685bd5d9bc93ff46cc9a5842",
+   "symbol": null,
+   "via": "coverage-worker:I4"
+  },
+  {
+   "file": "src/agent_replay_bundle/importers.py",
+   "lines": "src/agent_replay_bundle/importers.py:96,682-687; evidence-pack importer.py:109-115",
+   "repo": "cogno-us/cognous-replay-bundle",
+   "rule_id": "NEW:replay-and-pack-importer-supported-revisions",
+   "sha": "40012b8c174c6f25685bd5d9bc93ff46cc9a5842",
+   "symbol": null,
+   "via": "coverage-worker:I4"
   },
   {
    "file": "src/agent_control_plane/records.py",
@@ -5504,12 +5720,39 @@
   },
   {
    "file": "engine/dedupe_destination.py",
+   "lines": "105",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "RG-B-015",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "DedupeTtlOperationDestination.__init__ dedupe_ttl_seconds=600",
+   "via": "historical-row:W3-062"
+  },
+  {
+   "file": "src/agent_control_plane/dedupe.py",
+   "lines": "53-67",
+   "repo": "cogno-us/cognous-control-plane",
+   "rule_id": "RG-B-015",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "symbol": "DedupeProfile",
+   "via": "historical-row:W3-062"
+  },
+  {
+   "file": "engine/dedupe_destination.py",
    "lines": "62-99",
    "repo": "cogno-us/cognous-execution-runtime",
    "rule_id": "RG-B-015",
    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
    "symbol": "commit/land/_operation_guard/_operation_record",
    "via": "historical-row:W3-065"
+  },
+  {
+   "file": "engine/dedupe_destination.py",
+   "lines": "76-96",
+   "repo": "cogno-us/cognous-execution-runtime",
+   "rule_id": "RG-B-015",
+   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
+   "symbol": "DedupeTtlMixin._operation_guard",
+   "via": "historical-row:W3-063"
   },
   {
    "file": "engine/dedupe_destination.py",
@@ -6291,44 +6534,6 @@
    "sha": null,
    "symbol": null,
    "via": "missing-consumer-path:RG-C-018"
-  },
-  {
-   "file": "src/agent_control_plane/freshness.py",
-   "lines": "67-68, 155-179",
-   "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "RG-C-019",
-   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "max_age_extension_seconds, extension_defects",
-   "via": "historical-row:W8-043"
-  },
-  {
-   "file": "src/agent_control_plane/freshness.py",
-   "lines": "67-68",
-   "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "RG-C-019",
-   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "FreshnessProfile.max_age_extension_seconds",
-   "via": "g0-record:G0-C-019"
-  },
-  {
-   "file": "src/agent_control_plane/policy_binding.py",
-   "lines": "126-138",
-   "note": "ceiling check uses max_age_extension_seconds",
-   "repo": "cognous-control-plane",
-   "rule_id": "RG-C-019",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-C-019"
-  },
-  {
-   "file": "registry_successor/v2_age_bounds.py",
-   "lines": "1-30",
-   "note": "F4 closed to 2 keys",
-   "repo": "cognous-ocs-registry",
-   "rule_id": "RG-C-019",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-C-019"
   },
   {
    "file": "src/agent_control_plane/freshness.py",
@@ -7513,139 +7718,6 @@
    "via": "missing-consumer-path:RG-F1C-MAX-EFFECTS"
   },
   {
-   "file": "registry_successor/v2_f1ab.py",
-   "lines": "44-54",
-   "repo": "cogno-us/cognous-ocs-registry",
-   "rule_id": "RG-F1D-TARGET-MATCH",
-   "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
-   "symbol": "payload_validator (field_unknown on sixth key)",
-   "via": "g0-record:G0-A-006"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "343, 359-372, 393-394",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-MATCH",
-   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-   "symbol": "_TARGET_MATCH_MODES; LocalExecutionPolicy.target_match",
-   "via": "g0-record:G0-B-004"
-  },
-  {
-   "file": "registry_successor/v4_f1abcd.py",
-   "lines": "stricter, contained, matches",
-   "note": "mode composition; modes alone do not order (list,mode) pairs",
-   "repo": "cognous-ocs-registry",
-   "rule_id": "RG-F1D-TARGET-MATCH",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
-  },
-  {
-   "file": "engine/registry_selection_authority.py",
-   "lines": "1744-1748",
-   "note": "mode validity + containment at effect time",
-   "repo": "cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-MATCH",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
-  },
-  {
-   "file": "src/agent_control_plane/bounded.py",
-   "lines": "2637-2643",
-   "note": "allow_any_target / exact-membership semantics in CP are a separate matcher",
-   "repo": "cognous-control-plane",
-   "rule_id": "RG-F1D-TARGET-MATCH",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-F1D-TARGET-MATCH"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "358-372",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "LocalExecutionPolicy fields",
-   "via": "historical-row:W1-033"
-  },
-  {
-   "file": "engine/registry_f1abcd_narrowing.py",
-   "lines": "1-121",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "evaluate_with_registry_selection_f1abcd",
-   "via": "historical-row:W1-033"
-  },
-  {
-   "file": "registry_successor/v4_f1abcd.py",
-   "lines": "84,170",
-   "repo": "cogno-us/cognous-ocs-registry",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": "2668094dd6caac1a397dce7f6d6c3b5a194e9d8e",
-   "symbol": "compose_targets, compose_f1abcd",
-   "via": "historical-row:W1-033"
-  },
-  {
-   "file": "registry_successor/v2_f1ab.py",
-   "lines": "44-54",
-   "repo": "cogno-us/cognous-ocs-registry",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
-   "symbol": "payload_validator (field_unknown on sixth key)",
-   "via": "g0-record:G0-A-005"
-  },
-  {
-   "file": "engine/safe_executor.py",
-   "lines": "358-408",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
-   "symbol": "LocalExecutionPolicy.allowed_target_prefixes",
-   "via": "g0-record:G0-B-006"
-  },
-  {
-   "file": "registry_successor/v4_f1abcd.py",
-   "lines": "compose_targets, contained",
-   "note": "M3 slot exists (r08-v4); A-005 stale",
-   "repo": "cognous-ocs-registry",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-  },
-  {
-   "file": "engine/registry_selection_authority.py",
-   "lines": "1683-1748",
-   "note": "_check_policy_containment_f1abcd: prefix containment at effect time",
-   "repo": "cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-  },
-  {
-   "file": "src/agent_control_plane/bounded.py",
-   "lines": "2637-2643",
-   "note": "CP checks proposal.target in manifest allowed_targets (exact list; allow_any_target); no Registry input",
-   "repo": "cognous-control-plane",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-  },
-  {
-   "file": "src/agent_control_plane/manifest_validation.py",
-   "lines": "111, 122",
-   "note": "allowed_targets validation",
-   "repo": "cognous-control-plane",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
-   "sha": null,
-   "symbol": null,
-   "via": "missing-consumer-path:RG-F1D-TARGET-PREFIXES"
-  },
-  {
    "file": "src/agent_control_plane/bounded.py",
    "lines": "411-415",
    "repo": "cogno-us/cognous-control-plane",
@@ -7731,24 +7803,6 @@
    "via": "missing-consumer-path:RG-F6-ACTION-LISTS"
   },
   {
-   "file": "engine/dedupe_destination.py",
-   "lines": "105",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F7-DEDUPE",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "DedupeTtlOperationDestination.__init__ dedupe_ttl_seconds=600",
-   "via": "historical-row:W3-062"
-  },
-  {
-   "file": "src/agent_control_plane/dedupe.py",
-   "lines": "53-67",
-   "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "RG-F7-DEDUPE",
-   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
-   "symbol": "DedupeProfile",
-   "via": "historical-row:W3-062"
-  },
-  {
    "file": "engine/control_plane_adapter.py",
    "lines": "69-85",
    "repo": "cogno-us/cognous-execution-runtime",
@@ -7756,15 +7810,6 @@
    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
    "symbol": "adapter capability properties",
    "via": "historical-row:W2-062"
-  },
-  {
-   "file": "engine/dedupe_destination.py",
-   "lines": "76-96",
-   "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F7-DEDUPE",
-   "sha": "f7a55e2a8494801e49193f9f46935f0a971c248d",
-   "symbol": "DedupeTtlMixin._operation_guard",
-   "via": "historical-row:W3-063"
   },
   {
    "file": "src/agent_control_plane/dedupe.py",
@@ -7901,7 +7946,7 @@
    "file": "registry_successor/v2_f1ab.py",
    "lines": "44-54",
    "repo": "cogno-us/cognous-ocs-registry",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
+   "rule_id": "LR-F1D-TARGET-POLICY",
    "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
    "symbol": "payload_validator (field_unknown on sixth key)",
    "via": "g0-record:G0-A-005:frozen-inventory"
@@ -7910,7 +7955,7 @@
    "file": "registry_successor/v2_f1ab.py",
    "lines": "44-54",
    "repo": "cogno-us/cognous-ocs-registry",
-   "rule_id": "RG-F1D-TARGET-MATCH",
+   "rule_id": "LR-F1D-TARGET-POLICY",
    "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
    "symbol": "payload_validator (field_unknown on sixth key)",
    "via": "g0-record:G0-A-006:frozen-inventory"
@@ -8027,7 +8072,7 @@
    "file": "engine/safe_executor.py",
    "lines": "343, 359-372, 393-394",
    "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-MATCH",
+   "rule_id": "LR-F1D-TARGET-POLICY",
    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
    "symbol": "_TARGET_MATCH_MODES; LocalExecutionPolicy.target_match",
    "via": "g0-record:G0-B-004:frozen-inventory"
@@ -8045,7 +8090,7 @@
    "file": "engine/safe_executor.py",
    "lines": "358-408",
    "repo": "cogno-us/cognous-execution-runtime",
-   "rule_id": "RG-F1D-TARGET-PREFIXES",
+   "rule_id": "LR-F1D-TARGET-POLICY",
    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
    "symbol": "LocalExecutionPolicy.allowed_target_prefixes",
    "via": "g0-record:G0-B-006:frozen-inventory"
@@ -8441,7 +8486,7 @@
    "file": "src/agent_control_plane/freshness.py",
    "lines": "67-68",
    "repo": "cogno-us/cognous-control-plane",
-   "rule_id": "RG-C-019",
+   "rule_id": "LR-F5-CLASS-STATUS-AGE",
    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
    "symbol": "FreshnessProfile.max_age_extension_seconds",
    "via": "g0-record:G0-C-019:frozen-inventory"

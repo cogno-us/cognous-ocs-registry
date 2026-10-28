@@ -270,8 +270,8 @@
      "symbol": "_admit_plain_data"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": true,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": false,
    "evidence": "safe_executor.py:155 if depth > 32 or nodes > 10000; called before snapshot copy",
    "existing_registry_coverage": "NONE: no Registry slot; correct to have none",
    "g0_record_links": [
@@ -314,8 +314,8 @@
      "symbol": "_admit_plain_data max_bytes=1048576"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": true,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": false,
    "evidence": "safe_executor.py:147 def _admit_plain_data(..., max_bytes: int = 1048576); :161,:183 checks",
    "existing_registry_coverage": "NONE: no Registry slot; correct to have none",
    "g0_record_links": [
@@ -400,8 +400,8 @@
      "symbol": "_admit_plain_data"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": true,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": false,
    "evidence": "safe_executor.py:170-176",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -442,8 +442,8 @@
      "symbol": "_admit_plain_data"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": true,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": false,
    "evidence": "safe_executor.py:177-182",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -1362,7 +1362,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-F1D-TARGET-PREFIXES",
+   "canonical_rule_id": "LR-F1D-TARGET-POLICY",
    "child_params": [
     {
      "name": "allowed_target_prefixes",
@@ -5864,8 +5864,8 @@
      "symbol": "adapter capability properties"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": true,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_differs_from_worker": false,
    "evidence": "control_plane_adapter.py:69-85 getattr(self.destination,...,None)",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -9327,8 +9327,8 @@
      "symbol": "__init__"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": false,
+   "disposition": "PROVIDER-OR-HOST-OWNED",
+   "disposition_differs_from_worker": true,
    "evidence": "atomic_local_control_plane_executor.py:14-24; CP bounded.py:1455-1458 _identity",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [],
@@ -9988,7 +9988,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-F7-DEDUPE",
+   "canonical_rule_id": "RG-B-015",
    "child_params": [],
    "confidence": "HIGH",
    "config_owner": "Destination/provider (declared capability); CP host profile must stay below it",
@@ -10011,7 +10011,7 @@
      "symbol": "DedupeProfile"
     }
    ],
-   "disposition": "UNRESOLVED",
+   "disposition": "OUT-OF-SCOPE",
    "disposition_differs_from_worker": true,
    "evidence": "dedupe_destination.py:1-14 'CI/local aid... no model of any real provider'; :43-46; dedupe.py:64",
    "existing_registry_coverage": "NONE",
@@ -10023,12 +10023,12 @@
    "historical_loc": "DD:105",
    "historical_tier": "Tier3",
    "id": "W3-062",
-   "lead_adjudication": null,
+   "lead_adjudication": "Pass 2 (Worker B): rows are exactly G0-B-015's lines (dedupe_destination.py:76-105); W3-061 and W3-065 were moved in pass 1 but these two stayed under RG-F7-DEDUPE.",
    "merge_basis": "same TTL seen from destination and CP profile; agree with G0 merge",
    "narrowing_relation": "none: value is a provider fact; CP requires horizon<=escalation<ttl",
    "reclassified_vs_historical_class": true,
    "registry_appropriate": "NO",
-   "rekeyed_by_lead": false,
+   "rekeyed_by_lead": true,
    "repository": "cogno-us/cognous-execution-runtime",
    "source_status": "FOUND",
    "widening_risk": "MATERIAL if Registry could shorten (key forgotten sooner = duplicate allowed); raising misstates provider",
@@ -10039,7 +10039,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-F7-DEDUPE",
+   "canonical_rule_id": "RG-B-015",
    "child_params": [
     {
      "name": "dedupe_ttl_seconds",
@@ -10060,7 +10060,7 @@
      "symbol": "DedupeTtlMixin._operation_guard"
     }
    ],
-   "disposition": "UNRESOLVED",
+   "disposition": "OUT-OF-SCOPE",
    "disposition_differs_from_worker": true,
    "evidence": "dedupe_destination.py:76-93 now-committed_at<ttl; :113-118 default 600; ttl int>0 check :36-37",
    "existing_registry_coverage": "NONE",
@@ -10072,12 +10072,12 @@
    "historical_loc": "DD:76-93",
    "historical_tier": "Tier2",
    "id": "W3-063",
-   "lead_adjudication": null,
+   "lead_adjudication": "As W3-062.",
    "merge_basis": "G0 group kept; site-level resolved as provider fact",
    "narrowing_relation": "none at this site; provider fact, a registry cannot change what the provider remembers",
    "reclassified_vs_historical_class": true,
    "registry_appropriate": "NO",
-   "rekeyed_by_lead": false,
+   "rekeyed_by_lead": true,
    "repository": "cogno-us/cognous-execution-runtime",
    "source_status": "FOUND",
    "widening_risk": "MATERIAL if control plane believed a longer TTL than provider has (retry after expiry)",
@@ -13454,8 +13454,8 @@
      "symbol": "_EFFECTFUL/_HIGH_RISK/_PRIVILEGED"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": true,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": false,
    "evidence": "manifest_validation.py:18-21; docstring :1-14 parity; tests/test_scan6_manifest_validator_parity.py exists",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [
@@ -20253,7 +20253,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "canonical_rule_id": "LR-F5-CLASS-STATUS-AGE/mechanism",
    "child_params": [
     {
      "name": "max_status_age_seconds",
@@ -20282,8 +20282,8 @@
      "symbol": "pydantic model; consumed by bounded.py (not my file)"
     }
    ],
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_differs_from_worker": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": true,
    "evidence": "runtime_authority.py:126-135; registry v2_age_bounds.py:1-40",
    "existing_registry_coverage": "PARTIAL: Registry f5 composer exists (class->age, min()); no Control Plane consumer found (EXT-S4 pending)",
    "g0_record_links": [],
@@ -20292,12 +20292,12 @@
    "historical_loc": "RA:82-91",
    "historical_tier": "Tier1",
    "id": "W8-004",
-   "lead_adjudication": null,
+   "lead_adjudication": "Pass 2 (Worker H C-14): the irreversible default and class-id mechanism are protected code, not the F5 per-class age parameter.",
    "merge_basis": null,
    "narrowing_relation": "effective=min(host class bound, registry value); registry value above host ignored",
    "reclassified_vs_historical_class": true,
    "registry_appropriate": "YES",
-   "rekeyed_by_lead": false,
+   "rekeyed_by_lead": true,
    "repository": "cogno-us/cognous-control-plane",
    "source_status": "MOVED",
    "widening_risk": "MATERIAL: raising bound admits staler status; mitigated by min(caller,registry) only-narrowing",
@@ -20740,7 +20740,7 @@
    "historical_loc": "RA:138-147",
    "historical_tier": "Tier1",
    "id": "W8-013",
-   "lead_adjudication": null,
+   "lead_adjudication": "The marker-profile mechanism stays in code; only the on/off enablement is the Registry-manageable parameter.",
    "merge_basis": null,
    "narrowing_relation": null,
    "reclassified_vs_historical_class": false,
@@ -21485,7 +21485,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "LR-F5-CLASS-STATUS-AGE",
+   "canonical_rule_id": "LR-F5-CLASS-STATUS-AGE/mechanism",
    "child_params": [
     {
      "name": "max_status_age_seconds",
@@ -21506,8 +21506,8 @@
      "symbol": "validate_extensions"
     }
    ],
-   "disposition": "REGISTRY-ELIGIBLE",
-   "disposition_differs_from_worker": false,
+   "disposition": "RETAIN-IN-CODE",
+   "disposition_differs_from_worker": true,
    "evidence": "runtime_authority.py:405-416",
    "existing_registry_coverage": "PARTIAL: Registry f5 composer exists; no CP consumer wired",
    "g0_record_links": [],
@@ -21516,12 +21516,12 @@
    "historical_loc": "RA:339-342",
    "historical_tier": "Tier1",
    "id": "W8-031",
-   "lead_adjudication": null,
+   "lead_adjudication": "Pass 2 (Worker H C-14): the age<0 refusal evaluator is protected code.",
    "merge_basis": "consumer site of ActionClass.max_status_age_seconds (W8-004)",
    "narrowing_relation": "min(host class bound, registry value)",
    "reclassified_vs_historical_class": true,
    "registry_appropriate": "YES",
-   "rekeyed_by_lead": false,
+   "rekeyed_by_lead": true,
    "repository": "cogno-us/cognous-control-plane",
    "source_status": "MOVED",
    "widening_risk": "MATERIAL: larger bound admits staler purpose status; narrowing-only",
@@ -22000,7 +22000,7 @@
   },
   {
    "blocking_decision": null,
-   "canonical_rule_id": "RG-C-019",
+   "canonical_rule_id": "LR-F5-CLASS-STATUS-AGE",
    "child_params": [
     {
      "name": "signers",
@@ -24658,8 +24658,8 @@
      "symbol": "flags, _redaction_config_from_args"
     }
    ],
-   "disposition": "UNRESOLVED",
-   "disposition_differs_from_worker": true,
+   "disposition": "CALLER-OR-ISSUER-OWNED",
+   "disposition_differs_from_worker": false,
    "evidence": "models.py:420-451; cli.py:107-114 forces redact_payloads=True; redaction.py:23 config or RedactionConfig()",
    "existing_registry_coverage": "NONE",
    "g0_record_links": [

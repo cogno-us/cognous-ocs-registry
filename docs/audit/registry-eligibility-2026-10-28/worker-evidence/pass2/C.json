@@ -1,0 +1,290 @@
+{
+ "meta": {
+  "worker": "C (M11 decision conflict)",
+  "commits": {
+   "registry_main": "2668094dd6caac1a397dce7f6d6c3b5a194e9d8e",
+   "registry_audit_branch_head": "60d7cc750e91620d85f9d3f0916713f9e5a7a1f3",
+   "registry_pr58": "1a67d5396a3cf81512fdfa98c5cea9c6db70aede",
+   "registry_pr59": "e716eb78710812851807f1e1ee29418718247106 (handoff text cites earlier head 259766e6; amended by added commit)",
+   "control_plane_main": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "control_plane_pr87": "56ddb5f5cabab5c8c37155ae3a0ad1b586d0c354"
+  },
+  "files_examined": [
+   "docs/decisions/2026-10-25-dr-cp-age-1.md",
+   "docs/r08-v2-contract-amendment-1.md",
+   "docs/plans/PROJECT_PLAN-v1.5.md",
+   "docs/plans/PROJECT_PLAN-v1.4.md",
+   "docs/plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.0.md",
+   "docs/decisions/2026-10-26-operator-adoption-plan-v1.4.md",
+   "docs/decisions/2026-10-26-operator-adoption-plan-v1.5.md",
+   "docs/decisions/2026-10-26-adr-ext-s4-0-integration-contract.md",
+   "docs/family-migration/g0/unresolved-decisions.md",
+   "docs/family-migration/g0/migration-backlog.md",
+   "docs/family-migration/g0/current-candidate-ledger.json",
+   "docs/family-migration/g1-preparation/{open-decisions-and-prerequisites,g0-freeze-record,successor-contract-strategy}.md",
+   "docs/family-migration/m2/{01-migration-backlog,05-blocking-architectural-decisions}.md",
+   "registry_successor/v2_age_bounds.py (main)",
+   "PR58: docs/r08-v5-contract.md, registry_successor/v5_f4t.py, test diffs",
+   "PR59: m11/00-pause-handoff-2026-10-28.md and m2 backlog diff",
+   "CP PR87: src/agent_control_plane/registry_freshness_narrowing.py, tests/test_m11_registry_freshness.py (grep only)",
+   "CP main bounded.py:1271-1299,1430,2017-2024",
+   "account memory: Registry operator/Architect decisions"
+  ],
+  "limitations": [
+   "Batch 3, Batch 4, Batch 6 ruling texts, the M2/M3/M11 Architect authorization texts and Project docs (claude/*) are NOT in the repo and were not readable by this worker; account memory records M2 PR-1 authorization (2026-10-27) and V1 Option B (2026-10-25) only, nothing for M3 or M11 authorization.",
+   "PR #87 tests not run (brief forbids); CP code read from the ref only.",
+   "AD-07 supersession is inferred from merged code and Architect-approved notes, not from a recorded ruling."
+  ]
+ },
+ "dr_cp_age_1": {
+  "prohibits": [
+   "Clamping, coercing, defaulting or replacing any age value; non-exact-int, bool, float, str, None, zero or negative registry input, and anything above 2147483647 (Decision 1, lines 19).",
+   "Letting a Registry value widen: effective = min(caller, registry); a Registry value above the caller is a no-op (Decision 2, line 20).",
+   "Replacing an invalid caller value with the registry value (line 20).",
+   "Reading AGE_MAX as an operational freshness setting or safety certificate (Decision 3, line 21; line 40).",
+   "Registry values replacing, relaxing or widening any component-owned bound (Obligations 2-3, lines 45-46; Amendment 1 s2 rule 6, A:62).",
+   "Implementing the freshness-profile outage-extension composition in this decision; it belongs to the later host factory EXT-S3-4 (Decision 5, line 23).",
+   "Nothing in DR-CP-AGE-1 expressly forbids Registry governance of identity_max_age_seconds, mandate_max_age_seconds or clock_tolerance_seconds; it declares them out of scope (line 8)."
+  ],
+  "permits": [
+   "Registry-managed domain 1..2147483647 strict int for status_max_age_seconds, approval_max_age_seconds, ActionClass.max_status_age_seconds (line 8, 12, 15).",
+   "Caller domain 0..2147483647; caller 0 stays 0 (line 13, 20).",
+   "A Registry-hosted canonical V1 age table without a Control Plane mirror (line 3, 5; Batch 6 ruling 4.2 as reported).",
+   "Control Plane consumption is neither authorized nor barred by the text: line 22 says the decision 'validates and composes the registry side only' and CP 'must enforce corresponding bounds through its established S3 implementation' (line 5)."
+  ],
+  "scope_statement": "Fields: status_max_age_seconds, approval_max_age_seconds (workflow scalars) and ActionClass.max_status_age_seconds (per class). Out of scope and not covered: identity_max_age_seconds, mandate_max_age_seconds, clock_tolerance_seconds, evidence-obligation ages (host-owned, unvalidated, never registry-managed). Grammar note: the parenthetical host-owned/unvalidated/never-registry-managed attaches most naturally to the evidence-obligation ages; identity/mandate/tolerance are labelled only 'out of scope and not covered' (line 8), and clock-tolerance behaviour is separately called 'untouched and host-owned' (line 22).",
+  "status": "ACCEPTED by Architect Batch 6 ruling 4.2 (line 3). Binding; reaffirmed as preserved by plan v1.4:11, plan v1.5:10, operator adoption v1.4:13, v1.5:7, EXT-S4-0 line 8.",
+  "quotes": [
+   {
+    "loc": "docs/decisions/2026-10-25-dr-cp-age-1.md:8",
+    "text": "Out of scope and not covered: `identity_max_age_seconds`, `mandate_max_age_seconds`, `clock_tolerance_seconds`, evidence-obligation ages (host-owned, unvalidated, never registry-managed)."
+   },
+   {
+    "loc": "docs/decisions/2026-10-25-dr-cp-age-1.md:22",
+    "text": "Clock-tolerance behaviour (a status observed up to `clock_tolerance_seconds` in the future passes; the past side has no tolerance) is untouched and host-owned."
+   },
+   {
+    "loc": "docs/decisions/2026-10-25-dr-cp-age-1.md:22",
+    "text": "Code-owned safety floors and existing Control Plane enforcement are preserved: this decision validates and composes the registry side only."
+   },
+   {
+    "loc": "docs/decisions/2026-10-25-dr-cp-age-1.md:21",
+    "text": "The ceiling is a V1 technical representation ceiling, not an operational setting."
+   },
+   {
+    "loc": "docs/decisions/2026-10-25-dr-cp-age-1.md:23",
+    "text": "composition belongs to the later host factory (`EXT-S3-4`)... Not implemented here."
+   },
+   {
+    "loc": "docs/decisions/2026-10-25-dr-cp-age-1.md:5",
+    "text": "The Registry table does not replace Control Plane validation or operational safety limits... No Control Plane mirror of this table exists, and one is not a prerequisite for merging EXT-S1-4."
+   },
+   {
+    "loc": "docs/decisions/2026-10-25-dr-cp-age-1.md:25",
+    "text": "A Control Plane-valid caller policy that holds one age above 2147483647... is refused as `composition_caller_invalid` for the whole policy... an availability trade-off the Architect has not separately acknowledged."
+   },
+   {
+    "loc": "docs/r08-v2-contract-amendment-1.md:63",
+    "text": "Out of scope, unchanged: `identity_max_age_seconds`, `mandate_max_age_seconds`, `clock_tolerance_seconds` and the evidence-obligation ages."
+   },
+   {
+    "loc": "docs/r08-v2-contract-amendment-1.md:62",
+    "text": "[a valid registry value] can never silently disable, relax or override a stricter bound the enforcing component owns (a code-owned safety floor, a narrower component default, a host-configured limit or a clock-tolerance rule)."
+   },
+   {
+    "loc": "registry_successor/v2_age_bounds.py:6 (main)",
+    "text": "No other key (no amount key, no `identity_max_age_seconds`, `mandate_max_age_seconds`, `clock_tolerance_seconds`..."
+   }
+  ],
+  "applies_to": {
+   "status_approval_ages": "YES, directly governed (fields named line 8; domain lines 10-15).",
+   "identity_mandate_ages": "NO: expressly out of scope (R:8, A:63) and F4 payload closed (v2_age_bounds.py:6 -> field_unknown). Not prohibited, not authorized.",
+   "clock_tolerance_seconds": "NO as a Registry-governed field: out of scope (R:8, A:63); behaviour 'untouched and host-owned' (R:22); a 'clock-tolerance rule' is a component-owned bound the Registry may never relax (A:62). Not prohibited if narrow-only, but no decision adopts it."
+  }
+ },
+ "matrix": [
+  {
+   "field": "status_max_age_seconds",
+   "rule_id": "RG-C-003",
+   "registry_slot_exists": "yes: F4 f4-control-plane-age-bounds (r08-v2), merged",
+   "decision_status": "AUTHORIZED at Registry level: r08-v2 + Amendment 1 s2 (A:49-55) + DR-CP-AGE-1 (ACCEPTED, Batch 3 + Batch 6 4.2); V1 Option B and F4 age fields accepted by Architect/operator 2026-10-25 (account memory). CP consumption NOT shown authorized in repo.",
+   "pr_58_or_87_touches": "PR87 consumes via verify_and_decide_v2 (registry_freshness_narrowing.py:111-124); PR58 none",
+   "conflict": "No conflict with DR-CP-AGE-1 text: min(caller,registry) at :117 and :123, registry domain 1..MAX preserved (test_m11 line 134 refuses 0). Adjacent tensions: (a) SCALAR_MAX=2147483647 hard-coded in CP (:31,:62) and caller outside 0..MAX refused for whole build (:87) = DR Decision 7 availability trade-off now realised in CP; DR:5 said no CP mirror exists; (b) plan v1.5:13 defers F4/F5 and CP EXT-S3-1..3 unless operator-approved amendment; no amendment located; (c) AD-11 OPEN: status scalar mapping under runtime-authority profile (g0/unresolved-decisions.md); (d) PR59 handoff 6.E: verified once at construction, no revocation observation.",
+   "requires_reversal": "no (DR-CP-AGE-1 not reversed)",
+   "could_proceed_without_reversal": "yes as a decision-conflict matter, if split from tolerance; still needs explicit Architect M11 authorization (PR59 handoff s9.1), ruling on plan v1.5:13 deferral, AD-11 and 6.E",
+   "evidence": [
+    "bounded.py:1271,1295 (CP main)",
+    "registry_freshness_narrowing.py:87,111-124 (pr87)",
+    "docs/decisions/2026-10-25-dr-cp-age-1.md:12-13,20",
+    "plans/PROJECT_PLAN-v1.5.md:13"
+   ]
+  },
+  {
+   "field": "approval_max_age_seconds",
+   "rule_id": "RG-C-004",
+   "registry_slot_exists": "yes: F4 (same family, same record)",
+   "decision_status": "same as RG-C-003",
+   "pr_58_or_87_touches": "PR87 :111-124 (same call, inseparable from status in one F4 record)",
+   "conflict": "Same as RG-C-003; no DR conflict.",
+   "requires_reversal": "no",
+   "could_proceed_without_reversal": "yes, same conditions as RG-C-003",
+   "evidence": [
+    "bounded.py:1274,1298,2505 (CP main)",
+    "docs/decisions/2026-10-25-dr-cp-age-1.md:8,13"
+   ]
+  },
+  {
+   "field": "identity_max_age_seconds, mandate_max_age_seconds",
+   "rule_id": "RG-C-005",
+   "registry_slot_exists": "no: F4 closed to two keys (v2_age_bounds.py:6)",
+   "decision_status": "OUT OF SCOPE by DR-CP-AGE-1:8 and Amendment 1 s2 rule 7 (A:63); G0 rated CONDITIONAL needing a Registry contract change (g0 ledger RG-C-005). Not authorized.",
+   "pr_58_or_87_touches": "none (PR87 docstring :10 says they stay host-owned; PR59 handoff :32 same)",
+   "conflict": "none",
+   "requires_reversal": "n/a (untouched); any future migration requires an explicit Architect scope ruling plus F4 contract change",
+   "could_proceed_without_reversal": "n/a: remain host-owned",
+   "evidence": [
+    "docs/decisions/2026-10-25-dr-cp-age-1.md:8",
+    "docs/r08-v2-contract-amendment-1.md:63",
+    "registry_successor/v2_age_bounds.py:6",
+    "bounded.py:1272-1273,2352,2366 (CP main)"
+   ]
+  },
+  {
+   "field": "clock_tolerance_seconds",
+   "rule_id": "RG-C-006",
+   "registry_slot_exists": "no on main; PR58 adds new r08-v5 family f4t-control-plane-clock-tolerance (unmerged)",
+   "decision_status": "NOT authorized. Out of scope (R:8, A:63); behaviour 'untouched and host-owned' (R:22). PR59 handoff 6.B itself says 'Needs Architect adoption or change' and 'NOT an adopted Registry limit for tolerance' (H:50). G0 rated CONDITIONAL / ELIGIBLE-NOT-MIGRATED (unratified, recommendation only).",
+   "pr_58_or_87_touches": "PR58: v5_f4t.py:26-31,90-91, docs/r08-v5-contract.md:7,11,15; PR87: :9,:126-139; PR59: H:32,38,50",
+   "conflict": "Not a violation of an express prohibition; a scope breach. (1) PR58 contract s1 line 7 and v5_f4t.py:10-12 take the field DR-CP-AGE-1:8 / A:63 declare out of scope and create Registry-governed config for it. (2) v5_f4t.py:30 `TOLERANCE_MAX = v2_age_bounds.AGE_MAX` and contract line 11 'same technical ceiling as the age bounds' reuse the DR-CP-AGE-1 ceiling for a field it excludes. (3) v5_f4t.py:10-12 states the DR-CP-AGE-1 ceiling 'also bounds the measured date-arithmetic overflow of this scalar at about 2.5e11 s'; DR:36 measured the class base, not this scalar (tolerance not probed), so the attribution is unsupported. (4) Registry domain 0..MAX (TOLERANCE_MIN=0, v5_f4t.py:29) differs from DR registry domain 1..MAX; new domain without a ruling. (5) Contradicts R:22 'host-owned' and A:62 (clock-tolerance rule is a component-owned bound); narrow-only min() at v5_f4t.py:90 keeps A:62 rule 6 satisfied, so no widening. (6) PR87 :61-62,:87 imposes CP-side domain 0..MAX on tolerance and refuses the whole build if the caller value is outside it, including when only ages are governed (new restriction on an ungoverned value). (7) PR59 H:50 cites 'r08-v2-contract-amendment-1.md section 2' as basis, the very section whose rule 7 (A:63) excludes this field. (8) PR59 counts RG-C-006 as 'implemented' (H:38) while 6.B is OPEN. Monotonicity itself is sound: every use fails closed when smaller (bounded.py:1430, 2022; _record_check :650).",
+   "requires_reversal": "YES (explicit Architect ruling): adopting the field, its domain and its basis amends the scope exclusions in DR-CP-AGE-1:8,:22 and Amendment 1 s2 rule 7; treat as reversal of those exclusions for this field",
+   "could_proceed_without_reversal": "no for PR58; PR87 tolerance branch no; PR87 ages-only branch and PR59 docs yes (see matrix rows 1-2 and findings)",
+   "evidence": [
+    "docs/decisions/2026-10-25-dr-cp-age-1.md:8,22",
+    "docs/r08-v2-contract-amendment-1.md:62-63",
+    "PR58 registry_successor/v5_f4t.py:10-12,29-31,90-91",
+    "PR58 docs/r08-v5-contract.md:7,11,15,28",
+    "docs/family-migration/m11/00-pause-handoff-2026-10-28.md@refs/audit/pr59:32,38,50",
+    "PR87 registry_freshness_narrowing.py:31,61-62,87,126-139"
+   ]
+  },
+  {
+   "field": "class_status_max_age_seconds (ActionClass.max_status_age_seconds)",
+   "rule_id": "RG-C-008",
+   "registry_slot_exists": "yes: F5 f5-action-class-age-bounds (r08-v2), merged",
+   "decision_status": "AUTHORIZED at Registry level: DR-CP-AGE-1:8,12; Amendment 1 s2; V1 Option B F5 class status age (account memory 2026-10-25). CP consumption is M12, not authorized.",
+   "pr_58_or_87_touches": "none (PR87 module has no F5 or freshness-profile handling)",
+   "conflict": "none from M11. Note DR Decision 5 (R:23): outage-extension composition deferred to EXT-S3-4; PR87 builds the workflow from **workflow_kwargs (:143-156) without composing extension limits; if a host passes a freshness profile with extensions, base-plus-extension vs registry ceiling is not enforced by the adapter. Unverified whether bounded.py reaches that state; flagged.",
+   "requires_reversal": "no",
+   "could_proceed_without_reversal": "n/a for M11; M12 separate",
+   "evidence": [
+    "docs/decisions/2026-10-25-dr-cp-age-1.md:8,23",
+    "registry_successor/v2_age_bounds.py:52",
+    "registry_freshness_narrowing.py:143-156"
+   ]
+  },
+  {
+   "field": "evidence-obligation ages; ObservationPolicy.max_age_seconds / clock_tolerance_seconds",
+   "rule_id": "RG-F4-OBSERVATION-POLICY (and evidence ages)",
+   "registry_slot_exists": "no",
+   "decision_status": "evidence-obligation ages: host-owned, never registry-managed (R:8). ObservationPolicy (bounded.py:411-415) is stated not an F4/F5 field (R:13); G0 CONDITIONAL, unauthorized.",
+   "pr_58_or_87_touches": "none (G0 ledger RG-C-006 notes it is NOT the ObservationPolicy tolerance)",
+   "conflict": "none",
+   "requires_reversal": "n/a",
+   "could_proceed_without_reversal": "n/a",
+   "evidence": [
+    "docs/decisions/2026-10-25-dr-cp-age-1.md:8,13",
+    "bounded.py:415,1922 (CP main)"
+   ]
+  }
+ ],
+ "ad07": {
+  "text": "AD-07 | May the Registry ever carry `max_amount`, `max_effects`, `allowed_target_prefixes`, `target_match`, given Amendment 3 records them as caller-owned residuals? | A/B/C | OPEN  (docs/family-migration/g0/unresolved-decisions.md:58; same OPEN in g1-preparation/g0-freeze-record.md:62 and open-decisions-and-prerequisites.md:32; backlog g0/migration-backlog.md:65,80 'Blocking decisions: AD-07 (open)').",
+  "superseded_by": [
+   "No repo document records a disposition of AD-07. grep finds no AD-07 in plans v1.4/v1.5, operator adoption docs, or docs/family-migration/m2/*.",
+   "Account memory: Architect decisions 2026-10-27 on M2 authorize Registry carrying max_amount (0..2^53) and max_effects (0..2^53-1) via r08-v3 composite f1abc, Registry PR-1 authorized (PR #54). Ruling text not in repo.",
+   "docs/family-migration/m2/01-migration-backlog.md:75: M3 target prefixes/target_match 'Architect-approved' accepted-set containment rule; Registry r08-v4 PR #56 (b7e6a173) and Runtime #153 (f7a55e2a) merged. Authorization text for M3 not located.",
+   "Stale contrary text: m2/05-blocking-architectural-decisions.md:66 'M2 implementation: NOT AUTHORIZED' (historical, overtaken by the memory-recorded authorization).",
+   "g1-preparation/successor-contract-strategy.md:30 kept target prefixes/modes 'G0 AD-07' out 'until ruled'; the M3 order ruling is the recorded answer in substance."
+  ],
+  "supersession_in_substance": "YES in substance for all four fields (Registry may carry them, narrow-only, caller value remains the ceiling so Amendment 3 caller-ownership is preserved), evidenced by merged r08-v3/r08-v4 and Runtime enforcement. NO in form: the register row still reads OPEN, no ratification document is in the repository, and M3 authorization text is unverified by this worker.",
+  "recommended_additive_correction": "Add a new dated file (e.g. docs/decisions/2026-10-28-ad-07-disposition-addendum.md); do not edit g0/unresolved-decisions.md or the frozen G0 or G1 records. Content: (1) quote AD-07 verbatim with its original OPEN status and location; (2) record 'Disposition: ANSWERED, option A (yes, narrow-only: effective = min(caller, registry) / sound accepted-set containment for target pair; caller value is the ceiling; absent or invalid Registry input never adds permission)'; (3) cite Architect M2 directive (date 2026-10-27, text to be supplied by the Architect), M3 approval (date/text to be supplied), Registry PRs #54 #56, Runtime #151-#153, backlog m2/01:75; (4) state it answers AD-07 only, does not accept M2/M3 (independent Tier 1 acceptance still required) and does not change Amendment 3; (5) state it does not extend to any other field. Mark ratification by the Architect; the builder or auditor must not self-ratify."
+ },
+ "architect_rulings": [
+  {
+   "id": "AR-1",
+   "question": "Is clock_tolerance_seconds (RG-C-006) to become Registry-governed, which amends the scope exclusions in DR-CP-AGE-1 lines 8 and 22 and Amendment 1 s2 rule 7? If yes, under which new decision record (not an edit of DR-CP-AGE-1)?",
+   "options": [
+    "A: No. Remain host-owned; close or park Registry PR #58 and drop the tolerance branch of CP PR #87.",
+    "B: Yes, adopt as a new narrow-only F4T family via a new decision record that explicitly scopes it, names its owner and domain.",
+    "C: Defer until atomicity (handoff 6.A) and revocation (6.E) are ruled."
+   ],
+   "recommendation": "C now, B only after a new scoped decision. Narrowing is sound (all uses fail closed when smaller) so B is eligible in principle, but nothing adopts the field today and PR59 6.B already says it needs adoption. Keep PR #58 unmerged until AR-1 and AR-2 are answered."
+  },
+  {
+   "id": "AR-2",
+   "question": "If AR-1 is B: what registry domain and basis for the tolerance (PR58 proposes 0..2147483647 reusing the age ceiling)?",
+   "options": [
+    "A: 0..2147483647 as a technical representation ceiling, with a new probe measuring this scalar (the DR-CP-AGE-1 measurement covered the class base only).",
+    "B: A lower operational cap (e.g. a small seconds ceiling) set by the Architect, since tolerance of years has no operational meaning.",
+    "C: Registry domain 1..MAX like ages."
+   ],
+   "recommendation": "B or A with a fresh probe; do not rely on DR-CP-AGE-1 for the tolerance ceiling. Correct v5_f4t.py:10-12 wording either way."
+  },
+  {
+   "id": "AR-3",
+   "question": "May a Control Plane consumer of the existing F4 ages (RG-C-003/004) proceed as a stand-alone, tolerance-free adapter, given plan v1.5:13 defers F4/F5 and CP EXT-S3-1..3 absent an operator-approved amendment, AD-11 is OPEN, and handoff 6.E (no revocation observation) is unresolved? Also: does the Architect acknowledge the DR-CP-AGE-1 Decision 7 availability trade-off now realised in CP (PR87:87)?",
+   "options": [
+    "A: Authorize ages-only PR-2 after 6.E ruling.",
+    "B: Hold all CP consumption until AD-11, 6.A, 6.E, 6.C are closed.",
+    "C: Authorize with a documented requirement that the adapter also compose freshness-profile extensions (EXT-S3-4)."
+   ],
+   "recommendation": "A conditional on 6.E and AD-11 rulings; split tolerance out of PR #87. This needs no reversal of DR-CP-AGE-1."
+  },
+  {
+   "id": "AR-4",
+   "question": "Confirm identity_max_age_seconds and mandate_max_age_seconds (RG-C-005) stay host-owned and out of the Registry for this program.",
+   "options": [
+    "A: Confirm retained host-owned (no action).",
+    "B: Open a scoped decision to add them to F4 via a successor contract."
+   ],
+   "recommendation": "A. No benefit evidenced; both would need a Registry contract change and an AD-11-style mapping."
+  },
+  {
+   "id": "AR-5",
+   "question": "Ratify the disposition of AD-07 as answered by the merged M2/M3 narrowing, via an additive addendum.",
+   "options": [
+    "A: Ratify as option A (narrow-only) with the addendum described under ad07.",
+    "B: Direct a revert or further restriction."
+   ],
+   "recommendation": "A. Architect supplies the M2 and M3 ruling texts and dates; no code change."
+  },
+  {
+   "id": "AR-6",
+   "question": "Counting rule: may RG-C-006 be counted as implemented in the progress ledger (PR59 H:38, m2 backlog appended text) before AR-1/AR-2?",
+   "options": [
+    "A: No, show M11 as 2 groups implemented plus 1 pending ruling.",
+    "B: Yes."
+   ],
+   "recommendation": "A."
+  }
+ ],
+ "findings": [
+  "F1: DR-CP-AGE-1 contains no express prohibition on governing identity, mandate or clock tolerance; it states they are out of scope/not covered (R:8, A:63) and clock-tolerance behaviour host-owned (R:22). The existing audit lead override (eligibility-decisions.md:281-282, 'excludes ... as host-owned') overstates slightly for identity/mandate; BLOCKED for RG-C-005/006 remains defensible because nothing authorizes them.",
+  "F2: PR #58 and the tolerance branch of PR #87 are the only M11 changes outside existing authorization; they need an explicit Architect ruling (AR-1, AR-2). PR #58 v5_f4t.py:10-12 attributes to DR-CP-AGE-1 a measured overflow bound for the tolerance scalar that DR:36 did not measure.",
+  "F3: RG-C-003/004 are inside the DR-CP-AGE-1 domain. PR #87 composes min(caller, registry) (:117,:123) and keeps registry domain 1..MAX, so it does not conflict with DR-CP-AGE-1. It still depends on rulings not located: M11 authorization, plan v1.5:13 deferral, AD-11, 6.E.",
+  "F4: PR #87 :87 realises DR Decision 7 (whole-build refusal for out-of-domain caller scalars) and :31 creates a CP-side copy of the ceiling, while DR:5 recorded that no CP mirror exists. DR:25 says the Architect has not acknowledged the trade-off.",
+  "F5: PR #59 is documentation-only and honest about 6.B but cites Amendment 1 s2 as basis for the tolerance ceiling (H:50), the section that excludes the field, and counts RG-C-006 as implemented (H:38). Counts should show pending ruling.",
+  "F6: PR #58 edits two frozen-pattern tests (tests/test_ext_s1_5_vectors.py:1283, tests/test_r08v2_family_dispatch.py:319) to add v5 module names to allowlists; same transparent pattern as M2/M3 (PR #56); no r08-v2 file changed. Not a DR conflict.",
+  "F7: DR Decision 5 (R:23) defers outage-extension composition to EXT-S3-4; PR87 adapter passes **workflow_kwargs through without it. Unverified whether it matters; ask in AR-3 option C.",
+  "F8: AD-07 is answered in substance by merged M2/M3 work but remains OPEN in every register; the additive addendum plus Architect ratification closes it without rewriting history.",
+  "F9: The binding premise 'treat DR-CP-AGE-1 as binding until explicitly reversed' is respected: no recommendation here reverses it; the tolerance needs a new scoped decision, not a change to the age table."
+ ],
+ "limitations": [
+  "Batch 3, Batch 4, Batch 6 ruling texts, the M2/M3/M11 Architect authorization texts and Project docs (claude/*) are NOT in the repo and were not readable by this worker; account memory records M2 PR-1 authorization (2026-10-27) and V1 Option B (2026-10-25) only, nothing for M3 or M11 authorization.",
+  "PR #87 tests not run (brief forbids); CP code read from the ref only.",
+  "AD-07 supersession is inferred from merged code and Architect-approved notes, not from a recorded ruling.",
+  "Whether the Architect already authorized M11 (including tolerance) outside the repository is unknown to this worker; if such a ruling exists, AR-1/AR-3 may already be answered and the conflict reduces to documentation.",
+  "Grammar of R:8 parenthetical read two ways; the stricter reading (all four are host-owned and never registry-managed) would make PR58 a direct conflict; this worker took the narrower, text-faithful reading and flagged it.",
+  "Confidence: medium-high on quoted text and PR line evidence; medium on AD-07 substance (memory-sourced for M2, inferred for M3)."
+ ]
+}

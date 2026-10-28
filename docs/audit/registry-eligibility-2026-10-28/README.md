@@ -10,10 +10,19 @@ This is an independent architecture/eligibility audit. It is NOT independent Tie
 
 This audit does not modify production code, the frozen G0/S02 evidence, the active migration backlog or plan, or any builder PR. The audit PR is not to be merged automatically.
 
+## Pass 2 (correction pass, 2026-10-28)
+
+PR #60 was amended, not replaced. Pass 2 added parameter-level accounting (`parameter-catalogue.json`, `parameter-reconciliation.md`), resolved the DR-CP-AGE-1 / AD-07 decision reconciliation (`unresolved-architectural-decisions.md` §1b), re-examined the ten largest eligibility disagreements, closed part of the source-coverage gap, and subjected the lead's ledgers to an independent reconciliation worker. Raw pass-2 worker outputs are in `worker-evidence/pass2/` and `worker-evidence/I4.json`; the lead's rulings on them are in `lead-adjudications.json` (`pass2_resolutions`, `pass2_h_resolutions`). The pass-1 worker evidence, the 620-row crosswalk and the source pins are unchanged.
+
+Regenerate in order: `python3 -I tools/reconcile.py && python3 -I tools/build_parameters.py && python3 -I tools/render_reports.py` (each accepts `--check`).
+
+Notes on fields: `parameter_count` in `rule-catalogue.json` counts Registry-manageable parameters only and `configurable` is the pass-1 rule-level flag; for denominators use `parameter-catalogue.json`.
+
 ## Contents
 
 | File | Purpose |
 |---|---|
+| `parameter-catalogue.json`, `parameter-reconciliation.md` | Parameter ledger and its reconciliation to rules, G0 groups and historical sites |
 | `reconciliation-report.md` | Numerical reconciliation, counting rules, G0 movement, coverage limits |
 | `crosswalk.json` | All 620 historical rows, each mapped to one canonical rule and one disposition |
 | `rule-catalogue.json` | Canonical logical-rule catalogue |
@@ -32,6 +41,9 @@ This audit does not modify production code, the frozen G0/S02 evidence, the acti
 Integrity test: `tests/test_audit_registry_eligibility_integrity.py`.
 
 ## Method
+
+Eligibility test used to separate the dispositions: REGISTRY-ELIGIBLE means a strictness-only, one-way change that only adds refusals, with a defined consumer and a design gate (for example the approval_commitment coupling). BLOCKED means an accepted decision or missing authorization stands in the way even though the shape is monotone. A selection among protocol profiles that changes semantics (for example operation-identity enablement) is not a narrowing and is not eligible.
+
 
 Eight mutually exclusive dispositions: REGISTRY-GOVERNED, REGISTRY-ELIGIBLE, RETAIN-IN-CODE, CALLER-OR-ISSUER-OWNED, PROVIDER-OR-HOST-OWNED, OUT-OF-SCOPE, UNRESOLVED, BLOCKED. A rule is REGISTRY-GOVERNED only if it is implemented and integrated at an enforcement boundary; represented-only rules stay ELIGIBLE. Nothing is counted as independently accepted. Units (rule group, source site, configuration parameter) are kept separate.
 
