@@ -31,7 +31,7 @@ Builder-side, non-authorizing, documentation only; supplements (does not replace
 |---|---|---|
 | Registry PR-1 (r08-v3 contract, family, identity, verification, vectors) | MERGED ([#54](https://github.com/cogno-us/cognous-ocs-registry/pull/54)) | merge `ba98dd2689e402a855cacc2c7dc3a108c9144eb1` |
 | Runtime PR-2 (selection, activation, atomic family transition) | MERGED ([#151](https://github.com/cogno-us/cognous-execution-runtime/pull/151)) | merge `99f5f05374dc54a998304b5966f5cd2de3b5937b`; pinned Registry `ba98dd26` |
-| Runtime PR-3 (governed numeric ceilings, composite effect-time enforcement) | OPEN, not merged ([#152](https://github.com/cogno-us/cognous-execution-runtime/pull/152)) | head `ebbec2cb918b60fa7b9b3678b7796a7bf7aa83aa` |
+| Runtime PR-3 (governed numeric ceilings, composite effect-time enforcement) | MERGED ([#152](https://github.com/cogno-us/cognous-execution-runtime/pull/152)); IMPLEMENTED, not ACCEPTED | merge `dabaa7701a0fd28ab6dfdf90323d9a792d6d72bc` (reviewed head `ebbec2cb918b60fa7b9b3678b7796a7bf7aa83aa`) |
 | Control Plane change | none needed: the canonical policy binding already carries an arbitrary family identifier and the f1abc claim validated unchanged | n/a |
 | Independent Tier 1 qualification | REQUIRED, not performed; builder, lead and CI results are not independent | n/a |
 
