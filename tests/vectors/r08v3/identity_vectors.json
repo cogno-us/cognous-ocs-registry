@@ -1,0 +1,311 @@
+{
+ "domain": "ocs-reg/r08-v3/effective-policy\\n",
+ "profile": "r08-v3 effective-policy vectors",
+ "vectors": [
+  {
+   "digest": "sha256:a7099ad5b5185853f8141d8dcc4b06a2642aa6d76ac0b45d8bbdd44e69a2517a",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 3
+   },
+   "id": "baseline",
+   "preimage": {
+    "contract_version": "r08-v3",
+    "deny_all": [],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 3
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abc-local-execution-limits",
+    "family_version": "v3"
+   }
+  },
+  {
+   "digest": "sha256:c81e083264adc3c95b0710bdfa698136f63e2202c475f139bfd45605e6717cd3",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 9007199254740992,
+    "max_effects": 9007199254740991
+   },
+   "id": "max-boundaries",
+   "preimage": {
+    "contract_version": "r08-v3",
+    "deny_all": [],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 9007199254740992,
+     "max_effects": 9007199254740991
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abc-local-execution-limits",
+    "family_version": "v3"
+   }
+  },
+  {
+   "digest": "sha256:ce9349bfbac650abc4bb971c872cad7212d9abd39438ab0313521aa26d96a8b5",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 0,
+    "max_effects": 3
+   },
+   "id": "zero-amount",
+   "preimage": {
+    "contract_version": "r08-v3",
+    "deny_all": [],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 0,
+     "max_effects": 3
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abc-local-execution-limits",
+    "family_version": "v3"
+   }
+  },
+  {
+   "digest": "sha256:f0cec46c92ce3912e2605c927054ee5326919a47ec7c0d32a9de5a3ac4df42a5",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 0
+   },
+   "id": "deny-all-effects-zero",
+   "preimage": {
+    "contract_version": "r08-v3",
+    "deny_all": [
+     "max_effects"
+    ],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 0
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abc-local-execution-limits",
+    "family_version": "v3"
+   }
+  },
+  {
+   "digest": "sha256:0a1de2e6018dd98345c2a6b029ab4e7918f024c9e3b35579f69484643522c104",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_units": [],
+    "max_amount": 100,
+    "max_effects": 0
+   },
+   "id": "deny-all-empty-set-and-effects-zero",
+   "preimage": {
+    "contract_version": "r08-v3",
+    "deny_all": [
+     "allowed_units",
+     "max_effects"
+    ],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_units": [],
+     "max_amount": 100,
+     "max_effects": 0
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abc-local-execution-limits",
+    "family_version": "v3"
+   }
+  },
+  {
+   "digest": "sha256:ac7392e64bdf6558348327591c9986b3095e769678383999ca8d9f9d9121692f",
+   "effective": {
+    "allowed_actions": [
+     "act-\u00e9"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 3
+   },
+   "id": "non-ascii-token",
+   "preimage": {
+    "contract_version": "r08-v3",
+    "deny_all": [],
+    "effective": {
+     "allowed_actions": [
+      "act-\u00e9"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 3
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abc-local-execution-limits",
+    "family_version": "v3"
+   }
+  }
+ ]
+}
