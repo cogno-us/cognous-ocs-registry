@@ -1,0 +1,151 @@
+{
+ "schema": "ocs-g1-readiness/test-evidence-closure/1",
+ "files": [
+  {
+   "n": 1,
+   "repo": "Runtime",
+   "commit": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "path": "tests/test_f01_policy_containment.py",
+   "ast": 14,
+   "collected": 18,
+   "avail": "Collects under both locked profiles once PyNaCl and OCS_REGISTRY_PIN_DIR are present; module-level skip otherwise (including in Runtime CI).",
+   "topic": "OW-6 direct destination containment (no pin).",
+   "cases": "F01-1 widened actions refused (cause policy_not_subset:allowed_actions, zero effects); F01-2 strictly narrower executes; F01-3 equal executes; F01-4..8 one case per set (five), widening one set refused with cause policy_not_subset:<set>; F01-9a tampered stored record payload -> HOLD store_unknown; F01-9b guard-level missing/malformed record -> HOLD store_unknown (calls the private _check_policy_containment); F01-10a claim digest vs executable policy -> REFUSE; F01-10b sets not reproducing digest -> policy_identity_mismatch[policy_sets_digest]; F01-10c bound claim without executor sets -> verifier_unavailable[policy_sets_unavailable]; F01-11 withdrawn still refused; F01-12a/b legacy unchanged; F01-13 failing evidence write -> zero effects; F01-14 racing revocation stays atomic.",
+   "pin": "NO. Zero references to authorization_pin, pin_required or installer; every destination is built by g.Gov (tests/test_registry_selection_effect_guard.py) without authorization_pin.",
+   "gap": "Pin path (PR-4); deny-all [] record (F-07); record tamper on institutions/domains (F-12); policy_digest_unavailable (F-17); multi-member per-set independence (F-05)."
+  },
+  {
+   "n": 2,
+   "repo": "Runtime",
+   "commit": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "path": "tests/test_registry_selection_effect_guard.py",
+   "ast": 43,
+   "collected": 47,
+   "avail": "Same as file 1; also the fixture module imported by files 1, 5 and 6.",
+   "topic": "OW-6/OW-7 V05 effect-time selection guard (validity, binding, race, evidence, legacy, fail-closed store).",
+   "cases": "V-01..V-05 valid paths; S-01..S-06 withdrawn/revoked/issuer-key/stale/expired/window; B-01..B-07 binding substitution (B-04 executor policy not the effective policy); C-01..C-05 race, ordering, post-commit; E-01..E-04 evidence-failure atomicity; G-01/G-02; L-01..L-08 legacy claims; X-01..X-05 corrupted/restored/missing-anchor/tampered/never-baselined store -> HOLD; F-01 existing evaluator denies an operation outside the narrowed policy (allowed_actions).",
+   "pin": "NO. Defines Gov, binding_of, effect_policy, refused: the non-pin fixtures reused by the pin suites.",
+   "gap": "Institutions/domains-specific variants of B-03/X-01 (F-12, F-13); scope isolation (F-08, F-14)."
+  },
+  {
+   "n": 3,
+   "repo": "Runtime",
+   "commit": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "path": "tests/test_registry_selection_authority.py",
+   "ast": 51,
+   "collected": 57,
+   "avail": "Same as file 1 (module skip without OCS_REGISTRY_PIN_DIR and PyNaCl).",
+   "topic": "OW-5/OW-7 V04 durable selection authority (activation, withdrawal, epoch ratchet, log chain, anchor, restore).",
+   "cases": "a01..a06 activation commits state+log, unbaselined store, forged signature, rollback, restart; w01..w06 withdraw/revoke/saturation; h01..h06 stale epoch, lineage, snapshot rollback/floor; r01..r05 ratchet and policy generation; l01..l04 24-member log chain; s01..s06 restore/anchor; c01..c05 chain corruption; p01..p03 authority column corruption; a01..a05 (anchor) monotonic anchor, lock, interrupted write; f1..f5 floor lowering / legitimate advance / restart.",
+   "pin": "NO.",
+   "gap": "Only two lines mention allowed_institutions/allowed_authority_domains: no activation of a record that differs in the two sets (F-15), no multi-member or deny-all record restart (F-23)."
+  },
+  {
+   "n": 4,
+   "repo": "Runtime",
+   "commit": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "path": "tests/test_registry_f1a_narrowing.py",
+   "ast": 54,
+   "collected": 86,
+   "avail": "Same as file 1. Hard-codes PIN = 943ab183… and test_m1_20 asserts the Registry checkout HEAD equals it.",
+   "topic": "OW-1/OW-4 adapter-level narrowing (M1 acceptance oracles): five-set intersection, deny-all, malformed records, signatures, digests, evaluator compatibility, no-effect imports.",
+   "cases": "M1-01..M1-20 as predeclared in the module docstring; M1-04 five-set intersection exact and never widens; M1-05 empty set -> deny-all before any policy is built (all five fields); M1-06/07 malformed record; M1-08 forgery; M1-09..M1-12 context/expiry/withdrawn/snapshot; M1-14/15 digest equals Registry canonical digest and mismatch refuses; M1-15 effective set wider than caller refused (allowed_units); M1-16 non-narrowing record equals direct evaluator across a stride grid; M1-17/18 no I/O, raw inputs only; M1-19 unrelated constraints preserved; M1-20 pin; review follow-ups.",
+   "pin": "NO. Uses the adapter, not the destination.",
+   "gap": "Adapter subset check exercised by widening units only (F-04); empty-set branch only for units (F-07); durable-path derivation absent (F-06); stride-7 sample is not a full grid (F-26). M1-13 is declared NOT RUN for M1 in the module itself."
+  },
+  {
+   "n": 5,
+   "repo": "Runtime",
+   "commit": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "path": "tests/test_authorization_pin_guard.py",
+   "ast": 49,
+   "collected": 67,
+   "avail": "Collects under both locked profiles; needs Control Plane V02 and pydantic >= 2.12 to execute the pin cases (module docstring).",
+   "topic": "OW-9 Runtime pin guard with a TEST-ONLY pin writer (PinWriter): lineage/binding mismatch, status, validity window, anchor, intent, store integrity, fences, lock order.",
+   "cases": "Pin step: honest claim executes with pin receipt; original F-A1 substitution refused pin_binding_mismatch:operation; each lineage member and binding member mismatch refused; missing/terminal/expired pin; anchor and intent HOLDs; store garbage/hot journal/chain/epoch-gap HOLDs; fence cases; test_f01_containment_still_refuses_a_widened_policy_under_a_valid_pin (pin + containment, allowed_actions only, cause policy_not_subset:allowed_actions asserted); test_registry_selection_is_asked_about_the_pins_scope; test_check_effect_builds_the_governed_scope_from_pin_scope.",
+   "pin": "YES (test-only PinWriter, not the real installer).",
+   "gap": "Pin + containment shown for ONE set (allowed_actions); institutions/domains containment under the pin not isolated (F-29); stand-in claim for scope members (F-30)."
+  },
+  {
+   "n": 6,
+   "repo": "Runtime",
+   "commit": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "path": "tests/test_authorization_pin_integration.py",
+   "ast": 13,
+   "collected": 18,
+   "avail": "Collects. test_control_plane_export_output_is_accepted_by_the_installer_and_the_format_module reads CP_WORKTREE = /home/claude/wt/cp-export (machine-specific hard-coded path) and SKIPS (INCONCLUSIVE) when absent.",
+   "topic": "OW-9 real installer -> real guard integration (same identity, in-process).",
+   "cases": "installer pin read by guard and honest claim executes (receipt carries epoch/digests); store columns and read-only open; original F-A1 substitution refused against an installer-written pin; test_f01_widening_still_refuses_under_a_valid_installer_pin (ALL FIVE sets widened together; asserts status 'denied', zero effects and a selection_refusal is present; does NOT assert code, cause or set); terminal/revocation irreversible; missing pin holds; provision_claim cannot create pins; shared-fence race; pending intent; crash recovery; anchor inconsistency; stale old pin after reactivation; CP export accepted by installer (skip-gated).",
+   "pin": "YES (real installer; real guard).",
+   "gap": "Containment under the real installer is one aggregated all-five case without code/cause/per-set attribution (F-29); no HOLD store_unknown case for a damaged record under the pin."
+  },
+  {
+   "n": 7,
+   "repo": "Stack Qualification",
+   "commit": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "path": "suites/security-v07/test_adversarial.py",
+   "ast": 46,
+   "collected": 46,
+   "avail": "Collects only with V07_COMPONENTS_DIR pointing at pinned checkouts (registry a1169a05, control_plane 1bee3696, runtime ac247daf, control_plane_legacy e66e5f16); conftest raises UsageError otherwise ('never skips'). V07_PY211 must name a pydantic 2.11.9 Python for i03/i05. NOT built from the program pins.",
+   "topic": "OW-6 V07 adversarial harness (HELD/BREACH/CHARACTERIZED/INCONCLUSIVE verdicts): a12..a16 widen EACH of the five sets with a recomputed commitment; a17/a18 narrower and equal still execute; a08 original widened digest; d-series restore/tamper; t-series replay; i-series successor claim under pydantic 2.11.",
+   "cases": "A01..A18 attacks incl. A12..A16 per-set widening; C01..C07 concurrency/crash; D01..D08 restore/anchor/tamper; T01..T08 replay/lineage; I01..I05 integration (pydantic 2.11 fails closed). Fixtures imported from the Runtime tests; every attack is new.",
+   "pin": "NO. Its Runtime pin ac247daf predates the pin installer and guard (engine diff ac247daf..0dde0ef adds authorization pin modules).",
+   "gap": "Per-set containment for all five sets exists here WITHOUT the pin; the pin-path equivalent does not exist (PR-4)."
+  },
+  {
+   "n": 8,
+   "repo": "Stack Qualification",
+   "commit": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "path": "suites/tier1-v08-fa1/test_fa1_software.py",
+   "ast": 24,
+   "collected": 24,
+   "avail": "Collects only with V08_COMPONENTS_DIR (registry 1a4de326, control_plane d66ae07f, runtime 3873a61b) and the vendored historical helper digest check; its docstring states 23 of the 30 counted F-A1 executions (24 tests collect; FA1-06b is an additional host-only options case); the OS-identity cases are in test_fa1_os.py (needs root, useradd and setpriv).",
+   "topic": "OW-9 F-A1 software qualification (same-organization): substitution, stale grant, revocation serialization, anchor/restore, installer preconditions, F-01 beneath the pin.",
+   "cases": "FA1-01..FA1-18 pin step, revocation, anchor, restore; FA1-23 widening allowed_actions beneath a valid pin -> REFUSE policy_identity_mismatch[policy_not_subset:allowed_actions]; FA1-24 widening allowed_units beneath a valid pin; FA1-25 narrower executes under the pin; FA1-26..FA1-29 evidence failure, legacy claim, supplier-seeded rows, installer preconditions; FA1-06b host-only options.",
+   "pin": "YES (real Control Plane decision, real export, real installer, real guard).",
+   "gap": "FA1-24 expected text says 'the other three sets run in the Runtime F-01 CI suite': that suite builds destinations WITHOUT the pin and is not run by Runtime CI (PR-4); adapters, institutions and authority_domains remain unproven under the pin."
+  }
+ ],
+ "gap_effects": {
+  "F-01": {
+   "effect": "NARROWED",
+   "evidence": "test_f01_4_to_8_widening_one_set_is_refused widens EACH of the five sets (including allowed_institutions and allowed_authority_domains) by one member and requires REFUSE policy_identity_mismatch with cause policy_not_subset:<field> and zero effects. Direct destination only, default record; not on the pin path; the register entry predates reading this file."
+  },
+  "F-05": {
+   "effect": "NARROWED",
+   "evidence": "wide_gov() activates a record with TWO members per set (base plus one extra in all five sets) and F01-2/F01-3 run a narrower and an equal multi-member policy. Still absent: per-set independent multi-member and partial-overlap cases (one set varied, others fixed)."
+  },
+  "F-18": {
+   "effect": "NARROWED",
+   "evidence": "Same evidence as F-05: positive controls vary all five sets together; no per-set partial-overlap positive control."
+  },
+  "F-17": {
+   "effect": "NARROWED",
+   "evidence": "F01-10b observes cause policy_sets_digest and F01-10c observes verifier_unavailable[policy_sets_unavailable]. Not observed in any of the eight files: policy_digest_unavailable (engine/registry_selection_authority.py:1442)."
+  },
+  "F-07": {
+   "effect": "CONFIRMED OPEN",
+   "evidence": "No test in the eight files activates a record with [] for one of the two sets; no executor with an empty institution/domain set runs through the atomic route."
+  },
+  "F-12": {
+   "effect": "CONFIRMED OPEN",
+   "evidence": "F01-9a tampers record_json by inserting an allowed_actions member; no record-substitution case varies institutions or domains."
+  },
+  "F-29": {
+   "effect": "CONFIRMED OPEN",
+   "evidence": "Under the pin, containment is shown for allowed_actions (pin guard test, SQ FA1-23) and allowed_units (SQ FA1-24); all-five widening (integration) asserts only 'denied' and presence of a selection_refusal."
+  },
+  "F-30": {
+   "effect": "CONFIRMED OPEN",
+   "evidence": "No full pin-plus-binding scope substitution for institution/authority_domain with a real claim; test_binding_scope_members_are_compared_with_the_pin_independently uses a stand-in claim (pin guard)."
+  },
+  "F-06": {
+   "effect": "CONFIRMED OPEN",
+   "evidence": "grep at Runtime 0dde0ef7: evaluate_with_registry_selection is defined in engine/registry_f1a_narrowing.py and used only by tests/test_registry_f1a_narrowing.py."
+  },
+  "F-08": {
+   "effect": "CONFIRMED OPEN",
+   "evidence": "All governed fixtures in the eight files use scope inst-a/domain-a/tenant-a; only operation varies (GS_OTHER, op-other)."
+  }
+ }
+}
