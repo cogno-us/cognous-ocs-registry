@@ -1280,7 +1280,7 @@ def test_trust_snapshot_version_bound_is_tied_to_source_text_never_imports():
                 pytest.fail("snapshot line with a ceiling in %s: %s" % (path.name, line))
             if "MAX_INT" in line or "MAX_VERSION" in line:
                 users.add(path.name)
-    assert users <= {"common.py", "record.py", "selection.py", "v2_selection.py", "v3_selection.py", "consumer.py"}, users  # S01: v2_selection.py mirrors selection.py's record_version bound; M2 PR-1: so does v3_selection.py
+    assert users <= {"common.py", "record.py", "selection.py", "v2_selection.py", "v3_selection.py", "v4_selection.py", "consumer.py"}, users  # S01: v2_selection.py mirrors selection.py's record_version bound; M2 PR-1: so do v3_selection.py and v4_selection.py (M3 PR-1)
     common_text = (ROOT / "registry_successor" / "common.py").read_text(encoding="utf-8")
     assert 'json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)' in common_text  # unbounded Python ints
     hw = (ROOT / "registry_conformance" / "highwater.py").read_text(encoding="utf-8")

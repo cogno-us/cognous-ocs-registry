@@ -1,0 +1,302 @@
+{
+ "domain": "ocs-reg/r08-v4/effective-policy\\n",
+ "profile": "ocs-effective-policy/1",
+ "vectors": [
+  {
+   "digest": "sha256:6cd7b1604047e3c51df0f2bbfe67aadcb4dd4a84261da1c0dd49bc5718e07f72",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_target_prefixes": [
+     "rec/in/",
+     "rec/out"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 3,
+    "target_match": "segment"
+   },
+   "id": "baseline",
+   "preimage": {
+    "contract_version": "r08-v4",
+    "deny_all": [],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_target_prefixes": [
+      "rec/in/",
+      "rec/out"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 3,
+     "target_match": "segment"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abcd-local-execution-limits",
+    "family_version": "v4"
+   }
+  },
+  {
+   "digest": "sha256:dbf274b905efdc5c809aaa211b9b6846a2605a60c3cd113c7c96088eaf0b85cb",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_target_prefixes": [
+     "rec/in/a.txt"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 3,
+    "target_match": "exact"
+   },
+   "id": "exact-mode",
+   "preimage": {
+    "contract_version": "r08-v4",
+    "deny_all": [],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_target_prefixes": [
+      "rec/in/a.txt"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 3,
+     "target_match": "exact"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abcd-local-execution-limits",
+    "family_version": "v4"
+   }
+  },
+  {
+   "digest": "sha256:7f623534f5ed8de5d14375953d5efa2d4ac98056324897126b7849a28c13bac7",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_target_prefixes": [
+     "rec/in/",
+     "rec/out"
+    ],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 3,
+    "target_match": "legacy-prefix"
+   },
+   "id": "legacy-mode",
+   "preimage": {
+    "contract_version": "r08-v4",
+    "deny_all": [],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_target_prefixes": [
+      "rec/in/",
+      "rec/out"
+     ],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 3,
+     "target_match": "legacy-prefix"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abcd-local-execution-limits",
+    "family_version": "v4"
+   }
+  },
+  {
+   "digest": "sha256:68fa140c0a9b177a51bafa58eb8725c72f364b78fc056daa47b2eb77cdfef136",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_target_prefixes": [],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 3,
+    "target_match": "segment"
+   },
+   "id": "deny-all-targets",
+   "preimage": {
+    "contract_version": "r08-v4",
+    "deny_all": [
+     "allowed_target_prefixes"
+    ],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_target_prefixes": [],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 3,
+     "target_match": "segment"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abcd-local-execution-limits",
+    "family_version": "v4"
+   }
+  },
+  {
+   "digest": "sha256:6c9f2dc802e937a9b958edf2f00933ef3fda473bcb6abbf98bfb9ebc6d20c95a",
+   "effective": {
+    "allowed_actions": [
+     "act-copy",
+     "act-list"
+    ],
+    "allowed_adapters": [
+     "a-local"
+    ],
+    "allowed_authority_domains": [
+     "domain-a"
+    ],
+    "allowed_institutions": [
+     "inst-a"
+    ],
+    "allowed_target_prefixes": [],
+    "allowed_units": [
+     "u-read"
+    ],
+    "max_amount": 100,
+    "max_effects": 0,
+    "target_match": "segment"
+   },
+   "id": "deny-all-targets-and-effects",
+   "preimage": {
+    "contract_version": "r08-v4",
+    "deny_all": [
+     "allowed_target_prefixes",
+     "max_effects"
+    ],
+    "effective": {
+     "allowed_actions": [
+      "act-copy",
+      "act-list"
+     ],
+     "allowed_adapters": [
+      "a-local"
+     ],
+     "allowed_authority_domains": [
+      "domain-a"
+     ],
+     "allowed_institutions": [
+      "inst-a"
+     ],
+     "allowed_target_prefixes": [],
+     "allowed_units": [
+      "u-read"
+     ],
+     "max_amount": 100,
+     "max_effects": 0,
+     "target_match": "segment"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f1abcd-local-execution-limits",
+    "family_version": "v4"
+   }
+  }
+ ]
+}
