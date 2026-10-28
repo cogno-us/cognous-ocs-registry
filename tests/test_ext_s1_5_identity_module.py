@@ -917,7 +917,11 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
                                                                           "registry_successor/v2_selection.py",  # S01 (plan v1.4 Amendment 1): the r08-v2 envelope parser and signing input
                                                                           "registry_successor/canonical_b64.py",
                                                                           # P1 follow-up PR (FU-1, Architect final rulings): the r08-v2 family token validation uses the frozen predicate
-                                                                          "registry_successor/v2_token.py", "registry_successor/v2_f1ab.py", "registry_successor/v2_age_bounds.py"}, diff
+                                                                          "registry_successor/v2_token.py", "registry_successor/v2_f1ab.py", "registry_successor/v2_age_bounds.py",
+                                                                          # r08-v5 on_unreadable increment: the seven NEW v5 modules only (no existing successor module is touched)
+                                                                          "registry_successor/v5_class_unreadable.py", "registry_successor/v5_families.py", "registry_successor/v5_record.py",
+                                                                          "registry_successor/v5_selection.py", "registry_successor/v5_verify.py", "registry_successor/v5_policy_identity.py",
+                                                                          "registry_successor/v5_decision.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():
