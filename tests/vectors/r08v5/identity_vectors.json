@@ -1,0 +1,96 @@
+{
+ "domain": "ocs-reg/r08-v5/effective-policy\\n",
+ "profile": "ocs-effective-policy/1",
+ "vectors": [
+  {
+   "digest": "sha256:49a43b3417b5ced652715258cb7fc0519340824e8150558accccedeb70404b8d",
+   "effective": {
+    "class_on_unreadable": {
+     "class-a": "refuse",
+     "class-b": "bounded_tolerance"
+    }
+   },
+   "id": "baseline",
+   "preimage": {
+    "contract_version": "r08-v5",
+    "deny_all": [],
+    "effective": {
+     "class_on_unreadable": {
+      "class-a": "refuse",
+      "class-b": "bounded_tolerance"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-unreadable-policy",
+    "family_version": "v5"
+   }
+  },
+  {
+   "digest": "sha256:435a10c00433fec95cc6696de3a47d735b70a47e486d9557bcc1433228bebcf9",
+   "effective": {
+    "class_on_unreadable": {
+     "class-a": "refuse",
+     "class-b": "refuse",
+     "class-c": "refuse"
+    }
+   },
+   "id": "all-refuse",
+   "preimage": {
+    "contract_version": "r08-v5",
+    "deny_all": [],
+    "effective": {
+     "class_on_unreadable": {
+      "class-a": "refuse",
+      "class-b": "refuse",
+      "class-c": "refuse"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-unreadable-policy",
+    "family_version": "v5"
+   }
+  },
+  {
+   "digest": "sha256:7a121ab33d8ab724e5373eac6c329dbe3a5d8a8310f018f96b66df8d70dd1331",
+   "effective": {
+    "class_on_unreadable": {
+     "class-a": "bounded_tolerance"
+    }
+   },
+   "id": "all-tolerance",
+   "preimage": {
+    "contract_version": "r08-v5",
+    "deny_all": [],
+    "effective": {
+     "class_on_unreadable": {
+      "class-a": "bounded_tolerance"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-unreadable-policy",
+    "family_version": "v5"
+   }
+  },
+  {
+   "digest": "sha256:bc6b5d6d428a7626984b134dba56729cf32e2491fa3e05e47af6147ae4c5936d",
+   "effective": {
+    "class_on_unreadable": {
+     "class-a": "refuse"
+    }
+   },
+   "id": "single-refuse",
+   "preimage": {
+    "contract_version": "r08-v5",
+    "deny_all": [],
+    "effective": {
+     "class_on_unreadable": {
+      "class-a": "refuse"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-unreadable-policy",
+    "family_version": "v5"
+   }
+  }
+ ]
+}
