@@ -72,16 +72,14 @@ M2 groups RG-F1C-MAX-AMOUNT and RG-F1C-MAX-EFFECTS: **IMPLEMENTED, pending integ
 
 ## Progress accounting (appended 2026-10-28, M3)
 
-M3 groups RG-F1D-TARGET-PREFIXES and RG-F1D-TARGET-MATCH: **IMPLEMENTED on branch, pending review and integrated acceptance** (Registry r08-v4 PR #56, head `7cd80426`, UNMERGED; Runtime PR cogno-us/cognous-execution-runtime#153, head `4782b0db`, UNMERGED, pinned to the Registry PR head). Source finding: `exact ⊆ segment ⊆ legacy-prefix` holds per entry only, not between two (list, mode) pairs; composition uses a sound accepted-set containment rule (never wider than either operand, possibly narrower than the exact intersection).
+M3 groups RG-F1D-TARGET-PREFIXES and RG-F1D-TARGET-MATCH: **IMPLEMENTED and merged, pending integrated acceptance.** Registry r08-v4 PR #56 merged `b7e6a173877c731273858b01b26214147dd0736c` (reviewed head `7cd80426`); Runtime PR #153 merged `f7a55e2a8494801e49193f9f46935f0a971c248d` (reviewed head `4782b0db`; re-pinned to the Registry merge commit at `e8323f1d`). Source finding: `exact ⊆ segment ⊆ legacy-prefix` holds per entry only, not between two (list, mode) pairs; composition uses a sound accepted-set containment rule (never wider than either operand, possibly narrower than the exact intersection; Architect-approved).
 
 | Ledger | Count |
 |---|---|
 | Original eligible groups | 23 |
-| Implemented, merged and enforced (M2) | 2 (pending acceptance) |
-| Implemented on unmerged PRs (M3) | 2 |
+| Implemented and merged (M2 + M3) | 4 (pending acceptance) |
 | Independently accepted | 0 |
 | Remaining unimplemented | 19 |
-| Active wave | M3 (awaiting Architect review/merge) |
-| Next increment | M11, first cluster RG-C-003 / RG-C-004 / RG-C-006 (integer `min(host, registry)` clock/status-age tolerances in Control Plane `bounded.py`; source owner confirmed host constructor, literal defaults 60/60/5) — a Control Plane consumer plus an F4 contract extension (Registry F4 is closed to two keys), so it needs a Control Plane workstream authorization before code |
+| Active wave | M11 (Control Plane F4 consumer) |
 
 IMPLEMENTED is not ACCEPTED: nothing is counted as migrated until independent Tier 1 qualification of the integrated path.
