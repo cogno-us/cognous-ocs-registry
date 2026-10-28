@@ -83,3 +83,8 @@ M3 groups RG-F1D-TARGET-PREFIXES and RG-F1D-TARGET-MATCH: **IMPLEMENTED and merg
 | Active wave | M11 (Control Plane F4 consumer) |
 
 IMPLEMENTED is not ACCEPTED: nothing is counted as migrated until independent Tier 1 qualification of the integrated path.
+
+
+## Parameter-level accounting (appended 2026-10-28, F4 ages-only; supersedes no earlier entry)
+
+Basis: audit #60 / Plan v1.1 denominator of 19 Registry-manageable parameters (the 23/28 G0 group counts above are historical and provisional). `status_max_age_seconds` and `approval_max_age_seconds`: enforcement integration implemented in Control Plane PR #88 (head `9b71a1018eb630966a2b93c6e3bbfa36ebaeba7e`; reviewed head `ee8d51606fc33a0ee3d3784e2d05e55be4ce344e`), OPEN and UNMERGED; independently accepted: no. Merged basis 9 integrated / 10 eligible-not-integrated / 0 accepted; 11 / 8 if #88 merges. IMPLEMENTED is not ACCEPTED. See `docs/family-migration/f4-ages/00-f4-ages-increment-2026-10-28.md`.
