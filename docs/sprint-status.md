@@ -23,21 +23,22 @@ Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md
 
 ---
 
-## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-28): G0 ACCEPTED AFTER VERIFIED MERGE; G1 PREPARATION SUBMITTED, G1 NOT AUTHORIZED
+## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-28): G0 ACCEPTED AND FROZEN; G1 PREPARATION MERGED, G1 READINESS SUBMITTED, G1 NOT AUTHORIZED
 
 Separate from the V01–V09 status above, which is unchanged. Non-authorizing, builder-side, documentation only. Package: [family-migration/g1-preparation/README.md](family-migration/g1-preparation/README.md); frozen G0 record: [family-migration/g1-preparation/g0-freeze-record.md](family-migration/g1-preparation/g0-freeze-record.md).
 
 | Item | State |
 |---|---|
 | G0 | **ACCEPTED AFTER VERIFIED MERGE.** PR [#50](https://github.com/cogno-us/cognous-ocs-registry/pull/50) merged with a merge commit `7208eb6f53f12677f138fe0c64ec48a2e58292b5` (approved head `e6c57f6980aa71581499b5fcdbc38a647ebbe304`; CI on the merge commit green). G0 is an inventory qualification, not an independent security qualification. |
-| G1 preparation | M1 negative-oracle closure proposal, successor-contract strategy and decision list, submitted in the G1 preparation PR (this change); open for Architect review; not merged by the builder |
+| G1 preparation | **MERGED.** PR [#51](https://github.com/cogno-us/cognous-ocs-registry/pull/51), merge commit `2afbd8cd119751842b5df824229726aeb0e4a863` (approved head `00e9bb63e0ad32c7900713050e47b5df22279152` unchanged, exact-head CI green). Authorized nothing. |
+| G1 readiness | Documentation-only package submitted in the G1 readiness PR (this change): [family-migration/g1-readiness/README.md](family-migration/g1-readiness/README.md). Registry delta `943ab18..317eb76a` has no code change; eight previously uncollected test files read and collected; Runtime F-01 suite does not exercise the pin path; revised oracle specification (65 oracles, nine families). Open for Architect review; not merged by the builder. |
 | M1 | Reclassified as negative-oracle closure (AD-01 ACCEPTED). 65 oracle gaps identified (11 HIGH); no oracle exists, none is independent. |
 | Architect decisions | AD-01 ACCEPTED; AD-02 and AD-03 DIRECTION ACCEPTED; AD-04 to AD-24 OPEN; new preparation decisions PD-1 to PD-10 listed in the package |
 | Waves M1–M13 | none started; no migration implemented; no component source changed |
 
-G0: ACCEPTED AFTER VERIFIED MERGE. G1–G5: NOT AUTHORIZED. V09 independent V07 security review: OPEN. V09 independent V08 Tier 1 qualification: NOT STARTED. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
+G0: ACCEPTED AND FROZEN. G1: PREPARATION ONLY. G1 CONTRACT/ORACLE IMPLEMENTATION: NOT AUTHORIZED. G2–G5: NOT AUTHORIZED. V09 independent V07 review: OPEN. V09 independent V08 Tier 1: NOT STARTED. Ed25519 #26/#34: SECURITY-HELD. Release: HOLD. Publication: HOLD. Production: HOLD.
 
-**Next authorized action:** none for the builder beyond leaving the G1 preparation PR open for Architect review.
+**Next authorized action:** none for the builder beyond leaving the G1 readiness PR open for Architect review.
 
 ---
 

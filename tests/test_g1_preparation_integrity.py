@@ -109,7 +109,9 @@ def test_g1_is_not_authorized_and_nothing_claims_independent_qualification():
         for banned in ("independently qualified", "production ready", "security clearance"):
             assert banned not in t, (name, banned)
     status = (ROOT / "docs" / "sprint-status.md").read_text()
-    assert "G1 PREPARATION SUBMITTED, G1 NOT AUTHORIZED" in status and HOLDS in status
+    # Updated by the G1 readiness change: the successor section now records the merge of PR #51 and the readiness submission.
+    assert "G1 PREPARATION MERGED, G1 READINESS SUBMITTED, G1 NOT AUTHORIZED" in status
+    assert "G0: ACCEPTED AND FROZEN. G1: PREPARATION ONLY. G1 CONTRACT/ORACLE IMPLEMENTATION: NOT AUTHORIZED." in status
 
 
 def test_sprint_status_keeps_the_v09_block_first_and_history():
