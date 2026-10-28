@@ -1,0 +1,394 @@
+{
+ "worker": "F",
+ "note": "Collection only (--collect-only); no test was executed. Interpreter workaround: /usr/local/bin/python3 with pytest site-packages on PYTHONPATH because default env lacks pydantic/PyNaCl; PyNaCl-dependent modules skip at collection (0 collected) and SQ security-v07/tier1 suites need V07_COMPONENTS_DIR/V08_COMPONENTS_DIR (not set).",
+ "files": [
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_f01_policy_containment.py",
+   "collected": 0,
+   "summary_line": "no tests collected in 0.20s",
+   "exit_code": 5,
+   "notes": [
+    "SKIPPED [1] tests/test_registry_selection_authority.py:82: NOT RUN: PyNaCl (Registry requirements-ed25519.lock.txt) is not installed"
+   ],
+   "static_test_function_count": 14,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_f01_policy_containment.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_registry_selection_effect_guard.py",
+   "collected": 0,
+   "summary_line": "no tests collected in 0.15s",
+   "exit_code": 5,
+   "notes": [
+    "SKIPPED [1] tests/test_registry_selection_authority.py:82: NOT RUN: PyNaCl (Registry requirements-ed25519.lock.txt) is not installed"
+   ],
+   "static_test_function_count": 43,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_registry_selection_effect_guard.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_registry_selection_authority.py",
+   "collected": 0,
+   "summary_line": "no tests collected in 0.17s",
+   "exit_code": 5,
+   "notes": [
+    "SKIPPED [1] tests/test_registry_selection_authority.py:82: NOT RUN: PyNaCl (Registry requirements-ed25519.lock.txt) is not installed"
+   ],
+   "static_test_function_count": 51,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_registry_selection_authority.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_registry_f1a_narrowing.py",
+   "collected": 0,
+   "summary_line": "no tests collected in 0.08s",
+   "exit_code": 5,
+   "notes": [
+    "SKIPPED [1] tests/test_registry_f1a_narrowing.py:60: NOT RUN: PyNaCl (Registry requirements-ed25519.lock.txt) is not installed"
+   ],
+   "static_test_function_count": 54,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_registry_f1a_narrowing.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_authorization_pin_guard.py",
+   "collected": 0,
+   "summary_line": "no tests collected in 0.21s",
+   "exit_code": 5,
+   "notes": [
+    "SKIPPED [1] tests/test_registry_selection_authority.py:82: NOT RUN: PyNaCl (Registry requirements-ed25519.lock.txt) is not installed"
+   ],
+   "static_test_function_count": 49,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_authorization_pin_guard.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_authorization_pin_integration.py",
+   "collected": 0,
+   "summary_line": "no tests collected in 0.24s",
+   "exit_code": 5,
+   "notes": [
+    "SKIPPED [1] tests/test_registry_selection_authority.py:82: NOT RUN: PyNaCl (Registry requirements-ed25519.lock.txt) is not installed"
+   ],
+   "static_test_function_count": 13,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_authorization_pin_integration.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_authorization_pin_format.py",
+   "collected": 6,
+   "summary_line": "6 tests collected in 0.04s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 6,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_authorization_pin_format.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/host_pin/test_installer_crash_recovery.py",
+   "collected": 41,
+   "summary_line": "41 tests collected in 0.11s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 26,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/host_pin/test_installer_crash_recovery.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/host_pin/test_installer_os_isolation.py",
+   "collected": 1,
+   "summary_line": "1 test collected in 0.04s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 1,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/host_pin/test_installer_os_isolation.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_atomic_route_valid_flow_identity.py",
+   "collected": 11,
+   "summary_line": "11 tests collected in 0.31s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 7,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_atomic_route_valid_flow_identity.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_atomic_grant_status_and_envelope_binding.py",
+   "collected": 39,
+   "summary_line": "39 tests collected in 0.07s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 15,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_atomic_grant_status_and_envelope_binding.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_route_a_local_policy_reason.py",
+   "collected": 4,
+   "summary_line": "4 tests collected in 0.05s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 2,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_route_a_local_policy_reason.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_security_admission.py",
+   "collected": 29,
+   "summary_line": "29 tests collected in 0.06s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 9,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_security_admission.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_exact_target_matching.py",
+   "collected": 71,
+   "summary_line": "71 tests collected in 0.08s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 15,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_exact_target_matching.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_producer_contract.py",
+   "collected": 14,
+   "summary_line": "14 tests collected in 0.06s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 11,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_producer_contract.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_public_runtime_surface.py",
+   "collected": 5,
+   "summary_line": "5 tests collected in 0.04s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 5,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_public_runtime_surface.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_adapter_forwarding.py",
+   "collected": 4,
+   "summary_line": "4 tests collected in 0.08s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 4,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_adapter_forwarding.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_route_a_tenant_binding.py",
+   "collected": 5,
+   "summary_line": "5 tests collected in 0.07s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 2,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_route_a_tenant_binding.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_atomic_post_commit_fault_injection.py",
+   "collected": 15,
+   "summary_line": "15 tests collected in 0.32s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 10,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_atomic_post_commit_fault_injection.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "runtime",
+   "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+   "file": "tests/test_atomic_post_commit_unresolved.py",
+   "collected": 5,
+   "summary_line": "5 tests collected in 0.07s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 4,
+   "command": "cd /home/claude/g0/src/runtime && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_atomic_post_commit_unresolved.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "control_plane",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "file": "tests/test_v02_claim_policy_binding.py",
+   "collected": 95,
+   "summary_line": "95 tests collected in 0.59s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 56,
+   "command": "cd /home/claude/g0/src/control_plane && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_v02_claim_policy_binding.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "control_plane",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "file": "tests/test_authorization_pin_export.py",
+   "collected": 27,
+   "summary_line": "27 tests collected in 0.45s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 27,
+   "command": "cd /home/claude/g0/src/control_plane && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_authorization_pin_export.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "control_plane",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "file": "tests/test_policy_binding_approval_generation.py",
+   "collected": 102,
+   "summary_line": "102 tests collected in 0.64s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 41,
+   "command": "cd /home/claude/g0/src/control_plane && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_policy_binding_approval_generation.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "control_plane",
+   "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+   "file": "tests/test_v02_legacy_claim_vector.py",
+   "collected": 17,
+   "summary_line": "17 tests collected in 0.48s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 7,
+   "command": "cd /home/claude/g0/src/control_plane && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs tests/test_v02_legacy_claim_vector.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "stack_qualification",
+   "sha": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "file": "suites/security-v07/test_adversarial.py",
+   "collected": 0,
+   "summary_line": "ERROR: V07 component pins not satisfied (this suite never skips): V07_COMPONENTS_DIR is not set to a directory of pinned component checkouts",
+   "exit_code": 4,
+   "notes": [
+    "ERROR: V07 component pins not satisfied (this suite never skips): V07_COMPONENTS_DIR is not set to a directory of pinned component checkouts"
+   ],
+   "static_test_function_count": 46,
+   "command": "cd /home/claude/g0/src/stack_qualification && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs suites/security-v07/test_adversarial.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "stack_qualification",
+   "sha": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "file": "suites/tier1-v08-fa1/test_fa1_software.py",
+   "collected": 0,
+   "summary_line": "ERROR: F-A1 component pins not satisfied (this suite never skips): V08_COMPONENTS_DIR is not set to a directory of pinned component checkouts",
+   "exit_code": 4,
+   "notes": [
+    "ERROR: F-A1 component pins not satisfied (this suite never skips): V08_COMPONENTS_DIR is not set to a directory of pinned component checkouts"
+   ],
+   "static_test_function_count": 24,
+   "command": "cd /home/claude/g0/src/stack_qualification && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs suites/tier1-v08-fa1/test_fa1_software.py",
+   "status": "NOT RUN (collected 0; see notes; static_test_function_count is an AST count, not a pytest count)"
+  },
+  {
+   "repo": "stack_qualification",
+   "sha": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "file": "suites/v1-scenarios/test_scn_c11.py",
+   "collected": 55,
+   "summary_line": "55 tests collected in 0.08s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 12,
+   "command": "cd /home/claude/g0/src/stack_qualification && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs suites/v1-scenarios/test_scn_c11.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "stack_qualification",
+   "sha": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "file": "suites/cognous-execution-runtime/tests/test_local_authority_effect.py",
+   "collected": 40,
+   "summary_line": "40 tests collected in 0.40s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 28,
+   "command": "cd /home/claude/g0/src/stack_qualification && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs suites/cognous-execution-runtime/tests/test_local_authority_effect.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "stack_qualification",
+   "sha": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "file": "suites/cognous-execution-runtime/tests/test_safe_executor.py",
+   "collected": 37,
+   "summary_line": "37 tests collected in 0.08s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 23,
+   "command": "cd /home/claude/g0/src/stack_qualification && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs suites/cognous-execution-runtime/tests/test_safe_executor.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "stack_qualification",
+   "sha": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "file": "suites/v1-scenarios/test_asw_a.py",
+   "collected": 91,
+   "summary_line": "91 tests collected in 0.07s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 19,
+   "command": "cd /home/claude/g0/src/stack_qualification && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs suites/v1-scenarios/test_asw_a.py",
+   "status": "COLLECTED"
+  },
+  {
+   "repo": "stack_qualification",
+   "sha": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+   "file": "suites/v1-scenarios/test_scn_c18.py",
+   "collected": 60,
+   "summary_line": "60 tests collected in 0.06s",
+   "exit_code": 0,
+   "notes": [],
+   "static_test_function_count": 14,
+   "command": "cd /home/claude/g0/src/stack_qualification && PYTHONDONTWRITEBYTECODE=1 OCS_REGISTRY_PIN_DIR=/home/claude/g0/src/registry PYTHONPATH=<pytest-site-packages:repo:control_plane/src:registry:registry/tests> /usr/local/bin/python3 -m pytest -p no:cacheprovider --collect-only -q -rs suites/v1-scenarios/test_scn_c18.py",
+   "status": "COLLECTED"
+  }
+ ]
+}

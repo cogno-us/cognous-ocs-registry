@@ -1,0 +1,1459 @@
+[
+  {
+    "topic_no": 1,
+    "topic": "allowed_institutions / allowed_authority_domains validation and bounds",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_f1ab.py",
+        "lines": "28",
+        "symbol": "F1AB_FIELDS (exactly five keys)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_f1ab.py",
+        "lines": "31-41",
+        "symbol": "_entry_ok/_list_ok: plain list, <=256, sorted, duplicate-free, frozen_token_valid per entry; empty valid. VERIFIED: `field` arg of _entry_ok is unused, one rule for all five sets"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_f1ab.py",
+        "lines": "44-54",
+        "symbol": "payload_validator: field_unknown/field_missing/field_type_invalid before field_invalid; carries no member name"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_token.py",
+        "lines": "35-56",
+        "symbol": "frozen_token_valid: 1..128 code points, no '*', no code point in pinned Unicode 15.1.0 C*/Z* ranges"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/common.py",
+        "lines": "26-28",
+        "symbol": "MAX_ENTRIES=256, MAX_ENTRY_CHARS=128"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/record.py",
+        "lines": "43-56, 77",
+        "symbol": "_shape (exact payload key set via spec.payload_fields), _values calls spec.payload_validator"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "140-171",
+        "symbol": "validate_record_text_v2 (v2 record entry; looks family up in FAMILIES_V2)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_policy_identity.py",
+        "lines": "106, 1167-1210",
+        "symbol": "validate_effective_payload: SECOND independent validator of the same list rules, reports (code, member path)"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 2 lines 18-29 (table; 'Absent key: field_missing', 'Extra key: field_unknown', empty list = explicit deny-all, 256/128/exact-string rules)",
+      "docs/r08-v2-contract-amendment-1.md section 5.1 item 3 (line 224: payload entries keep the section 2 opaque-token rule, not the ASCII grammar)",
+      "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md section 6.1 (N-13 frozen Unicode 15.1.0 table, lines 295-306)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_each_field_absent_refused_field_missing[x5]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "parametrised over all five keys incl. both sets; composer maps to composition_record_invalid"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_sixth_key_refused_field_unknown[x10]",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "key-set test, not set-specific"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_malformed_lists_refused[5 fields x 20 bad values]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "unsorted, dup, '*', '', non-str, control, >128, non-list: field_invalid vs field_type_invalid per field"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_oversize_list_refused_and_boundary_accepted[x5]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "256 accepted, 257 field_invalid, per field"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_entry_length_boundary_128",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "128 accepted / 129 refused asserted on allowed_actions only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_str_subclass_entries_refused",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "allowed_actions only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_section2_opaque_tokens_accepted_in_every_list[5 x 5]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "e-acute, 'Inst-A', emoji, 128 chars, 'u:1/2' accepted in every list incl. both sets"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_section2_token_rule_negative_in_every_list[5 x 7]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "space, '*', leading/trailing ws, newline, tab, '', 129 chars refused in every list"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_fu_b_identity_order_and_family_tokens.py",
+        "test_name": "test_family_validators_follow_the_frozen_table_with_the_host_database_poisoned[38 vectors]",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "_f1ab_payload(tok) puts the token ONLY in allowed_actions (index 0); the other four lists are []"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_fu_b_identity_order_and_family_tokens.py",
+        "test_name": "test_older_and_newer_host_cases_decide_identically[3]",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "same: allowed_actions only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_vectors.py",
+        "test_name": "test_token_unicode_vectors_and_known_divergent_code_points",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "f1ab effective-payload refusal asserted with 'a\\u088f' in allowed_actions only (L2279-2284)"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_identity_module.py",
+        "test_name": "test_effective_list_rules_and_bounds",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "all bad-list cases name allowed_actions; other four sets are only the []-baseline"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_vectors.py",
+        "test_name": "test_effective_policy_controls_and_invalid_inputs (effective_payloads_invalid EI-001..EI-018 + EI-ORDER)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "VERIFIED from vector JSON: offending member is allowed_actions x8, allowed_units x2, none is allowed_institutions/allowed_authority_domains; run against a TEST-LOCAL reference (Refuse, validate_effective_payload defined in the test file), not registry code"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_identity_module.py",
+        "test_name": "test_invalid_and_boundary_vectors_report_code_member_and_layer",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "replays the vector groups against registry v2_policy_identity; INFERRED it includes effective_payloads_invalid; same member distribution as above"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_04_malformed_payload_refuses_with_typed_code[4]",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "decision level; only institutions case is pop('allowed_institutions') -> field_missing; others target units/unknown key"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-01",
+        "description": "No test places a frozen-table-divergent or Cf/Cs/Co/Cn token (TU-D*, TU-012/014/015/016) in allowed_institutions or allowed_authority_domains; every token vector and every validate_effective_payload refusal targets allowed_actions. A per-set shortcut (or a different token rule for the last two keys) would not be detected.",
+        "why_it_matters": "Runtime and Control Plane must re-implement the same value rules independently (Amendment 3 item 2 'Registry value rules'); the sets that carry institution/domain identity are the ones least pinned.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Extend the existing 38 token_unicode vectors (already cross-checked by Node) to a per-member axis (5 members x 38). Independent of Registry code if the expected values come from the vector file.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-02",
+        "description": "Two independent validators encode the same rules (v2_f1ab._list_ok and v2_policy_identity.validate_effective_payload, plus normalize_caller). No differential test runs them against each other over a shared corpus for the two sets; vectors only vary actions/units.",
+        "why_it_matters": "Drift between the three code paths would give a different accept/refuse (and different code) for the same institution/domain list depending on the entry point.",
+        "proposed_oracle_kind": "differential",
+        "independence_note": "Differential between two Registry code paths is weak independence; pair with the Node recomputation or a Runtime/CP implementation of the vectors.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-03",
+        "description": "Decision-level negative coverage for the two sets is a single case (pop allowed_institutions -> validator field_missing). No decision-level (verify_and_decide_v2) test for unsorted, duplicate, token-invalid, oversize or wrong-type lists in either set, and none for allowed_authority_domains at all. At decision level the typed code is always collapsed to composition_record_invalid (decision.py 89-95 and 101-103; verify.py 412-415, 587-588), so the failing set is not identifiable.",
+        "why_it_matters": "A required operation sees only 'composition_record_invalid' whatever set is malformed; negative oracles for the two sets need the validator-level code AND the decision-level collapse pinned per set.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Per-set mutation table at validate_record_text_v2 + verify_and_decide_v2; expected codes are contract-derived, not read from code.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-04",
+        "description": "Contract section 2 / Amendment 1 5.1(3) describe the token rule as 'no control, separator or * characters'; the code and spec 6.1 (N-13) additionally exclude format (Cf), surrogate, private-use and every code point unassigned in Unicode 15.1.0. The frozen contract text does not mention the table.",
+        "why_it_matters": "An independent implementer following the contract text alone accepts U+200B or U+088F in an institution/domain entry that the Registry refuses; the containment check would then compare sets built under different rules.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Publish the table-derived expectations as the oracle for Runtime/CP; contract text is not a sufficient independent source.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-05",
+        "description": "128-character acceptance boundary and str-subclass/list-subclass rejection are asserted on allowed_actions only.",
+        "why_it_matters": "Boundary parity across the five sets is assumed, not asserted.",
+        "proposed_oracle_kind": "positive",
+        "independence_note": "Parametrise existing tests over F1AB_FIELDS; low independence (same code path).",
+        "severity": "LOW"
+      }
+    ],
+    "not_read": [
+      "registry_successor/v2_token_table.py (2869-line pinned table; only its sha pin and docs read)",
+      "tests/test_ext_s1_4_age_slots.py",
+      "docs/ext-implementation/ext-s1-5-effective-policy-identity-spec.md beyond section 6.1 and the rulings list"
+    ],
+    "confidence": "HIGH for code and test names (VERIFIED by reading); MEDIUM that EI-* vectors run through registry code in test_ext_s1_5_identity_module (INFERRED from loop at L166-176/L800)"
+  },
+  {
+    "topic_no": 2,
+    "topic": "intersection-only narrowing",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_f1ab.py",
+        "lines": "78-99",
+        "symbol": "compose_f1ab: operator must equal 'intersection' (80-81); effective[f] = tuple(sorted(set(caller[f]) & set(payload[f]))) for all five keys (95)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/families.py",
+        "lines": "99, 116-122, 179-198",
+        "symbol": "FAMILIES_V2 registers f1ab; compose_v2/_compose dispatch (operator, record validity, family, composer)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "117-121",
+        "symbol": "_decide_verified composes only after record_binding pass; kind applied / applied_deny_all"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/compose.py",
+        "lines": "15-22",
+        "symbol": "CompositionResult"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 2 line 21 ('intersection per key'), line 30-31",
+      "docs/r08-v2-contract-amendment-1.md section 3 rule 2 (line ~80: effective is the narrowed result, registry and caller inputs not in preimage)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_effective_is_intersection_and_subset_of_both",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "covers all five keys; for institutions and domains the registry set is a subset of the caller set, so only the 'caller has extras' direction is exercised"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_registry_cannot_widen_caller",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "allowed_actions only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_exhaustive_small_grid_never_widens",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "power-set grid over allowed_units only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_non_ascii_entry_does_not_poison_ascii_caller_intersection",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "institutions: caller ['a'] vs registry ['a','\\u00e9'] -> ('a',); the only registry-wider-than-caller case for a two-set key"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_no_normalization_or_case_folding_in_matching",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "institutions only: Inst-A vs inst-a, NFC vs NFD stay distinct (-> deny-all)"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_all_32_empty_combinations_are_explicit_deny_all[32]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "caller-empty and payload-empty on every key; the only test where allowed_authority_domains has a caller narrower than the registry"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_composer_is_pure_and_does_not_mutate",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "whole payload"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_operator_must_be_intersection[6]",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "operator, set-agnostic"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_01_valid_f1ab_is_applied_with_exact_intersection",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "decision level; institutions=['inst-a'] and domains=['domain-a'] on BOTH sides, so intersection is trivial for the two sets"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_02_narrowing_removes_u_write",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "decision-level narrowing asserted for allowed_units only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_vectors.py",
+        "test_name": "test_effective_payload_digests_use_the_domain_separated_preimage (EP-007/EP-008)",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "vectors narrow institutions (caller a,b,c vs registry a,b -> a,b; caller a -> a) and domains (caller a,z -> a) but are computed with a TEST-LOCAL compose() (L744), NOT v2_f1ab.compose_f1ab; also recomputed by Node"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-06",
+        "description": "Decision-level (verify_and_decide_v2) narrowing is exercised only for allowed_units (V1A-02); for the two sets the only decision-level case has identical single-element caller and registry sets.",
+        "why_it_matters": "G0 worker A's claim is VERIFIED at decision level: nothing at the public entry point shows the two sets are narrowed rather than copied from either side.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Table of (caller, registry, expected) per set, expected computed by an independent set-theoretic model, not by compose_f1ab.",
+        "severity": "HIGH"
+      },
+      {
+        "gap_id": "M1-E-07",
+        "description": "EP-007/EP-008 (narrowed institutions/domains) are never replayed against registry compose_f1ab; the vector composition is a test-local restatement. The Registry composer has no vector-driven test.",
+        "why_it_matters": "The narrowing vectors are the only independent (Node) evidence for the two sets, but the production composer is not bound to them.",
+        "proposed_oracle_kind": "differential",
+        "independence_note": "Run compose_f1ab over vector `inputs` and compare to `payload`; expected values already come from the vector file and Node.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-08",
+        "description": "No test where the registry set for allowed_institutions/allowed_authority_domains is a strict superset of the caller set at composer level (except one institutions case), and no property/exhaustive grid for either set (grid is units only).",
+        "why_it_matters": "'Registry cannot widen the caller' is the core narrowing-only property; a mutant that returns payload[f] instead of the intersection for one set would be caught only through the narrow cases listed above.",
+        "proposed_oracle_kind": "property",
+        "independence_note": "Exhaustive power-set grid and Hypothesis-style property over all five keys; independent set model.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-09",
+        "description": "No mutation run is evidenced for compose_f1ab on the two sets (operator replaced, per-key loop truncated to three keys, & replaced by |). Not executed here (collection-only).",
+        "why_it_matters": "The 3-key f1a composer and the 5-key f1ab composer share patterns; a copy of the 3-key loop would pass most decision-level tests.",
+        "proposed_oracle_kind": "mutation",
+        "independence_note": "Mutation harness over v2_f1ab.compose_f1ab with the tests of test_r08v2_f1ab_family + V01a; report survivors.",
+        "severity": "MEDIUM"
+      }
+    ],
+    "not_read": [
+      "registry_successor/v2_age_bounds.py (F4/F5, out of scope)"
+    ],
+    "confidence": "HIGH (VERIFIED by reading); mutant-survival statements are INFERRED, nothing executed"
+  },
+  {
+    "topic_no": 3,
+    "topic": "deny-all representation",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_f1ab.py",
+        "lines": "35-41, 96-97",
+        "symbol": "empty list valid in payload; empty effective set -> deny_all True and deny_all_fields tuple"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "120-121",
+        "symbol": "kind applied_deny_all with result.deny_all_fields"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_policy_identity.py",
+        "lines": "1213-1222 (_deny_all, deny_all_dimensions)",
+        "symbol": "deny_all = sorted names of empty-list dimensions"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 2 lines 27, 31 ('Deny-all is decided by the enforcing gate before any policy object is built (D-20)'), section 6 line 177 (registry_deny_all distinct from LocalExecutionPolicy.check denial)",
+      "docs/r08-v2-contract-amendment-1.md section 3 rule 3 (deny_all derived and checked)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_all_32_empty_combinations_are_explicit_deny_all[32]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "composer: every combination of empty dimension over all five keys; deny_all_fields order and effective == ()"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_disjoint_dimension_is_deny_all_never_caller",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "units only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_version_dispatch.py",
+        "test_name": "test_f1ab_under_v2_composes_all_five_fields_and_empty_set_denies",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "empty set injected into allowed_units"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_03_empty_set_is_explicit_deny_all",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "decision-level applied_deny_all asserted for allowed_units only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_vectors.py",
+        "test_name": "EP-004 (effective_payloads) via test_effective_payload_digests_use_the_domain_separated_preimage",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "all five empty: deny_all lists all five dimensions in the preimage; sets present but only as explicit empties"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_vectors.py",
+        "test_name": "EP-011/EP-012 (same test)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "single deny-all dimension is allowed_units; EP-012 shows empty-by-composition == explicit empty, units only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_identity_module.py",
+        "test_name": "test_effective_list_rules_and_bounds",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "deny_all_dimensions of an all-[] f1ab payload == all five names"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-10",
+        "description": "G0 worker A claim REFUTED at composer level and VERIFIED at decision/vector level: composer deny-all covers all five keys (32 combinations), but decision-level deny-all (V1A-03) and the single-dimension vectors (EP-011/012) are allowed_units only. There is no decision-level or vector case where exactly allowed_institutions (or exactly allowed_authority_domains) is empty and the other four are not.",
+        "why_it_matters": "Single-dimension deny-all for the two sets is the case a gate must reject on its own; only all-five-empty (EP-004) is pinned at the digest level.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Add EP-style vectors with deny_all == [allowed_institutions] and [allowed_authority_domains], plus decision-level applied_deny_all cases.",
+        "severity": "HIGH"
+      },
+      {
+        "gap_id": "M1-E-11",
+        "description": "No Registry test asserts that the deny-all result for the two sets can never be converted into a caller policy or an empty LocalExecutionPolicy on the required path (the code only returns tuples; contract says the gate decides before building a policy).",
+        "why_it_matters": "S04 (v1) builds a policy with an empty set and lets check() deny; v2 contract says preconstruction deny-all. No executable oracle for the two sets distinguishes the two behaviours.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Cross-component oracle owned by Runtime/CP; Registry can only publish the vector.",
+        "severity": "MEDIUM"
+      }
+    ],
+    "not_read": [],
+    "confidence": "HIGH"
+  },
+  {
+    "topic_no": 4,
+    "topic": "identity and provenance binding (who may supply/select the record; scope.institution / scope.authority_domain vs payload sets)",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_selection.py",
+        "lines": "38-93 (scope check at 67-68)",
+        "symbol": "v2 statement validator: scope tokens use common.valid_token (v1, host unicodedata dependent), not the frozen table or the ASCII grammar"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/verify.py",
+        "lines": "627-633",
+        "symbol": "authority layer: exact (consumer, tenant, institution, authority_domain, operation) grant match for a valid signer"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/verify.py",
+        "lines": "635-647",
+        "symbol": "scope layer: statement scope tenant/institution/authority_domain compared by equality to ExpectedContext"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/verify.py",
+        "lines": "412-432",
+        "symbol": "_record_binding: family, record id/version/digest, evaluator pinned by the signed statement"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_policy_identity.py",
+        "lines": "126-132, 1011-1025",
+        "symbol": "SCOPE_MEMBERS; project_scope: ASCII-identifier identity projection or field_invalid at stage projection"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/families.py",
+        "lines": "99",
+        "symbol": "no function relates scope.* to payload sets (grep over registry_successor/, registry_consumer/, registry_conformance/: allowed_institutions only in v2_f1ab.py and v2_policy_identity.py _F1AB_MEMBERS) - VERIFIED by absence"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 4 lines 76-88 (binding members), line 100 (ASCII identifier grammar), section 7.4 line 226",
+      "docs/r08-v2-contract-amendment-1.md section 5.1 and 5.3 (lines 218-235: scope-token projection)",
+      "docs/r08-v2-contract-amendment-4.md section 3.1 (pin members tenant_id, institution_id, authority_domain)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_r08_spec_conformance.py",
+        "test_name": "test_QV07_scope_mismatch[QV07c-institution, QV07d-authority-domain]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "v1 verify_selection: institution/domain context mismatch -> selection_scope_mismatch"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_s01_withdrawal_floor_signing.py",
+        "test_name": "test_av04_cross_scope_replay_is_refused[AV04c-cross-institution, AV04d-cross-domain]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "v2 verify_selection_v2 (FAKE verifier): same"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08_spec_conformance.py",
+        "test_name": "test_QV06_issuer_authority_is_exact",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "v1 path: grant with institution='inst-b' or authority_domain='domain-b' -> issuer_not_authorized"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08_verify.py",
+        "test_name": "authority tests at L143-148",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "v1; tenant and wildcard grants only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_09_wrong_context_refuses[3]",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "v2 decision path: tenant-b, consumer, operation only; institution/domain contexts NOT included"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08_selection.py",
+        "test_name": "resolver context cases at L257-258",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "v1 resolve_effective: inst-b / domain-b contexts are not matched"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_vectors.py",
+        "test_name": "scope_projection PJ-001..PJ-023 + identifier_matrix (via test_ext_s1_5_identity_module projection tests)",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "scope.institution/scope.authority_domain: NFC/NFD, Cyrillic homoglyph, fullwidth, emoji, control, whitespace, '%', leading '_' all refuse field_invalid at stage projection; first-in-sorted-order member"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_trust_snapshot_and_identity.py",
+        "test_name": "binding-edit test at L327-328",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "changing scope.institution / scope.authority_domain changes the binding digest"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-12",
+        "description": "(c) No vector or test crosses scope.institution / scope.authority_domain with the payload sets. Neither contract text nor code states the intended relation (e.g. a statement scoped to inst-a pinning a record whose allowed_institutions is ['inst-b'], or whose allowed_authority_domains excludes the scope's domain). The Registry composes and returns it as 'applied'. Default fixtures use inst-a/domain-a in both places, so even an accidental coupling would be invisible.",
+        "why_it_matters": "The relation is the heart of 'who may narrow what': if the intended semantics is independence, the oracle must pin that explicitly; if containment is intended, nothing enforces it in the Registry.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Specify first (Architect), then add vectors with scope != payload for each set, expected value from the specification, not from code.",
+        "severity": "HIGH"
+      },
+      {
+        "gap_id": "M1-E-13",
+        "description": "The v2 statement validator accepts scope tokens under common.valid_token (host Unicode database; v2_selection.py:67-68) and grants likewise (verify.py:343-344); Unicode scope.institution passes verify_and_decide_v2 and is refused only later at binding projection. No test pins that v2 decision/verification accepts or refuses a Unicode institution or authority_domain scope token. Contract line 100 parenthetical says r08-v2 refuses v1 Unicode scope tokens; Amendment 1 5.3 says refusal happens at projection only.",
+        "why_it_matters": "Host-dependent acceptance of scope tokens is exactly the N-13 divergence that was frozen for payload entries; scope tokens were not brought under the frozen table.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Vector: Unicode and divergent-code-point scope.institution through verify_and_decide_v2 with the expected value stated by Amendment 1 5.3.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-14",
+        "description": "Authority-grant mismatch on institution or authority_domain (issuer_not_authorized) is tested on the v1 path only; the v2 path has no such test (grep issuer_not_authorized: tests/test_r08_spec_conformance.py, tests/test_r08_verify.py).",
+        "why_it_matters": "Who may select a record for an institution/domain rests on the grant match; v2 adds private-copy normalisation (verify.py 216-222, 343-344) that is untested for these two fields.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Port QV06 institution/domain rows to verify_selection_v2.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-15",
+        "description": "V1A-09 (the v2 decision-level wrong-context test) omits institution and authority_domain contexts.",
+        "why_it_matters": "Decision-level cross-institution/cross-domain refusal is covered only at verify level.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Add the two rows; same oracle as AV04c/d.",
+        "severity": "LOW"
+      }
+    ],
+    "not_read": [
+      "Runtime/Control Plane sources (other workers)",
+      "tests/test_core_security_mutants.py bodies beyond grep"
+    ],
+    "confidence": "HIGH that no Registry code relates scope to payload sets (VERIFIED by grep + reading); contract intent for the relation is UNSPECIFIED, not inferred"
+  },
+  {
+    "topic_no": 5,
+    "topic": "substitution attacks (swap record, swap family, cross-scope, cross-tenant, cross-version, replay of an older record)",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/verify.py",
+        "lines": "412-432",
+        "symbol": "_record_binding: digest recomputation, family equality, record id/version/digest, evaluator"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "99-116",
+        "symbol": "record/payload digests recomputed again; bound_record_digest compared"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/verify.py",
+        "lines": "583-585, 636-647, 664-669",
+        "symbol": "integrity, scope, revocation and epoch layers"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/families.py",
+        "lines": "140-156",
+        "symbol": "table_for_contract_version: exact r08-v1 / r08-v2 only"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_selection.py",
+        "lines": "22, 29-30",
+        "symbol": "SIGNING_DOMAIN_V2 domain separation"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/record.py",
+        "lines": "89-95",
+        "symbol": "_supersession_ok: lower version of same record_id"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 1 line 11 (cross-version), section 3 line 53 (replay), section 7.1 lines 205-207",
+      "docs/r08-v2-contract-amendment-3.md section 2 item 5",
+      "docs/r08-v2-contract-amendment-4.md section 2.1 (adversary table)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_10_other_record_than_pinned_refuses",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "other record differs in allowed_units"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_06_record_altered_after_signing_refuses",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "tamper widens allowed_units; reseal -> record_digest_mismatch"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_16_* (3 tests)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "cross-version v1/v2 record and entry points; family f1ab at v1 -> family_unsupported; set-agnostic"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_golden_replay.py",
+        "test_name": "test_v1_golden_replay_byte_identical[chunks]",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "golden corpus has f1ab only as a REFUSED family string with a 3-key payload (fam-f1ab); no f1ab record with narrowed institutions/domains (VERIFIED by JSON grep)"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08_v2_canonical_base64_vectors.py",
+        "test_name": "199-vector signature spelling",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "signature substitution, set-agnostic"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_s01_withdrawal_floor_signing.py",
+        "test_name": "test_av04_cross_scope_replay_is_refused[5], test_av05_epoch_floor_revoked_pair_and_superseded_replay",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "cross-tenant/institution/domain/operation and epoch/revoked replay at verify level"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_core_security_sig_and_key_admission.py",
+        "test_name": "v2 context private-copy tests L1036-1037, L1120",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "context subclass/str-subclass -> selection_scope_mismatch"
+      },
+      {
+        "repo": "registry",
+        "file": "registry_conformance/vectors/01_selection_epoch.json + 02_revocation_withdrawal_replay.json (via tests/test_conformance_kit.py)",
+        "test_name": "EP-02, EP-04, RV-07, RV-08",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "replay and per-scope epochs; all vectors use ONE scope (tenant-a/inst-a/domain-a), EP-04 varies only selection_id/operation"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-16",
+        "description": "No substitution vector differs only in allowed_institutions / allowed_authority_domains: e.g. a resealed record with the same record_id and record_version but a widened institutions list pinned by an older signed selection (expect record_digest_mismatch), or an older record_version with a wider domain set.",
+        "why_it_matters": "The digest check covers the whole payload by construction, but the tests that prove it widen allowed_units only; a regression that digests a subset of the payload would pass.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Pair of records identical except one set; expected code from the contract (record_digest_mismatch / digest_mismatch).",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-17",
+        "description": "Conformance kit vectors never vary tenant, institution or authority_domain between scopes (regex scan of all 11 vector files: only tenant-a, inst-a, domain-a; MF-01 has malformed values). Cross-scope and cross-tenant substitution at the activation/guard layer is not exercised, and an other-institution claim would read `not_activated` rather than a mismatch.",
+        "why_it_matters": "Registry kit is the only executable model of the guard comparison; it has no institution/domain isolation oracle.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Add two-scope vectors differing in institution only and in authority_domain only (state rows must not interfere; guard on the wrong scope refuses).",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-18",
+        "description": "No test for cross-family substitution at decision level where the pinned record is f1ab and the statement family is f1a (or vice versa) with sets present; family equality is checked in _record_binding (verify.py:424) but only golden/v1 corpus rows exercise family mismatch.",
+        "why_it_matters": "Swapping a 3-key f1a record for a 5-key f1ab selection would drop the two sets entirely if a mismatch were ever accepted.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Decision-level family-swap table in both directions.",
+        "severity": "MEDIUM"
+      }
+    ],
+    "not_read": [
+      "tests/test_s06_integrity.py",
+      "tests/test_v09_*.py (record/candidate integrity pins)",
+      "tests/test_r08_regressions.py bodies"
+    ],
+    "confidence": "MEDIUM-HIGH; vector-file scans VERIFIED, family-swap decision-level gap INFERRED from grep"
+  },
+  {
+    "topic_no": 6,
+    "topic": "selection and activation boundaries",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_conformance/highwater.py",
+        "lines": "41-49, 75, 107-123, 671-695, 964-1024",
+        "symbol": "SCOPE_FIELDS (7), scope_key, _chain_key (drops selection_id), _do_select, _guard; no allowed_* member anywhere in the kit"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/selection.py",
+        "lines": "174-178, 202-247",
+        "symbol": "_matches (scope equality incl. institution/authority_domain), _resolve; resolve_authoritative always refuses"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_policy_identity.py",
+        "lines": "1092-1138",
+        "symbol": "scope_key object (7 members, versioned, no delimiter join)"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 7 (state, scope key line 184), 7.1 transitions, 7.4 guard lines 223-232",
+      "docs/r08-v2-contract-amendment-1.md section 6 (not_activated, policy_identity_mismatch, store_unknown)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_conformance_kit.py",
+        "test_name": "224 collected tests (vector replay + mutation harness)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "scope fields are constants 't','i','d' (L164, 188, 262); no institution/domain variation"
+      },
+      {
+        "repo": "registry",
+        "file": "registry_conformance/vectors/08_guard_and_optional_fallback.json",
+        "test_name": "GD-01..GD-11",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "guard on a single scope; no payload sets"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_vectors.py",
+        "test_name": "scope_keys SK-MUT-institution, SK-MUT-authority_domain, scope_key_collision_pairs SKC-002/003",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "scope key changes with institution/authority_domain; delimiter-collision pairs involving institution and authority_domain"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08_selection.py",
+        "test_name": "resolver cross-context cases (L257-258)",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "inst-b/domain-b contexts not matched"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-19",
+        "description": "Activation/selection is Registry-external (kit only). The kit has no payload sets, so there is no Registry oracle that an activated record's institution/domain sets are the ones later contained against, and no vector where two scopes differ only in institution or authority_domain share a store (state-row isolation, selection_conflict not triggered across them).",
+        "why_it_matters": "Selection boundary for institution/domain scopes is exercised only through scope-key derivation vectors, not through activation/guard behaviour.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Two-scope vectors (see M1-E-17).",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-20",
+        "description": "Kit identifier grammar `^[A-Za-z0-9._:/-]{1,128}$` (highwater.py:75) differs from the binding grammar `\\A[A-Za-z0-9][A-Za-z0-9._:-]{0,127}\\Z`: it admits '/' and a leading '.', '_', ':' or '-'. A scope the kit activates may be one the binding projection refuses.",
+        "why_it_matters": "Kit and identity module disagree about which institution/domain tokens are legal scope members; the kit is the stated model for implementers.",
+        "proposed_oracle_kind": "differential",
+        "independence_note": "Differential: same scope-token corpus through kit.scope_key and v2_policy_identity.project_scope.",
+        "severity": "LOW"
+      }
+    ],
+    "not_read": [
+      "registry_conformance/highwater.py lines 220-360 and 700-960 (state-verification and transition helpers read only by symbol list)",
+      "docs/conformance/README.md"
+    ],
+    "confidence": "MEDIUM-HIGH"
+  },
+  {
+    "topic_no": 7,
+    "topic": "effect-time enforcement (what the Registry requires of the Runtime; Registry code stops at composition)",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "47-77, 117-121",
+        "symbol": "Registry returns effective tuples / refusals only; operationally_authorized always False"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 7.4 lines 219-232 (guard under destination lock, item 3 'not compared to durable state')",
+      "docs/r08-v2-contract-amendment-3.md section 2 items 1-6 (lines 24-33): per-set subset containment of executor policy within the activated record payload, REFUSE policy_identity_mismatch, indeterminate payload -> HOLD store_unknown, missing executor sets -> verifier_unavailable",
+      "docs/r08-v2-contract-amendment-3.md section 3 (residual limits) and line 40 (not evidence F-01 is closed)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_contract_amendment_3_pins.py",
+        "test_name": "test_normative_section_covers_the_invariant_and_adds_no_reason_code",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "TEXT pin only: asserts the five set names and the strings 'policy_identity_mismatch', 'store_unknown', 'HOLD' occur in the amendment; no behaviour"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_contract_amendment_3_pins.py",
+        "test_name": "test_frozen_contract_is_unchanged_and_quoted / test_excerpts_of_the_supersession_table_exist_in_the_frozen_contract",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "sha256 / blob pins"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_contract_amendment_4_pins.py",
+        "test_name": "test_roles_codes_protocol_and_limits_are_stated",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "text pin"
+      }
+    ],
+    "coverage_for_two_sets": "NONE",
+    "gaps": [
+      {
+        "gap_id": "M1-E-21",
+        "description": "No executable Registry-side oracle for effect-time containment of the two sets. Amendment 3 is prose with text-pin tests; the five-set containment vectors (executor sets x record payload sets -> accept / REFUSE policy_identity_mismatch / HOLD store_unknown, including 'first offending set' ordering) do not exist in the Registry repo.",
+        "why_it_matters": "This is the missing independent oracle for the M1 negative-oracle proposal; the Runtime tests are the only executable evidence and are authored by the implementer.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Publish a Registry-owned vector file: (executor sets, record payload, expected verdict, expected cause) with cases per set, including extras in institutions only and domains only, empty executor set, payload missing a set, malformed payload set.",
+        "severity": "HIGH"
+      },
+      {
+        "gap_id": "M1-E-22",
+        "description": "Amendment 3 item 1 says the 'evidence cause names the first offending set' but defines no order of sets and no cause spelling; Amendment 1 6.2a states `member`/`unknown_cause` carry no normative weight. A containment violation in both extra institutions and extra domains has no specified reported cause.",
+        "why_it_matters": "Negative oracles cannot assert the cause string; two correct implementations may disagree.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Needs a specification decision before a vector can pin it.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-23",
+        "description": "Amendment 3 maps containment failure to policy_identity_mismatch, whose Amendment 1 6.1 definition is 'a claim-carried identity member differs from the durable activation row'; executor-policy-vs-record-payload is not one of the listed members. Semantic stretch of an existing code.",
+        "why_it_matters": "Reason-code oracles for the two sets inherit an ambiguous definition.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Specification clarification; then a vector.",
+        "severity": "LOW"
+      }
+    ],
+    "not_read": [
+      "Runtime guard code (Runtime worker)",
+      "docs/decisions/2026-10-26-adr-ext-s4-0-integration-contract.md (referenced; not read)"
+    ],
+    "confidence": "HIGH that Registry has no executable containment test (VERIFIED by reading the pins tests and grepping for allowed_institutions)"
+  },
+  {
+    "topic_no": 8,
+    "topic": "revocation and stale-state behavior",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/verify.py",
+        "lines": "664-669",
+        "symbol": "revocation layer (revoked_selections) and epoch floor (min_epochs)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/verify.py",
+        "lines": "493-536",
+        "symbol": "snapshot floor / last_accepted_snapshot: trust_snapshot_version_stale"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "54-60",
+        "symbol": "optional refusal -> overlay_not_applied with caller policy (normalised with the f1a normaliser)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_conformance/highwater.py",
+        "lines": "546-560, 580-630, 1027-1055",
+        "symbol": "revoked set, revoked key/record/issuer, stale epoch, no-binding fallback"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 3.2 line 61, section 6 line 178, section 7.1-7.3",
+      "docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md line 131 (stale epoch is REFUSE, not HOLD)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_s01_withdrawal_floor_signing.py",
+        "test_name": "test_av05_epoch_floor_revoked_pair_and_superseded_replay",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "set-agnostic"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_07_withdrawn_selection_refuses; test_v1a_15_optional_refusal_is_not_an_application",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "f1ab record but nothing asserted about the sets; optional case asserts only kind and caller_unchanged"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_conformance_kit.py",
+        "test_name": "vector replay RV-01..RV-18, SN-01..SN-08, GD-05..GD-07",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "state machine is payload-independent; no payload in the kit"
+      }
+    ],
+    "coverage_for_two_sets": "NOT_APPLICABLE",
+    "gaps": [
+      {
+        "gap_id": "M1-E-24",
+        "description": "Optional-participation fallback after withdrawal/expiry/revocation returns the caller policy unchanged, i.e. the registry narrowing of institutions/domains disappears. test_v1a_15 asserts only kind and caller_unchanged; nothing pins that `effective` equals the caller's institutions/domains (and for a five-key caller what object is returned, see M1-E-28).",
+        "why_it_matters": "A negative oracle for 'withdrawn narrowing does not linger' must say that the effective two sets are exactly the caller's, never the withdrawn record's.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Decision-level table over optional/required x {withdrawn, expired, revoked, stale} with registry institutions != caller institutions.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-25",
+        "description": "machine-readable ld02-outcome-map.json (vetted proposal, not ratified) still classifies selection_scope_mismatch and 23 other codes HOLD, and its `applied` entry says 'F1a sets only'; the ADR (line 131) flips only selection_epoch_stale and selection_withdrawn to REFUSE. Contract section 6 line 178 matches the ADR, the map does not.",
+        "why_it_matters": "The REFUSE-vs-HOLD class of a wrong-institution selection (scope mismatch) is HOLD in the map but containment failure (same institution fact) is REFUSE in Amendment 3.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Specification decision; then a code-class vector.",
+        "severity": "LOW"
+      }
+    ],
+    "not_read": [
+      "docs/p1-extraction-plan/data/ld02-outcome-map.json beyond the rows listed",
+      "registry_conformance/highwater.py lines 220-360"
+    ],
+    "confidence": "HIGH that tests are payload-independent; NOT_APPLICABLE is a judgement because revocation keys are selection id/epoch/key/record, not set content"
+  },
+  {
+    "topic_no": 9,
+    "topic": "recovery and restart behavior (what the Registry requires of the Runtime; kit models state generically)",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_conformance/highwater.py",
+        "lines": "281-360, 1058+",
+        "symbol": "anchor, state problems, restore/lose_state/rebaseline (generic, no payload)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_codes.py",
+        "lines": "33-39",
+        "symbol": "REV2 codes: not_activated, policy_identity_mismatch, store_unknown"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 8 lines 238-246 (restore, rollback, custody; 'Lost state is unknown, never zero'; restart before first sync refuses required scopes)",
+      "docs/r08-v2-contract-amendment-3.md section 2 item 2 (record payload missing/non-canonical/digest mismatch -> HOLD store_unknown)",
+      "docs/r08-v2-contract-amendment-4.md section 7"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "registry_conformance/vectors/05_restore_rollback_custody.json",
+        "test_name": "RC-01..RC-19 (via tests/test_conformance_kit.py)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "restore, torn write, lost state, anchor; payload-independent"
+      },
+      {
+        "repo": "registry",
+        "file": "registry_conformance/vectors/10_state_tampering.json",
+        "test_name": "TM-01..TM-06",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "row/ratchet/revoked-set tamper"
+      }
+    ],
+    "coverage_for_two_sets": "NONE",
+    "gaps": [
+      {
+        "gap_id": "M1-E-26",
+        "description": "Amendment 3 item 2 requires the Runtime to treat a stored record payload that is missing a set, non-canonical, or not well-formed under the Registry value rules as HOLD store_unknown. The kit stores the record pin (id/version/digest) only, never the payload; no Registry vector covers a restart/restore where the stored payload lacks allowed_institutions or allowed_authority_domains, is truncated, or reorders them.",
+        "why_it_matters": "Recovery for the two sets is the case where a corrupted payload could silently turn into 'no restriction'.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Add payload-bearing state to the kit (or a companion vector) with corrupt-payload rows; expected UNKNOWN_FAIL_CLOSED / store_unknown.",
+        "severity": "HIGH"
+      }
+    ],
+    "not_read": [
+      "Runtime recovery code",
+      "registry_conformance/highwater.py 1058-1098"
+    ],
+    "confidence": "MEDIUM-HIGH"
+  },
+  {
+    "topic_no": 10,
+    "topic": "refusal reason compatibility (typed codes, REFUSE vs HOLD, retry classes)",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_codes.py",
+        "lines": "26-39",
+        "symbol": "CODES_V2 (46+2), CODES_V2_REV2 (+3)"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/common.py",
+        "lines": "31-86",
+        "symbol": "CODES: composition_* and field_* codes"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_f1ab.py",
+        "lines": "73-75, 78-99",
+        "symbol": "compose_f1ab refusals: composition_operator_unsupported / composition_record_invalid / composition_family_unsupported / composition_caller_invalid; every other exception -> composition_record_invalid"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "66-77, 80-123",
+        "symbol": "refusal_rev2, required -> required_policy_unavailable, optional -> overlay_not_applied"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "docs/p1-extraction-plan/data/ld02-outcome-map-rev2.json",
+        "lines": "codes_added",
+        "symbol": "verdict_class and retry_class for the three rev-2 codes"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md sections 3.2, 3.3, 6 (lines 171-178)",
+      "docs/r08-v2-contract-amendment-1.md section 6 (lines 236-330)",
+      "docs/r08-v2-contract-amendment-3.md item 1 and 2",
+      "docs/decisions/2026-10-25-adr-ext-s1-1-v1-contract.md lines 131-132, 225"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_reason_mapping_completion.py",
+        "test_name": "completeness over 51 codes (9 tests)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "vocabulary and map completeness"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_ext_s1_5_guard_amendment.py",
+        "test_name": "refusal_rev2 tests (41)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "rev-2 codes never fall back, never remapped"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_each_field_absent_refused_field_missing / test_sixth_key / test_malformed_lists_refused / test_invalid_caller_refuses_and_is_never_replaced / test_no_refusal_ever_returns_the_caller_policy",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "composer codes for all five keys; caller-invalid bad values target allowed_units/actions, but missing-set test covers all five"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_v01a_v2_record_path.py",
+        "test_name": "test_v1a_04_*, test_v1a_14_*, assert_refused()",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "required refusal never returns caller; typed validator code vs collapsed decision code"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_contract_amendment_1_pins.py",
+        "test_name": "test_additive_codes_are_disjoint_and_counts_hold, test_verdict_classes_belong_to_the_four_verdict_vocabulary",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "vocabulary pins"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-27",
+        "description": "No per-set attribution in any Registry refusal: payload_validator returns a bare shape code, compose_f1ab returns composition_record_invalid / composition_caller_invalid for any set, decision collapses record faults to composition_record_invalid. Only v2_policy_identity.validate_effective_payload reports a member, and its vectors name only allowed_actions/allowed_units. No test asserts which set is blamed for institutions or domains.",
+        "why_it_matters": "Reason-compatibility oracles for the two sets can only assert the generic code; the Runtime's 'first offending set' evidence (Amendment 3) has no Registry counterpart.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Member-level vectors for effective_payloads_invalid with offending member = each of the five keys.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-28",
+        "description": "In the optional-refusal path decision._plain_refusal normalises the caller with the f1a three-key normaliser (decision.py:57); for a five-key caller that returns None and the raw caller object is returned as `effective` (line 58). Not covered by any test (V1A-15 asserts kind and caller_unchanged only). VERIFIED by reading, not executed.",
+        "why_it_matters": "A five-key caller policy on the optional path is neither validated nor normalised, so malformed institutions/domains in the caller are returned as given (by design 'unchanged'), but sorted-tuple form (used on the applied path) and raw form differ.",
+        "proposed_oracle_kind": "differential",
+        "independence_note": "Decision-level test comparing optional-refusal effective with the normalised caller for five-key input; needs spec statement of expected shape.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-29",
+        "description": "REFUSE vs HOLD classification of a wrong-institution/domain outcome is inconsistent across documents: map HOLD for selection_scope_mismatch; REFUSE for policy_identity_mismatch (Amend 1, 3, 4); kit REFUSE for guard mismatches. Retry class for composition_* codes is not stated in the rev-2 map (only for the three new codes).",
+        "why_it_matters": "A negative oracle needs a single normative class per code.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Specification decision.",
+        "severity": "LOW"
+      }
+    ],
+    "not_read": [
+      "docs/p1-extraction-plan/data/ld02-outcome-map.json fully (spot-read 5 rows + HOLD list)",
+      "docs/conformance/README.md"
+    ],
+    "confidence": "HIGH for code facts; MEDIUM for classification discussion"
+  },
+  {
+    "topic_no": 11,
+    "topic": "caller-side normalisation and baseline LocalExecutionPolicy equivalence",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_f1ab.py",
+        "lines": "57-70",
+        "symbol": "normalize_caller: exactly five keys; list/tuple/set/frozenset of exact-str frozen-valid tokens; empty allowed; returns sorted tuples; accepts UNSORTED / duplicated input (set())"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "baseline/execution-runtime/engine/safe_executor.py",
+        "lines": "358-420",
+        "symbol": "LocalExecutionPolicy: allowed_institutions / allowed_authority_domains frozenset[str] of non-empty str (any content); check order: institution first, then authority domain, adapter, action, target, unit, amount, effects"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_consumer/consumer.py",
+        "lines": "42, 210-268",
+        "symbol": "S04 overlay (v1): EFFECTIVE_FIELDS is the three f1a sets; dataclasses.replace(caller_policy, **effective); institutions/domains untouched"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/v2_policy_identity.py",
+        "lines": "1167-1210",
+        "symbol": "validate_effective_payload role 'caller' = STRICT (sorted, duplicate-free lists, no sets) - different from normalize_caller"
+      },
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "registry_successor/decision.py",
+        "lines": "54-60",
+        "symbol": "optional path uses the f1a normaliser"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract.md section 6 line 177 (equivalence asserted only for representable non-empty effective policies)",
+      "docs/s04-implementation.md line 12 (S04 narrows exactly three sets; institutions, domains, prefixes caller-owned)",
+      "docs/s05-comparison-spec.md"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_caller_missing_a_set_refuses[5]",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "all five keys"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_invalid_caller_refuses_and_is_never_replaced[15]",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "bad values name allowed_units/allowed_actions; extra key, wrong container, upper-cased keys"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_r08v2_f1ab_family.py",
+        "test_name": "test_caller_set_types_accepted_and_sorted; test_caller_str_subclass_entry_refuses",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": true,
+        "note": "allowed_units only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_s04_overlay.py",
+        "test_name": "test_P1/P6 (institutions/domains unchanged; check order unchanged)",
+        "asserts_about_institutions_or_domains": "PARTIAL",
+        "asserts_about_units_only": false,
+        "note": "asserts the S04 overlay does NOT touch allowed_institutions/allowed_authority_domains and baseline institution check stays first; v1 three-set only"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_s01_baseline_local_policy.py",
+        "test_name": "test_first_failing_check_in_documented_order_wins; test_each_local_restriction_refuses_with_its_stable_reason",
+        "asserts_about_institutions_or_domains": "YES",
+        "asserts_about_units_only": false,
+        "note": "baseline characterisation: 'local institution restriction' then 'local authority-domain restriction'; pins the evaluator, not the Registry composer"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_s05_equivalence.py",
+        "test_name": "test_G1_exhaustive_equivalence_nonwidening_and_ordering; test_G2_per_field_exhaustive (oracle in tests/s05_oracle.py, frozen expectations)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "independent differential harness exists but only for actions/adapters/units; institutions/domains are fixed constants INSTITUTION/DOMAIN"
+      },
+      {
+        "repo": "registry",
+        "file": "tests/test_s03_contract.py",
+        "test_name": "test around L570-600 (not_supplied set)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "S03 validator does not supply institutions/domains"
+      }
+    ],
+    "coverage_for_two_sets": "PARTIAL",
+    "gaps": [
+      {
+        "gap_id": "M1-E-30",
+        "description": "No differential/equivalence oracle between compose_f1ab effective sets and LocalExecutionPolicy.check for the two sets. The S05 harness is the template (independent oracle, frozen expectations) but is three-set only; nothing builds a LocalExecutionPolicy from a five-set effective result in the Registry repo.",
+        "why_it_matters": "Contract section 6 asserts reason/order equivalence for representable non-empty policies; for the two sets that is exactly the cross-component question the M1 proposal needs.",
+        "proposed_oracle_kind": "differential",
+        "independence_note": "S05-style grid over (caller, registry, op institution/domain) with an independent model; exhaustive over small universes.",
+        "severity": "HIGH"
+      },
+      {
+        "gap_id": "M1-E-31",
+        "description": "Three different caller validators exist: normalize_caller (lenient: sets/tuples, unsorted, duplicates collapsed, frozen-table), validate_effective_payload role 'caller' (strict sorted/duplicate-free lists), and LocalExecutionPolicy.__post_init__ (any non-empty str incl. '*', spaces, >128 chars). A baseline policy holding such an institution/domain is refused composition_caller_invalid, never narrowed. No test states or pins this boundary for the two sets.",
+        "why_it_matters": "Caller-side refusal of baseline-legal values is fail-closed but changes behaviour relative to the baseline; the oracle must say that explicitly.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Vector: baseline-legal-but-token-invalid values in each of the two caller sets -> composition_caller_invalid, no effective policy.",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-32",
+        "description": "S04 (frozen v1) builds a policy with empty intersection and lets check() deny; v2 contract D-20 says deny-all is decided before any policy object is built. The two behaviours coexist; only 3-set S04 tests exist and none for the two sets.",
+        "why_it_matters": "Equivalence tests written against S04 semantics would contradict the v2 contract for the two sets.",
+        "proposed_oracle_kind": "differential",
+        "independence_note": "Document which semantics the M1 oracle follows.",
+        "severity": "MEDIUM"
+      }
+    ],
+    "not_read": [
+      "docs/s05-comparison-spec.md (referenced)",
+      "tests/s05_oracle.py, tests/s05_expectations.json (not opened; relied on test docstring and grep for institution)",
+      "baseline/ remainder"
+    ],
+    "confidence": "HIGH for code; MEDIUM that S05 oracle has no institution/domain variation (INFERRED from grep: no hits in s05_oracle.py, s05_expectations.json)"
+  },
+  {
+    "topic_no": 12,
+    "topic": "pin / authorization-pin interaction (F-A1) with the five-set containment",
+    "code_refs": [
+      {
+        "repo": "registry",
+        "sha": "317eb76acb2847c534c3ce7c2180b89b4aef987d",
+        "file": "docs/r08-v2-contract-amendment-4.md",
+        "lines": "68-87 (pin members), 125-139 (guard steps 1-9), 240-248 (typed reasons)",
+        "symbol": "no registry_successor code implements the pin; contract only"
+      }
+    ],
+    "contract_refs": [
+      "docs/r08-v2-contract-amendment-4.md section 3.1 (pin carries tenant_id, institution_id, authority_domain; NOT the five sets), section 5 steps 4-7 (pin lineage and binding checks precede the 7.4 guard, containment is step 7), section 9",
+      "docs/r08-v2-contract-amendment-3.md section 2",
+      "Status: Amendment 4 is a DRAFT, not effective until the Architect merges it (line 3)"
+    ],
+    "existing_tests": [
+      {
+        "repo": "registry",
+        "file": "tests/test_contract_amendment_4_pins.py",
+        "test_name": "5 tests (frozen pins, supersession excerpts, roles/codes/protocol/limits stated, plan size, no unfenced terminal commit)",
+        "asserts_about_institutions_or_domains": "NO",
+        "asserts_about_units_only": false,
+        "note": "text pins only; no behavioural test of the pin, installer or guard exists in this repo"
+      }
+    ],
+    "coverage_for_two_sets": "NONE",
+    "gaps": [
+      {
+        "gap_id": "M1-E-33",
+        "description": "Naming/mapping gap: the pin stores `institution_id` and `authority_domain` (from TenantAuthorizationBinding) while step 5 compares the binding's `scope.institution` / `scope.authority_domain` to 'the pin's'; step 4 compares the claim's `institution_id`/`authority_domain` to the pin. The equality institution_id == scope.institution is implied, not stated. The ASCII grammar applies to scope.* but is not stated for the pin members.",
+        "why_it_matters": "A negative oracle for pin-vs-scope substitution of institution/domain needs the mapping and the grammar stated.",
+        "proposed_oracle_kind": "negative",
+        "independence_note": "Clarify in the amendment; then vectors (pin inst-a, binding scope inst-b, claim inst-a ...).",
+        "severity": "MEDIUM"
+      },
+      {
+        "gap_id": "M1-E-34",
+        "description": "Interaction order: pin step 5 (scope.* vs pin) precedes step 6 (scope key from pin) and step 7 (five-set containment); the pin has no member for the five sets. No contract text or vector says that a record activated for the authorized institution may carry allowed_institutions that exclude (or include) that institution, i.e. the same unspecified relation as M1-E-12 seen from the pin side. Pin refusals and containment refusals share the code policy_identity_mismatch and differ only by an unspecified cause string.",
+        "why_it_matters": "A pin-valid claim with executor sets outside the record payload must still be refused by containment; there is no joint vector, and the cause strings for the two refusals are not in a common vocabulary.",
+        "proposed_oracle_kind": "vector",
+        "independence_note": "Joint vector: pin ok + binding ok + executor institution/domain set outside record payload -> REFUSE policy_identity_mismatch, cause names the set.",
+        "severity": "HIGH"
+      },
+      {
+        "gap_id": "M1-E-35",
+        "description": "Amendment 4 is DRAFT and Amendment 3 explicitly states it is not evidence F-01 is closed; any M1 closure claim cannot rely on Registry contract tests, which pin text only.",
+        "why_it_matters": "Status risk for the negative-oracle proposal.",
+        "proposed_oracle_kind": "positive",
+        "independence_note": "State status in the proposal.",
+        "severity": "LOW"
+      }
+    ],
+    "not_read": [
+      "docs/f-a1-authorization-pin/* (qualification-plan.md, implementation-proposal.md)",
+      "docs/decisions/2026-10-26-adr-ext-s4-0-integration-contract.md",
+      "Amendment 4 sections 6-7 beyond the table"
+    ],
+    "confidence": "HIGH that nothing executable exists in the Registry for this topic"
+  }
+]

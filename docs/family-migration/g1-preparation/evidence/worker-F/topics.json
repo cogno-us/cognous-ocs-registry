@@ -1,0 +1,1590 @@
+[
+ {
+  "topic_no": 1,
+  "topic": "allowed_institutions / allowed_authority_domains validation and bounds (Runtime/CP side: what is enforced or normalised)",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/safe_executor.py",
+    "lines": "359-394",
+    "symbol": "LocalExecutionPolicy.__post_init__ (frozenset of non-empty str; no size, length, charset or emptiness bound)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_f1a_narrowing.py",
+    "lines": "60-67",
+    "symbol": "_valid_effective (exact five keys; tuple of non-empty str; type() is str)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1566-1570",
+    "symbol": "_clean_set (set/list/tuple of non-empty str)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1436-1443",
+    "symbol": "policy_digest_unavailable HOLD when Registry digest cannot be computed from executor sets"
+   },
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+    "file": "src/agent_control_plane/canonical_policy_binding.py",
+    "lines": "40-42,57-92",
+    "symbol": "binding_defect: scope.institution / scope.authority_domain must match identifier regex [A-Za-z0-9][A-Za-z0-9._:-]{0,127}"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract.md section 4.1 (identifier/digest rules) and 7.4 item 1",
+   "Registry docs/r08-v2-contract-amendment-3.md section 2 items 2-4 (well-formed sets; malformed record sets are HOLD store_unknown)",
+   "Registry registry_successor/v2_f1ab.py:28-52 and v2_token.py (payload bounds: sorted, unique, <=256 entries, 1..128 code points, no '*'): context only"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_security_admission.py",
+    "test_name": "test_local_policy_rejects_non_frozenset_allowed_sets (param over allowed_institutions and allowed_authority_domains)",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "construction refuses str, mutable set, frozenset({1}); no empty-string member, no empty-set, no size/length/'*' case"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_06_missing_or_unknown_set_is_a_typed_registry_refusal",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "pops allowed_institutions and allowed_authority_domains from record payload -> composition_record_invalid, no policy built (adapter level)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_07_malformed_payload_values_are_refused",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": true,
+    "note": "unsorted/wrong type/duplicate/wildcard/empty token matrix is applied to allowed_units only"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_15_a_malformed_effective_policy_from_the_decision_is_refused",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "tamper pops allowed_institutions (key set), other tampers use allowed_units"
+   },
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "file": "tests/test_v02_claim_policy_binding.py",
+    "test_name": "test_a06_identifier_matrix_every_bad_value_in_every_identifier_member / test_a08",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "scope.institution and scope.authority_domain identifier matrix incl. in claim binding (CP side)"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-01",
+    "description": "No test pins what the destination does when the executor LocalExecutionPolicy holds an institution or authority-domain member that violates the Registry token rule (contains '*', >128 code points, excluded Unicode range) or a set with >256 entries. LocalExecutionPolicy accepts any non-empty str with no bound (safe_executor.py:374-386); policy_digest_of then returns None and the guard raises verifier_unavailable[policy_digest_unavailable] HOLD (registry_selection_authority.py:1441-1442). That branch is asserted nowhere (grep of tests and SQ suites).",
+    "why_it_matters": "The two sets are the only ones whose natural values (URNs, domain names) are likely to carry characters the Registry token rule refuses; the failure would be HOLD rather than REFUSE and should be pinned.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Independent of Runtime fixtures if the fixture builds policies directly and calls policy_digest_of plus execute_claim_atomic.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-02",
+    "description": "LocalExecutionPolicy construction tests for the two sets omit an empty-string member (frozenset({''})) and do not pin that an EMPTY frozenset is accepted (and means deny-all at check()).",
+    "why_it_matters": "Deny-all by empty set is a representation choice the M1 closure relies on; unpinned for institutions/domains.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Trivial; authored from safe_executor.py:374-386 only.",
+    "severity": "LOW"
+   },
+   {
+    "gap_id": "M1-F-03",
+    "description": "Adapter malformed-value matrix (unsorted, wrong type, duplicate, '*', empty token) is exercised for allowed_units only (M1-07); composition_caller_invalid (caller policy value violating the token rule) has no Runtime test for any set.",
+    "why_it_matters": "Value-rule enforcement for inst/domain is Registry-owned, but the Runtime adapter's surfacing (typed refusal, no policy built) is unproven for these two sets.",
+    "proposed_oracle_kind": "vector",
+    "independence_note": "Registry vectors (ext-s1-5 policy identity vectors) can seed it; independent of the Runtime test tree.",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "Registry validators for the payload (v2_f1ab.py read only lines 20-60); G0 Worker R owns them"
+  ],
+  "confidence": "MEDIUM-HIGH",
+  "claims": [
+   {
+    "claim": "LocalExecutionPolicy enforces only 'frozenset of non-empty str' for the two sets; no size/length/charset/emptiness rule",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Governed-path identifier regex for scope.institution/authority_domain is narrower than the baseline policy values accepted by LocalExecutionPolicy",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "A policy member failing the Registry token rule yields HOLD verifier_unavailable at effect time",
+    "status": "INFERRED (code path read; no test executes it)"
+   }
+  ],
+  "coverage_basis": "IMPLICIT/PARTIAL: construction type checks and one key-set tamper cover the two sets; value rules covered for allowed_units only"
+ },
+ {
+  "topic_no": 2,
+  "topic": "Intersection-only narrowing (adapter-level narrowing and effect-time subset containment)",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_f1a_narrowing.py",
+    "lines": "75-129",
+    "symbol": "evaluate_with_registry_selection (applied only; effective subset of caller; replace() of five frozensets; digest self-check)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_f1a_narrowing.py",
+    "lines": "112-113",
+    "symbol": "effective_policy_widens_caller loop over all five FIELDS"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1451-1484",
+    "symbol": "_check_policy_containment (executor set <= record payload set, per field, first offender named)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/atomic_local_control_plane_executor.py",
+    "lines": "96-100",
+    "symbol": "executor derives policy_effective_digest and policy_effective_sets from self.policy"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract-amendment-3.md section 2 item 1 (containment per set, subset or equal) and item 3",
+   "Registry docs/r08-v2-contract.md section 7.4 item 3 (superseded as sole enforcement point by Amendment 3 section 1)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_04_five_set_intersection_is_exact_and_never_widens",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "caller inst {a,b} x record {a,z} -> {a}; domain {a,b} x {a} -> {a}; inst-b and domain-b refused although the caller permits them"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_04_institutions_and_authority_domains_are_present_and_unchanged",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "equal sets pass; inst-b refused with 'local institution restriction' (only place that message is asserted)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_15_an_effective_set_wider_than_the_caller_is_refused",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": true,
+    "note": "monkeypatches allowed_units wider than caller only"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_4_to_8_widening_one_set_is_refused[allowed_institutions|allowed_authority_domains]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "one extra member per set; cause policy_not_subset:<field>; zero effects/attempts/receipts/budget"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_2_..._strictly_narrower / test_f01_3_..._equal_policy_commits",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "narrower and equal in all five sets at once (not per set)"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/security-v07/test_adversarial.py",
+    "test_name": "test_a15_widen_allowed_institutions... / test_a16_widen_allowed_authority_domains... (via _widen_one)",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "same attack re-authored in SQ but built on Runtime fixtures (imports test_registry_selection_effect_guard as g); needs V07_COMPONENTS_DIR"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-04",
+    "description": "The adapter's own subset check (registry_f1a_narrowing.py:112-113) is exercised only by widening allowed_units (M1-15). A mutant that drops allowed_institutions / allowed_authority_domains from that loop, or from the empty check at :110, is not killed by any Runtime test because Registry's composer already intersects before the adapter sees the decision.",
+    "why_it_matters": "Single-set test leaves two of five loop members unprotected against mutation.",
+    "proposed_oracle_kind": "mutation",
+    "independence_note": "Mutation harness over registry_f1a_narrowing.py; independent of fixture family.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-05",
+    "description": "All durable-path fixtures use single-member sets (inst-a, domain-a). No multi-member institutions/domains record, no partial-overlap executor set that is NOT a subset (e.g. executor {a,x} vs record {a,b}), and no property test over subset/superset/disjoint combinations for the two sets.",
+    "why_it_matters": "Direction and strictness of the subset test are only shown for 'one extra member on a one-member base'; cardinality- or intersection-style mutants are not exercised.",
+    "proposed_oracle_kind": "property",
+    "independence_note": "Existing Runtime and SQ V07 oracles share one fixture family (single-member sets, one scope inst-a/domain-a, one signing key, builders imported from tests/test_registry_selection_authority.py); a new oracle should carry its own multi-member fixture and be authored outside the Runtime test tree.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-06",
+    "description": "Nothing in the engine builds the executor policy from caller policy and the activated record on the durable path: evaluate_with_registry_selection (the only code that computes caller INTERSECT record) is imported by no engine module (grep). The effect-time guard enforces executor SUBSET-OF record, not equality with the intersection. No end-to-end test takes a multi-member caller policy and record, derives the effective policy via the adapter, and drives it through the atomic route to show the two agree for institutions/domains.",
+    "why_it_matters": "M1 closure claims intersection-only narrowing; the two halves (compose-time intersection, effect-time containment) are proven separately, never together.",
+    "proposed_oracle_kind": "differential",
+    "independence_note": "Needs a differential oracle comparing adapter output with atomic-route outcome across an institution x domain grid.",
+    "severity": "HIGH"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)"
+  ],
+  "confidence": "HIGH",
+  "claims": [
+   {
+    "claim": "Effect-time check is subset containment of executor sets in the record payload, not an intersection computation",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "evaluate_with_registry_selection is not called by any engine module",
+    "status": "VERIFIED (rg over runtime checkout)"
+   },
+   {
+    "claim": "All governed Runtime fixtures use one-member sets",
+    "status": "VERIFIED"
+   }
+  ],
+  "coverage_basis": "EXPLICIT for refusal of one-extra-member widening in both sets; IMPLICIT for positive/narrower cases"
+ },
+ {
+  "topic_no": 3,
+  "topic": "Deny-all representation (empty set) for the two sets",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_f1a_narrowing.py",
+    "lines": "101-111",
+    "symbol": "applied_deny_all and effective-empty refusals before any policy object is built"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/safe_executor.py",
+    "lines": "413-416",
+    "symbol": "empty frozenset => 'local institution restriction' / 'local authority-domain restriction' for every op"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1473-1484",
+    "symbol": "containment against an empty record set: executor member absent => policy_not_subset:<field>"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/atomic_local_control_plane_executor.py",
+    "lines": "69-83",
+    "symbol": "local policy check precedes the destination: policy_denial / local_policy_rejected"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract.md section 2 (family list; [] = explicit deny-all) context",
+   "Registry docs/r08-v2-contract-amendment-3.md section 2 item 1",
+   "G0 ledger G0-A-002 ('[] = deny-all') context"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_05_empty_effective_set_is_explicit_deny_all_before_any_policy_is_built[all five fields]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "record with [] in each set -> registry_kind applied_deny_all, no policy built"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_05_empty_intersection_with_nonempty_record_is_also_deny_all",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": true,
+    "note": "disjoint allowed_units only"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_15_a_malformed_effective_policy_from_the_decision_is_refused[allowed_units=()]",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": true,
+    "note": "the adapter's own empty-set branch (:110-111) is reached only by the units tamper"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-07",
+    "description": "Durable and effect-time deny-all is untested for the two sets. No test activates a record whose allowed_institutions or allowed_authority_domains is [] and shows the claim is refused (policy_not_subset:<field>, zero effects), and no test runs an executor whose own allowed_institutions/allowed_authority_domains is empty through the atomic route (expected policy_denial 'local institution restriction'; the atomic-route evaluator test uses allowed_actions). The adapter-level empty branch (:110-111) is exercised only for allowed_units.",
+    "why_it_matters": "Deny-all is the fail-closed representation. A truthiness shortcut such as 'if registry_sets[field] and not executor<=registry' would turn an empty record set into 'no restriction' and no existing test would fail.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Independent fixture needed: record payload with [] for exactly one of the two sets, otherwise the standard record.",
+    "severity": "HIGH"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)"
+  ],
+  "confidence": "HIGH",
+  "claims": [
+   {
+    "claim": "Containment against an empty record set refuses any non-empty executor set",
+    "status": "INFERRED (by code reading of :1483; no test)"
+   },
+   {
+    "claim": "LocalExecutionPolicy accepts empty frozensets (deny-all at check)",
+    "status": "VERIFIED"
+   }
+  ],
+  "coverage_basis": "EXPLICIT at adapter level for all five sets; NONE at durable/effect level for the two sets"
+ },
+ {
+  "topic_no": 4,
+  "topic": "Identity and provenance binding (who supplies/selects the record; scope.institution / scope.authority_domain vs payload sets)",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1222-1262,1261-1262",
+    "symbol": "_do_select: scope from the authenticated statement (institution/authority_domain from stmt['scope']); Registry verify_selection_v2 with caller-supplied ExpectedContext"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1360-1383",
+    "symbol": "check_effect: governed scope from claim binding.scope (or pin_scope) + binding.family"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1486-1511",
+    "symbol": "_check_unbound: match of claim institution/authority_domain against scope tuples (tup[2], tup[3] at :1498)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect.py",
+    "lines": "712-760",
+    "symbol": "_validate_claim_state: claim vs envelope institution_id/authority_domain (:717-718) and vs grant row (:755-756)"
+   },
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+    "file": "src/agent_control_plane/local_authority_effect.py",
+    "lines": "128-147,168-180,467-470",
+    "symbol": "claim model validator: binding.scope must equal claim tenant/institution/authority_domain; issuance refuses scope != institution context"
+   },
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+    "file": "src/agent_control_plane/authorization_pin_export.py",
+    "lines": "197-201",
+    "symbol": "host binding scope vs persisted institution context"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/atomic_local_control_plane_executor.py",
+    "lines": "49-52",
+    "symbol": "operation-identity derivation compares domain only (opt-in path)"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract.md section 7 scope key; 7.4 item 2",
+   "Registry docs/r08-v2-contract-amendment-4.md section 3.1 / 5 step 4-5 (pin lineage)",
+   "G0 ledger G0-A-002 constitutional_constraints (scope members are identity, distinct from payload sets)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "file": "tests/test_v02_claim_policy_binding.py",
+    "test_name": "test_b15_binding_scope_must_match_the_claims_own_scope[scope.institution|scope.authority_domain]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "self-consistent commitment, inconsistent scope -> verify False and ValidationError"
+   },
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "file": "tests/test_v02_claim_policy_binding.py",
+    "test_name": "test_c04_incorrect_tenant_institution_or_domain_is_refused",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "issuance refused for wrong scope.institution / authority_domain"
+   },
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "file": "tests/test_v02_claim_policy_binding.py",
+    "test_name": "test_b02_any_altered_binding_member_invalidates_the_commitment[scope.institution|scope.authority_domain]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "commitment covers the scope members"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_guard.py",
+    "test_name": "test_each_lineage_member_mismatch_is_refused[institution_id|authority_domain]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "claim vs pin lineage, cause pin_lineage_mismatch:<member>, zero effects"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_guard.py",
+    "test_name": "test_binding_scope_members_are_compared_with_the_pin_independently[scope.institution|scope.authority_domain]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "guard function with a stand-in claim (the CP model prevents this through a validated claim)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_09_wrong_consumer_tenant_scope_or_operation_is_refused",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "ExpectedContext inst-b / domain-b -> selection_scope_mismatch (adapter, Registry code)"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/v1-scenarios/test_scn_c18.py",
+    "test_name": "test_scn_c18_route_b_handoff_cannot_extend_a_grant_by_provisioning_a_broader_claim",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "provision_claim refuses claim with other institution / domain vs grant row (baseline, no f1ab)"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-08",
+    "description": "No Runtime test (and no SQ slice read) puts two governed scopes with different institution or authority_domain in one store and shows isolation: every Runtime/SQ governed fixture uses scope inst-a/domain-a/tenant-a and varies only `operation` (GS_OTHER, B-05, FA1-03, original F-A1 attack). Cross-institution, cross-domain and cross-tenant row selection in check_effect, activation lineage and the unbound-claim scan (:1498) are therefore unexercised.",
+    "why_it_matters": "The two sets' identity role (scope members) is the substitution surface; a mutation in the scope tuple order or in :1498 survives.",
+    "proposed_oracle_kind": "differential",
+    "independence_note": "Needs a second activated scope differing only in institution (then only in authority_domain); independent fixture.",
+    "severity": "HIGH"
+   },
+   {
+    "gap_id": "M1-F-09",
+    "description": "Nothing in code or tests relates scope.institution / scope.authority_domain to the record payload sets: activation does not require the scope institution to be a member of payload.allowed_institutions (nor domain), and effect-time containment ignores scope. Because the CP model forces claim institution == binding scope institution, a governed op can only ever carry the scope's institution; extra members of allowed_institutions/allowed_authority_domains are inert on the governed path (INFERRED). No test pins either reading, e.g. a record whose allowed_institutions excludes the scope institution.",
+    "why_it_matters": "Defines whether the payload sets are authoritative narrowing or redundant with scope; the closure proposal must state which.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Contract decision first; then a positive/negative pair (record excludes scope institution).",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-10",
+    "description": "CP pin export scope check (authorization_pin_export.py:197-201) has no test: the host-body-scope vs persisted-institution refusal is only reachable when the profile digest was built over a scope that disagrees with the snapshot, and test_authorization_pin_export covers operation/consumer/epoch/activation/digest swaps only.",
+    "why_it_matters": "Pin payload institution_id/authority_domain come from the persisted context (:216-217); an unchecked disagreement would pin the wrong identity.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Independent of Runtime tests; needs a profile built over a deliberately mismatching scope.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-11",
+    "description": "Claim-vs-envelope institution_id/authority_domain equality (local_authority_effect.py:717-718) and claim-vs-grant-row equality (:755-756) have no isolating Runtime test (only operation_commitment, proposal_commitment, effective_max_effects mismatches are tested); SQ c18 covers the same grant-row comparison at provisioning only. operation_commitment also covers both members (:670-671), so the envelope comparison is partly redundant.",
+    "why_it_matters": "Low residual risk, but an oracle should state which layer refuses a wrong institution/domain.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Direct unit calls to _validate_claim_state with a stand-in claim (pattern already in test_atomic_grant_status_and_envelope_binding.py).",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "CP policy_binding.py (approval-side policy-binding/0.1) read by grep only",
+   "CP runtime_authority.py, bounded.py"
+  ],
+  "confidence": "MEDIUM-HIGH",
+  "claims": [
+   {
+    "claim": "Governed claim institution/authority_domain are forced equal to binding.scope by the CP model and re-compared in Runtime",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "No code relates scope institution/domain to payload allowed_institutions/allowed_authority_domains",
+    "status": "VERIFIED (read of _do_select and check_effect; rg for payload use)"
+   },
+   {
+    "claim": "Extra set members beyond the scope value are inert on the governed path",
+    "status": "INFERRED"
+   }
+  ],
+  "coverage_basis": "EXPLICIT for claim/binding/pin scope tampering of both members; NONE for multi-scope isolation and for scope-vs-payload relation"
+ },
+ {
+  "topic_no": 5,
+  "topic": "Substitution attacks (swap record, family, cross-scope, cross-tenant, cross-version, replay of older record)",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1383-1428",
+    "symbol": "check_effect: row lookup by governed scope digest; lineage; record triple; activation_ref chain (stale vs foreign); epoch/digest equality"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1258-1262,1285-1292",
+    "symbol": "_do_select: family must equal FAMILY_F1AB; lineage replacement and cross-scope selection_id refused"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1380",
+    "symbol": "pin path: scope = {**pin_scope, 'family': binding['family']} (family taken from the claim binding)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1451-1484",
+    "symbol": "record bytes re-authenticated against record_digest and record_policy_digest"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract.md section 7.4 items 2-3",
+   "Registry docs/r08-v2-contract-amendment-4.md section 5 step 6 (family digest-bound)",
+   "ADR EXT-S4-0 section 9.2 (foreign vs earlier activation_ref)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_effect_guard.py",
+    "test_name": "test_b03_substituted_record_triple_refuses",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "mutates record_digest only -> record_identity_mismatch; record_id and record_version are not varied separately"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_effect_guard.py",
+    "test_name": "test_b01 / test_b02 / test_s04 (foreign, earlier activation_ref; stale generation)",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "replay of older authority; set-agnostic"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_9a_a_tampered_record_payload_in_the_store_holds",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "tamper adds act-zzz to allowed_actions in record_json -> HOLD store_unknown"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_08_modified_record_is_refused_and_cannot_widen / test_m1_08_a_different_record_than_the_pinned_one_is_refused",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": true,
+    "note": "widened allowed_units only"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_guard.py",
+    "test_name": "test_original_fa1_substitution_is_refused_on_the_operation_with_zero_effects",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "cross-operation substitution to another VALID activation with a wide record (all five sets widened together); pin_binding_mismatch:operation"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/security-v07/test_adversarial.py",
+    "test_name": "test_t06_record_identity_substitution_under_a_pinned_statement",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "mutated record widens allowed_actions only"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/security-v07/test_adversarial.py",
+    "test_name": "test_t03 / test_t04 / test_a10 (older epoch / old activation / supersession)",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "replay of older record statements; default single fixture"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-12",
+    "description": "Record-substitution oracles never widen allowed_institutions or allowed_authority_domains: tamper (F01-9a), activation with a different record than pinned (T06, M1-08) and widened re-seal (M1-08) each vary allowed_actions or allowed_units. The digest path is set-agnostic by construction (INFERRED), so this is an oracle gap, not a known weakness.",
+    "why_it_matters": "The M1 closure needs a per-set record-swap/tamper negative for the two sets to show widening cannot ride a substituted or edited record.",
+    "proposed_oracle_kind": "mutation",
+    "independence_note": "Independent builder for a record whose ONLY difference is one extra institution or domain.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-13",
+    "description": "No Runtime test varies binding.family, record_id or record_version independently (B-03 changes record_digest only). On the pin path the family comes from the claim binding (:1380) because the pin payload has no family member; today only FAMILY_F1AB can be activated (:1258) so the member is inert (INFERRED), but cross-family substitution is untested.",
+    "why_it_matters": "Matters as soon as a second family exists in the same store, and for any mutation that stops comparing family or version.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Independent vector per triple member plus family.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-14",
+    "description": "Cross-tenant and cross-institution substitution of the governed scope at the effect guard cannot be mounted through a validated claim (CP model) and is tested only against the pin guard function with a stand-in claim; no full-route attack mutates scope.tenant/institution/authority_domain with a recomputed claim commitment.",
+    "why_it_matters": "The F-A1 class of attack (supplier recomputes the commitment) was only demonstrated for `operation`.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "SQ-style attack with resealed commitment (reseal helper exists in SQ test_adversarial.py) varying institution and domain.",
+    "severity": "MEDIUM"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)"
+  ],
+  "confidence": "MEDIUM-HIGH",
+  "claims": [
+   {
+    "claim": "Record triple compared to the activated row; record bytes re-hashed at effect time",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Family on the pin path is supplied by the claim binding",
+    "status": "VERIFIED (:1380)"
+   },
+   {
+    "claim": "Replay/stale-record behaviour is independent of set content",
+    "status": "INFERRED"
+   }
+  ],
+  "coverage_basis": "IMPLICIT for record/replay (fixtures contain the sets); EXPLICIT only for operation-level substitution"
+ },
+ {
+  "topic_no": 6,
+  "topic": "Selection and activation boundaries",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1052-1073",
+    "symbol": "sync_selection / activate_selection / withdraw_selection: the only writers; activation_ref never an input"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1222-1344",
+    "symbol": "_do_select (parse, Registry verify at write time under the lock and trusted clock, statement form, snapshot synced, key/pair revoked, lineage, epoch, supersession, ratchet)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1309-1313",
+    "symbol": "record_policy_digest = Registry effective digest of the record payload (five sets)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect.py",
+    "lines": "839-866",
+    "symbol": "destination delegation methods; selection store attached by configure_selection_authority"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract.md section 7.1 transitions; ADR EXT-S4-0 sections 3.1, 5",
+   "Registry docs/r08-v2-contract-amendment-4.md section 5 step 6 (pin never selects record)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_authority.py",
+    "test_name": "test_a01..a06, w01..w06, h01..h06, r01..r05 (activation, withdrawal, revocation, ratchet)",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "all on the single-member default record; state machine does not read the sets (INFERRED); a01 asserts state.effective_policy_digest == digest of all five sets"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_06 / test_m1_09 (adapter selection verification for the two sets)",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "missing inst/domain key -> composition_record_invalid; scope mismatch for inst/domain context"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_18_optional_participation_never_falls_back_to_the_caller_policy",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "optional selection never silently falls back; set-agnostic"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-15",
+    "description": "activate_selection (the durable activation boundary) is never called in Runtime tests with a record whose allowed_institutions or allowed_authority_domains is missing, malformed, or [] (deny-all); the only inst/domain refusals at activation are reached through the V01 adapter (M1-06, M1-09), not the durable writer. No test asserts 'refusal writes nothing' (A03 pattern) for these inputs.",
+    "why_it_matters": "The durable writer is the sole place a wide record could be accepted into authority; its handling of the two sets must be proven at that boundary.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Registry-side validators are Worker R's; this is the Runtime-boundary counterpart.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-16",
+    "description": "ExpectedContext institution/authority_domain mismatch at the durable writer (statement scope inst-a, context inst-b) is not exercised: Runtime passes `context` through to Registry (:1237) and only the adapter-level M1-09 shows the Registry refusal.",
+    "why_it_matters": "Context supply is host-owned; the durable writer should be shown to inherit the refusal and write nothing.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Short; independent of the Runtime fixture family if the context is built directly.",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)"
+  ],
+  "confidence": "MEDIUM-HIGH",
+  "claims": [
+   {
+    "claim": "The activation state machine never branches on payload set contents; the sets are read only for record_policy_digest and containment",
+    "status": "VERIFIED (read _do_select and _compare_pinned)"
+   },
+   {
+    "claim": "Durable activation refuses nothing set-specific beyond what Registry validate_record_text_v2 returns",
+    "status": "INFERRED"
+   }
+  ],
+  "coverage_basis": "IMPLICIT: durable fixtures contain the two sets; set-specific assertions exist only at adapter level"
+ },
+ {
+  "topic_no": 7,
+  "topic": "Effect-time enforcement (F-01 containment inside the atomic transaction)",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect.py",
+    "lines": "901-975",
+    "symbol": "_execute_claim_atomic_body: BEGIN IMMEDIATE, lock-time clock, claim validation, pin step, selection guard, then effect insert"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect.py",
+    "lines": "815-832",
+    "symbol": "_selection_guard (store absent + binding => HOLD store_unknown; successor claim without binding => field_invalid)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1346-1449",
+    "symbol": "check_effect (items 1-7 of contract 7.4 plus digest self-consistency), containment last at :1445"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1451-1484",
+    "symbol": "_check_policy_containment"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/atomic_local_control_plane_executor.py",
+    "lines": "69-100",
+    "symbol": "policy.check precedes the destination call; executor passes digest and sets of the same policy object"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "701-710,860-880",
+    "symbol": "_registry(): effect-time verification imports Registry (policy digest recomputed in _compare_pinned)"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract-amendment-3.md sections 2 (items 1-6) and 3 (residual limits)",
+   "Registry docs/r08-v2-contract.md section 7.4",
+   "ADR EXT-S4-0 sections 7.1, 7.3, 7.6 (Route A not rechecked at commit)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_4_to_8_widening_one_set_is_refused (param all five)",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "institutions and domains each individually: policy_identity_mismatch REFUSE, cause policy_not_subset:<field>, counts (0,0,0,0)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_2 / test_f01_3 (narrower, equal policy executes)",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "all five sets narrower/equal together; one extra member each"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_9a / f01_9b / f01_10a-c / f01_11 / f01_13 / f01_14",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "HOLD on tampered record, sets-vs-digest, sets absent, withdrawn, evidence failure, racing revocation; actions-based tamper, set-agnostic"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_effect_guard.py",
+    "test_name": "test_f01_existing_evaluator_denies_an_operation_outside_the_narrowed_policy",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": true,
+    "note": "evaluator denial shown with allowed_actions only"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/security-v07/test_adversarial.py",
+    "test_name": "test_a15 / test_a16 / test_a17 / test_a18",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "SQ re-run of the five-set containment; over-enforcement controls (strict subset in all five, equal in all five); SQ result 8 HELD in REQUALIFICATION.md (same builder, not independent attestation)"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/v1-scenarios/test_asw_a.py",
+    "test_name": "test_asw_a04_route_b_local_allow_list_fails_closed_outside_declared_scope[institution|authority_domain]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "baseline Route B LocalExecutionPolicy refusal (no f1ab, SQ frozen reference)"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-17",
+    "description": "Effect-time HOLD/REFUSE branches that are specific to executor/record set handling have no test: policy_digest_unavailable (:1441-1442), policy_sets_malformed (:1464), binding_validator_unavailable (:1368), and Registry-unavailable during verification (_compare_pinned -> 'registry_unavailable_for_policy_digest' -> store_unknown, :878-879). Only policy_sets_unavailable (F01-10c) and policy_sets_digest (F01-10b) are pinned.",
+    "why_it_matters": "These are the branches where a malformed institution/domain value turns into HOLD vs REFUSE; unpinned codes can drift.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Direct unit calls on SelectionAuthorityStore plus one atomic-route case.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-18",
+    "description": "Multi-member and partial-overlap cases are absent at the effect guard (see M1-F-05) and the positive controls (F01-2/3) widen/narrow all five sets together, so a mutant that special-cases one of the two sets in the positive direction (e.g. equality instead of subset for institutions only) is killed only through the negative tests.",
+    "why_it_matters": "Per-set positive controls complete the pair for each set.",
+    "proposed_oracle_kind": "property",
+    "independence_note": "Existing Runtime and SQ V07 oracles share one fixture family (single-member sets, one scope inst-a/domain-a, one signing key, builders imported from tests/test_registry_selection_authority.py); a new oracle should carry its own multi-member fixture and be authored outside the Runtime test tree.",
+    "severity": "LOW"
+   },
+   {
+    "gap_id": "M1-F-19",
+    "description": "Route A (ControlPlaneRefundDestinationAdapter + DurableRefundDestination) has no commit-time f1ab or record containment (ADR 7.6, disclosed). No test asserts that Route A is not presented as governed by an f1ab selection, and ControlPlaneRefundDestinationAdapter._check_trusted_context institution/domain mismatch messages (control_plane_adapter.py:86-92) have no test.",
+    "why_it_matters": "Scope statement for the closure: effect-time enforcement is Route B only.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Documentation/contract assertion plus one Route A negative.",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "engine/control_plane_adapter.py beyond lines 80-100 and grep",
+   "engine/safe_executor.py outside lines 340-430"
+  ],
+  "confidence": "HIGH",
+  "claims": [
+   {
+    "claim": "Containment is evaluated inside the same BEGIN IMMEDIATE, after lock-time clock, claim validation and pin step, before the effect insert",
+    "status": "VERIFIED (local_authority_effect.py:901-975)"
+   },
+   {
+    "claim": "Containment compares executor sets with the stored record payload (re-hashed), never with claim members",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Verification at effect time requires the Registry package to be importable (HOLD otherwise)",
+    "status": "VERIFIED (:878-879, :701-710)"
+   },
+   {
+    "claim": "Route A has no effect-time selection guard",
+    "status": "VERIFIED (ADR 7.6; no selection reference in control_plane_adapter.py)"
+   }
+  ],
+  "coverage_basis": "EXPLICIT per-set refusal for institutions and domains (Runtime F01-6/7, SQ A15/A16); positive controls not per set"
+ },
+ {
+  "topic_no": 8,
+  "topic": "Revocation and stale-state behaviour for a claim bound to an f1ab record",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1386-1444",
+    "symbol": "check_effect: withdrawn/revoked, activation_ref chain (stale vs foreign), epoch and high-water, revoked pair/key, validity window, ratchet, snapshot version/fingerprint/expiry"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1116-1215",
+    "symbol": "_do_snapshot / _revoke_pair / _revoke_key (revocation arrives only via snapshot sync; no record-level revocation)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "84-97",
+    "symbol": "_STALE_CODES / _HOLD_CODES / classify"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect.py",
+    "lines": "1074-1077",
+    "symbol": "commit; later revocation does not undo a committed effect (ADR 7.5)"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract.md section 7.4 items 2-7",
+   "ADR EXT-S4-0 sections 7.5, 9.1-9.2",
+   "Registry docs/r08-v2-contract-amendment-4.md section 12 items 4-5 (revocation propagation delay)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_effect_guard.py",
+    "test_name": "test_s01..s06, b02, c01, c02, c05",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "withdrawn, revoked pair, revoked key, stale generation, expired snapshot (HOLD), window, racing revocation blocked by lock, post-commit withdrawal does not undo; default single-member record"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_11 / test_f01_14",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "withdrawal and racing revocation with a WIDE record (all five sets widened)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_authority.py",
+    "test_name": "test_w04, w05, h03, h04, h05",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "snapshot revocation, key revocation, snapshot rollback, omitted revocation, floor"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/security-v07/test_adversarial.py",
+    "test_name": "test_a05, a06, a10, c07, t01..t04",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "stale/withdrawn/revoked behaviour on the default record; needs V07_COMPONENTS_DIR"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/tier1-v08-fa1/test_fa1_software.py",
+    "test_name": "test_fa1_10, fa1_11, fa1_12, fa1_15",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "pin-status revocation (grant revoked in CP), serialization with in-flight effects, propagation window CHARACTERIZED, stale replay"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-20",
+    "description": "Every re-activation/supersession test re-uses the SAME record payload (REC), so no test shows that after a new epoch whose record narrows or widens allowed_institutions/allowed_authority_domains, a claim bound to the older epoch is stale-refused AND a new claim is judged against the NEW record's sets (not the first record's). SQ A10 and Runtime B-02/S-04 supersede with an identical record.",
+    "why_it_matters": "Stale-record behaviour for set content is exactly what narrowing-by-new-record relies on.",
+    "proposed_oracle_kind": "differential",
+    "independence_note": "Needs two records differing only in institutions/domains across epochs 1 and 2.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-21",
+    "description": "Record-level revocation does not exist in the Runtime (revocation is (selection_id, epoch) pair or issuer key only; module docstring lists record/issuer revocation extensions as not implemented). No contract text or test addresses how an over-wide record (e.g. extra institution) is neutralised other than by revoking its selection.",
+    "why_it_matters": "Closure scope: the negative oracle for 'bad record found' is revoke-selection, not revoke-record.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Decision item for the Architect; then a negative oracle through snapshot revocation of a wide record's selection.",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "Runtime apply_entry/replay transition rules (lines 372-525) read by signature only"
+  ],
+  "confidence": "MEDIUM-HIGH",
+  "claims": [
+   {
+    "claim": "State checks (withdrawn/revoked/epoch/window/snapshot) all run before containment in check_effect",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Revocation/withdrawal handling is independent of set content",
+    "status": "INFERRED"
+   },
+   {
+    "claim": "There is no record-level revocation path",
+    "status": "VERIFIED (module docstring lines 33-35; no writer)"
+   }
+  ],
+  "coverage_basis": "IMPLICIT: all state-based refusals run on f1ab records that contain the two sets; no set-specific assertion"
+ },
+ {
+  "topic_no": 9,
+  "topic": "Recovery and restart behaviour for a claim bound to an f1ab record",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "884-958",
+    "symbol": "_verify: full replay and table/anchor comparison at every open/read/write; unknown => HOLD"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/atomic_local_control_plane_executor.py",
+    "lines": "102-138",
+    "symbol": "TimeoutError / generic exception => reconcile_claim; unresolved state reported as unknown, never retryable"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect_recovery.py",
+    "lines": "8-24",
+    "symbol": "reconcile_claim_exact reads claim/effect rows only; no selection store consultation"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect.py",
+    "lines": "1112-1114",
+    "symbol": "reconcile_claim delegates to reconcile_claim_exact"
+   }
+  ],
+  "contract_refs": [
+   "ADR EXT-S4-0 sections 3.6, 7.3, 7.5",
+   "Registry docs/r08-v2-contract.md section 8 (restore, rollback, custody)",
+   "Registry docs/r08-v2-contract-amendment-4.md section 7 (pin anti-rollback and recovery)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_authority.py",
+    "test_name": "test_a05_state_survives_a_new_process / test_r02 / test_p03 / test_f5 / test_s01..s06",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "restart, restore older DB, missing anchor; state-level, not claim execution"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_effect_guard.py",
+    "test_name": "test_x01..x05",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "corrupt row / restored older DB / missing anchor / tampered log / never baselined => HOLD store_unknown at effect time"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_integration.py",
+    "test_name": "test_crash_recovery_preserves_the_barrier_and_then_completes; host_pin/test_installer_crash_recovery.py (26 functions, 41 collected)",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "pin installer crash points; independent of sets"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/security-v07/test_adversarial.py",
+    "test_name": "test_c05_process_killed_between_effect_insert_and_commit / test_c06_process_killed_immediately_after_commit / test_d01..d08",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "crash/restore on default record: retry after pre-commit kill executes (so containment passes after restart); replay after post-commit kill does not re-execute"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_atomic_post_commit_fault_injection.py",
+    "test_name": "(15 collected) post-commit unknown/reconcile",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "no selection store or binding in these fixtures (rg: no 'selection'/'policy_binding' in the file)"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-22",
+    "description": "Post-commit unknown / TimeoutError / reconcile paths are never exercised for a claim bound to an f1ab record (the atomic post-commit suites carry no selection store or binding). reconcile_claim_exact does not consult the selection store, so a reconcile after a crash reports 'applied' regardless of later withdrawal/revocation (consistent with ADR 7.5) - unpinned by any governed test.",
+    "why_it_matters": "A governed claim's restart semantics (effect already durable vs never started) should be shown not to re-run containment against changed state after the effect is durable.",
+    "proposed_oracle_kind": "vector",
+    "independence_note": "Independent crash-point vectors with a governed claim (SQ c05/c06 pattern, plus a wide record to force the sets check).",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-23",
+    "description": "Restart/crash tests re-verify containment only on the single-member default record; no restart test activates a multi-member record or a deny-all record for the two sets and re-executes after process restart.",
+    "why_it_matters": "Containment re-reads record_json from durable state after restart; the set content is untested across the restart boundary.",
+    "proposed_oracle_kind": "vector",
+    "independence_note": "Existing Runtime and SQ V07 oracles share one fixture family (single-member sets, one scope inst-a/domain-a, one signing key, builders imported from tests/test_registry_selection_authority.py); a new oracle should carry its own multi-member fixture and be authored outside the Runtime test tree.",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "engine/recovery_resolution.py, revocation_closeout.py (standalone ledgers; head only)",
+   "tests/test_atomic_post_commit_* read by grep only"
+  ],
+  "confidence": "MEDIUM",
+  "claims": [
+   {
+    "claim": "reconcile_claim_exact never reads the selection store",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Post-commit suites contain no governed claims",
+    "status": "VERIFIED (rg)"
+   },
+   {
+    "claim": "Retry after pre-commit kill re-runs the full guard (including containment)",
+    "status": "INFERRED from SQ c05 outcome and code"
+   }
+  ],
+  "coverage_basis": "IMPLICIT only"
+ },
+ {
+  "topic_no": 10,
+  "topic": "Refusal reason compatibility (typed codes, REFUSE vs HOLD vs REFUSE_STALE, retry classes)",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "84-112",
+    "symbol": "_STALE_CODES, _HOLD_CODES, classify(), SelectionRefusal(code, refusal_class, cause)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/atomic_local_control_plane_executor.py",
+    "lines": "113-120,215-222",
+    "symbol": "every PermissionError (typed or not) -> status denied, failure_class authority_hold, reason_code current_authority_rejected; typed fields only in evidence['selection_refusal']"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/atomic_local_control_plane_executor.py",
+    "lines": "69-83",
+    "symbol": "local policy refusal -> failure_class policy_denial / reason_code local_policy_rejected (no typed selection evidence)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1436-1442,1130",
+    "symbol": "same code, different class by raise site (trust_snapshot_expired: HOLD at effect time, REFUSE via classify at sync; trust_snapshot_version_stale: HOLD when carried ahead, REFUSE_STALE otherwise)"
+   }
+  ],
+  "contract_refs": [
+   "ADR EXT-S4-0 sections 7.4, 9.1, 9.2, 9.4 (AD-3: classification at the consumer boundary; CP outcomes unchanged)",
+   "Registry docs/r08-v2-contract.md section 3.3 and 6",
+   "Registry docs/r08-v2-contract-amendment-3.md section 2 item 1 (policy_identity_mismatch, no new code); Amendment 4 section 9"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_f01_policy_containment.py",
+    "test_name": "test_f01_4_to_8 / f01_9b / f01_10b / f01_10c",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "policy_identity_mismatch REFUSE with cause policy_not_subset:allowed_institutions|allowed_authority_domains; store_unknown HOLD; verifier_unavailable[policy_sets_unavailable]"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_effect_guard.py",
+    "test_name": "refused() helper used by s01..x05, e03",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "typed code and refusal_class asserted per case; e03 typed evidence reaches result and failure record"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_guard.py",
+    "test_name": "refused(..., code, class, cause) across pin_* causes; fence tests",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "REFUSE policy_identity_mismatch vs HOLD store_unknown / verifier_unavailable pinned with causes"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_03 / M1-04 (evaluator_refusal strings)",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "'local institution restriction' asserted once; 'local authority-domain restriction' asserted nowhere in Runtime or in the SQ slices read"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-24",
+    "description": "No test pins the classify() table or the per-raise-site class of codes that can arise on the two-set paths, and no test shows which refusals leave the claim `issued` (retryable) versus consumed. Only C-03 (one REFUSE case) asserts the claim stays issued. ExecutionResult collapses REFUSE, REFUSE_STALE and HOLD into the same status/failure_class; the distinction exists only in evidence.",
+    "why_it_matters": "'Retry class' compatibility (REFUSE_STALE: never with same input; HOLD: later) is defined in ADR 9.1 but not enforced or observed at the result level.",
+    "proposed_oracle_kind": "vector",
+    "independence_note": "Table-driven vector over every SelectionRefusal site: (code, class, cause, claim_state_after).",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-25",
+    "description": "The local-policy refusal text/reason for the two sets is under-pinned: 'local authority-domain restriction' is asserted by no Runtime test; the atomic route's policy_denial/local_policy_rejected mapping is shown with allowed_actions only; SQ C11 route B asserts only that the reason contains 'local' and 'restriction'.",
+    "why_it_matters": "Consumers parse these messages (route A observation wrapper); drift between the two sets' messages would go unnoticed.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Message-pinning oracle for both sets in routes A and B.",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "CP reason registry 0.3 tests (test_reason_registry_0_3.py) read by function names only"
+  ],
+  "confidence": "HIGH",
+  "claims": [
+   {
+    "claim": "All PermissionErrors from the destination map to failure_class authority_hold / reason current_authority_rejected",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Class assigned per raise site, not purely by code",
+    "status": "VERIFIED (:1436-1442 vs :1130 vs classify)"
+   }
+  ],
+  "coverage_basis": "EXPLICIT for containment code/class/cause on both sets; NONE for class table and retry semantics"
+ },
+ {
+  "topic_no": 11,
+  "topic": "Caller-side normalisation and baseline LocalExecutionPolicy equivalence",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/safe_executor.py",
+    "lines": "359-424",
+    "symbol": "LocalExecutionPolicy.check: exact frozenset membership, no normalisation (institution step 1, authority-domain step 2)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_f1a_narrowing.py",
+    "lines": "81-84,114-122",
+    "symbol": "caller policy snapshotted; narrowed = dataclasses.replace(five frozensets); target prefixes/amount/effects/target_match preserved"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1573-1590",
+    "symbol": "policy_sets_of / policy_digest_of derive from the executor's own policy object"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1486-1511",
+    "symbol": "unbound (legacy) claim path: caller-policy fallback only under authenticated optional state"
+   }
+  ],
+  "contract_refs": [
+   "G0 ledger G0-B-009/010/013 (baseline = caller policy); G0-A-001 'floor: Runtime baseline/caller policy'",
+   "Registry docs/r08-v2-contract.md section 7.4 item 8 (claim without binding)",
+   "Registry s05-equivalence-report.md (3-set equivalence, per brief)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_16_non_narrowing_record_gives_exactly_the_direct_evaluator_result_across_a_grid",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "adapter vs direct check over a stride-7 sample of a 648-cell grid (units x adapters x actions x {inst-a,inst-b,inst-none} x {domain-a,domain-none} x target x amount); my own enumeration of the stride gives 93 cells of which 2 are ALLOW, 31 first-fail on institution and 32 on authority-domain (INFERRED, computed from the stated grid, test not run)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_16_narrowing_is_monotone_across_a_grid",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": true,
+    "note": "units/adapters/actions only"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_f1a_narrowing.py",
+    "test_name": "test_m1_16_protected_runtime_source_is_byte_identical",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "safe_executor.py blob 2fc880da... (confirmed equal at 0dde0ef7; no diff since c5e97e87 in git)"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_registry_selection_effect_guard.py",
+    "test_name": "test_l01 / test_l02 (legacy claim without binding unchanged / falls back)",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "single operation; no inst/domain grid"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/v1-scenarios/test_scn_c11.py",
+    "test_name": "test_scn_c11_route_a_/route_b_stricter_local_policy_overrides (param institution, authority_domain)",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "baseline policy refuses an authorized decision per dimension; reason only 'local ... restriction'; runs against the SQ frozen F5b reference, not Runtime 0dde0ef7"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/v1-scenarios/test_asw_a.py",
+    "test_name": "test_asw_a04_route_b_local_allow_list_fails_closed_outside_declared_scope[institution|authority_domain]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "out-of-scope envelope values refused, claim stays issued"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-26",
+    "description": "No full-grid differential at the DURABLE effect boundary: governed claim with a NON-narrowing f1ab record versus the same operations on the ungoverned LocalExecutionPolicy path, across an institution x authority_domain grid (allow and every refusal reason). The adapter-level equivalence (M1-16) is a stride-7 sample, and the G0 S05 equivalence is three-set.",
+    "why_it_matters": "The baseline equivalence for the two sets is the stated precondition for classifying M1 as ALREADY-GOVERNED.",
+    "proposed_oracle_kind": "differential",
+    "independence_note": "Differential harness: ungoverned path vs governed path with an equal-sets record; independent grid generator.",
+    "severity": "HIGH"
+   },
+   {
+    "gap_id": "M1-F-27",
+    "description": "No Runtime test pins exact-match semantics for op.institution_id / op.authority_domain against the policy sets (no case folding, NFC/NFD, whitespace, prefix or substring equivalence): the only related test is the construction-time substring-string rejection. G0-A-002 notes the Registry case-folding/NFC negative covers institutions only.",
+    "why_it_matters": "Normalisation is the classic substitution vector for identifier sets.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Vector set of confusable identifiers for both sets, run through LocalExecutionPolicy.check and the governed path.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-28",
+    "description": "SQ baseline suites (C11, ASW-A04, C18) run against SQ's own frozen reference pin, not the G0 Runtime pin 0dde0ef7; the Runtime-pin equivalence for the two sets rests on the Runtime's own tests.",
+    "why_it_matters": "Evidence provenance for the baseline.",
+    "proposed_oracle_kind": "differential",
+    "independence_note": "Re-run SQ slices against the G0 pins (outside this read-only task).",
+    "severity": "LOW"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "Registry s05 comparison spec and report (Worker R)",
+   "SQ C11 frozen-reference helpers (_c_2b_helpers.py, H/H2) not opened"
+  ],
+  "confidence": "MEDIUM",
+  "claims": [
+   {
+    "claim": "LocalExecutionPolicy performs no normalisation (exact 'in' on frozenset)",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "safe_executor.py is byte-identical to the V01 protected blob",
+    "status": "VERIFIED (git rev-parse HEAD:engine/safe_executor.py)"
+   },
+   {
+    "claim": "M1-16 sample composition (93 cells, 2 ALLOW)",
+    "status": "INFERRED"
+   }
+  ],
+  "coverage_basis": "EXPLICIT adapter-level (sampled); EXPLICIT baseline refusals in SQ; NONE at the durable path"
+ },
+ {
+  "topic_no": 12,
+  "topic": "Pin / authorization-pin interaction (F-A1) with the five-set containment",
+  "code_refs": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/authorization_pin.py",
+    "lines": "291-333",
+    "symbol": "check_claim_against_pin: lineage (institution_id, authority_domain at :280-281), binding pairs incl. scope.institution/scope.authority_domain, pin_scope from the pin"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/local_authority_effect.py",
+    "lines": "947-972",
+    "symbol": "pin step before selection guard; pin_scope handed to the guard"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/registry_selection_authority.py",
+    "lines": "1360-1381",
+    "symbol": "pin path: binding required, scope built from pin_scope, family from binding"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "sha": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+    "file": "engine/authorization_pin_format.py",
+    "lines": "31-37",
+    "symbol": "pin payload: 17 members, none is a policy set or effective digest"
+   },
+   {
+    "repo": "cogno-us/cognous-agent-control-plane",
+    "sha": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+    "file": "src/agent_control_plane/authorization_pin_export.py",
+    "lines": "197-232",
+    "symbol": "payload built from persisted decision/snapshot; institution_id/authority_domain from the snapshot institution context"
+   }
+  ],
+  "contract_refs": [
+   "Registry docs/r08-v2-contract-amendment-4.md sections 3.1, 5 (steps 4-7), 9, 12",
+   "Registry docs/r08-v2-contract-amendment-3.md section 2 (unchanged under the pin per Amendment 4 step 7)"
+  ],
+  "existing_tests": [
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_guard.py",
+    "test_name": "test_f01_containment_still_refuses_a_widened_policy_under_a_valid_pin",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "widens allowed_actions only; cause policy_not_subset:allowed_actions"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_integration.py",
+    "test_name": "test_f01_widening_still_refuses_under_a_valid_installer_pin",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "widens ALL FIVE sets at once; asserts denied, zero counts and selection_refusal present; no code/cause assertion"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_guard.py",
+    "test_name": "test_each_lineage_member_mismatch_is_refused[institution_id|authority_domain]",
+    "asserts_about_institutions_or_domains": "YES",
+    "asserts_about_units_only": false,
+    "note": "pin lineage refuses a claim whose institution/authority_domain differs from the pin"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "file": "tests/test_authorization_pin_guard.py",
+    "test_name": "test_check_effect_builds_the_governed_scope_from_pin_scope_not_from_the_binding / test_registry_selection_is_asked_about_the_pins_scope",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "scope passed to the guard is the pin's (inst-a/domain-a); only operation is varied"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/tier1-v08-fa1/test_fa1_software.py",
+    "test_name": "test_fa1_23 (allowed_actions) and test_fa1_24 (allowed_units) containment under a valid pin",
+    "asserts_about_institutions_or_domains": "NO",
+    "asserts_about_units_only": false,
+    "note": "expected text of FA1-24: 'the other three sets run in the Runtime F-01 CI suite' - but the Runtime F-01 suite targets a destination WITHOUT the pin option; under the pin only actions (Runtime guard, SQ FA1-23), units (SQ FA1-24) and all-five-together (integration, no cause) exist"
+   },
+   {
+    "repo": "cogno-us/cognous-stack-qualification",
+    "file": "suites/tier1-v08-fa1/test_fa1_software.py",
+    "test_name": "test_fa1_25_valid_narrower_policy_executes_under_the_pin",
+    "asserts_about_institutions_or_domains": "PARTIAL",
+    "asserts_about_units_only": false,
+    "note": "record wider than policy in all five sets executes under pin"
+   }
+  ],
+  "coverage_for_two_sets": "PARTIAL",
+  "gaps": [
+   {
+    "gap_id": "M1-F-29",
+    "description": "Under the pin (F-A1) the containment of allowed_institutions and allowed_authority_domains is not isolated by any test I read: Runtime guard test uses allowed_actions, SQ FA1-23/24 use actions and units, and the Runtime installer-integration test widens all five at once without asserting code or cause. The SQ expectation that the other three sets are covered by the Runtime F-01 suite is not accurate for the pin path (that suite builds a destination without authorization_pin).",
+    "why_it_matters": "The pin changes how the governed scope is built, so containment under the pin is a distinct code path from the non-pin path (pin_scope branch, extra fence lock order); the same code runs (INFERRED) but the oracle is missing.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "Parametrize the pin-path widen test over all five sets with cause assertion; keep it independent of the pin writer used to install the pin.",
+    "severity": "MEDIUM"
+   },
+   {
+    "gap_id": "M1-F-30",
+    "description": "Pin-vs-binding scope substitution for scope.institution and scope.authority_domain is shown only on the guard function with a stand-in claim; no full-route attack presents a resealed claim whose binding scope differs from the pin (only `operation` is attacked end-to-end, FA1-01/03). The pin carries no policy sets or effective-policy digest (VERIFIED), so it cannot itself detect set widening; protection rests entirely on Registry containment.",
+    "why_it_matters": "The two sets' protection under the pin is the conjunction pin lineage + record containment; no test exercises the conjunction for these sets.",
+    "proposed_oracle_kind": "negative",
+    "independence_note": "SQ-style end-to-end attacks varying institution/domain with resealed commitments under a pin.",
+    "severity": "MEDIUM"
+   }
+  ],
+  "not_read": [
+   "Registry repo at 317eb76a (Worker R owns it); only its contract/amendment/ADR text and v2_f1ab/v2_token were read for context",
+   "Runtime engine/registry_selection_authority.py lines 172-700 (canonical bytes, entry validation, replay/apply_entry, HostAnchorFile) and 960-1116 (sync/baseline internals) read only by signature",
+   "Stack Qualification: about 28,961 tracked files; everything except the suite slices named in test_inventory.json (results/ read only for results/v07-security/requalification/REQUALIFICATION.md)",
+   "SQ harness internals (suites/security-v07/_probe.py, gate.py, conftest.py; suites/tier1-v08-fa1/_fa1.py, _historical/_wf.py, fa1_child.py, test_fa1_os.py)",
+   "host/authorization_pin/installer.py (636 lines; grep only)",
+   "engine/authorization_pin_format.py beyond lines 25-60 and grep",
+   "SQ tier1-v08-fa1 test_fa1_os.py, _fa1.py rig"
+  ],
+  "confidence": "MEDIUM-HIGH",
+  "claims": [
+   {
+    "claim": "Pin payload has no policy-set or effective-digest member",
+    "status": "VERIFIED (authorization_pin_format.py:31-37)"
+   },
+   {
+    "claim": "Under the pin the guard builds scope from the pin and still runs the same _check_policy_containment",
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Runtime F-01 suite does not exercise the pin option",
+    "status": "VERIFIED (test_f01_policy_containment.py builds Gov destinations without authorization_pin)"
+   }
+  ],
+  "coverage_basis": "EXPLICIT lineage for both members; containment under pin: actions, units, and all-five-together only"
+ }
+]
