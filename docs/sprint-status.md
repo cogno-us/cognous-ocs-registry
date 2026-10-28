@@ -41,11 +41,23 @@ Holds unchanged: M3 and later waves not authorized for implementation; Ed25519 #
 
 ---
 
+## REGISTRY FAMILY MIGRATION — M12 F5 PER-CLASS STATUS-AGE INCREMENT SUBMITTED FOR REVIEW (2026-10-28)
+
+Builder-side, non-authorizing. Baselines: Static Plan v1.1 (adoption merge `6f600ab1150f00ef3d96834159b1807e866a78b6`), audit #60 (`6516446a4e551e50f2bb47c1d57fbf8ace27d7c5`), Engineering Constitution `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`. Detail and the contract decision record: [family-migration/f5-class-age/00-f5-class-age-increment-2026-10-28.md](family-migration/f5-class-age/00-f5-class-age-increment-2026-10-28.md).
+
+- **F4 ages-only is MERGED** (verified on GitHub): Control Plane #88 `673ef092cf083b235b2c99e3cd4a6ad8361f2973`, Registry docs #62 `88cc72919ae9926737856f16259d5692ea16eefe`. This supersedes the "OPEN, UNMERGED" wording of the F4 block below (historical text retained). Merged basis: **11 of 19 integrated, 8 eligible-not-integrated, 0 independently accepted.**
+- Control Plane [#89](https://github.com/cogno-us/cognous-control-plane/pull/89) (head `8fa99755c6a432fcc89786bd7bad1c274a65bb3d`): `class_max_status_age_seconds` consumed from the existing r08-v2 F5 family by building one effective `RuntimeAuthorityProfile` (the narrowed class age enters `approval_commitment` before approval issuance; no commitment, evaluator or reason-code change), revalidated at construction, decision, effect entry and the commit gate; outage-extension limit composed per DR-CP-AGE-1 decision 5; 111 tests, 27/27 mutants killed, CI green on 3.11/3.12 including the pinned step (fails on any skip). **OPEN, UNMERGED, NOT ACCEPTED.** No Registry or Runtime change.
+- Parameter accounting (denominator 19 unchanged): if #89 merges, **12 integrated, 7 remaining, 0 independently accepted** until formal qualification. Open PRs are not counted; green CI is not acceptance.
+- Held, unchanged and not merged: Registry #58, #59, Control Plane #87. Excluded: clock tolerance (AR-1/AR-2), identity/mandate ages, other class fields. No next increment started.
+- Independent Tier 1 acceptance REQUIRED; V09 assurance separate; Ed25519 #26/#34 SECURITY-HELD; Release, Publication, Production HOLD.
+
+---
+
 ## REGISTRY FAMILY MIGRATION — F4 AGES-ONLY INCREMENT SUBMITTED FOR REVIEW (2026-10-28)
 
 Builder-side, non-authorizing. Supersedes only the "next recommended restart" line of the pause block below; plan v1.1 (adoption merge `6f600ab1150f00ef3d96834159b1807e866a78b6`) and audit #60 (`6516446a4e551e50f2bb47c1d57fbf8ace27d7c5`) are the baselines. Detail: [family-migration/f4-ages/00-f4-ages-increment-2026-10-28.md](family-migration/f4-ages/00-f4-ages-increment-2026-10-28.md).
 
-- Control Plane [#88](https://github.com/cogno-us/cognous-control-plane/pull/88) (head `9b71a1018eb630966a2b93c6e3bbfa36ebaeba7e`; reviewed head `ee8d51606fc33a0ee3d3784e2d05e55be4ce344e`): `status_max_age_seconds` and `approval_max_age_seconds` consumed from the existing r08-v2 F4 family with revalidation at construction, decision, effect entry and the effect-commit gate before `destination.apply` (residual window inside the destination call remains, options in the increment record); **OPEN, UNMERGED, NOT ACCEPTED**. CI green on 3.11/3.12 including the Registry-pinned test step (fails on any skip). No Registry change.
+- Control Plane [#88](https://github.com/cogno-us/cognous-control-plane/pull/88) (head `9b71a1018eb630966a2b93c6e3bbfa36ebaeba7e`; reviewed head `ee8d51606fc33a0ee3d3784e2d05e55be4ce344e`): `status_max_age_seconds` and `approval_max_age_seconds` consumed from the existing r08-v2 F4 family with revalidation at construction, decision, effect entry and the effect-commit gate before `destination.apply` (residual window inside the destination call remains, options in the increment record); **OPEN, UNMERGED, NOT ACCEPTED** at the time of writing; since MERGED at `673ef092cf083b235b2c99e3cd4a6ad8361f2973` (see the M12 block above). CI green on 3.11/3.12 including the Registry-pinned test step (fails on any skip). No Registry change.
 - Parameter accounting (denominator 19 unchanged): merged basis 9 integrated, 10 eligible-not-integrated, 0 accepted; if #88 merges 11 and 8.
 - Held, unchanged: Registry #58, Control Plane #87, Registry #59 (OPEN, unmerged). Clock tolerance needs AR-1/AR-2. M12 and later: NOT AUTHORIZED until #88 is reviewed.
 - Independent Tier 1 acceptance REQUIRED; V09 assurance separate; Ed25519 #26/#34 SECURITY-HELD; Release, Publication, Production HOLD.

@@ -1,0 +1,137 @@
+[
+ [
+  "M01 drop widening guard",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_n01_defence_in_depth_refuses_a_registry_result_wider_than_the_host"
+ ],
+ [
+  "M02 drop min cross-check",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_n02_a_registry_result_that_disagrees_with_the_record_minimum_is_refus"
+ ],
+ [
+  "M03 class age not applied",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_g01_valid_selection_narrows_the_effective_profile_and_carries_identit"
+ ],
+ [
+  "M04 wrong class used for every action",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_g01_valid_selection_narrows_the_effective_profile_and_carries_identit"
+ ],
+ [
+  "M05 extension limit not composed",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_x01_the_uncomposed_gap_exists_and_the_composed_limit_closes_it"
+ ],
+ [
+  "M06 room measured from host not narrowed",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_x01_the_uncomposed_gap_exists_and_the_composed_limit_closes_it"
+ ],
+ [
+  "M07 extension may exceed host limit",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_x03_the_limit_is_the_minimum_over_every_governed_class_and_never_abov"
+ ],
+ [
+  "M08 no profile-modified check",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_m04_class_substitution_by_editing_the_held_profile_is_refused"
+ ],
+ [
+  "M09 drop all three change comparisons",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_m02_a_different_effective_policy_cannot_ride_an_approval_issued_for_a"
+ ],
+ [
+  "M10 drop effective-profile digest comparison only",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_x06_the_composed_limit_enters_the_commitment_and_a_changed_record_cha"
+ ],
+ [
+  "M11 drop effective map comparison only",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_n05_each_component_of_the_bound_identity_is_compared_on_its_own[effec"
+ ],
+ [
+  "M12 drop policy digest comparison only",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_n05_each_component_of_the_bound_identity_is_compared_on_its_own[regis"
+ ],
+ [
+  "M13 destination not gated",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_e07_full_flow_executes_when_selection_stays_valid"
+ ],
+ [
+  "M14 gate raises plain error",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_c01_revoked_after_execute_entry_verification_but_before_the_effect_bo"
+ ],
+ [
+  "M15 no effect-entry check",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_e07_full_flow_executes_when_selection_stays_valid"
+ ],
+ [
+  "M16 no decision-entry check",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_e07_full_flow_executes_when_selection_stays_valid"
+ ],
+ [
+  "M17 scoped class coverage not required",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_g07_a_record_silent_about_the_scoped_class_governs_nothing_and_is_ref"
+ ],
+ [
+  "M18 policy_binding profile accepted",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_g01_valid_selection_narrows_the_effective_profile_and_carries_identit"
+ ],
+ [
+  "M19 proposal scope not checked",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_l07_proposals_outside_the_host_fixed_scope_are_refused_before_registr"
+ ],
+ [
+  "M20 execute-entry clock ignored at gate",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_c07_every_boundary_including_the_commit_gate_is_judged_at_the_execute"
+ ],
+ [
+  "M21 ambiguity not detected",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_g08_two_actions_sharing_a_class_need_one_host_age_and_both_get_the_na"
+ ],
+ [
+  "M22 manifest authority not rechecked",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_l08_manifest_authority_change_after_construction_is_refused"
+ ],
+ [
+  "M23 verifier type not enforced",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_g16_optional_participation_and_non_admitted_verifiers_are_refused"
+ ],
+ [
+  "M24 lax record parser",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_n03_the_record_class_map_parser_is_strict"
+ ],
+ [
+  "M25 optional participation",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_g01_valid_selection_narrows_the_effective_profile_and_carries_identit"
+ ],
+ [
+  "M26 deny_all ignored",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_n06_an_unexpected_registry_decision_shape_is_refused[<lambda>-registr"
+ ],
+ [
+  "M27 hold accepted as applied kind",
+  "KILLED",
+  "FAILED tests/test_f5_class_age_governance.py::test_n06_an_unexpected_registry_decision_shape_is_refused[<lambda>-registr"
+ ]
+]

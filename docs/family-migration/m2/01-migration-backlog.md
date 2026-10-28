@@ -88,3 +88,8 @@ IMPLEMENTED is not ACCEPTED: nothing is counted as migrated until independent Ti
 ## Parameter-level accounting (appended 2026-10-28, F4 ages-only; supersedes no earlier entry)
 
 Basis: audit #60 / Plan v1.1 denominator of 19 Registry-manageable parameters (the 23/28 G0 group counts above are historical and provisional). `status_max_age_seconds` and `approval_max_age_seconds`: enforcement integration implemented in Control Plane PR #88 (head `9b71a1018eb630966a2b93c6e3bbfa36ebaeba7e`; reviewed head `ee8d51606fc33a0ee3d3784e2d05e55be4ce344e`), OPEN and UNMERGED; independently accepted: no. Merged basis 9 integrated / 10 eligible-not-integrated / 0 accepted; 11 / 8 if #88 merges. IMPLEMENTED is not ACCEPTED. See `docs/family-migration/f4-ages/00-f4-ages-increment-2026-10-28.md`.
+
+
+## Parameter-level accounting (appended 2026-10-28, M12 F5 class status age; supersedes no earlier entry)
+
+Basis: audit #60 / Plan v1.1 denominator of 19 (unchanged). F4 status and approval ages are MERGED (Control Plane #88 `673ef092cf083b235b2c99e3cd4a6ad8361f2973`; Registry docs #62 `88cc72919ae9926737856f16259d5692ea16eefe`): merged basis 11 integrated / 8 eligible-not-integrated / 0 accepted. `class_max_status_age_seconds` (RG-C-008, F5 `f5-action-class-age-bounds`): enforcement integration implemented in Control Plane PR #89 (head `8fa99755c6a432fcc89786bd7bad1c274a65bb3d`), OPEN and UNMERGED; independently accepted: no; 12 / 7 if #89 merges. IMPLEMENTED is not ACCEPTED. See `docs/family-migration/f5-class-age/00-f5-class-age-increment-2026-10-28.md`.
