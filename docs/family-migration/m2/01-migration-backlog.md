@@ -83,3 +83,18 @@ M3 groups RG-F1D-TARGET-PREFIXES and RG-F1D-TARGET-MATCH: **IMPLEMENTED and merg
 | Active wave | M11 (Control Plane F4 consumer) |
 
 IMPLEMENTED is not ACCEPTED: nothing is counted as migrated until independent Tier 1 qualification of the integrated path.
+
+
+## Progress accounting (appended 2026-10-28, M11)
+
+M11 groups RG-C-003 `status_max_age_seconds`, RG-C-004 `approval_max_age_seconds` and RG-C-006 `clock_tolerance_seconds`: **IMPLEMENTED on OPEN, UNMERGED PRs; not counted as merged.** Registry PR #58 (r08-v5 `f4t-control-plane-clock-tolerance`, head `1a67d5396a3cf81512fdfa98c5cea9c6db70aede`) and Control Plane PR #87 (stateless adapter `registry_freshness_narrowing`, head `56ddb5f5cabab5c8c37155ae3a0ad1b586d0c354`, tests pinned to the Registry PR head). RG-C-003/004 reuse the existing F4 `r08-v2` fields (no new Registry field); only RG-C-006 needed a new family. Runtime unchanged (source shows it does not consume these values). Control Plane CI cannot run the new tests (no pin, no PyNaCl): NOT RUN in CI; they pass locally against the pin (81 passed).
+
+| Ledger | Count |
+|---|---|
+| Original eligible groups | 23 |
+| Implemented and merged (M2 + M3) | 4 (pending acceptance) |
+| Implemented on open PRs (M11, unmerged) | 3 |
+| Independently accepted | 0 |
+| Remaining unimplemented (merged basis) | 19; 16 if the M11 PRs merge |
+
+IMPLEMENTED is not ACCEPTED. Standing holds: Independent Tier 1 acceptance REQUIRED; Release HOLD; Publication HOLD; Production HOLD.
