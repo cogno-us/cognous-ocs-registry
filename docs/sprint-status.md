@@ -23,6 +23,24 @@ Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md
 
 ---
 
+## M2 PROGRESS (Registry family migration, 2026-10-28): IMPLEMENTED, PENDING INTEGRATED ACCEPTANCE
+
+Builder-side, non-authorizing, documentation only; supplements (does not replace) the successor status below. Wave M2 = RG-F1C-MAX-AMOUNT + RG-F1C-MAX-EFFECTS via the composite family `f1abc-local-execution-limits` (contract `r08-v3`).
+
+| Item | State | Exact revision |
+|---|---|---|
+| Registry PR-1 (r08-v3 contract, family, identity, verification, vectors) | MERGED ([#54](https://github.com/cogno-us/cognous-ocs-registry/pull/54)) | merge `ba98dd2689e402a855cacc2c7dc3a108c9144eb1` |
+| Runtime PR-2 (selection, activation, atomic family transition) | MERGED ([#151](https://github.com/cogno-us/cognous-execution-runtime/pull/151)) | merge `99f5f05374dc54a998304b5966f5cd2de3b5937b`; pinned Registry `ba98dd26` |
+| Runtime PR-3 (governed numeric ceilings, composite effect-time enforcement) | OPEN, not merged ([#152](https://github.com/cogno-us/cognous-execution-runtime/pull/152)) | head `ebbec2cb918b60fa7b9b3678b7796a7bf7aa83aa` |
+| Control Plane change | none needed: the canonical policy binding already carries an arbitrary family identifier and the f1abc claim validated unchanged | n/a |
+| Independent Tier 1 qualification | REQUIRED, not performed; builder, lead and CI results are not independent | n/a |
+
+**Metric (unchanged baseline, G0 category B = 23 rule groups): 2 implemented (RG-F1C-MAX-AMOUNT, RG-F1C-MAX-EFFECTS), pending integrated acceptance; 23 eligible-not-migrated until the acceptance gates pass, then 21.** A Registry schema alone is not counted. No inventory was reopened.
+
+Holds unchanged: M3 and later waves not authorized for implementation; Ed25519 #26/#34 SECURITY-HELD; V09 assurance separate; Release / Publication / Production: HOLD.
+
+---
+
 ## SUCCESSOR PROGRAM STATUS (Registry family migration, 2026-10-28): G0 ACCEPTED AFTER VERIFIED MERGE; G1 PREPARATION SUBMITTED, G1 NOT AUTHORIZED
 
 Separate from the V01–V09 status above, which is unchanged. Non-authorizing, builder-side, documentation only. Package: [family-migration/g1-preparation/README.md](family-migration/g1-preparation/README.md); frozen G0 record: [family-migration/g1-preparation/g0-freeze-record.md](family-migration/g1-preparation/g0-freeze-record.md).
