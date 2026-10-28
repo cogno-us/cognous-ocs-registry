@@ -41,6 +41,17 @@ Holds unchanged: M3 and later waves not authorized for implementation; Ed25519 #
 
 ---
 
+## REGISTRY FAMILY MIGRATION — F4 AGES-ONLY INCREMENT SUBMITTED FOR REVIEW (2026-10-28)
+
+Builder-side, non-authorizing. Supersedes only the "next recommended restart" line of the pause block below; plan v1.1 (adoption merge `6f600ab1150f00ef3d96834159b1807e866a78b6`) and audit #60 (`6516446a4e551e50f2bb47c1d57fbf8ace27d7c5`) are the baselines. Detail: [family-migration/f4-ages/00-f4-ages-increment-2026-10-28.md](family-migration/f4-ages/00-f4-ages-increment-2026-10-28.md).
+
+- Control Plane [#88](https://github.com/cogno-us/cognous-control-plane/pull/88) (head `ee8d51606fc33a0ee3d3784e2d05e55be4ce344e`): `status_max_age_seconds` and `approval_max_age_seconds` consumed from the existing r08-v2 F4 family with decision- and effect-boundary revalidation; **OPEN, UNMERGED, NOT ACCEPTED**. CI green on 3.11/3.12 including the Registry-pinned test step (fails on any skip). No Registry change.
+- Parameter accounting (denominator 19 unchanged): merged basis 9 integrated, 10 eligible-not-integrated, 0 accepted; if #88 merges 11 and 8.
+- Held, unchanged: Registry #58, Control Plane #87, Registry #59 (OPEN, unmerged). Clock tolerance needs AR-1/AR-2. M12 and later: NOT AUTHORIZED until #88 is reviewed.
+- Independent Tier 1 acceptance REQUIRED; V09 assurance separate; Ed25519 #26/#34 SECURITY-HELD; Release, Publication, Production HOLD.
+
+---
+
 ## REGISTRY FAMILY MIGRATION — CURRENT PAUSE / AUDIT RECONCILIATION (2026-10-28)
 
 **Program PAUSED pending Architect adoption of audit [#60](https://github.com/cogno-us/cognous-ocs-registry/pull/60) and proposed [static plan v1.1](plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.1.md).** Original plan v1.0, G0/S02 evidence and V09 historical baselines are unchanged.

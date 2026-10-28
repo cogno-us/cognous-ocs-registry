@@ -1,0 +1,1 @@
+SKIPPED [1] tests/test_f4_age_governance.py:27: NOT RUN: OCS_REGISTRY_PIN_DIR is not set to a Registry checkout
