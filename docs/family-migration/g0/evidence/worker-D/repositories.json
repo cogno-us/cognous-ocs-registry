@@ -1,0 +1,178 @@
+[
+ {
+  "name": "cogno-us/cognous-action-manifest",
+  "clone": "OK (shallow, /home/claude/g0/src/other/cognous-action-manifest)",
+  "head": "fa170815ef96a54c233d0dd9da821b60debabf8b",
+  "hub_lock_sha": "fa170815ef96a54c233d0dd9da821b60debabf8b",
+  "purpose": "Declare the action before evaluating permission: Agent Action Manifest 1.1 (tools, actions, authority_required, target_policy, effect_limits, redaction hints, runtime proposal 1.1/1.2).",
+  "relevant": "YES",
+  "reason": "Authored per-agent permission, target and effect-limit declarations consumed by the Control Plane gate (F1c, F1d, F6 context); tenant id length literal (F9); redaction hint default (F11).",
+  "families": [
+   "F1c",
+   "F1d",
+   "F6",
+   "F9",
+   "F11",
+   "F3"
+  ]
+ },
+ {
+  "name": "cogno-us/cognous-agent-control-plane (= cognous-control-plane, renamed)",
+  "clone": "OK; redirects to the Control Plane checkout",
+  "head": "d66ae07fa240510efdcc11ed4b3e1189dcefc822",
+  "hub_lock_sha": "0a41faa972699f7ec3063967a14cd9bdd3e67d27",
+  "purpose": "Control Plane.",
+  "relevant": "YES, but owned by worker C (not re-inventoried; HEAD equals /home/claude/g0/src/control_plane)",
+  "reason": "Alias/rename of the Control Plane.",
+  "families": []
+ },
+ {
+  "name": "cogno-us/cognous-open-control-stack (hub)",
+  "clone": "OK (shallow)",
+  "head": "51c579a3208149922649a31a6eb041106a4121c3",
+  "hub_lock_sha": "n/a (is the lock owner)",
+  "purpose": "Hub: component lock, reference profiles, tools, contracts, docs, qualification surfaces for the bounded synthetic reference.",
+  "relevant": "YES (partly)",
+  "reason": "reference_profiles/ and tools/ hold freshness, audit-budget, admission rate limit, claim scanner, inventory staleness values; component-lock.json pins the whole chain; docs/declarative-governance-registry.md (OCS-DGR-ARCH/1.0.0) defines the data-versus-code partition and its own ocs-registry-record/0 profile.",
+  "families": [
+   "F3",
+   "F4",
+   "F11",
+   "NEW:destination-admission-rate-limit",
+   "NEW:audit-budget",
+   "NEW:inventory-staleness",
+   "NEW:claim-scanner-terms"
+  ]
+ },
+ {
+  "name": "cogno-us/cognous-open-control-stack-verifier",
+  "clone": "OK (shallow)",
+  "head": "39d46b494558e271439966bec98b26dc4d040cc4",
+  "hub_lock_sha": "c0b8ba1f55b75db787a320f3de0f79342c6f6826",
+  "purpose": "Independent standard-library verifier of run records; vendors copied schemas and reason registries.",
+  "relevant": "CONTRACT-COUPLED ONLY",
+  "reason": "Vendors runtime-authority-reasons 0.1 and 0.2 (not 0.3) and two ODES schemas; its limits are deliberately independent.",
+  "families": [
+   "F3"
+  ]
+ },
+ {
+  "name": "cogno-us/cognous-governance-evidence-pack",
+  "clone": "OK (shallow)",
+  "head": "7b9511f2c6d56d424f17b078826594abd29f6c96",
+  "hub_lock_sha": "a3ebbb90559a44a88855139a182649d3792bb1ca",
+  "purpose": "Turn traceable runtime records into reviewable evidence packs; imports Replay output; freshness block re-implemented from CP.",
+  "relevant": "CONTRACT-COUPLED (producer revision pins; freshness/0.1 reimplementation)",
+  "reason": "Accepts only exact producer revision sets (CP 7a4bcd40, Runtime c5e97e87, manifest fa170815 in the P2 set); no retention or pack-size policy value found beyond an 8 MiB JSON cap.",
+  "families": [
+   "F4",
+   "F3"
+  ]
+ },
+ {
+  "name": "cogno-us/cognous-replay-bundle (= cognous-agent-replay-bundle, renamed)",
+  "clone": "OK; cognous-agent-replay-bundle clone resolves to the identical HEAD",
+  "head": "40012b8c174c6f25685bd5d9bc93ff46cc9a5842",
+  "hub_lock_sha": "028f63d1c001f99580583888fa4b4e46d77a267b",
+  "purpose": "Reconstruct what retained records support; importers for CP and Runtime exports; opt-in programme2 profiles (freshness/0.1, dedupe-ttl/0.1, terminal-revocation, etc.).",
+  "relevant": "CONTRACT-COUPLED",
+  "reason": "Producer-revision pins gate which CP/Runtime exports are importable; re-verifies recorded observation freshness policy; carries a parallel copy of redaction defaults (F11).",
+  "families": [
+   "F3",
+   "F4",
+   "F7",
+   "F11"
+  ]
+ },
+ {
+  "name": "cogno-us/cognous-governed-exchange",
+  "clone": "OK (shallow)",
+  "head": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+  "hub_lock_sha": "7f7569b02666b99669a9fca61117ca1f4bce5f0d",
+  "purpose": "Governed exchange and continuity for a bounded synthetic refund workflow (GAX retained artifacts 1.1.0). Code is under experiments/.",
+  "relevant": "MARGINAL",
+  "reason": "Host-constructor retry/backoff and clock skew defaults only; demo policy literals in gax_ref.py (INSTITUTION, TRUSTED_PERMISSION etc.) are synthetic fixtures (F8 look-alike).",
+  "families": [
+   "F4",
+   "F8",
+   "NEW:exchange-delivery-retry"
+  ]
+ },
+ {
+  "name": "cogno-us/open-decision-evidence-standard (ODES)",
+  "clone": "OK (shallow)",
+  "head": "1a5e1d300250d832e611633f0bf8f762e398c0ec",
+  "hub_lock_sha": "e86a25a1d660e74533337d38744e2934200a50ae",
+  "purpose": "Draft specification and 0.1.0-draft contracts for portable decision evidence (control-plane-journal, execution-attempt-lifecycle, freshness-clocks, bounded-deferral, effect-reversibility, operation-identity, non-broadening-delegation, rule-revision ...).",
+  "relevant": "CONTRACT-COUPLED (normative shapes, almost no values)",
+  "reason": "Fixes shapes and refusal codes; values such as max_status_age_seconds come from the Control Plane action class. Few literals: SEMANTIC_DEADLINE_SECONDS 5, MAX_SIGNATURES 8, JCS_MAX_DEPTH 64, OPERATION_ID {0,127}.",
+  "families": [
+   "F3",
+   "F4",
+   "F7"
+  ]
+ },
+ {
+  "name": "cogno-us/cognous-evidence-registry (the_index)",
+  "clone": "OK (shallow)",
+  "head": "b2485998b88256c2b322493800d1fba076814cbd",
+  "hub_lock_sha": "b2485998b88256c2b322493800d1fba076814cbd",
+  "purpose": "Local blockchain reference for claims, evidence commitments and lifecycle history (Knowledge and Provenance group).",
+  "relevant": "NO",
+  "reason": "Not on the authority/effect/freshness path of any Registry family; evidence quality score constants (app/evidence/service.py:26-31) are scoring diagnostics. NOT further read.",
+  "families": []
+ },
+ {
+  "name": "cogno-us/cognous-evidence-attestation (BitRep)",
+  "clone": "OK (shallow)",
+  "head": "981036c315856c71207984797b0c4e48d3b3921d",
+  "hub_lock_sha": "981036c315856c71207984797b0c4e48d3b3921d",
+  "purpose": "Verify issuer signatures under explicit trust assumptions (verification contract v1).",
+  "relevant": "NO",
+  "reason": "Provenance verification; statement validity (issued_at <= not_before < expires_at) is an invariant, governance proposal expiry (days_until_expiry) is caller-supplied. No Registry-family coupling found. NOT further read.",
+  "families": []
+ },
+ {
+  "name": "cogno-us/cognous-institutional-governance (Alvorada display alias)",
+  "clone": "OK (shallow)",
+  "head": "03a90c14c4a178997df2b6e527f67452b9c6bb7a",
+  "hub_lock_sha": "9b5ab721ae0684150e466c01e9d0d59ec61c3e00",
+  "purpose": "Authority, challenge and correction for institutions; defines Authority Context 0.1.0 / 0.2.0 consumed by CP and manifest.",
+  "relevant": "YES (contract + one value table)",
+  "reason": "Authority Context schema generations; tier delay ceilings T0-T4 (proposed, unenforced).",
+  "families": [
+   "NEW:consequence-tier-delay-ceilings",
+   "F5"
+  ]
+ },
+ {
+  "name": "cogno-us/moltbot-safe (= cognous-execution-runtime, renamed)",
+  "clone": "OK; resolves to the identical Runtime HEAD",
+  "head": "0dde0ef7a55f3d6a43a7da2c6ab1212b8863b491",
+  "hub_lock_sha": "ec728da6dc301a664b331ac8986afd6e850a1273",
+  "purpose": "Runtime.",
+  "relevant": "YES, owned by worker B (not re-inventoried)",
+  "reason": "Alias/rename of the Runtime.",
+  "families": []
+ },
+ {
+  "name": "cogno-us/cognous-stack-qualification (checked out)",
+  "clone": "existing checkout",
+  "head": "bb9b08904192b5f50a49e00ed8de0cab80fd7c19",
+  "hub_lock_sha": "n/a",
+  "purpose": "Qualification harness, freeze manifests, workflows, suites.",
+  "relevant": "PARTLY (pins, harness thresholds)",
+  "reason": "Holds the refreeze log that defines which component SHAs were qualified; harness thresholds are qualification policy (OUT-OF-SCOPE). 75 workflows; only .github/workflows names, tools/v1_validation.py, suites/_pins.py and the v1-2026-10-16-a freeze-manifest/refreeze-log were read.",
+  "families": []
+ },
+ {
+  "name": "cogno-us/cognous-engineering-constitution",
+  "clone": "existing checkout /home/claude/cogno-us/cognous-engineering-constitution (shallow)",
+  "head": "a4dd11115e47e27e8f0731a622fe950f7fbf2fc2 (checkout HEAD); plan pin 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b also present as an object",
+  "hub_lock_sha": "n/a",
+  "purpose": "Normative engineering articles CA01-CA23.",
+  "relevant": "NORMATIVE",
+  "reason": "Read at the pin where it matters: HEAD differs from the pin by three files, including an INVERTED tier numbering.",
+  "families": []
+ }
+]

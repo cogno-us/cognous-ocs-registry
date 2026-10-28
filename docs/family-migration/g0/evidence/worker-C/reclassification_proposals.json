@@ -1,0 +1,62 @@
+[
+ {
+  "id": "W8-011",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "CALLER_SUPPLIED (approved authority-context data, not host profile policy)",
+  "evidence": "runtime_authority.py 347-357: criterion = EvidenceCriterion.model_validate(criteria[oid]) where criteria = spec.get('evidence_criteria') from context['runtime_authority']; approval_commitment hashes context['runtime_authority'] (236-252)."
+ },
+ {
+  "id": "W6-042",
+  "old_class": "UNRESOLVED",
+  "proposed_class": "IMMUTABLE_CONTROL (presence requirement; fail-closed)",
+  "evidence": "bounded.py 1858, 1901 observation_policy_missing; accepted = not reasons (1946); tests/test_bounded_authorization.py::test_missing_observation_policy_blocks_initial_dispatch"
+ },
+ {
+  "id": "W4-014/W4-015",
+  "old_class": "UNRESOLVED",
+  "proposed_class": "DEAD/INERT FIELD (no consumer)",
+  "evidence": "policy_config.py 43-59 frame_from_policy_config omits default_action; no reader in src/, tests/, examples/, tools/"
+ },
+ {
+  "id": "W4-020/W4-021",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "OUT-OF-SCOPE (demo-only caller-overridable defaults, no caller in repo)",
+  "evidence": "grep for read_only_recorder/write_enabled_recorder finds only definitions; docs/README.md:67 file description"
+ },
+ {
+  "id": "W5-002",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "CONFIGURABLE-CANDIDATE, Tier 3 supportable (diagnostic only in this repo)",
+  "evidence": "no reference to refusal_trends outside reason_vocabulary.py in src/tools/examples; docstring 'investigation signal only'"
+ },
+ {
+  "id": "W5-044",
+  "old_class": "UNRESOLVED",
+  "proposed_class": "IMMUTABLE_CONTROL / diagnostic severity",
+  "evidence": "policy_gate.py 283-284 skips other-actor records, so the warning cannot reflect granted authority"
+ },
+ {
+  "id": "W8-042",
+  "old_class": "CONFIGURABLE-CANDIDATE",
+  "proposed_class": "IMMUTABLE_CONTROL-adjacent safeguard toggle (migration would only permit weakening)",
+  "evidence": "freshness.py 65-66; status_nonce_mismatch holds"
+ },
+ {
+  "id": "W8-040..W8-044",
+  "old_class": "CONFIGURABLE-CANDIDATE (coordinates 'cumulative')",
+  "proposed_class": "UNCHANGED class; coordinates corrected",
+  "evidence": "freshness.py 61-72 (current), file identical to old pin"
+ },
+ {
+  "id": "W9-002",
+  "old_class": "CONFIGURABLE-CANDIDATE (single row)",
+  "proposed_class": "split: IMMUTABLE_CONTROL (payload redaction and fingerprint blanking at CLI) + CALLER_SUPPLIED (scope flags, replacement)",
+  "evidence": "cli.py 107-114 hard-wires redact_payloads=True; redaction.py 63-70"
+ },
+ {
+  "id": "W8-091",
+  "old_class": "UNRESOLVED",
+  "proposed_class": "derived minimum of host/issuer-declared values (no literal)",
+  "evidence": "bounded.py 2570-2574"
+ }
+]

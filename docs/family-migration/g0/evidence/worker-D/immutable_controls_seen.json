@@ -1,0 +1,226 @@
+[
+ {
+  "repository": "cogno-us/cognous-action-manifest",
+  "file": "src/agent_action_manifest/validator.py",
+  "symbol": "effectful_types / high_risk_types",
+  "lines": "134,277",
+  "why_immutable": "Closed sets that decide which action types need finite targets, authority context and effect_limits (E020-E023, E014); a record shrinking them would disable mandatory checks."
+ },
+ {
+  "repository": "cogno-us/cognous-action-manifest",
+  "file": "src/agent_action_manifest/binding.py",
+  "symbol": "SUPPORTED_RUNTIME_MANIFEST_VERSIONS",
+  "lines": "14",
+  "why_immutable": "Closed contract-version gate {\"1.1\"}."
+ },
+ {
+  "repository": "cogno-us/cognous-action-manifest",
+  "file": "src/agent_action_manifest/validator.py",
+  "symbol": "supported_versions",
+  "lines": "57",
+  "why_immutable": "Closed {\"1.0\",\"1.1\"} version gate."
+ },
+ {
+  "repository": "cogno-us/cognous-action-manifest",
+  "file": "src/agent_action_manifest/models.py",
+  "symbol": "TargetPolicy.allow_any_target (default False)",
+  "lines": "163-164",
+  "why_immutable": "Widening escape hatch; v1.1 consumption requires false."
+ },
+ {
+  "repository": "cogno-us/cognous-action-manifest",
+  "file": "src/agent_action_manifest/models.py",
+  "symbol": "BaseModel model_config extra=\"forbid\", allow_inf_nan=False",
+  "lines": "19",
+  "why_immutable": "Fail-closed strict parse."
+ },
+ {
+  "repository": "cogno-us/cognous-action-manifest",
+  "file": "src/agent_action_manifest/loader.py",
+  "symbol": "atomic write with fixed mode 0600",
+  "lines": "98-116",
+  "why_immutable": "Serialization/filesystem safety, not policy."
+ },
+ {
+  "repository": "cogno-us/cognous-action-manifest",
+  "file": "src/agent_action_manifest/models.py",
+  "symbol": "ConsequenceTier enum T0-T4",
+  "lines": "85-90",
+  "why_immutable": "Closed vocabulary."
+ },
+ {
+  "repository": "cogno-us/cognous-replay-bundle",
+  "file": "src/agent_replay_bundle/importers.py",
+  "symbol": "producer revision constants and SUPPORTED_* / PRODUCER_COMPATIBILITY",
+  "lines": "25-115",
+  "why_immutable": "Exact provenance pins; fail closed on unsupported combination."
+ },
+ {
+  "repository": "cogno-us/cognous-replay-bundle",
+  "file": "src/agent_replay_bundle/importers.py",
+  "symbol": "ATTEMPT_EVENT_STATUSES, EXECUTION_RESULT_STATUSES, RUNTIME_FAILURE_CLASSES, *_TRANSITIONS",
+  "lines": "233-246,1537-1560,1777",
+  "why_immutable": "Closed lifecycle vocabularies and transition tables (ODES contract)."
+ },
+ {
+  "repository": "cogno-us/cognous-replay-bundle",
+  "file": "src/agent_replay_bundle/importers.py",
+  "symbol": "ENFORCE_UNKNOWN_WITH_VALIDATED_OBSERVATION = True",
+  "lines": "1773",
+  "why_immutable": "Boolean that looks like a switch; it is a recovery-semantics invariant."
+ },
+ {
+  "repository": "cogno-us/cognous-replay-bundle",
+  "file": "src/agent_replay_bundle/importers.py",
+  "symbol": "EXTENSION_NAME regex",
+  "lines": "246",
+  "why_immutable": "Serialization integrity."
+ },
+ {
+  "repository": "cogno-us/cognous-governance-evidence-pack",
+  "file": "src/agent_governance_evidence_pack/importer.py",
+  "symbol": "revision sets (P2_REVISIONS, MERGED_REVISIONS, ...) and TRANSFORMATION_VERSIONs",
+  "lines": "28-115",
+  "why_immutable": "Exact pins; transformation identity."
+ },
+ {
+  "repository": "cogno-us/cognous-governance-evidence-pack",
+  "file": "src/agent_governance_evidence_pack/freshness.py",
+  "symbol": "FRESHNESS_PHASES, TERMINAL, EXPIRED_CODE",
+  "lines": "26-28",
+  "why_immutable": "Closed vocabularies mirroring CP freshness/0.1."
+ },
+ {
+  "repository": "cogno-us/cognous-governed-exchange",
+  "file": "experiments/governed_message_transport/transport.py",
+  "symbol": "EXECUTION_ELIGIBLE_TYPES / INFORMATIONAL_TYPES / UNRESOLVED_RESULT_STATES",
+  "lines": "20-48",
+  "why_immutable": "Closed message-type vocabulary deciding what can drive execution."
+ },
+ {
+  "repository": "cogno-us/cognous-governed-exchange",
+  "file": "experiments/odex_gax_imx_reference/gax_ref.py",
+  "symbol": "SAFE_MESSAGE_ID regex",
+  "lines": "31-34",
+  "why_immutable": "Path-safety grammar ({0,127}); identifiers become file names."
+ },
+ {
+  "repository": "cogno-us/cognous-governed-exchange",
+  "file": "experiments/odex_gax_imx_reference/gax_ref.py",
+  "symbol": "TRUSTED_ACTOR / TRUSTED_PERMISSION / TRUSTED_GRANT_ID / INSTITUTION",
+  "lines": "19-29",
+  "why_immutable": "Synthetic fixture identities; look like policy lists (F8) but are a demo trust anchor."
+ },
+ {
+  "repository": "cogno-us/open-decision-evidence-standard",
+  "file": "contracts/operation-identity/validate.py",
+  "symbol": "OPERATION_ID regex, COMMITTED, POSSIBLY_COMMITTED",
+  "lines": "46-48",
+  "why_immutable": "Identity grammar and commit-state sets."
+ },
+ {
+  "repository": "cogno-us/open-decision-evidence-standard",
+  "file": "contracts/freshness-clocks/validate.py",
+  "symbol": "CODE_EXPIRED, CODE_OVERDUE, CODE_LEASE, CODE_NONCE, DESTINATION_METHODS",
+  "lines": "42-45",
+  "why_immutable": "Closed refusal vocabulary."
+ },
+ {
+  "repository": "cogno-us/open-decision-evidence-standard",
+  "file": "src/odes/canonicalization.py",
+  "symbol": "JCS_MAX_INTEGER 2**53-1, JCS_MAX_DEPTH 64",
+  "lines": "39-40",
+  "why_immutable": "Canonicalisation integrity."
+ },
+ {
+  "repository": "cogno-us/open-decision-evidence-standard",
+  "file": "src/odes/signatures.py",
+  "symbol": "MAX_SIGNATURES = 8",
+  "lines": "39",
+  "why_immutable": "Signature-set bound inside verification."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "tools/registry_records.py",
+  "symbol": "STATUSES, DISPOSITIONS, MISSING_TREATMENTS = {\"fail_closed\"}",
+  "lines": "29-31",
+  "why_immutable": "Closed vocabulary; missing treatment cannot be anything but fail_closed."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "tools/mandatory_checks.py",
+  "symbol": "MAX_CHECKS 512, MAX_SOURCES 256, MAX_TEXT 512 (design decision D1)",
+  "lines": "135-140",
+  "why_immutable": "Schema bounds on the mandatory-check manifest validator."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "reference_profiles/protected_destination.py",
+  "symbol": "COUNTER_MAX = 2**63-1",
+  "lines": "23",
+  "why_immutable": "Overflow bound for the admission counter."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "reference_profiles/assurance_runtime.py",
+  "symbol": "audit_configuration ceilings (events>4096, event_bytes>8192, sources>256, database_pages>4096 refused; database_pages<16 refused)",
+  "lines": "27-31",
+  "why_immutable": "Reference storage ceiling: a host value can narrow but never exceed it."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "reference_profiles/context_evidence.py",
+  "symbol": "LIMITS dict (authorizing False, production_ready False ...)",
+  "lines": "20-23",
+  "why_immutable": "Claim-limit flags (non-authorizing), not tunables."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "reference_profiles/context_journal.py",
+  "symbol": "LIMITS dict",
+  "lines": "12-13",
+  "why_immutable": "Same."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "reference_profiles/assurance_runtime.py",
+  "symbol": "require(len(key)>=32) fixture key length",
+  "lines": "122,433",
+  "why_immutable": "Key-strength floor."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "reference_profiles/resolver_assurance.py",
+  "symbol": "STATUSES / OBSERVATION_FIELDS / minimum 32-byte key",
+  "lines": "11-12,52",
+  "why_immutable": "Closed vocabularies."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack",
+  "file": "release-state.json",
+  "symbol": "publication_authorized / production_authorized = false",
+  "lines": "n/a",
+  "why_immutable": "Owner-decision HOLD flag; never changed by a passing gate."
+ },
+ {
+  "repository": "cogno-us/cognous-open-control-stack-verifier",
+  "file": "src/cognous_verify/data.py",
+  "symbol": "DEFAULT_REGISTRY = \"runtime-authority-reasons/0.1\"",
+  "lines": "27",
+  "why_immutable": "Default registry selector for rows with no label; changing it changes verifier verdicts."
+ },
+ {
+  "repository": "cogno-us/cognous-institutional-governance",
+  "file": "process/implementation/public-stack-v0.1/AUTHORITY_CONTEXT.md",
+  "symbol": "delay_limit.on_miss enum has no \"proceed\" option",
+  "lines": "67-71",
+  "why_immutable": "Expiry is never approval: invariant of the schema."
+ },
+ {
+  "repository": "cogno-us/cognous-stack-qualification",
+  "file": "tools/v1_validation.py",
+  "symbol": "STATUSES tuple; effective_job_status downgrade rules; JOB_ZERO_SKIP_COMPONENTS",
+  "lines": "36,807-828",
+  "why_immutable": "Fail-closed qualification semantics."
+ }
+]

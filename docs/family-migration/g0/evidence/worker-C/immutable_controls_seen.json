@@ -1,0 +1,266 @@
+[
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "_FRESH_DEADLINES / dispatch deadline collector",
+  "lines": "485, 2017-2022",
+  "why_immutable": "Records observed_at+bound for every judged input; mechanism of freshness/0.1 anchoring."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "ObservationPolicy presence requirement (observation_policy_missing)",
+  "lines": "1858, 1901",
+  "why_immutable": "Absent policy never defaults; holds. Protects against permissive default."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "_reconcile_observation reason set (effect id mismatch, state contradictions, time malformed/naive)",
+  "lines": "1903-1950",
+  "why_immutable": "Closed fail-closed validation of destination evidence."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "EVIDENCE_KINDS / UNKNOWN_BEHAVIORS",
+  "lines": "100-101",
+  "why_immutable": "Closed protocol vocabularies; out-of-vocabulary values hold."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "_exact_int / _finite_number / _exact_strings strict typing",
+  "lines": "91-125",
+  "why_immutable": "Never coerce limits; malformed limit grants nothing."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "_matching_permission malformed-limit rules",
+  "lines": "2714-2743",
+  "why_immutable": "A malformed list or limit grants nothing."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "effective_max_effects = min(...) and cumulative destination count",
+  "lines": "2570-2574, 1175-1187",
+  "why_immutable": "Narrowing composition and atomic effect-count enforcement; DefinitiveDestinationRejection."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "irreversible class cannot carry on_unreadable != refuse (action_class_invalid)",
+  "lines": "2111",
+  "why_immutable": "Cross-field safety guard against tolerance on irreversible classes."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "unknown action class -> action_class_unknown; unauthenticated resolver -> resolver_not_authenticated",
+  "lines": "2110-2114",
+  "why_immutable": "Fail-closed gate on profile path."
+ },
+ {
+  "file": "src/agent_control_plane/bounded.py",
+  "symbol": "synthetic profile requires explicit test clock",
+  "lines": "1288-1290",
+  "why_immutable": "allow_synthetic_resolver cannot be used with the real clock."
+ },
+ {
+  "file": "src/agent_control_plane/freshness.py",
+  "symbol": "FreshnessProfile.nonce = True default and status_nonce_mismatch",
+  "lines": "65-66",
+  "why_immutable": "Replay safeguard; look-alike config but removing it widens."
+ },
+ {
+  "file": "src/agent_control_plane/freshness.py",
+  "symbol": "extension_defects: base mismatch, self-signed, unsigned, exceeds-limit refusals",
+  "lines": "155-179",
+  "why_immutable": "Extension authority checks; measured from trusted base."
+ },
+ {
+  "file": "src/agent_control_plane/freshness.py",
+  "symbol": "GENESIS / witness chain constants",
+  "lines": "witness.py 50",
+  "why_immutable": "Hash-chain anchor; integrity constant."
+ },
+ {
+  "file": "src/agent_control_plane/runtime_authority.py",
+  "symbol": "validate_evidence: Ed25519 verification, closed statement members",
+  "lines": "255-305",
+  "why_immutable": "Authentication/provenance check."
+ },
+ {
+  "file": "src/agent_control_plane/runtime_authority.py",
+  "symbol": "REGISTRY_SHA256 pinned reason-registry digests",
+  "lines": "80-84",
+  "why_immutable": "Closed vocabulary identity; replay/rollback protection."
+ },
+ {
+  "file": "src/agent_control_plane/runtime_authority.py",
+  "symbol": "CODES_ADDED_IN_0_2 / CODES_ADDED_IN_0_3 sets",
+  "lines": "26-77",
+  "why_immutable": "Closed refusal vocabulary."
+ },
+ {
+  "file": "src/agent_control_plane/runtime_authority.py",
+  "symbol": "approval_commitment preimage",
+  "lines": "236-252",
+  "why_immutable": "Binds profile, context and policy generation; serialization integrity."
+ },
+ {
+  "file": "src/agent_control_plane/runtime_authority.py",
+  "symbol": "holder_inventory_missing hold",
+  "lines": "429-433",
+  "why_immutable": "Fail-closed hold."
+ },
+ {
+  "file": "src/agent_control_plane/runtime_authority.py",
+  "symbol": "ActionClass.irreversible = True default",
+  "lines": "130",
+  "why_immutable": "Strictest default for undeclared classes."
+ },
+ {
+  "file": "src/agent_control_plane/reversibility.py",
+  "symbol": "STRICTNESS ladder and effective_reversibility defaults",
+  "lines": "40, 165-181",
+  "why_immutable": "Undeclared/protected/unobservable resolve irreversible; ReversibilityProfile is a marker 'not tunable per deployment'."
+ },
+ {
+  "file": "src/agent_control_plane/policy_binding.py",
+  "symbol": "INT_MIN, INT_MAX; valid_digest (all-zero digest refused); SUPPORTED_APPROVAL_COMMITMENT_VERSIONS",
+  "lines": "33-35, 58-63",
+  "why_immutable": "Strict range/form checks and closed version set; generation/activation equality is anti-substitution, not a tunable."
+ },
+ {
+  "file": "src/agent_control_plane/policy_binding.py",
+  "symbol": "member_defects: withdrawn carries no digest and no ceilings",
+  "lines": "84-110",
+  "why_immutable": "Withdrawal representation invariants."
+ },
+ {
+  "file": "src/agent_control_plane/canonical_policy_binding.py",
+  "symbol": "MEMBERS, DIGESTS, INTEGER_RANGES, regexes, DIGEST_DOMAIN",
+  "lines": "22-60",
+  "why_immutable": "Canonical contract shape and digest domain separation."
+ },
+ {
+  "file": "src/agent_control_plane/authorization_pin_export.py",
+  "symbol": "PAYLOAD_MEMBERS, _REVOKED_REASONS, _SUPERSEDED_REASONS, _WITHDRAWN_REASONS, _classify",
+  "lines": "43-54, 71-80",
+  "why_immutable": "Closed 17-member export and 'never guess' terminal classification; non-authorizing."
+ },
+ {
+  "file": "src/agent_control_plane/operation_identity.py",
+  "symbol": "OPERATION_ID_PATTERN, only the recorded issuer writes a renewal",
+  "lines": "33, 40-42",
+  "why_immutable": "Identity shape and admission invariant."
+ },
+ {
+  "file": "src/agent_control_plane/dedupe.py",
+  "symbol": "provider_horizon <= escalation_deadline < dedupe_ttl validator",
+  "lines": "61-65",
+  "why_immutable": "Ordering invariant of the DedupeProfile."
+ },
+ {
+  "file": "src/agent_control_plane/dedupe.py / merge.py",
+  "symbol": "attempt_outcomes / unresolved_effects definitions",
+  "lines": "merge.py 129-151; dedupe.py 111-155",
+  "why_immutable": "Recovery classification that blocks a new key on possibly-applied attempts."
+ },
+ {
+  "file": "src/agent_control_plane/rule_revision.py",
+  "symbol": "unsigned_revision_row exemption and revision_defects",
+  "lines": "88-93, 150, 163",
+  "why_immutable": "Unsigned rows recorded but never count."
+ },
+ {
+  "file": "src/agent_control_plane/manifest_validation.py",
+  "symbol": "SUPPORTED_VERSIONS = {1.0, 1.1}",
+  "lines": "17",
+  "why_immutable": "Closed accepted-language set; unsupported version -> invalid_manifest."
+ },
+ {
+  "file": "src/agent_control_plane/manifest_validation.py",
+  "symbol": "is_exact_identifier predicate",
+  "lines": "24-27",
+  "why_immutable": "Exact identifier predicate, no normalisation."
+ },
+ {
+  "file": "src/agent_control_plane/decision_input_profile.py",
+  "symbol": "ALLOWED_ASSURANCE_CLASSES / ALLOWED_EVIDENCE_STATES",
+  "lines": "50-56",
+  "why_immutable": "Closed vocabularies of a proposed non-authorizing profile."
+ },
+ {
+  "file": "src/agent_control_plane/validation.py",
+  "symbol": "authority_actor_mismatch severity warning",
+  "lines": "188-193",
+  "why_immutable": "Diagnostic; the gate itself ignores other-actor records so it cannot confer authority."
+ },
+ {
+  "file": "src/agent_control_plane/policy_gate.py",
+  "symbol": "_active_authority_scopes (run, actor, expiry filters) and rule order",
+  "lines": "270-288, 168-231",
+  "why_immutable": "Evaluator semantics of the legacy gate."
+ },
+ {
+  "file": "src/agent_control_plane/microsoft_agt.py",
+  "symbol": "agt_warning_requires_review hold; exact-token decision handling; tenant opaque exact string",
+  "lines": "216-217, 288-302",
+  "why_immutable": "Warnings are restrictions; tokens never normalised."
+ },
+ {
+  "file": "src/agent_control_plane/microsoft_agt.py",
+  "symbol": "MICROSOFT_AGT_UPSTREAM_REVISION",
+  "lines": "14",
+  "why_immutable": "Pinned upstream identity."
+ },
+ {
+  "file": "src/agent_control_plane/strict_json.py",
+  "symbol": "safe_text escaping of non-printables",
+  "lines": "24-33",
+  "why_immutable": "Log-injection defence."
+ },
+ {
+  "file": "src/agent_control_plane/strict_json.py",
+  "symbol": "strict_loads refusals (duplicate member, non-finite number, lone surrogate)",
+  "lines": "87-119",
+  "why_immutable": "Admission parsing integrity."
+ },
+ {
+  "file": "src/agent_control_plane/time_instant.py",
+  "symbol": "parse_instant RFC 3339 strictness (naive refused)",
+  "lines": "1-80",
+  "why_immutable": "Time semantics for every freshness decision."
+ },
+ {
+  "file": "src/agent_control_plane/atomic_write.py",
+  "symbol": "PRIVATE_DIR_MODE 0o700, PRIVATE_FILE_MODE 0o600",
+  "lines": "9-10",
+  "why_immutable": "Look-alike constants that are filesystem confidentiality controls."
+ },
+ {
+  "file": "src/agent_control_plane/models.py / redaction.py",
+  "symbol": "redact_payloads=True and fingerprint blanking in the CLI",
+  "lines": "models.py 422-451; redaction.py 63-70; cli.py 107-114",
+  "why_immutable": "Mandatory confidentiality at the CLI boundary."
+ },
+ {
+  "file": "src/agent_control_plane/cli_run.py",
+  "symbol": "VERDICT_SOURCE and DOES_NOT_PROVE",
+  "lines": "62-72",
+  "why_immutable": "Non-authorizing / no-production-claim wording."
+ },
+ {
+  "file": "src/agent_control_plane/local_authority_effect.py",
+  "symbol": "LOCAL_AUTHORITY_EFFECT_PROFILE(_V2) and claim authorizing_by_possession False, source literal",
+  "lines": "31-34, 124, 548",
+  "why_immutable": "Profile identity and non-authorizing flag."
+ },
+ {
+  "file": "src/agent_control_plane/signing.py",
+  "symbol": "signature_algorithm == HMAC-SHA256 check",
+  "lines": "46",
+  "why_immutable": "Fixed algorithm, no negotiation."
+ },
+ {
+  "file": "src/agent_control_plane/persistence.py / atomic_write.py",
+  "symbol": "Atomic same-host write and 0600/0700 modes",
+  "lines": "persistence.py 32; atomic_write.py 9-10",
+  "why_immutable": "Atomic transaction and custody."
+ }
+]

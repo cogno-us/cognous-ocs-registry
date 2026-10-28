@@ -1,0 +1,273 @@
+[
+ {
+  "id": "CD-01",
+  "contract": "runtime-authority-reasons vocabulary",
+  "producer": {
+   "repo": "cogno-us/cognous-control-plane",
+   "path": "schemas/runtime_authority_reasons_0_1/0_2/0_3.json",
+   "pin": "d66ae07f (HEAD) holds all three; sha256 0_3=58b29ef74b9bd49d3eae7278d8cce73c7cbc6a1095a07f7b9fa44f48a7b8c07f, 172 codes; 0_2=c7678fa7..., 164 codes"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-open-control-stack-verifier",
+    "path": "src/cognous_verify/data/runtime-authority-reasons-0.1.json and -0.2.json",
+    "pin": "PROVENANCE.json: 0.1 from CP 6b8fb627, 0.2 from CP 0a41faa9; vendored sha256 equal to the CP files at d66ae07f for 0_1 and 0_2"
+   },
+   {
+    "repo": "cogno-us/cognous-ocs-registry",
+    "path": "docs/v09/candidate-manifest.json",
+    "pin": "lists schemas/runtime_authority_reasons_0_3.json sha256 58b29ef7... (equal to CP file)"
+   }
+  ],
+  "drift": "YES: the verifier has no 0.3 registry (data.py REGISTRY_FILES has 0.1 and 0.2, DEFAULT_REGISTRY 0.1). 0.3 adds 8 codes (approval_commitment_version_unsupported, approval_policy_activation_mismatch, approval_policy_generation_invalid/_mismatch/_missing, freshness_ceiling_exceeded, freshness_ceiling_unanchored, policy_binding_invalid). A run record using reason_vocabulary_version 0.3 cannot be resolved by the verifier as vendored.",
+  "registry_relevance": "Registry typed refusals and the eight reasons-0.3 codes (ADR-REG-S4-0 section 9) would be unresolvable by the independent verifier."
+ },
+ {
+  "id": "CD-02",
+  "contract": "execution-attempt-lifecycle schema and control-plane-journal schema",
+  "producer": {
+   "repo": "cogno-us/open-decision-evidence-standard",
+   "path": "contracts/execution-attempt-lifecycle/schema.json, contracts/control-plane-journal/schema.json",
+   "pin": "HEAD 1a5e1d30 sha256 1fc55d6f... / fec8e9b4..."
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-open-control-stack-verifier",
+    "path": "src/cognous_verify/data/*.schema.json",
+    "pin": "copied from ODES e5fe3822; sha256 identical to ODES HEAD files"
+   }
+  ],
+  "drift": "NO content drift at the schema files (identical sha256). Source revision recorded (e5fe3822) is not the ODES HEAD; both contracts remain 0.1.0-draft (\"unfrozen\").",
+  "registry_relevance": "Low; shape only."
+ },
+ {
+  "id": "CD-03",
+  "contract": "producer revision pairing for export/import (CP + Runtime + Manifest)",
+  "producer": {
+   "repo": "CP / Runtime / Manifest",
+   "path": "n/a",
+   "pin": "CP d66ae07f, Runtime 0dde0ef7 (current mains); Manifest fa170815"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-replay-bundle",
+    "path": "src/agent_replay_bundle/importers.py:81-96",
+    "pin": "programme-2 generation: CP 7a4bcd40, Runtime c5e97e87 (provisional development pin), Manifest fa170815; comment: \"export of any other runtime revision is refused as an unsupported combination\""
+   },
+   {
+    "repo": "cogno-us/cognous-governance-evidence-pack",
+    "path": "src/agent_governance_evidence_pack/importer.py:95-100",
+    "pin": "P2_REVISIONS CP 7a4bcd40, Runtime c5e97e87, Replay 40012b8c, Manifest fa170815"
+   }
+  ],
+  "drift": "YES (structural): neither importer lists the current CP main d66ae07f nor Runtime main 0dde0ef7. Only the Runtime documentation (docs/authorization-pin-f3-acceptance-record.md) mentions them. Any Registry-family change in CP or Runtime changes the producer revision and, per the importers, is refused until the importer pins are re-tied.",
+  "registry_relevance": "Registry migration waves G3 (CP/Runtime wiring) will break Replay/Evidence-Pack import and the stack-qualification suites that run them unless the pins are re-tied; the importer pin lists are exact, not ranges, and are marked \"alpha scaffolding ... removed at end-of-alpha (P5)\"."
+ },
+ {
+  "id": "CD-04",
+  "contract": "hub component lock versus repository heads",
+  "producer": {
+   "repo": "cogno-us/cognous-open-control-stack",
+   "path": "component-lock.json",
+   "pin": "HEAD 51c579a3"
+  },
+  "consumers": [
+   {
+    "repo": "each component",
+    "path": "n/a",
+    "pin": "see table"
+   }
+  ],
+  "drift": "YES: lock vs HEAD: control_plane 0a41faa9 vs d66ae07f; moltbot_safe ec728da6 vs 0dde0ef7; replay_bundle 028f63d1 vs 40012b8c; governance_evidence_pack a3ebbb90 vs 7b9511f2; odes e86a25a1 vs 1a5e1d30; verifier c0b8ba1f vs 39d46b49; constitutional_authority 9b5ab721 vs 03a90c14. Equal: action_manifest fa170815, gax_imx_transport 7f7569b0, bitrep 981036c3, the_index b2485998. The lock equals the stack-qualification refreeze-log final entries RF-55..RF-61.",
+  "registry_relevance": "The lock names the previously qualified chain, which is the S02 historical pin generation for CP and Runtime."
+ },
+ {
+  "id": "CD-05",
+  "contract": "tenant_id exact string length 1..128",
+  "producer": {
+   "repo": "cogno-us/cognous-action-manifest",
+   "path": "models.py:350 and schemas/runtime_action_proposal_v1_2.schema.json:25",
+   "pin": "fa170815"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-control-plane",
+    "path": "bounded.py:154,297; local_authority_effect.py:50,61,155",
+    "pin": "d66ae07f"
+   },
+   {
+    "repo": "cogno-us/cognous-execution-runtime",
+    "path": "engine/safe_executor.py:319",
+    "pin": "0dde0ef7"
+   },
+   {
+    "repo": "cogno-us/cognous-open-control-stack-verifier",
+    "path": "src/cognous_verify/identity.py:61",
+    "pin": "39d46b49 (compares tenant_id as a string member; no length bound found)"
+   }
+  ],
+  "drift": "NO disagreement found (all 128); the verifier has no bound.",
+  "registry_relevance": "F9: a Registry value must change at least eight sites in three repositories atomically, or stay a frozen contract."
+ },
+ {
+  "id": "CD-06",
+  "contract": "redaction defaults (payload redacted by default, \"[REDACTED]\")",
+  "producer": {
+   "repo": "cogno-us/cognous-control-plane",
+   "path": "models.py:420 RedactionConfig; cli.py:107-114 (S02 W9-002)",
+   "pin": "d66ae07f (not re-read here)"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-replay-bundle",
+    "path": "redaction.py:11-24",
+    "pin": "40012b8c: redact_payloads=True, others False, replacement \"[REDACTED]\""
+   },
+   {
+    "repo": "cogno-us/cognous-action-manifest",
+    "path": "models.py RedactionHint.replacement",
+    "pin": "fa170815"
+   }
+  ],
+  "drift": "NO disagreement visible between Replay and the S02 description of CP; CP side not re-read by this worker (worker C).",
+  "registry_relevance": "F11."
+ },
+ {
+  "id": "CD-07",
+  "contract": "freshness/0.1 (age_bound, deadline, extension, nonce)",
+  "producer": {
+   "repo": "cogno-us/cognous-control-plane",
+   "path": "freshness.py",
+   "pin": "d66ae07f"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-governance-evidence-pack",
+    "path": "freshness.py",
+    "pin": "docstring: \"a reimplementation, not an import\" of freshness_counts (CP #47)"
+   },
+   {
+    "repo": "cogno-us/cognous-replay-bundle",
+    "path": "programme2_profiles.py:460-515",
+    "pin": "validates deadline = opening + age_bound_seconds and extension to_max_age_seconds"
+   },
+   {
+    "repo": "cogno-us/open-decision-evidence-standard",
+    "path": "contracts/freshness-clocks (0.1.0-draft), bounded-deferral, effect-reversibility",
+    "pin": "1a5e1d30; class max_status_age_seconds is supplied by the CP action class, not fixed by ODES"
+   }
+  ],
+  "drift": "UNKNOWN: the pack and replay re-implement CP semantics; no automated equality check was read. The CP side was not re-read here.",
+  "registry_relevance": "F4: a Registry-supplied age bound must be recorded in the journal row (deadline/age_bound_seconds) for these consumers to keep verifying it."
+ },
+ {
+  "id": "CD-08",
+  "contract": "observation freshness 60 versus 300",
+  "producer": {
+   "repo": "cogno-us/cognous-control-plane",
+   "path": "cli_run.py:510 ObservationPolicy(max_age_seconds=300, clock_tolerance_seconds=5); bounded.py:1271 status_max_age_seconds: int = 60",
+   "pin": "d66ae07f"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-replay-bundle",
+    "path": "importers.py:1580-1594",
+    "pin": "reads observation_max_age_seconds / clock_tolerance from the row; no default"
+   },
+   {
+    "repo": "cogno-us/cognous-open-control-stack",
+    "path": "examples/batch4c-recovery-authority/run-2/scenarios/*.json",
+    "pin": "retained run: obligation max_age_seconds 300 (evidence, line 252) and reconciliation observation_max_age_seconds 60 (line 1018) in the same scenario"
+   }
+  ],
+  "drift": "Not a disagreement between two readings of one value: the retained scenario shows two distinct parameters (300 on the obligation, 60 on the reconciliation observation), which supports reading them as different concepts. CP code behaviour was not re-derived here (worker C).",
+  "registry_relevance": "Evidence for the unresolved 60 vs 300 question: proposed resolution only, MEDIUM at best; lead decides."
+ },
+ {
+  "id": "CD-09",
+  "contract": "Authority Context 0.1.0 / 0.2.0",
+  "producer": {
+   "repo": "cogno-us/cognous-institutional-governance",
+   "path": "process/implementation/public-stack-v0.1/authority-context.0.1.0.schema.json (sha256 7b9e26f0...) and authority-context.schema.json (0.2.0, sha256 3a99e19f...)",
+   "pin": "HEAD 03a90c14; 0.2.0 first appears at d40522af (per AUTHORITY_CONTEXT.md)"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-control-plane",
+    "path": "bounded.py:52-57",
+    "pin": "accepts (\"0.1.0\",\"0.2.0\"); delay_limit \"neither read nor enforced\"; ALVORADA_UPSTREAM_COMMIT fb3d9793"
+   },
+   {
+    "repo": "cogno-us/cognous-action-manifest",
+    "path": "models.py AuthorityContextRequirement",
+    "pin": "schema_version default \"0.1.0\""
+   },
+   {
+    "repo": "cogno-us/cognous-open-control-stack",
+    "path": "component-lock.json constitutional_authority",
+    "pin": "9b5ab721"
+   }
+  ],
+  "drift": "YES: three different Alvorada SHAs in play (fb3d9793 in CP/replay/pack, 9b5ab721 in the hub lock, 03a90c14 at HEAD). fb3d9793 is not an object in the shallow clone, so content equality was not checked.",
+  "registry_relevance": "F5 authority-profile declarations; consequence tier T0-T4 vocabulary also lives in the manifest ConsequenceTier enum."
+ },
+ {
+  "id": "CD-10",
+  "contract": "manifest validator parity (CP re-declares manifest models)",
+  "producer": {
+   "repo": "cogno-us/cognous-action-manifest",
+   "path": "validator.py/binding.py",
+   "pin": "fa170815"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-control-plane",
+    "path": "manifest_validation.py (S02 W5-022); bounded.py:56 MANIFEST_UPSTREAM_COMMIT",
+    "pin": "MANIFEST_UPSTREAM_COMMIT 46c950be vs manifest HEAD fa170815"
+   }
+  ],
+  "drift": "RECORDED-ONLY drift: CP constant names 46c950be while the lock/HEAD is fa170815; the constant appears only as a definition in bounded.py (not found used elsewhere in src). Parity tests test_scan6_manifest_validator_* skip without the pinned manifest (stack-qualification SIBLING_PROVISIONING comment).",
+  "registry_relevance": "F1c/F1d/F6: any Registry narrowing of manifest limits must be mirrored in the CP re-declared checks."
+ },
+ {
+  "id": "CD-11",
+  "contract": "dedupe-ttl/0.1 and operation-identity/0.1 profiles",
+  "producer": {
+   "repo": "cogno-us/cognous-execution-runtime",
+   "path": "engine/dedupe_destination.py (dedupe_ttl_seconds=600 per S02 F7, not re-read)",
+   "pin": "0dde0ef7"
+  },
+  "consumers": [
+   {
+    "repo": "cogno-us/cognous-replay-bundle",
+    "path": "programme2_profiles.py:20,280,733",
+    "pin": "dedupe_escalations list; \"dedupe-ttl/0.1\" selected by member presence"
+   },
+   {
+    "repo": "cogno-us/open-decision-evidence-standard",
+    "path": "contracts/operation-identity/validate.py:46",
+    "pin": "OPERATION_ID [A-Za-z0-9][A-Za-z0-9._:/#-]{0,127}; GAX SAFE_MESSAGE_ID uses the same {0,127} shape"
+   }
+  ],
+  "drift": "NO",
+  "registry_relevance": "F7 evidence consumers do not carry the TTL value itself in anything I read; NOT FOUND whether the exported rows record the effective TTL."
+ },
+ {
+  "id": "CD-12",
+  "contract": "qualification pins (freeze-manifest vs refreeze-log)",
+  "producer": {
+   "repo": "cogno-us/cognous-stack-qualification",
+   "path": "process/v1-validation/v1-2026-10-16-a/freeze-manifest.json and refreeze-log.json; suites/_pins.py",
+   "pin": "bb9b0890"
+  },
+  "consumers": [
+   {
+    "repo": "all suites",
+    "path": "suites/_pins.py",
+    "pin": "original manifest overridden by APPLIED refreeze entries in file order (61 entries RF-1..RF-61)"
+   }
+  ],
+  "drift": "Effective qualified pins end at CP 0a41faa9, Runtime ec728da6, Replay 028f63d1, Pack a3ebbb90, ODES e86a25a1, GAX 7f7569b0, Manifest fa170815, BitRep 981036c3, Index b2485998, Alvorada 9b5ab721, i.e. before CP d66ae07f / Runtime 0dde0ef7 / current Replay, Pack, ODES.",
+  "registry_relevance": "Downstream qualification of anything built on current CP/Runtime needs a new refreeze series."
+ }
+]
