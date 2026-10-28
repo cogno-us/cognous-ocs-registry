@@ -1,5 +1,20 @@
 # Sprint status (the only live status document)
 
+## REGISTRY FAMILY MIGRATION — CURRENT PAUSE / AUDIT RECONCILIATION (2026-10-28)
+
+**Program PAUSED pending Architect adoption of audit [#60](https://github.com/cogno-us/cognous-ocs-registry/pull/60) and proposed [static plan v1.1](plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.1.md).** Original plan v1.0, G0/S02 evidence and V09 historical baselines are unchanged.
+
+- Audit PR #60 (draft): 620 sites → 444 canonical rules; 80 candidate configurable parameters; provisional 19 Registry-manageable parameters in 12 rules (14 core + 5 qualified/coupled). Nine integrated; 12 represented; zero independently accepted; ten eligible and unintegrated. Three blocked, one unresolved excluded. These are parameter counts, not G0's 23-rule backlog.
+- M2 and M3: merged, implemented (four new parameters in addition to five pre-existing allow-set parameters). Independent Tier 1 pending.
+- M11: Registry #58, Control Plane #87, tracking #59 **OPEN / UNMERGED**. F4 status and approval ages are represented but lack a merged consumer. Constructor clock tolerance is subject to separate AR-1/AR-2 authorization; CP adapter's startup-only revocation check and family atomicity require resolution. Do not automatically merge these PRs.
+- M12 and later: NOT AUTHORIZED. Next recommended restart is F4 ages-only integration after the audit and plan are accepted and the Architect explicitly authorizes it.
+- V09 independent V07/V08 and Tier 1 gates remain open; Ed25519 #26/#34 SECURITY-HELD. Release, Publication and Production HOLD.
+
+**Note:** This proposed status block becomes current only after the documentation PR merges. Older successor sections below are retained as historical records.
+
+---
+
+
 ## CURRENT STATUS (2026-10-27, post-merge): V09 FREEZE-CANDIDATE PACKAGE MERGED; FORMAL ACCEPTANCE HELD
 
 Non-authorizing, builder-side. Governing plan: [v1.5](plans/PROJECT_PLAN-v1.5.md) (unchanged); Constitution pin `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`. Detail: [v09/post-merge-record.md](v09/post-merge-record.md). **This is not a release; no tag or version exists.**
