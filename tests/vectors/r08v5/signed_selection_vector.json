@@ -1,0 +1,120 @@
+{
+ "envelope": {
+  "contract_version": "r08-v5",
+  "kind": "selection-envelope",
+  "signatures": [
+   {
+    "alg": "ed25519",
+    "key_id": "key-test-1",
+    "signature": "pwf58VW0uIQrjnIB+rTzUFgs9djR/S8Uz3ItP/iceG1gnHwfJAmy5tMN5NdBYk9FEqtQiUGLMrUeowtYxVdnDw=="
+   }
+  ],
+  "statement": {
+   "consumer_id": "consumer-test",
+   "disposition": "select",
+   "effective": {
+    "valid_from": "2026-10-25T00:00:00Z",
+    "valid_until": "2026-10-26T00:00:00Z"
+   },
+   "epoch": 1,
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f4t-control-plane-clock-tolerance",
+   "issued_at": "2026-10-24T00:00:00Z",
+   "kind": "selection",
+   "operation": "op-test",
+   "participation": "required",
+   "record": {
+    "record_digest": "sha256:e1e121f259ee7c14900e950105fdfe750dcb902f73e1a0893fff8ef075b8df41",
+    "record_id": "f4t-test-record",
+    "record_version": 1
+   },
+   "revocation_ref": "revocation-test-1",
+   "scope": {
+    "authority_domain": "domain-a",
+    "institution": "inst-a",
+    "tenant": "tenant-a"
+   },
+   "selection_id": "sel-test-1",
+   "selector_ref": "selector-test-1",
+   "supersedes": null
+  },
+  "statement_digest": "sha256:5aff2dff9094264703184ec7bce183f547bfdf1886238a59a5a9954e29e88b36"
+ },
+ "note": "synthetic test-only key; non-authorizing",
+ "profile": "ocs-reg/r08-v5/selection",
+ "public_key_hex": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+ "record": {
+  "contract_version": "r08-v5",
+  "evaluator": {
+   "binding": "registered-code-reference",
+   "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+   "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+   "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+  },
+  "family": "f4t-control-plane-clock-tolerance",
+  "kind": "record",
+  "non_authorizing": true,
+  "payload": {
+   "clock_tolerance_seconds": 5
+  },
+  "payload_digest": "sha256:b6693e02ead42a644e7559941c127567b2be2c036cd89351c1b21f05514c65e4",
+  "provenance": {
+   "authored_at": "2026-10-25T00:00:00Z",
+   "authored_by": "test-author",
+   "decision_ref": "decision-test-1"
+  },
+  "record_digest": "sha256:e1e121f259ee7c14900e950105fdfe750dcb902f73e1a0893fff8ef075b8df41",
+  "record_id": "f4t-test-record",
+  "record_version": 1,
+  "source": {
+   "blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+   "commit": "ec728da6dc301a664b331ac8986afd6e850a1273",
+   "path": "engine/safe_executor.py",
+   "repository": "cogno-us/cognous-execution-runtime",
+   "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+  },
+  "supersedes": null
+ },
+ "signature": "pwf58VW0uIQrjnIB+rTzUFgs9djR/S8Uz3ItP/iceG1gnHwfJAmy5tMN5NdBYk9FEqtQiUGLMrUeowtYxVdnDw==",
+ "signature_hex": "a707f9f155b4b8842b8e7201fab4f350582cf5d8d1fd2f14cf722d3ff89c786d609c7c1f2409b2e6d30de4d741624f4512ab5089418b32b51ea30b58c557670f",
+ "signing_input_hex": "6f63732d7265672f7230382d76352f73656c656374696f6e0a7b22636f6e73756d65725f6964223a22636f6e73756d65722d74657374222c22646973706f736974696f6e223a2273656c656374222c22656666656374697665223a7b2276616c69645f66726f6d223a22323032362d31302d32355430303a30303a30305a222c2276616c69645f756e74696c223a22323032362d31302d32365430303a30303a30305a227d2c2265706f6368223a312c226576616c7561746f72223a7b2262696e64696e67223a22726567697374657265642d636f64652d7265666572656e6365222c226576616c7561746f725f6964223a22656e67696e652e736166655f6578656375746f722e4c6f63616c457865637574696f6e506f6c6963792e636865636b222c22736f757263655f626c6f625f6964223a2232666338383064616533376561633736653530373435333334333537343063653036383432303964222c22736f757263655f736861323536223a227368613235363a39343065373831393334353432613761636437626265326636383333663964333239333235643934623439343235616664396432626564636632336335623638227d2c2266616d696c79223a226634742d636f6e74726f6c2d706c616e652d636c6f636b2d746f6c6572616e6365222c226973737565645f6174223a22323032362d31302d32345430303a30303a30305a222c226b696e64223a2273656c656374696f6e222c226f7065726174696f6e223a226f702d74657374222c2270617274696369706174696f6e223a227265717569726564222c227265636f7264223a7b227265636f72645f646967657374223a227368613235363a65316531323166323539656537633134393030653935303130356664666537353064636239303266373365316130383933666666386566303735623864663431222c227265636f72645f6964223a226634742d746573742d7265636f7264222c227265636f72645f76657273696f6e223a317d2c227265766f636174696f6e5f726566223a227265766f636174696f6e2d746573742d31222c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f6964223a2273656c2d746573742d31222c2273656c6563746f725f726566223a2273656c6563746f722d746573742d31222c2273757065727365646573223a6e756c6c7d",
+ "statement": {
+  "consumer_id": "consumer-test",
+  "disposition": "select",
+  "effective": {
+   "valid_from": "2026-10-25T00:00:00Z",
+   "valid_until": "2026-10-26T00:00:00Z"
+  },
+  "epoch": 1,
+  "evaluator": {
+   "binding": "registered-code-reference",
+   "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+   "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+   "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+  },
+  "family": "f4t-control-plane-clock-tolerance",
+  "issued_at": "2026-10-24T00:00:00Z",
+  "kind": "selection",
+  "operation": "op-test",
+  "participation": "required",
+  "record": {
+   "record_digest": "sha256:e1e121f259ee7c14900e950105fdfe750dcb902f73e1a0893fff8ef075b8df41",
+   "record_id": "f4t-test-record",
+   "record_version": 1
+  },
+  "revocation_ref": "revocation-test-1",
+  "scope": {
+   "authority_domain": "domain-a",
+   "institution": "inst-a",
+   "tenant": "tenant-a"
+  },
+  "selection_id": "sel-test-1",
+  "selector_ref": "selector-test-1",
+  "supersedes": null
+ }
+}

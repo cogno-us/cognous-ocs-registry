@@ -1,0 +1,57 @@
+{
+ "domain": "ocs-reg/r08-v5/effective-policy\\n",
+ "profile": "ocs-effective-policy/1",
+ "vectors": [
+  {
+   "digest": "sha256:b34f64a3db85f0344681ea4764b72d5c34054aed57106ab678ad77b8af3ac0d6",
+   "effective": {
+    "clock_tolerance_seconds": 5
+   },
+   "id": "baseline",
+   "preimage": {
+    "contract_version": "r08-v5",
+    "deny_all": [],
+    "effective": {
+     "clock_tolerance_seconds": 5
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f4t-control-plane-clock-tolerance",
+    "family_version": "v5"
+   }
+  },
+  {
+   "digest": "sha256:96266bc74a8b164536b52d292702c685c5b0a6ed3087ec923b821325f63415eb",
+   "effective": {
+    "clock_tolerance_seconds": 0
+   },
+   "id": "zero-strictest",
+   "preimage": {
+    "contract_version": "r08-v5",
+    "deny_all": [],
+    "effective": {
+     "clock_tolerance_seconds": 0
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f4t-control-plane-clock-tolerance",
+    "family_version": "v5"
+   }
+  },
+  {
+   "digest": "sha256:995598d975654738c77fbac22e7279af9d0f44fc5a1c406c7b05206ca01bd0ad",
+   "effective": {
+    "clock_tolerance_seconds": 2147483647
+   },
+   "id": "ceiling",
+   "preimage": {
+    "contract_version": "r08-v5",
+    "deny_all": [],
+    "effective": {
+     "clock_tolerance_seconds": 2147483647
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f4t-control-plane-clock-tolerance",
+    "family_version": "v5"
+   }
+  }
+ ]
+}
