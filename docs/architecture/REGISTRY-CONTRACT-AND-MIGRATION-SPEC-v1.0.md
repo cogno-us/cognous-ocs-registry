@@ -1,6 +1,6 @@
 # Cognous Registry Contract and Migration Specification v1.0
 
-Status: PROPOSED, NON-AUTHORIZING. Companion to docs/architecture/REGISTRY-TARGET-ARCHITECTURE-v1.0.md and Static Migration Plan v1.1 section 12. Governing Constitution: cogno-us/cognous-engineering-constitution@1c2e920f4e58e07a52e8e2408a506cf7dbc1292b plus ADOPTION.md. Inventoried denominator: 19 parameters / 12 canonical rules (audit PR #60). No Registry code change or successor contract allocation is made here.
+Pre-builder reconciliation and decision ledger: [REGISTRY-ARCHITECT-PREBUILDER-REVIEW-v1.0.md](REGISTRY-ARCHITECT-PREBUILDER-REVIEW-v1.0.md).\n\nStatus: PROPOSED, NON-AUTHORIZING. Companion to docs/architecture/REGISTRY-TARGET-ARCHITECTURE-v1.0.md and Static Migration Plan v1.1 section 12. Governing Constitution: cogno-us/cognous-engineering-constitution@1c2e920f4e58e07a52e8e2408a506cf7dbc1292b plus ADOPTION.md. Inventoried denominator: 19 parameters / 12 canonical rules (audit PR #60). No Registry code change or successor contract allocation is made here.
 
 ## 1. Target contract boundaries
 
