@@ -1,0 +1,40 @@
+# ObservationPolicy reconciliation (read-only)
+
+Source: r6_cp (CP, src/agent_control_plane) on branch HEAD a62ca8d; r7_base audit docs.
+
+| Item | max_age_seconds | clock_tolerance_seconds |
+|---|---|---|
+| Owner | `ObservationPolicy(BaseModel)`, bounded.py:411-415; exported __init__.py:24,82 | same |
+| Type / default | `int = Field(gt=0)`, REQUIRED, no default (:414) | `int = Field(default=5, ge=0)` (:415) |
+| Validators | none beyond gt/ge; no model_config (lax: `True`->1, `"7"`->7, `3.0`->3 accepted; verified); no upper bound; no cross-field validator | same |
+| Consumer | `_reconcile_observation` stale check, bounded.py:1925-1926 (`(evaluation_time - observed_at) > max_age` -> `observation_stale`) | future check, :1920-1924 (`observed_at > reference + tol` -> `observation_time_future`) |
+| Registry narrowing | audit: min(host, registry), eligible CORE | audit: min(host, registry), eligible QUALIFIED (pending AR-1) |
+| Verdict | **BLOCKED** (D-06) | **BLOCKED** (D-06 plus AR-1) |
+
+## 1. Owner and MISSING behaviour
+- The policy is a constructor arg `observation_policy: ObservationPolicy | None = None` (bounded.py:1276), deep-copied at :1300. No file or Registry read. Host callers: cli_run.py:510 `ObservationPolicy(300, 5)` and tests.
+- Missing is a hold, confirmed: `_reconcile_observation` appends `observation_policy_missing` (:1899-1901); the time comparison is skipped because it needs `policy is not None` (:1918); any reason means `accepted=False` and `result="hold"` (:1946-1954). The transport-failure path does the same (:1856-1858). Result echoes `observation_max_age_seconds` / `observation_clock_tolerance_seconds` as None (:1868-1869, 1963-1964). Pre-dispatch (:1730) and post-dispatch (:1832) both use this path. Tests: test_bounded_authorization.py:842-853, 1040.
+- Audit classifies "absent policy => hold" as an INVARIANT, RETAIN-IN-CODE (parameter-catalogue `I-W6-042`): "a Registry value must never supply a policy where host passed None."
+
+## 2. Semantics
+- Clock: `evaluation_time` is `_now()` UTC (bounded.py:63, 1307-1311), or the caller `now` only when `allow_test_time` (:1308, `_trusted_evaluation_time` :1875-1888). Staleness is measured against evaluation_time. The future limit uses `reference = max(evaluation_time, _now())` when freshness/0.1 is configured (`self._freshness`, :1920-1922), else evaluation_time. `observed_at` is destination-stamped via `parse_instant`. This clock domain is separate from `_fresh` (:2017-2024), which uses the constructor tolerance.
+- The checks are if/elif: future first, otherwise stale. Observations up to tol in the future yield a negative age and pass stale. So tolerance only widens acceptance of future stamps, and max_age is the sole bound on the past side.
+- Lowering `max_age_seconds`: strictly more restrictive in every path. The sole read of the value is the `>` comparison at :1925, and every non-accepted result is a hold. Output only gains `observation_stale` reasons.
+- Lowering `clock_tolerance_seconds`: strictly stricter. It shrinks `future_limit`, so it can only add `observation_time_future` refusals (false refusal, never widening). No other read site. Caveat: with tol=0 and freshness active, `reference` moves forward with the service clock, so a mis-stamped observation can still be refused. That is still restrictive.
+- 60/300: 60 = default of authority-input ages `status/identity/mandate/approval_max_age_seconds` (:1271-1274), judged by `_fresh`. 300 = the CLI/test literal for `ObservationPolicy.max_age_seconds` (cli_run.py:510), which has no code default. g0-exit-report.md §4 states that nothing in code compares or orders them. Audit (parameter-catalogue max_age row) records "60 vs 300 relationship not resolved; no CP consumer". D-07 (PREBUILDER-REVIEW:26) leaves it open. The source requires NO relationship, so none can be asserted. Two distinct 5 s tolerances exist (ctor default :1275, ObservationPolicy :415).
+- Cross-field: none in source. tolerance <= max_age is not enforced and not needed for safety. The only interaction is that a future-stamped, tolerated observation has negative age. A Registry composition should not invent a cross-field rule.
+- Supported bounds: max_age >= 1, tolerance >= 0, no ceiling. Audit valid_domain "int >0" / "int >=0". Any Registry upper bound or range is an Architect choice (cf. AR-2 for the constructor tolerance).
+
+## 3. Binding and persistence (precise)
+- NOT bound. `RuntimeAuthorityProfile` (runtime_authority.py:194-229) has no observation field and `extra="forbid"`. `approval_commitment` (:236-250) and `catalogue_digest` (:473 = commitment(profile.model_dump)) are over the profile only. Repo-wide grep: `observation_policy` / `ObservationPolicy` appear only in bounded.py (:411, 1276, 1300, 1856-1964) and cli_run.py:510. `AuthorizationBinding` (:264+) and the persisted decision carry no such field, and `registry_governed_policy.py` has none either.
+- The only persisted trace is diagnostic: each `ReconciliationResult` stores the `observation_max_age_seconds` and `observation_clock_tolerance_seconds` actually applied (:427-428, appended :624-625). No replay re-validation reads it.
+- Therefore it is constructor-only and workflow-local, the same status as the F4 scalars (D-06 text: "also lacks an established equivalent commitment path"). This is the "persistence/binding gap". Binding it requires either (B) a new persisted effective-configuration field, which is a persisted-decision schema change needing F3 requalification, or (C) adding it to the approval preimage (:239-243), which invalidates existing approvals and changes `catalogue_digest`. Both are STOP conditions requiring Architect authorization (D-06 says do NOT choose B/C without explicit decision). Option A (workflow-local, documented as not globally reproducible) needs no code change but needs an explicit Architect acceptance.
+
+## 4. Reachability without touching protected evaluators
+- Technically yes. `GovernedAgeWorkflow` (registry_f4_age_governance.py:105-123) and `GovernedPolicyWorkflow` (registry_governed_policy.py:231) forward `**workflow_kwargs` to `BoundedAuthorizationWorkflow.__init__`, so a governed subclass could clamp `observation_policy` (min(host, registry), and never when host passed None) before `super().__init__`. bounded.py is untouched.
+- The wall is governance, not code: the F4 payload is closed to 2 keys (audit: "F4 payload closed to 2 keys"), so a new family, contract and selection scope are needed. A clamped value would be unbound and un-re-validated at decision/effect unless the `_gl_*` re-validation machinery is extended, and `_gl_held_defect` at :148-152 checks only the two F4 scalars. Replacing a value post-construction without the binding would be exactly the D-06 gap.
+
+## 5. Verdicts
+- `max_age_seconds`: **BLOCKED** (for the governed path). Direction is safe (lowering is strictly stricter, missing stays a hold). Not implementable until D-06 (binding option A/B/C) is decided and D-07 (60/300 precedence, confirmed to be no source relationship) is ruled. Minimum unblock: Architect rules D-06 = A (accept workflow-local, document non-reproducibility) or authorizes B/C with F3 requalification, AND records that no 60/300 ordering is required. Audit eligibility is CORE but `enforcement_integrated=NO`, `registry_family=none`.
+- `clock_tolerance_seconds`: **BLOCKED**, with the same D-06/D-07 plus AR-1: DR-CP-AGE-1 line 8 lists `clock_tolerance_seconds` unqualified as out of scope, and nothing says whether that covers the ObservationPolicy field. Unblock: AR-1 ruling that the exclusion does not extend to ObservationPolicy tolerance (a separate decision record, not an edit), plus a range ruling (floor 0, optional ceiling). It must not be bundled with held f4t (#58 / CP #87), which covers the constructor tolerance only.
+- Note: the Architect pre-builder review (:48) says "distinct ObservationPolicy tolerance is within the 19", so scope inclusion is asserted. The binding gap still blocks implementation.
