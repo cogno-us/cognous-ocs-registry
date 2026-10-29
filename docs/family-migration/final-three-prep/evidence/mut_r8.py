@@ -3,7 +3,7 @@ Copies the repo to a temp root, applies ONE string mutation at a time to a NEW m
 to the V8 block of engine/profiles.py, or to the additive `scalar-int` branch of engine/identity.py and the KINDS tuple of engine/profile.py, runs the r08-v8 test files and
 records KILLED/SURVIVED. Frozen files (v1..v7) are not mutated: they are protected by the byte-identity baseline tests.
 Environment: MUT_ONLY=ID1,ID2 (subset), MUT_PY (interpreter), MUT_K (pytest -k expression), MUT_SUFFIX (output suffix).
-DRAFT / PROPOSED / GATED; BUILDER_TESTED developer evidence."""
+APPROVED CANDIDATE; BUILDER_TESTED developer evidence."""
 import json, os, pathlib, shutil, subprocess, sys, tempfile
 src_root, out_dir = pathlib.Path(sys.argv[1]).resolve(), pathlib.Path(sys.argv[2]).resolve()
 work = pathlib.Path(tempfile.mkdtemp(prefix="mut_r8_"))
@@ -116,6 +116,9 @@ M = [
  ("TH13 v8 digest-of-preimage bound to the v7 profile", TI, "return _id.effective_digest_of_preimage(_profiles.V8, preimage)", "return _id.effective_digest_of_preimage(_profiles.V7, preimage)"),
  ("TH14 v8 effective prefix of the v7 profile", TI, "EFFECTIVE_PREFIX = _profiles.V8.effective_policy_domain", "EFFECTIVE_PREFIX = _profiles.V7.effective_policy_domain"),
  ("TH15 v8 identity rows of the v7 profile", TI, "IDENTITY_FAMILIES = _profiles.V8.identity", "IDENTITY_FAMILIES = _profiles.V7.identity"),
+ ("TH16 v8 public anchor id constant points at max-age", TF, "FAMILY_ANCHOR_V8 = _anchor.FAMILY_ANCHOR", "FAMILY_ANCHOR_V8 = _obs.FAMILY_MAX_AGE"),
+ ("TH17 v8 public tolerance id constant points at max-age", TF, "FAMILY_OBSERVATION_CLOCK_TOLERANCE_V8 = _obs.FAMILY_TOLERANCE", "FAMILY_OBSERVATION_CLOCK_TOLERANCE_V8 = _obs.FAMILY_MAX_AGE"),
+ ("TH18 v8 public family id tuple order changed", TF, "FAMILY_IDS_V8 = (FAMILY_ANCHOR_V8, FAMILY_OBSERVATION_MAX_AGE_V8, FAMILY_OBSERVATION_CLOCK_TOLERANCE_V8)", "FAMILY_IDS_V8 = (FAMILY_OBSERVATION_MAX_AGE_V8, FAMILY_ANCHOR_V8, FAMILY_OBSERVATION_CLOCK_TOLERANCE_V8)"),
 ]
 ONLY = [x for x in os.environ.get("MUT_ONLY", "").split(",") if x]
 PY = os.environ.get("MUT_PY", sys.executable)

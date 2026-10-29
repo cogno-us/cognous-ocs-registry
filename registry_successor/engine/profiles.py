@@ -4,7 +4,7 @@
 for `anchor_deadline_to_inputs`, `ObservationPolicy.max_age_seconds` and `ObservationPolicy.clock_tolerance_seconds` are BLOCKED by decision record and
 are NOT registered.
 
-`V8` is the PROPOSED, GATED successor `r08-v8` (DRAFT; not for merge until the Architect decides): it carries ONLY the three remaining families
+`V8` is the APPROVED CANDIDATE successor `r08-v8` (Architect-selected, D-C5; BUILDER_TESTED, not independently qualified): it carries ONLY the three remaining families
 `f5-anchor-deadline-to-inputs-policy`, `f5-observation-max-age-policy` and `f5-observation-clock-tolerance-policy` (schema revision 1 each) and does NOT re-register
 irreversibility. It is additive: `V7`, `V6_COMPAT` and `PROFILES` are unchanged, and `V8` is not a member of `PROFILES`.
 

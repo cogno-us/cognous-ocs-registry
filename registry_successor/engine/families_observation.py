@@ -1,7 +1,7 @@
 """Two F5 scalar-int families for the Control Plane `ObservationPolicy` for contract `r08-v8` (docs/r08-v8-contract.md).
 
-DRAFT / PROPOSED / GATED: not part of any merged contract. Registering these families enables NO consumer; the Control Plane consumers are not implemented, and the
-observation values are not persisted-bound (decision D-06 is open).
+APPROVED CANDIDATE (Architect-selected successor, D-C5): BUILDER_TESTED, non-authorizing, not independently qualified. Registering these families enables NO consumer; the Control Plane consumers are not implemented, and the
+observation values are bound by the Control Plane D-06 effective-configuration binding, NOT by this module.
 
   `f5-observation-max-age-policy`         member `observation_max_age_seconds`         (host `ObservationPolicy.max_age_seconds`)
   `f5-observation-clock-tolerance-policy` member `observation_clock_tolerance_seconds` (host `ObservationPolicy.clock_tolerance_seconds`)

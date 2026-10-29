@@ -1,4 +1,4 @@
-"""Frozen-baseline protection for the `r08-v8` preparation (DRAFT / PROPOSED / GATED; BUILDER_TESTED; not independently qualified).
+"""Frozen-baseline protection for the `r08-v8` preparation (APPROVED CANDIDATE; BUILDER_TESTED; not independently qualified).
 
 `tests/vectors/r08v8/frozen_baseline_manifest.json` extends the r08-v7 manifest (itself the r08-v6 manifest plus r08-v6) with every r08-v7 module, engine module, contract
 document, test and vector that this change does not edit (sha256 from `git show <baseline>:<path>`, baseline = Registry main 67512a71546748cd888e4cf790485ea0bef9199a;

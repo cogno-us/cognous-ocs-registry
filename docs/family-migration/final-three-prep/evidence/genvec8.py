@@ -1,5 +1,5 @@
 """Generate tests/vectors/r08v8/identity_vectors.json with an INDEPENDENT canonical encoder (json.dumps sort_keys, ASCII), not the module's.
-The preimage carries the integer `family_schema_revision` (not the legacy `family_version` tag). Run from the repository root. DRAFT / PROPOSED / GATED."""
+The preimage carries the integer `family_schema_revision` (not the legacy `family_version` tag). Run from the repository root. APPROVED CANDIDATE."""
 import hashlib, json
 DOM = b"ocs-reg/r08-v8/effective-policy\n"
 ANC, AGE, TOL = "f5-anchor-deadline-to-inputs-policy", "f5-observation-max-age-policy", "f5-observation-clock-tolerance-policy"

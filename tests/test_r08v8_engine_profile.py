@@ -1,4 +1,4 @@
-"""The `V8` engine profile and its thin public modules (DRAFT / PROPOSED / GATED; BUILDER_TESTED; not independently qualified).
+"""The `V8` engine profile and its thin public modules (APPROVED CANDIDATE; BUILDER_TESTED; not independently qualified).
 
 `V8` carries ONLY the three remaining families and does not re-register irreversibility; `V7`, `V6_COMPAT` and `PROFILES` are unchanged (`V7` still registers exactly one
 family; its tests are untouched). Registering a family enables no consumer.
@@ -188,3 +188,17 @@ def test_the_engine_files_other_than_the_two_additive_edits_are_unchanged_in_con
     ident = (PKG / "engine" / "identity.py").read_text(encoding="utf-8")
     assert ident.count('elif row.kind == "scalar-int":') == 1 and ident.count('if row.kind == "classmap-enum":') == 1 and ident.count("# scalar-enum") == 1
     assert profile_e.KINDS == ("classmap-enum", "scalar-enum", "scalar-int")
+
+
+def test_public_family_id_constants_match_the_profile_table_and_expose_the_binding_fields():
+    """D-06 binding entries need {family_id, contract_version, family_schema_revision, effective_policy_digest}; all four are reachable from the public v8 modules."""
+    from registry_successor import v8_families as vf, v8_policy_identity as vi
+    assert vf.FAMILY_IDS_V8 == ("f5-anchor-deadline-to-inputs-policy", "f5-observation-max-age-policy", "f5-observation-clock-tolerance-policy")
+    assert tuple(vf.FAMILIES_V8) == vf.FAMILY_IDS_V8 and vf.CONTRACT_V8 == vi.CONTRACT_VERSION == "r08-v8"
+    assert (vf.FAMILY_ANCHOR_V8, vf.FAMILY_OBSERVATION_MAX_AGE_V8, vf.FAMILY_OBSERVATION_CLOCK_TOLERANCE_V8) == vf.FAMILY_IDS_V8
+    sample = {vf.FAMILY_IDS_V8[0]: {"anchor_deadline_to_inputs": "anchor"}, vf.FAMILY_IDS_V8[1]: {"observation_max_age_seconds": 60},
+              vf.FAMILY_IDS_V8[2]: {"observation_clock_tolerance_seconds": 0}}
+    for fid in vf.FAMILY_IDS_V8:
+        rev = vi.registered_family_version(fid, vf.CONTRACT_V8)
+        dig = vi.effective_policy_digest(fid, sample[fid])
+        assert type(rev) is int and rev == 1 and dig.startswith("sha256:") and len(dig) == 71

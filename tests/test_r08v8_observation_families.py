@@ -1,4 +1,4 @@
-"""`r08-v8` families `f5-observation-max-age-policy` and `f5-observation-clock-tolerance-policy` (DRAFT / PROPOSED / GATED; BUILDER_TESTED; not independently qualified).
+"""`r08-v8` families `f5-observation-max-age-policy` and `f5-observation-clock-tolerance-policy` (APPROVED CANDIDATE; BUILDER_TESTED; not independently qualified).
 
 Strict ints, `min(caller, registry)` composition, no host bound implied: 2147483647 is the structural Registry token range (`common.MAX_INT`), not a Control Plane bound.
 A caller above the range refuses the WHOLE caller. The tolerance member must never alias the held constructor tolerance member `clock_tolerance_seconds`.
@@ -360,3 +360,33 @@ def test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer(fam):
     assert fam["composer"]({field: 100}, type("Rec", (), {"ok": True, "record": D(good.record)})()).code == "composition_record_invalid"
     assert fam["composer"]({field: 100}, type("Rec", (), {"ok": True, "record": dict(good.record, payload=D({field: 60}))})()).code == "composition_record_invalid"
     assert fam["composer"]({field: 100}, type("Rec", (), {"ok": True, "record": dict(good.record, payload={field: 60})})()).ok
+
+
+@BOTH
+@pytest.mark.parametrize("mutated", [7, -5, 2 ** 40])
+def test_the_validated_payload_copy_is_a_defence_against_mutation_after_validation(fam, mutated):
+    """Deterministic kill of the aliasing mutant (`snap = payload`): the caller mapping is read AFTER the registry payload was validated and BEFORE the registry value is used,
+    and its `items()` mutates the live payload dict (what another thread, a signal handler or a finalizer could do). The composer must use the validated copy.
+    Without the copy the effective value would be the mutated (and possibly out-of-domain) value."""
+    field = fam["field"]
+    live = {field: 50}
+    shell = type("Rec", (), {"ok": True, "record": dict(rec(fam, {field: 50}).record, payload=live)})()
+    fired = []
+
+    class Mutating(Mapping):
+        def __iter__(self):
+            return iter([field])
+
+        def __len__(self):
+            return 1
+
+        def __getitem__(self, k):
+            return 100
+
+        def items(self):
+            live[field] = mutated  # after the registry payload was validated
+            fired.append(1)
+            return iter([(field, 100)])
+    res = fam["composer"](Mutating(), shell)
+    assert fired == [1] and live[field] == mutated, "the mutation hook must actually have run between validation and use"
+    assert res.ok and res.code is None and res.effective == {field: 50} and res.detail == ""

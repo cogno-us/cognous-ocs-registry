@@ -1,4 +1,4 @@
-"""`r08-v8` family `f5-anchor-deadline-to-inputs-policy`: payload validation and composition (DRAFT / PROPOSED / GATED; BUILDER_TESTED; not independently qualified).
+"""`r08-v8` family `f5-anchor-deadline-to-inputs-policy`: payload validation and composition (APPROVED CANDIDATE; BUILDER_TESTED; not independently qualified).
 
 Pure: no signature backend is needed. The only relation asserted is the two-point order `anchor` (stricter) < `no_change` (looser). The Registry can never assert false:
 there is no such word in the vocabulary and a JSON boolean is a type refusal. Registering the family enables no consumer.
@@ -254,3 +254,30 @@ def test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer():
     assert f.compose_anchor({FIELD: N}, type("Rec", (), {"ok": True, "record": D(good.record)})()).code == "composition_record_invalid"
     assert f.compose_anchor({FIELD: N}, type("Rec", (), {"ok": True, "record": dict(good.record, payload=D({FIELD: A}))})()).code == "composition_record_invalid"
     assert f.compose_anchor({FIELD: N}, type("Rec", (), {"ok": True, "record": dict(good.record, payload={FIELD: A})})()).ok
+
+
+def test_the_validated_payload_copy_is_a_defence_against_mutation_after_validation():
+    """Deterministic kill of the aliasing mutant (`snap = payload`): the caller mapping is read AFTER the registry payload was validated and BEFORE the registry value is used,
+    and its `items()` mutates the live payload dict (what another thread, a signal handler or a finalizer could do). The composer must use the validated copy."""
+    for mutated in (N, "false", True, 0):
+        live = {FIELD: A}
+        shell = type("Rec", (), {"ok": True, "record": dict(rec({FIELD: A}).record, payload=live)})()
+        fired = []
+
+        class Mutating(Mapping):
+            def __iter__(self):
+                return iter([FIELD])
+
+            def __len__(self):
+                return 1
+
+            def __getitem__(self, k):
+                return N
+
+            def items(self):
+                live[FIELD] = mutated  # after the registry payload was validated
+                fired.append(1)
+                return iter([(FIELD, N)])
+        res = f.compose_anchor(Mutating(), shell)
+        assert fired == [1] and live[FIELD] == mutated
+        assert res.ok and res.code is None and res.effective == {FIELD: A} and res.detail == ""

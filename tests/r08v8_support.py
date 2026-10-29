@@ -1,4 +1,4 @@
-"""Test builders for the `r08-v8` remaining families on the unified engine (test-only; DRAFT / PROPOSED / GATED; BUILDER_TESTED, not independently qualified).
+"""Test builders for the `r08-v8` remaining families on the unified engine (test-only; APPROVED CANDIDATE; BUILDER_TESTED, not independently qualified).
 
 Three families, each with one payload member: `f5-anchor-deadline-to-inputs-policy` (str `anchor` | `no_change`), `f5-observation-max-age-policy` and
 `f5-observation-clock-tolerance-policy` (strict ints). Every builder takes the family (default the anchor family). Real Ed25519 (PyNaCl, deterministic) signs every

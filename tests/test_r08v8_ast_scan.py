@@ -1,5 +1,5 @@
-"""AST scan of the NEW `r08-v8` modules: no interpreter, no executable rule, no I/O, no clock, no randomness, no mutable global, no new reason code (DRAFT / PROPOSED /
-GATED; BUILDER_TESTED; not independently qualified). A policy is data validated by exact type and range; nothing here evaluates text or loads code.
+"""AST scan of the NEW `r08-v8` modules: no interpreter, no executable rule, no I/O, no clock, no randomness, no mutable global, no new reason code (APPROVED CANDIDATE;
+BUILDER_TESTED; not independently qualified). A policy is data validated by exact type and range; nothing here evaluates text or loads code.
 """
 import ast
 from pathlib import Path

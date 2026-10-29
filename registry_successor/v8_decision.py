@@ -1,7 +1,7 @@
 """`r08-v8` verify-and-decide entry point (docs/r08-v8-contract.md). A thin public binding of the parameterised engine to the `V8` profile.
 
 Same signature and result type as `v6_decision.verify_and_decide_v6`; there is no `contract_version` parameter (hardwired `r08-v8`). The engine
-implements verification and decision once; this module adds nothing to it. DRAFT / PROPOSED / GATED. Non-authorizing; unqualified.
+implements verification and decision once; this module adds nothing to it. APPROVED CANDIDATE. Non-authorizing; unqualified.
 """
 from typing import Any
 

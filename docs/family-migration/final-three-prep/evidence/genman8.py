@@ -1,7 +1,7 @@
 """Generate tests/vectors/r08v8/frozen_baseline_manifest.json: the r08-v7 manifest plus every r08-v7 module, engine module, contract, test and vector that this change does NOT
 edit, each hashed from `git show <baseline>:<path>` with baseline = Registry main 67512a71546748cd888e4cf790485ea0bef9199a. The three engine files that carry ADDITIVE edits
 (profile.py, identity.py, profiles.py) are recorded as `additive_edits`: baseline sha256 plus the exact line-level diff (current lines and the baseline lines they replace), so a
-test can reverse the edit and prove the baseline is recovered byte for byte. Run from the repository root. DRAFT / PROPOSED / GATED; BUILDER_TESTED."""
+test can reverse the edit and prove the baseline is recovered byte for byte. Run from the repository root. APPROVED CANDIDATE; BUILDER_TESTED."""
 import difflib, hashlib, json, subprocess
 BASE = "67512a71546748cd888e4cf790485ea0bef9199a"
 EDITED = ["registry_successor/engine/profile.py", "registry_successor/engine/identity.py", "registry_successor/engine/profiles.py"]
@@ -32,5 +32,5 @@ for p in EDITED:
     print(p, [(o["tag"], o["baseline_lines"], o["current_lines"]) for o in ops])
 doc = {"baseline_commit": BASE, "files": files, "additive_edits": additive,
        "note": "r08-v7 baseline plus the r08-v7 modules, engine modules, contract, tests and vectors this change does not edit; every file hashed from `git show <baseline>:<path>`",
-       "profile": "frozen baseline for r08-v8 (DRAFT / PROPOSED / GATED)"}
+       "profile": "frozen baseline for r08-v8 (APPROVED CANDIDATE)"}
 open("tests/vectors/r08v8/frozen_baseline_manifest.json", "w").write(json.dumps(doc, indent=1, sort_keys=True) + "\n")

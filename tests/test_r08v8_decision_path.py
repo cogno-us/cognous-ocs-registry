@@ -1,4 +1,4 @@
-"""The public `r08-v8` decision path with real synthetic Ed25519 signatures, all three families (DRAFT / PROPOSED / GATED; BUILDER_TESTED; not independently qualified).
+"""The public `r08-v8` decision path with real synthetic Ed25519 signatures, all three families (APPROVED CANDIDATE; BUILDER_TESTED; not independently qualified).
 
 Where PyNaCl is absent the module is NOT RUN (skipped with a reason), never passed with a double. A decision here enables no consumer and authorizes nothing
 (`operationally_authorized` is always False).

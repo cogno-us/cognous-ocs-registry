@@ -1,6 +1,6 @@
 """F5 family `f5-anchor-deadline-to-inputs-policy` for contract `r08-v8` (docs/r08-v8-contract.md; Control Plane field `FreshnessProfile.anchor_deadline_to_inputs`).
 
-DRAFT / PROPOSED / GATED: not part of any merged contract. Registering this family enables NO consumer; the Control Plane consumer is not implemented.
+APPROVED CANDIDATE (Architect-selected successor, D-C5): BUILDER_TESTED, non-authorizing, not independently qualified. Registering this family enables NO consumer; the Control Plane consumer is not implemented. The purpose-observation residual is closed only together with the separately authorized D-07 Control Plane correction, not by this module.
 
 Payload: EXACTLY one member, `anchor_deadline_to_inputs`, an exact `str` in the CLOSED two-string vocabulary `anchor` | `no_change`. The Control Plane field is a bool
 (default False); the Registry never uses JSON booleans (a `true`/`false` is `field_type_invalid`) and never coerces: the consumer maps the exact strings. A second

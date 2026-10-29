@@ -75,7 +75,7 @@
       5,
       9
      ],
-     "current_text": "\n`V8` is the PROPOSED, GATED successor `r08-v8` (DRAFT; not for merge until the Architect decides): it carries ONLY the three remaining families\n`f5-anchor-deadline-to-inputs-policy`, `f5-observation-max-age-policy` and `f5-observation-clock-tolerance-policy` (schema revision 1 each) and does NOT re-register\nirreversibility. It is additive: `V7`, `V6_COMPAT` and `PROFILES` are unchanged, and `V8` is not a member of `PROFILES`.\n",
+     "current_text": "\n`V8` is the APPROVED CANDIDATE successor `r08-v8` (Architect-selected, D-C5; BUILDER_TESTED, not independently qualified): it carries ONLY the three remaining families\n`f5-anchor-deadline-to-inputs-policy`, `f5-observation-max-age-policy` and `f5-observation-clock-tolerance-policy` (schema revision 1 each) and does NOT re-register\nirreversibility. It is additive: `V7`, `V6_COMPAT` and `PROFILES` are unchanged, and `V8` is not a member of `PROFILES`.\n",
      "tag": "insert"
     },
     {
@@ -337,5 +337,5 @@
   "tests/vectors/wycheproof/ed25519_test.json": "ea80ffebac085e21cb9d3e903e7fa2b448d96702da5b31f061d0b83b430b74b3"
  },
  "note": "r08-v7 baseline plus the r08-v7 modules, engine modules, contract, tests and vectors this change does not edit; every file hashed from `git show <baseline>:<path>`",
- "profile": "frozen baseline for r08-v8 (DRAFT / PROPOSED / GATED)"
+ "profile": "frozen baseline for r08-v8 (APPROVED CANDIDATE)"
 }

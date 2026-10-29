@@ -1,5 +1,5 @@
 """Generate tests/vectors/r08v8/signed_selection_vector.json (one deterministic signed selection per family; SYNTHETIC test keys). Run from the repository root with PYTHONPATH=. .
-DRAFT / PROPOSED / GATED; BUILDER_TESTED; non-authorizing."""
+APPROVED CANDIDATE; BUILDER_TESTED; non-authorizing."""
 import base64, json, sys
 sys.path.insert(0, "tests")
 import r08_support as r

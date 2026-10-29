@@ -1,4 +1,4 @@
-"""Cross-version refusal for `r08-v8` (DRAFT / PROPOSED / GATED; BUILDER_TESTED; not independently qualified).
+"""Cross-version refusal for `r08-v8` (APPROVED CANDIDATE; BUILDER_TESTED; not independently qualified).
 
 A document of one contract is accepted by that contract's entry point only. v6, v7 and v8 documents (record + signed selection) are run through every other entry point; the
 three v8 family ids stay `family_unsupported` under r08-v7 (a v7 document naming them is not applied); irreversibility is `family_unsupported` under r08-v8; a signature made
