@@ -1,6 +1,6 @@
 # Cognous Registry Target Architecture v1.0
 
-Status: PROPOSED, NON-AUTHORIZING (2026-10-28). Governing: Engineering Constitution and ADOPTION.md at 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b; Static Migration Plan v1.1 section 12; Engineering Plan v1.5; audit PR #60. Last merged accounting 13/19 integrated, six outstanding, zero independently accepted. Frozen r08-v1 through r08-v5 remain preserved.
+Pre-builder reconciliation and decision ledger: [REGISTRY-ARCHITECT-PREBUILDER-REVIEW-v1.0.md](REGISTRY-ARCHITECT-PREBUILDER-REVIEW-v1.0.md).\n\nStatus: PROPOSED, NON-AUTHORIZING (2026-10-28). Governing: Engineering Constitution and ADOPTION.md at 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b; Static Migration Plan v1.1 section 12; Engineering Plan v1.5; audit PR #60. Last merged accounting 13/19 integrated, six outstanding, zero independently accepted. Frozen r08-v1 through r08-v5 remain preserved.
 
 ## Purpose
 
