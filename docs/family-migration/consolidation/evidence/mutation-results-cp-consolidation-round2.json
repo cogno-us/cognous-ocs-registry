@@ -1,0 +1,57 @@
+[
+ [
+  "L08 held state not checked first",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_i05_post_construction_edits_of_the_held_state_are_refused_at_every_boundary[scalars]"
+ ],
+ [
+  "L10 manifest authority not rechecked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k04_a_changed_manifest_authority_after_construction_is_refused_at_every_boundary"
+ ],
+ [
+  "L12 gate ignores execute-entry time",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_r07_every_boundary_including_the_commit_gate_is_judged_at_the_execute_entry_time"
+ ],
+ [
+  "L13 execute does not publish its time",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_r07_every_boundary_including_the_commit_gate_is_judged_at_the_execute_entry_time"
+ ],
+ [
+  "L15 gated destination re-wrap allowed",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k03_an_already_gated_destination_is_refused"
+ ],
+ [
+  "L16 naive construction time accepted",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k02_a_naive_construction_time_is_refused"
+ ],
+ [
+  "L17 test clock honoured without allow_test_time",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k01_the_construction_clock_is_the_real_clock_unless_the_host_allows_test_time"
+ ],
+ [
+  "P10 extension widening not checked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k07_the_extension_limit_can_never_grow_in_the_final_composition"
+ ],
+ [
+  "P11 final host-invariant check dropped",
+  "SURVIVED",
+  "composition tests pass"
+ ],
+ [
+  "P23 bound identity omits class age",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k06_each_component_of_the_bound_identity_is_compared_on_its_own[class_age]"
+ ],
+ [
+  "P32 host scalar validity not required",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k05_host_scalars_must_be_exact_integers_when_f4_is_declared[-1]"
+ ]
+]

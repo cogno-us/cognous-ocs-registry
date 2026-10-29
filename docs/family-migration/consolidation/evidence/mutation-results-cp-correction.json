@@ -1,0 +1,282 @@
+[
+ [
+  "L01 commit gate does not reverify",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_b05_all_three_execute_end_to_end"
+ ],
+ [
+  "L02 gate raises a plain error",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_r03_a_family_revoked_after_execute_entry_is_refused_at_the_commit_gate[f]"
+ ],
+ [
+  "L03 gate does not record the refusal",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_r03_a_family_revoked_after_execute_entry_is_refused_at_the_commit_gate[f]"
+ ],
+ [
+  "L04 no decision-entry revalidation",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_b05_all_three_execute_end_to_end"
+ ],
+ [
+  "L05 no effect-entry revalidation",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_b05_all_three_execute_end_to_end"
+ ],
+ [
+  "L06 proposal tenant not checked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_s01_a_proposal_for_another_action_or_tenant_is_out_of_scope"
+ ],
+ [
+  "L07 proposal action not checked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_s01_a_proposal_for_another_action_or_tenant_is_out_of_scope"
+ ],
+ [
+  "L08 held state not checked first",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_i05_post_construction_edits_of_the_held_state_are_refused_at_every_boundary[scalars]"
+ ],
+ [
+  "L09 held state not checked last",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_i06_the_held_state_is_checked_again_after_the_sources_ran"
+ ],
+ [
+  "L10 manifest authority not rechecked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k04_a_changed_manifest_authority_after_construction_is_refused_at_every_boundary"
+ ],
+ [
+  "L11 bound comparison dropped",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_r04_a_changed_selection_between_execute_entry_and_dispatch_is_refused[f]"
+ ],
+ [
+  "L12 gate ignores execute-entry time",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_r07_every_boundary_including_the_commit_gate_is_judged_at_the_execute_entry_time"
+ ],
+ [
+  "L13 execute does not publish its time",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_r07_every_boundary_including_the_commit_gate_is_judged_at_the_execute_entry_time"
+ ],
+ [
+  "L14 gated destination skips the gate",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_b05_all_three_execute_end_to_end"
+ ],
+ [
+  "L15 gated destination re-wrap allowed",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k03_an_already_gated_destination_is_refused"
+ ],
+ [
+  "L16 naive construction time accepted",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k02_a_naive_construction_time_is_refused"
+ ],
+ [
+  "L17 test clock honoured without allow_test_time",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k01_the_construction_clock_is_the_real_clock_unless_the_host_allows_test_time"
+ ],
+ [
+  "L18 source failure swallowed",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c03_a_declared_family_is_mandatory_a_failing_source_refuses_the_whole_construction[f]"
+ ],
+ [
+  "L19 scope validity loosened",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c05_scopes_must_share_consumer_tenant_and_action"
+ ],
+ [
+  "P01 F4 family not verified",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a03_f4_alone_with_a_profile_narrows_only_the_two_scalars"
+ ],
+ [
+  "P02 class-age family not verified",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a02_class_age_alone_equals_the_dedicated_workflow"
+ ],
+ [
+  "P03 unreadable family not verified",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a01_unreadable_alone_equals_the_dedicated_workflow"
+ ],
+ [
+  "P04 class-age refusal swallowed",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c04_an_unusable_selection_in_any_declared_family_refuses_and_names_the_family[a-class"
+ ],
+ [
+  "P05 final composition not validated",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_f03_the_final_validator_blocks_a_derived_result_that_widens"
+ ],
+ [
+  "P06 scalar widening not checked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_f01_the_final_composition_validator_rejects_every_widening_and_foreign_change"
+ ],
+ [
+  "P07 age widening not checked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_f01_the_final_composition_validator_rejects_every_widening_and_foreign_change"
+ ],
+ [
+  "P08 unreadable widening not checked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_f01_the_final_composition_validator_rejects_every_widening_and_foreign_change"
+ ],
+ [
+  "P09 foreign-field change not detected",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_f01_the_final_composition_validator_rejects_every_widening_and_foreign_change"
+ ],
+ [
+  "P10 extension widening not checked",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k07_the_extension_limit_can_never_grow_in_the_final_composition"
+ ],
+ [
+  "P11 final host-invariant check dropped",
+  "SURVIVED",
+  "composition tests pass"
+ ],
+ [
+  "P12 original-host defect not rechecked in final",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_f01_the_final_composition_validator_rejects_every_widening_and_foreign_change"
+ ],
+ [
+  "P13 host validity precheck removed",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_h01_an_invalid_original_host_is_refused_before_any_registry_call_and_is_not_repaired["
+ ],
+ [
+  "P14 scope mismatch accepted",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c05_scopes_must_share_consumer_tenant_and_action"
+ ],
+ [
+  "P15 empty declaration accepted",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c01_nothing_declared_or_wrong_shapes_are_refused"
+ ],
+ [
+  "P16 profile not required for profile families",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c02_a_profile_bearing_family_requires_the_host_profile[a]"
+ ],
+ [
+  "P17 policy_binding accepted",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c06_a_profile_with_policy_binding_is_refused_for_the_profile_bearing_families"
+ ],
+ [
+  "P18 scalar edits not detected",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_i05_post_construction_edits_of_the_held_state_are_refused_at_every_boundary[scalars]"
+ ],
+ [
+  "P19 profile edits not detected",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_i05_post_construction_edits_of_the_held_state_are_refused_at_every_boundary[profile_d"
+ ],
+ [
+  "P20 ledger claim ignored",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_l01_a_second_differently_configured_workflow_for_the_same_action_is_refused_by_a_shar"
+ ],
+ [
+  "P21 ledger supersession ignored",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_l02_supersede_retires_the_old_workflow_at_every_boundary"
+ ],
+ [
+  "P22 bound identity omits unreadable",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a01_unreadable_alone_equals_the_dedicated_workflow"
+ ],
+ [
+  "P23 bound identity omits class age",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k06_each_component_of_the_bound_identity_is_compared_on_its_own[class_age]"
+ ],
+ [
+  "P24 bound identity omits F4",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a03_f4_alone_with_a_profile_narrows_only_the_two_scalars"
+ ],
+ [
+  "P25 bound identity omits profile digest",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a01_unreadable_alone_equals_the_dedicated_workflow"
+ ],
+ [
+  "P26 only the first family is re-read",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_b01_all_three_compose_one_profile_plus_explicit_scalars"
+ ],
+ [
+  "P27 composition order changed",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_b01_all_three_compose_one_profile_plus_explicit_scalars"
+ ],
+ [
+  "P28 narrowed scalars not applied",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a03_f4_alone_with_a_profile_narrows_only_the_two_scalars"
+ ],
+ [
+  "P29 host profile passed instead of the effective one",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_a01_unreadable_alone_equals_the_dedicated_workflow"
+ ],
+ [
+  "P30 family prefix dropped",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_c04_an_unusable_selection_in_any_declared_family_refuses_and_names_the_family[f-f4_ag"
+ ],
+ [
+  "P31 unreadable composed over the host not the age profile",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_b01_all_three_compose_one_profile_plus_explicit_scalars"
+ ],
+ [
+  "P32 host scalar validity not required",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_k05_host_scalars_must_be_exact_integers_when_f4_is_declared[-1]"
+ ],
+ [
+  "C01 configuration identity omits the bound identity",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_l04_two_differently_governed_configurations_never_share_an_identity[registry_age_valu"
+ ],
+ [
+  "C02 configuration identity omits the host values",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_l04_two_differently_governed_configurations_never_share_an_identity[host_age]"
+ ],
+ [
+  "C03 claim made before construction completes",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_l06_a_failed_construction_leaves_no_claim"
+ ],
+ [
+  "C04 claim is not atomic (check then set, no lock)",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_l08_concurrent_claims_have_exactly_one_winner_and_the_claim_is_atomic"
+ ],
+ [
+  "C05 final claim result ignored",
+  "PATTERN COUNT 0",
+  ""
+ ]
+]

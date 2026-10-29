@@ -1,0 +1,7 @@
+[
+ [
+  "C05 final claim result ignored",
+  "KILLED",
+  "FAILED tests/test_governed_policy_composition.py::test_l01_a_second_differently_configured_workflow_for_the_same_action_is_refused_by_a_shar"
+ ]
+]
