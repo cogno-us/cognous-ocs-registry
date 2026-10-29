@@ -1,0 +1,252 @@
+[
+ [
+  "A01 assurance stricter() inverted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "A02 terminal stricter() inverted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b01_a_valid_selection_forces_the_terminal_section_on_and_changes_nothing_else"
+ ],
+ [
+  "A03 host flag mapping inverted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "A04 host terminal value inverted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b01_a_valid_selection_forces_the_terminal_section_on_and_changes_nothing_else"
+ ],
+ [
+  "A05 compose_assurance never sets the flag",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "A07 compose_terminal writes a wrong section",
+  "SURVIVED",
+  "composition tests pass"
+ ],
+ [
+  "A09 assurance widening check removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f01_a_forged_registry_result_that_loosens_a_required_host_class_is_refused"
+ ],
+ [
+  "A10 assurance stricter-of-host-and-registry check removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f06_a_forged_effective_value_that_is_not_the_stricter_of_host_and_record_or_not_an"
+ ],
+ [
+  "A11 assurance unnamed-class-keeps-host check removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f03_a_forged_registry_result_that_is_not_the_stricter_of_host_and_record_is_refuse"
+ ],
+ [
+  "A12 scoped class need not be governed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a10_a_registry_class_unknown_to_the_host_is_refused_and_the_record_must_name_the_s"
+ ],
+ [
+  "A13 scoped action may be unknown",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u04_the_composers_only_ever_add_and_the_defensive_checks_hold_when_reached_directl"
+ ],
+ [
+  "A14 registry class unknown to host accepted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u04_the_composers_only_ever_add_and_the_defensive_checks_hold_when_reached_directl"
+ ],
+ [
+  "A15 effective class-set check removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f03_a_forged_registry_result_that_is_not_the_stricter_of_host_and_record_is_refuse"
+ ],
+ [
+  "A16 effective value domain check removed (assurance)",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f03_a_forged_registry_result_that_is_not_the_stricter_of_host_and_record_is_refuse"
+ ],
+ [
+  "A17 terminal widening check removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f02_a_forged_registry_result_that_turns_a_host_on_off_is_refused"
+ ],
+ [
+  "A18 terminal stricter-of-host-and-registry check removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f06_a_forged_effective_value_that_is_not_the_stricter_of_host_and_record_or_not_an"
+ ],
+ [
+  "A19 terminal host value not validated",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u04_the_composers_only_ever_add_and_the_defensive_checks_hold_when_reached_directl"
+ ],
+ [
+  "A20 verifier admission removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u02_a_verifier_that_is_not_the_admitted_ed25519_verifier_and_wrong_material_types_"
+ ],
+ [
+  "A21 operationally_authorized not checked",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f05_a_registry_decision_of_the_wrong_shape_is_refused[authorized-ra]"
+ ],
+ [
+  "A22 non-applied decision kinds accepted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f05_a_registry_decision_of_the_wrong_shape_is_refused[wrong_kind-ra]"
+ ],
+ [
+  "A23 deny_all not checked",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f05_a_registry_decision_of_the_wrong_shape_is_refused[deny_all-ra]"
+ ],
+ [
+  "A24 assurance digest computed for the wrong family",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "A25 terminal caller always off",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b02_the_effective_value_is_on_if_either_side_is_on_and_a_registry_off_never_turns_"
+ ],
+ [
+  "A26 assurance second parse accepts any payload key",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u01_the_second_strict_parse_of_the_verified_record_text_refuses_anything_unusual"
+ ],
+ [
+  "A27 second parse accepts duplicate keys",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u01_the_second_strict_parse_of_the_verified_record_text_refuses_anything_unusual"
+ ],
+ [
+  "A28 second parse accepts numbers",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u01_the_second_strict_parse_of_the_verified_record_text_refuses_anything_unusual"
+ ],
+ [
+  "A29 non-exact str values accepted (assurance)",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f06_a_forged_effective_value_that_is_not_the_stricter_of_host_and_record_or_not_an"
+ ],
+ [
+  "A30 material type check removed",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u02_a_verifier_that_is_not_the_admitted_ed25519_verifier_and_wrong_material_types_"
+ ],
+ [
+  "A31 non-bool host flag accepted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u03_a_host_class_with_two_assurance_values_or_a_non_bool_flag_is_refused_before_an"
+ ],
+ [
+  "A32 ambiguous class assurance accepted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u03_a_host_class_with_two_assurance_values_or_a_non_bool_flag_is_refused_before_an"
+ ],
+ [
+  "B01 terminal family not in composition order",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b01_a_valid_selection_forces_the_terminal_section_on_and_changes_nothing_else"
+ ],
+ [
+  "B02 assurance not composed into the profile",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "B03 terminal not composed into the profile",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b01_a_valid_selection_forces_the_terminal_section_on_and_changes_nothing_else"
+ ],
+ [
+  "B04 dropped assurance flag not a widening",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f04_the_final_composition_validator_rejects_a_dropped_requirement_a_dropped_sectio"
+ ],
+ [
+  "B05 dropped terminal section not a widening",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f04_the_final_composition_validator_rejects_a_dropped_requirement_a_dropped_sectio"
+ ],
+ [
+  "B06 foreign terminal section content accepted",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_u04_the_composers_only_ever_add_and_the_defensive_checks_hold_when_reached_directl"
+ ],
+ [
+  "B07 assurance flag excluded from the foreign-change comparison only on one side",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "B08 original host validity not checked early for the new families",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_e01_an_invalid_original_host_is_refused_before_any_source_read_and_never_repaired["
+ ],
+ [
+  "B09 host assurance values not read",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "B10 identity omits the host assurance and terminal values",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_l03_a_host_value_difference_changes_the_identity_even_with_the_same_registry_mater"
+ ],
+ [
+  "B11 profile digest not bound for assurance-only governance",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_n05_editing_the_held_profile_is_refused_when_that_family_governs_alone[ra]"
+ ],
+ [
+  "B12 profile digest not bound for terminal-only governance",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_n05_editing_the_held_profile_is_refused_when_that_family_governs_alone[tr]"
+ ],
+ [
+  "B13 new families do not count as profile-bearing",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_c08_a_profile_is_required_for_both_new_families_and_policy_binding_is_refused"
+ ],
+ [
+  "B14 bound identity omits the assurance part",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a01_a_valid_selection_requires_assurance_for_the_governed_class_and_changes_nothin"
+ ],
+ [
+  "B15 bound identity omits the terminal part",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b01_a_valid_selection_forces_the_terminal_section_on_and_changes_nothing_else"
+ ],
+ [
+  "B16 re-derivation ignores the host terminal value",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b02_the_effective_value_is_on_if_either_side_is_on_and_a_registry_off_never_turns_"
+ ],
+ [
+  "B17 prefix of the terminal refusal dropped",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_b10_malformed_terminal_records_are_refused[payload0]"
+ ],
+ [
+  "B18 assurance refusal does not name the family",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_a10_a_registry_class_unknown_to_the_host_is_refused_and_the_record_must_name_the_s"
+ ],
+ [
+  "B19 assurance difference tolerated although the family is not declared",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f09_another_composer_that_adds_a_revocation_field_without_the_family_being_declare"
+ ],
+ [
+  "B20 terminal difference tolerated although the family is not declared",
+  "KILLED",
+  "FAILED tests/test_revocation_families_governance.py::test_f09_another_composer_that_adds_a_revocation_field_without_the_family_being_declare"
+ ]
+]
