@@ -21,3 +21,13 @@ The three blocked parameters have NO Registry family, no placeholder and no clai
 
 ## Holds (unchanged)
 Registry #58/#59 and Control Plane #87: HELD. Constructor clock tolerance: NOT AUTHORIZED. Independent Tier 1 qualification: DEFERRED, NOT WAIVED. V09 assurance: SEPARATE. Ed25519 #26/#34: SECURITY-HELD. Release, publication, production: HOLD.
+
+## Update (append-only): merges observed after this ledger was drafted
+At 2026-10-29 03:04-03:05 UTC the repository owner merged Registry #69 (merge `673e16c739dd5a6c7901651861d9c9bfd932e979`, head `42a666328b974a7581013358bcf8bc7b9eac7761`), Control Plane #92 (merge `39211b73971e28e10563e9dac9161f7ea5683613`, head `a62ca8d8e4088c95407c2000dcca081383d8dd4d`) and Registry docs #70 (merge `c58daee326f790b7982c9f57cfa1c1154f29698f`, head `f309ae20a194786a45a708118b93603ee4670096`). The builder did not merge them. Heads were unchanged by the merge; both mains contain the preserved heads as ancestors. Verified from GitHub, not assumed.
+
+| State | Integrated | Remaining |
+|---|---|---|
+| Actual now (rows 14 and 15 enforcement merged) | **15/19** | **4** |
+| Conditional: #71 + #93 also merge | 16/19 | 3 (all BLOCKED pending Architect decisions) |
+
+Independently accepted remains 0. The tables above are kept as originally written; this section supersedes the "Actual today 13/19" line. Stacked PRs #71, #72 and #93 were retargeted from their parent branches to `main` (diffs unchanged: parents were merged with identical heads). New baselines: Registry `main` `c58daee326f790b7982c9f57cfa1c1154f29698f`, Control Plane `main` `39211b73971e28e10563e9dac9161f7ea5683613`.
