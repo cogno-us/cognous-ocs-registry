@@ -1,0 +1,519 @@
+{
+ "tests": [
+  "tests/test_r08v8_anchor_family.py",
+  "tests/test_r08v8_ast_scan.py",
+  "tests/test_r08v8_cross_version.py",
+  "tests/test_r08v8_decision_path.py",
+  "tests/test_r08v8_engine_profile.py",
+  "tests/test_r08v8_frozen_baseline.py",
+  "tests/test_r08v8_observation_families.py",
+  "tests/test_r08v8_policy_identity.py"
+ ],
+ "results": [
+  [
+   "AN01 order inverted",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false"
+  ],
+  [
+   "AN02 stricter picks the looser",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false"
+  ],
+  [
+   "AN03 is_value accepts str subclass",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value"
+  ],
+  [
+   "AN04 payload unknown member tolerated",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_payload_shape_codes[payload1-field_unknown]"
+  ],
+  [
+   "AN05 payload missing member tolerated",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_payload_shape_codes[payload0-field_missing]"
+  ],
+  [
+   "AN06 payload value type check dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_non_string_values_including_json_booleans_are_field_type_invalid[None]"
+  ],
+  [
+   "AN07 payload key type check dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value"
+  ],
+  [
+   "AN08 family not checked in composer",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_invalid_or_foreign_records_refuse"
+  ],
+  [
+   "AN09 operator not checked",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_only_the_intersection_operator_is_supported[union]"
+  ],
+  [
+   "AN10 record ok flag truthy accepted",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_invalid_or_foreign_records_refuse"
+  ],
+  [
+   "AN11 caller extra key tolerated",
+   "SURVIVED",
+   "v8 tests pass"
+  ],
+  [
+   "AN12 caller value domain not checked",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_unknown_or_respelled_values_are_field_invalid[Anchor]"
+  ],
+  [
+   "AN13 registry overrides caller (lowering)",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-no_change]"
+  ],
+  [
+   "AN14 not-narrowing reported on equal values",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor]"
+  ],
+  [
+   "AN15 deny_all set",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor]"
+  ],
+  [
+   "AN16 schema revision changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false"
+  ],
+  [
+   "AN17 member name changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false"
+  ],
+  [
+   "AN18 vocabulary order swapped",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false"
+  ],
+  [
+   "AN19 caller snapshot bound off by one",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_a_caller_mapping_is_read_for_at_most_two_items"
+  ],
+  [
+   "AN20 payload copy skipped (aliased)",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_the_validated_payload_copy_is_a_defence_against_mutation_after_validation"
+  ],
+  [
+   "AN21 not-narrowing detail text changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false"
+  ],
+  [
+   "AN22 value vocabulary admits false",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false"
+  ],
+  [
+   "AN23 payload dict type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer"
+  ],
+  [
+   "AN24 record body type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer"
+  ],
+  [
+   "OB01 max-age floor lowered to 0",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad16]"
+  ],
+  [
+   "OB02 tolerance floor raised to 1",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]"
+  ],
+  [
+   "OB03 ceiling off by one",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad21]"
+  ],
+  [
+   "OB04 max-age accepts bool/subclass",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad15]"
+  ],
+  [
+   "OB05 tolerance accepts bool/subclass",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-clock-tolerance-policy-bad29]"
+  ],
+  [
+   "OB06 max-age ceiling dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad21]"
+  ],
+  [
+   "OB07 tolerance ceiling dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-clock-tolerance-policy-bad35]"
+  ],
+  [
+   "OB08 tolerance floor dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-clock-tolerance-policy-bad31]"
+  ],
+  [
+   "OB09 max-age floor dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad16]"
+  ],
+  [
+   "OB10 payload unknown member tolerated",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_extra_members_are_field_unknown[extra1-max_age]"
+  ],
+  [
+   "OB11 payload missing member tolerated",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_missing_and_foreign_members[max_age]"
+  ],
+  [
+   "OB12 payload value type check dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_malformed_payload_typed_validator_code_and_decision_refusal[f5-observation-max-age-policy-payload16-field_type_in"
+  ],
+  [
+   "OB13 composition takes the maximum",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_valid_selection_narrows_the_caller_and_authorizes_nothing[max_age]"
+  ],
+  [
+   "OB14 registry overrides caller",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]"
+  ],
+  [
+   "OB15 not-narrowing reported on equal values",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]"
+  ],
+  [
+   "OB16 family not checked in composer",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_invalid_or_foreign_records_refuse[max_age]"
+  ],
+  [
+   "OB17 operator not checked",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_only_the_intersection_operator_is_supported[union-max_age]"
+  ],
+  [
+   "OB18 caller domain not checked",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad15]"
+  ],
+  [
+   "OB19 tolerance composer uses the max-age validator",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]"
+  ],
+  [
+   "OB20 tolerance composer uses the max-age normalizer",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]"
+  ],
+  [
+   "OB21 tolerance member aliases the held constructor name",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[tolerance]"
+  ],
+  [
+   "OB22 max-age member loses its prefix",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]"
+  ],
+  [
+   "OB23 deny_all set",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]"
+  ],
+  [
+   "OB24 caller snapshot bound off by one",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_a_caller_mapping_is_read_for_at_most_two_items[max_age]"
+  ],
+  [
+   "OB25 payload key type check dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_missing_and_foreign_members[max_age]"
+  ],
+  [
+   "OB26 str-subclass family accepted by the composer",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_invalid_or_foreign_records_refuse[max_age]"
+  ],
+  [
+   "OB27 payload copy skipped (aliased)",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_the_validated_payload_copy_is_a_defence_against_mutation_after_validation[7-max_age]"
+  ],
+  [
+   "OB28 schema revision changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_v8_profile_content - Assertio..."
+  ],
+  [
+   "OB29 not-narrowing detail text changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]"
+  ],
+  [
+   "OB30 family id of max-age changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_signed_vector_is_deterministic_and_verifies[anchor]"
+  ],
+  [
+   "OB31 family id of tolerance changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_decision_path.py::test_signed_vector_is_deterministic_and_verifies[anchor]"
+  ],
+  [
+   "OB32 max-age composer reads the tolerance field",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key5]"
+  ],
+  [
+   "OB33 record ok flag truthy accepted",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_invalid_or_foreign_records_refuse[max_age]"
+  ],
+  [
+   "OB34 record body type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer[max_age]"
+  ],
+  [
+   "OB35 payload dict type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer[max_age]"
+  ],
+  [
+   "SI01 scalar-int type check dropped",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only"
+  ],
+  [
+   "SI02 scalar-int type check accepts bool",
+   "KILLED",
+   "FAILED tests/test_r08v8_policy_identity.py::test_scalar_int_refusals[f5-observation-max-age-policy-observation_max_age_seconds-1]"
+  ],
+  [
+   "SI03 scalar-int value domain not checked",
+   "KILLED",
+   "FAILED tests/test_r08v8_policy_identity.py::test_the_families_are_not_deny_all_dimensions"
+  ],
+  [
+   "SI04 scalar-int branch selected for scalar-enum",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only"
+  ],
+  [
+   "SI05 scalar-int refuses with the wrong code",
+   "KILLED",
+   "FAILED tests/test_r08v8_policy_identity.py::test_the_families_are_not_deny_all_dimensions"
+  ],
+  [
+   "SI06 scalar-int member path wrong",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only"
+  ],
+  [
+   "SI07 KINDS lacks scalar-int",
+   "KILLED",
+   "ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile..."
+  ],
+  [
+   "SI08 KINDS admits an unknown kind",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_scalar_int_rows_are_validated_at_construction"
+  ],
+  [
+   "PV01 v8 selection domain wrong",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key3]"
+  ],
+  [
+   "PV02 v8 effective domain wrong",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_v8_profile_content - Assertio..."
+  ],
+  [
+   "PV03 v8 anchor identity kind is scalar-int",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only"
+  ],
+  [
+   "PV04 v8 max-age identity kind is scalar-enum",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only"
+  ],
+  [
+   "PV05 v8 tolerance value vocabulary is max-age's",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_v8_specs_are_the_family_module_functions_not_copies"
+  ],
+  [
+   "PV06 v8 max-age value vocabulary is tolerance's",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_v8_specs_are_the_family_module_functions_not_copies"
+  ],
+  [
+   "PV07 v8 enforcing component runtime",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_the_family_registration_facts"
+  ],
+  [
+   "PV08 v8 evaluator binding swapped",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor]"
+  ],
+  [
+   "PV09 v8 anchor composer swapped",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_the_family_registration_facts"
+  ],
+  [
+   "PV10 v8 tolerance schema revision 2",
+   "KILLED",
+   "ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile..."
+  ],
+  [
+   "PV11 v8 family order changed",
+   "KILLED",
+   "ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile..."
+  ],
+  [
+   "PV12 v8 contract version changed",
+   "KILLED",
+   "ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile..."
+  ],
+  [
+   "PV13 v8 registered in PROFILES",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_v7_and_v6_compat_and_the_profiles_table_are_untouched"
+  ],
+  [
+   "PV14 v8 anchor uses the legacy tag member",
+   "KILLED",
+   "ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile..."
+  ],
+  [
+   "PV15 v8 max-age family id mapped to the tolerance spec",
+   "KILLED",
+   "ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile..."
+  ],
+  [
+   "PV16 v7 selection domain changed (v7 untouched)",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key2]"
+  ],
+  [
+   "TH01 v8 families bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_v8_table_dispatches_by_exact_string_and_the_contract_version"
+  ],
+  [
+   "TH02 v8 lookup bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_v8_refuses_irreversibility_in_records_selections_and_decisions"
+  ],
+  [
+   "TH03 v8 table selector bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_v8_table_dispatches_by_exact_string_and_the_contract_version"
+  ],
+  [
+   "TH04 v8 compose bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_dispatch_enforces_operator_record_validity_and_family"
+  ],
+  [
+   "TH05 v8 compose_for bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_dispatch_enforces_operator_record_validity_and_family"
+  ],
+  [
+   "TH06 v8 decision bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key2]"
+  ],
+  [
+   "TH07 v8 identity digest bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine"
+  ],
+  [
+   "TH08 v8 identity default contract version",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_entry_points_take_no_contract_version_in_the_decision"
+  ],
+  [
+   "TH09 v8 preimage bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine"
+  ],
+  [
+   "TH10 v8 payload validation bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine"
+  ],
+  [
+   "TH11 v8 registered version bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine"
+  ],
+  [
+   "TH12 v8 deny-all dimensions bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine"
+  ],
+  [
+   "TH13 v8 digest-of-preimage bound to the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine"
+  ],
+  [
+   "TH14 v8 effective prefix of the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_policy_identity.py::test_vectors_cover_all_three_families_and_the_domain_is_pinned"
+  ],
+  [
+   "TH15 v8 identity rows of the v7 profile",
+   "KILLED",
+   "FAILED tests/test_r08v8_policy_identity.py::test_family_rows_are_exactly_the_three_registered_families_with_revision_1"
+  ],
+  [
+   "TH16 v8 public anchor id constant points at max-age",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_public_family_id_constants_match_the_profile_table_and_expose_the_binding_fields"
+  ],
+  [
+   "TH17 v8 public tolerance id constant points at max-age",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_public_family_id_constants_match_the_profile_table_and_expose_the_binding_fields"
+  ],
+  [
+   "TH18 v8 public family id tuple order changed",
+   "KILLED",
+   "FAILED tests/test_r08v8_engine_profile.py::test_public_family_id_constants_match_the_profile_table_and_expose_the_binding_fields"
+  ]
+ ]
+}

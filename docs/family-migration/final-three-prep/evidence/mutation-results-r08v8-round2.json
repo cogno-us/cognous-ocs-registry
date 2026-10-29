@@ -1,0 +1,59 @@
+{
+ "tests": [
+  "tests/test_r08v8_anchor_family.py",
+  "tests/test_r08v8_ast_scan.py",
+  "tests/test_r08v8_cross_version.py",
+  "tests/test_r08v8_decision_path.py",
+  "tests/test_r08v8_engine_profile.py",
+  "tests/test_r08v8_frozen_baseline.py",
+  "tests/test_r08v8_observation_families.py",
+  "tests/test_r08v8_policy_identity.py"
+ ],
+ "results": [
+  [
+   "AN11 caller extra key tolerated",
+   "SURVIVED",
+   "v8 tests pass"
+  ],
+  [
+   "AN19 caller snapshot bound off by one",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_a_caller_mapping_is_read_for_at_most_two_items"
+  ],
+  [
+   "AN20 payload copy skipped (aliased)",
+   "SURVIVED",
+   "v8 tests pass"
+  ],
+  [
+   "AN23 payload dict type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer"
+  ],
+  [
+   "AN24 record body type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_anchor_family.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer"
+  ],
+  [
+   "OB24 caller snapshot bound off by one",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_a_caller_mapping_is_read_for_at_most_two_items[max_age]"
+  ],
+  [
+   "OB27 payload copy skipped (aliased)",
+   "SURVIVED",
+   "v8 tests pass"
+  ],
+  [
+   "OB34 record body type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer[max_age]"
+  ],
+  [
+   "OB35 payload dict type not exact",
+   "KILLED",
+   "FAILED tests/test_r08v8_observation_families.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer[max_age]"
+  ]
+ ]
+}

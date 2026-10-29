@@ -17,7 +17,8 @@ FILES = MANIFEST["files"]
 V6_MODULES = {"v6_class_revocation_assurance.py", "v6_terminal_revocation.py", "v6_families.py", "v6_record.py", "v6_selection.py", "v6_verify.py",
               "v6_policy_identity.py", "v6_decision.py"}
 V7_MODULES = {"v7_decision.py", "v7_families.py", "v7_policy_identity.py"}
-ENGINE_MODULES = {"__init__.py", "profile.py", "profiles.py", "selection.py", "record.py", "verify.py", "decide.py", "identity.py", "families_irreversibility.py"}
+ENGINE_MODULES = {"__init__.py", "profile.py", "profiles.py", "selection.py", "record.py", "verify.py", "decide.py", "identity.py", "families_irreversibility.py",
+                  "families_anchor.py", "families_observation.py"}  # allowlist-only edit for r08-v8 (docs/r08-v8-contract.md): the two NEW family modules; r08-v7 itself is unchanged
 ALLOWLIST_EDITED_GUARDS = {"tests/test_ext_s1_5_identity_module.py", "tests/test_ext_s1_5_vectors.py", "tests/test_r08v2_family_dispatch.py"}
 BASELINE = "42a666328b974a7581013358bcf8bc7b9eac7761"
 

@@ -1,0 +1,2230 @@
+=== AN01 order inverted [KILLED]
+F
+=================================== FAILURES ===================================
+____ test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false _____
+
+    def test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false():
+        assert f.VALUES == (A, N) and f.ANCHOR == A and f.NO_CHANGE == N and f.ANCHOR_FIELDS == (FIELD,) and f.ANCHOR_FIELD == "anchor_deadline_to_inputs"
+>       assert f.stricter(A, N) == A and f.stricter(N, A) == A and f.stricter(A, A) == A and f.stricter(N, N) == N
+E       AssertionError: assert ('no_change' == 'anchor'
+E         
+E         - anchor
+E         + no_change)
+
+tests/test_r08v8_anchor_family.py:29: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 223 deselected in 1.16s
+
+
+=== AN02 stricter picks the looser [KILLED]
+F
+=================================== FAILURES ===================================
+____ test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false _____
+
+    def test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false():
+        assert f.VALUES == (A, N) and f.ANCHOR == A and f.NO_CHANGE == N and f.ANCHOR_FIELDS == (FIELD,) and f.ANCHOR_FIELD == "anchor_deadline_to_inputs"
+>       assert f.stricter(A, N) == A and f.stricter(N, A) == A and f.stricter(A, A) == A and f.stricter(N, N) == N
+E       AssertionError: assert ('no_change' == 'anchor'
+E         
+E         - anchor
+E         + no_change)
+
+tests/test_r08v8_anchor_family.py:29: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 223 deselected in 0.96s
+
+
+=== AN03 is_value accepts str subclass [KILLED]
+..............................F
+=================================== FAILURES ===================================
+_____ test_str_subclass_values_and_keys_are_refused_not_compared_by_value ______
+
+    def test_str_subclass_values_and_keys_are_refused_not_compared_by_value():
+        class S(str):
+            pass
+        assert f.payload_validator({FIELD: S("anchor")}) == "field_type_invalid"
+        assert f.payload_validator({S(FIELD): "anchor"}) == "field_type_invalid"
+>       assert f.normalize_caller({FIELD: S("anchor")}) is None
+E       AssertionError: assert {'anchor_deadline_to_inputs': 'anchor'} is None
+E        +  where {'anchor_deadline_to_inputs': 'anchor'} = <function normalize_caller at 0x7fd29e420360>({'anchor_deadline_to_inputs': 'anchor'})
+E        +    where <function normalize_caller at 0x7fd29e420360> = f.normalize_caller
+
+tests/test_r08v8_anchor_family.py:54: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 30 passed, 223 deselected in 0.96s
+
+
+=== AN04 payload unknown member tolerated [KILLED]
+==== FAILURES ===================================
+_______________ test_payload_shape_codes[payload1-field_unknown] _______________
+
+payload = {'anchor_deadline_to_inputs': 'anchor', 'extra': 1}
+code = 'field_unknown'
+
+    @pytest.mark.parametrize("payload,code", [
+        ({}, "field_missing"), ({FIELD: A, "extra": 1}, "field_unknown"), ({"other": A}, "field_unknown"), ({1: A}, "field_type_invalid"),
+        ({FIELD: A, 1: A}, "field_type_invalid"), ({"anchor": A}, "field_unknown"), ({"terminal_revocation": "enable"}, "field_unknown"),
+        ({"class_irreversible": {"class-a": "irreversible"}}, "field_unknown"), ({"observation_max_age_seconds": 60}, "field_unknown"),
+        ({FIELD: {"class-a": A}}, "field_type_invalid"), ({FIELD: "true"}, "field_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+E       AssertionError: assert None == 'field_unknown'
+E        +  where None = <function payload_validator at 0x7f4de6c60180>({'anchor_deadline_to_inputs': 'anchor', 'extra': 1})
+E        +    where <function payload_validator at 0x7f4de6c60180> = f.payload_validator
+
+tests/test_r08v8_anchor_family.py:75: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_payload_shape_codes[payload1-field_unknown]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 33 passed, 223 deselected in 0.80s
+
+
+=== AN05 payload missing member tolerated [KILLED]
+d_type_invalid"), ({"anchor": A}, "field_unknown"), ({"terminal_revocation": "enable"}, "field_unknown"),
+        ({"class_irreversible": {"class-a": "irreversible"}}, "field_unknown"), ({"observation_max_age_seconds": 60}, "field_unknown"),
+        ({FIELD: {"class-a": A}}, "field_type_invalid"), ({FIELD: "true"}, "field_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v8_anchor_family.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+payload = {}
+
+    def payload_validator(payload: dict) -> Optional[str]:
+        """None when valid, else a shape code (`field_type_invalid` before `field_invalid`). Safe to call alone."""
+        if type(payload) is not dict or not all(type(k) is str for k in payload):
+            return "field_type_invalid"
+        keys = set(payload)
+        if keys - set(ANCHOR_FIELDS):
+            return "field_unknown"
+>       value = payload[ANCHOR_FIELD]
+                ^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'anchor_deadline_to_inputs'
+
+registry_successor/engine/families_anchor.py:58: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_payload_shape_codes[payload0-field_missing]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 32 passed, 223 deselected in 0.94s
+
+
+=== AN06 payload value type check dropped [KILLED]
+....................F
+=================================== FAILURES ===================================
+_ test_non_string_values_including_json_booleans_are_field_type_invalid[None] __
+
+bad = None
+
+    @pytest.mark.parametrize("bad", [None, True, False, 0, 1, 1.0, b"anchor", ["anchor"], {"v": "anchor"}, ("anchor",)])
+    def test_non_string_values_including_json_booleans_are_field_type_invalid(bad):
+>       assert f.payload_validator({FIELD: bad}) == "field_type_invalid"
+E       AssertionError: assert 'field_invalid' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         ?      -----
+E         + field_invalid
+
+tests/test_r08v8_anchor_family.py:45: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_non_string_values_including_json_booleans_are_field_type_invalid[None]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 20 passed, 223 deselected in 0.80s
+
+
+=== AN07 payload key type check dropped [KILLED]
+..............................F
+=================================== FAILURES ===================================
+_____ test_str_subclass_values_and_keys_are_refused_not_compared_by_value ______
+
+    def test_str_subclass_values_and_keys_are_refused_not_compared_by_value():
+        class S(str):
+            pass
+        assert f.payload_validator({FIELD: S("anchor")}) == "field_type_invalid"
+>       assert f.payload_validator({S(FIELD): "anchor"}) == "field_type_invalid"
+E       AssertionError: assert None == 'field_type_invalid'
+E        +  where None = <function payload_validator at 0x7f8879d64180>({'anchor_deadline_to_inputs': 'anchor'})
+E        +    where <function payload_validator at 0x7f8879d64180> = f.payload_validator
+
+tests/test_r08v8_anchor_family.py:53: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 30 passed, 223 deselected in 0.86s
+
+
+=== AN08 family not checked in composer [KILLED]
+use ____________________
+
+    def test_invalid_or_foreign_records_refuse():
+        good = rec({FIELD: A})
+        assert good.ok
+        assert f.compose_anchor({FIELD: N}, None).code == "composition_record_invalid"
+        assert f.compose_anchor({FIELD: N}, object()).code == "composition_record_invalid"
+        other_family = type("Rec", (), {"ok": True, "record": dict(good.record, family="f5-observation-max-age-policy")})()
+>       assert f.compose_anchor({FIELD: N}, other_family).code == "composition_family_unsupported"
+E       AssertionError: assert None == 'composition_family_unsupported'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()) = <function compose_anchor at 0x7f3b39d6c540>({'anchor_deadline_to_inputs': 'no_change'}, <test_r08v8_anchor_family.Rec object at 0x7f3b3a192a50>)
+E        +      where <function compose_anchor at 0x7f3b39d6c540> = f.compose_anchor
+
+tests/test_r08v8_anchor_family.py:183: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_invalid_or_foreign_records_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 75 passed, 223 deselected in 0.96s
+
+
+=== AN09 operator not checked [KILLED]
+.....................................................................F
+=================================== FAILURES ===================================
+___________ test_only_the_intersection_operator_is_supported[union] ____________
+
+operator = 'union'
+
+    @pytest.mark.parametrize("operator", ["union", "", None, "Intersection", 1, b"intersection"])
+    def test_only_the_intersection_operator_is_supported(operator):
+        res = f.compose_anchor({FIELD: N}, rec({FIELD: A}), operator)
+>       assert not res.ok and res.code == "composition_operator_unsupported" and res.effective is None
+E       AssertionError: assert (not True)
+E        +  where True = CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()).ok
+
+tests/test_r08v8_anchor_family.py:174: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_only_the_intersection_operator_is_supported[union]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 69 passed, 223 deselected in 0.86s
+
+
+=== AN10 record ok flag truthy accepted [KILLED]
+position_record_invalid"
+        not_payload = type("Rec", (), {"ok": True, "record": dict(good.record, payload=[A])})()
+        assert f.compose_anchor({FIELD: N}, not_payload).code == "composition_record_invalid"
+        not_ok = type("Rec", (), {"ok": False, "record": good.record})()
+        assert f.compose_anchor({FIELD: N}, not_ok).code == "composition_record_invalid"
+        truthy = type("Rec", (), {"ok": 1, "record": good.record})()
+>       assert f.compose_anchor({FIELD: N}, truthy).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()) = <function compose_anchor at 0x7f2375860540>({'anchor_deadline_to_inputs': 'no_change'}, <test_r08v8_anchor_family.Rec object at 0x7f23757c1fd0>)
+E        +      where <function compose_anchor at 0x7f2375860540> = f.compose_anchor
+
+tests/test_r08v8_anchor_family.py:193: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_invalid_or_foreign_records_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 75 passed, 223 deselected in 1.28s
+
+
+=== AN11 caller extra key tolerated [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+...............................................                          [100%]
+551 passed, 223 deselected in 2.13s
+
+
+=== AN12 caller value domain not checked [KILLED]
+.F
+=================================== FAILURES ===================================
+__________ test_unknown_or_respelled_values_are_field_invalid[Anchor] __________
+
+bad = 'Anchor'
+
+    @pytest.mark.parametrize("bad", ["Anchor", "ANCHOR", " anchor", "anchor ", "anchor\n", "true", "false", "True", "False", "on", "off", "", "no-change", "No_Change", "NO_CHANGE",
+                                     "none", "unanchor", "аnchor", "anchor\x00"])
+    def test_unknown_or_respelled_values_are_field_invalid(bad):
+        assert f.payload_validator({FIELD: bad}) == "field_invalid"
+>       assert f.normalize_caller({FIELD: bad}) is None
+E       AssertionError: assert {'anchor_deadline_to_inputs': 'Anchor'} is None
+E        +  where {'anchor_deadline_to_inputs': 'Anchor'} = <function normalize_caller at 0x7fc381c68360>({'anchor_deadline_to_inputs': 'Anchor'})
+E        +    where <function normalize_caller at 0x7fc381c68360> = f.normalize_caller
+
+tests/test_r08v8_anchor_family.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_unknown_or_respelled_values_are_field_invalid[Anchor]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed, 223 deselected in 0.85s
+
+
+=== AN13 registry overrides caller (lowering) [KILLED]
+............................................F
+=================================== FAILURES ===================================
+_ test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-no_change] _
+
+host = 'anchor', reg = 'no_change'
+
+    @pytest.mark.parametrize("host,reg", list(itertools.product((A, N), repeat=2)))
+    def test_composition_matrix_is_anchor_if_either_side_is_anchor(host, reg):
+        res = f.compose_anchor({FIELD: host}, rec({FIELD: reg}))
+        assert res.ok and res.deny_all is False and res.deny_all_fields == () and res.code is None
+        expected = A if A in (host, reg) else N
+>       assert res.effective == {FIELD: expected}
+E       AssertionError: assert {'anchor_dead...: 'no_change'} == {'anchor_dead...ts': 'anchor'}
+E         
+E         Differing items:
+E         {'anchor_deadline_to_inputs': 'no_change'} != {'anchor_deadline_to_inputs': 'anchor'}
+E         Use -v to get more diff
+
+tests/test_r08v8_anchor_family.py:84: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-no_change]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 44 passed, 223 deselected in 0.85s
+
+
+=== AN14 not-narrowing reported on equal values [KILLED]
+...........................................F
+=================================== FAILURES ===================================
+__ test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor] ___
+
+host = 'anchor', reg = 'anchor'
+
+    @pytest.mark.parametrize("host,reg", list(itertools.product((A, N), repeat=2)))
+    def test_composition_matrix_is_anchor_if_either_side_is_anchor(host, reg):
+        res = f.compose_anchor({FIELD: host}, rec({FIELD: reg}))
+        assert res.ok and res.deny_all is False and res.deny_all_fields == () and res.code is None
+        expected = A if A in (host, reg) else N
+        assert res.effective == {FIELD: expected}
+        assert f._RANK[res.effective[FIELD]] <= f._RANK[host] and f._RANK[res.effective[FIELD]] <= f._RANK[reg]
+>       assert res.detail == ((f.NOT_NARROWING + ":" + FIELD) if (reg, host) == (N, A) else "")
+E       AssertionError: assert 'registry_val...ine_to_inputs' == ''
+E         
+E         + registry_value_not_narrowing:anchor_deadline_to_inputs
+
+tests/test_r08v8_anchor_family.py:86: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 43 passed, 223 deselected in 0.78s
+
+
+=== AN15 deny_all set [KILLED]
+...........................................F
+=================================== FAILURES ===================================
+__ test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor] ___
+
+host = 'anchor', reg = 'anchor'
+
+    @pytest.mark.parametrize("host,reg", list(itertools.product((A, N), repeat=2)))
+    def test_composition_matrix_is_anchor_if_either_side_is_anchor(host, reg):
+        res = f.compose_anchor({FIELD: host}, rec({FIELD: reg}))
+>       assert res.ok and res.deny_all is False and res.deny_all_fields == () and res.code is None
+E       AssertionError: assert (True and True is False)
+E        +  where True = CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=True, deny_all_fields=('anchor_deadline_to_inputs',)).ok
+E        +  and   True = CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=True, deny_all_fields=('anchor_deadline_to_inputs',)).deny_all
+
+tests/test_r08v8_anchor_family.py:82: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 43 passed, 223 deselected in 0.73s
+
+
+=== AN16 schema revision changed [KILLED]
+F
+=================================== FAILURES ===================================
+____ test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false _____
+
+    def test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false():
+        assert f.VALUES == (A, N) and f.ANCHOR == A and f.NO_CHANGE == N and f.ANCHOR_FIELDS == (FIELD,) and f.ANCHOR_FIELD == "anchor_deadline_to_inputs"
+        assert f.stricter(A, N) == A and f.stricter(N, A) == A and f.stricter(A, A) == A and f.stricter(N, N) == N
+>       assert f.SCHEMA_REVISION == 1 and type(f.SCHEMA_REVISION) is int and f.NOT_NARROWING == "registry_value_not_narrowing"
+E       assert (2 == 1)
+E        +  where 2 = f.SCHEMA_REVISION
+
+tests/test_r08v8_anchor_family.py:30: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 223 deselected in 0.80s
+
+
+=== AN17 member name changed [KILLED]
+F
+=================================== FAILURES ===================================
+____ test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false _____
+
+    def test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false():
+>       assert f.VALUES == (A, N) and f.ANCHOR == A and f.NO_CHANGE == N and f.ANCHOR_FIELDS == (FIELD,) and f.ANCHOR_FIELD == "anchor_deadline_to_inputs"
+E       AssertionError: assert (('anchor', 'no_change') == ('anchor', 'no_change')
+E         
+E         Use -v to get more diff and 'anchor' == 'anchor'
+E         
+E           anchor and 'no_change' == 'no_change'
+E         
+E           no_change and ('anchor_deadline',) == ('anchor_deadline',)
+E         
+E         Use -v to get more diff and 'anchor_deadline' == 'anchor_deadline_to_inputs'
+E         
+E         - anchor_deadline_to_inputs
+E         ?                ----------
+E         + anchor_deadline)
+
+tests/test_r08v8_anchor_family.py:28: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 223 deselected in 0.84s
+
+
+=== AN18 vocabulary order swapped [KILLED]
+F
+=================================== FAILURES ===================================
+____ test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false _____
+
+    def test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false():
+>       assert f.VALUES == (A, N) and f.ANCHOR == A and f.NO_CHANGE == N and f.ANCHOR_FIELDS == (FIELD,) and f.ANCHOR_FIELD == "anchor_deadline_to_inputs"
+E       AssertionError: assert (('no_change', 'anchor') == ('anchor', 'no_change')
+E         
+E         At index 0 diff: 'no_change' != 'anchor'
+E         Use -v to get more diff)
+
+tests/test_r08v8_anchor_family.py:28: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 223 deselected in 0.82s
+
+
+=== AN19 caller snapshot bound off by one [KILLED]
+       def __iter__(self):
+                return iter(())
+    
+            def __len__(self):
+                return 10 ** 9
+    
+            def __getitem__(self, k):
+                return A
+    
+            def items(self):
+                def gen():
+                    for i in itertools.count():
+                        consumed.append(i)
+                        yield (FIELD if i == 0 else "k%d" % i), A
+                return gen()
+>       assert f.normalize_caller(Counting()) is None and len(consumed) == 2
+E       AssertionError: assert (None is None and 3 == 2)
+E        +  where None = <function normalize_caller at 0x7ffbe2038360>(<test_r08v8_anchor_family.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7ffbe2462a50>)
+E        +    where <function normalize_caller at 0x7ffbe2038360> = f.normalize_caller
+E        +    and   <test_r08v8_anchor_family.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7ffbe2462a50> = <class 'test_r08v8_anchor_family.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting'>()
+E        +  and   3 = len([0, 1, 2])
+
+tests/test_r08v8_anchor_family.py:245: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_a_caller_mapping_is_read_for_at_most_two_items
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 79 passed, 223 deselected in 0.90s
+
+
+=== AN20 payload copy skipped (aliased) [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+...............................................                          [100%]
+551 passed, 223 deselected in 2.32s
+
+
+=== AN21 not-narrowing detail text changed [KILLED]
+F
+=================================== FAILURES ===================================
+____ test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false _____
+
+    def test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false():
+        assert f.VALUES == (A, N) and f.ANCHOR == A and f.NO_CHANGE == N and f.ANCHOR_FIELDS == (FIELD,) and f.ANCHOR_FIELD == "anchor_deadline_to_inputs"
+        assert f.stricter(A, N) == A and f.stricter(N, A) == A and f.stricter(A, A) == A and f.stricter(N, N) == N
+>       assert f.SCHEMA_REVISION == 1 and type(f.SCHEMA_REVISION) is int and f.NOT_NARROWING == "registry_value_not_narrowing"
+E       AssertionError: assert (1 == 1 and <class 'int'> is int and 'registry_value_narrowing' == 'registry_value_not_narrowing'
+E        +  where 1 = f.SCHEMA_REVISION
+E        +  and   <class 'int'> = type(1)
+E        +    where 1 = f.SCHEMA_REVISION
+E         
+E         - registry_value_not_narrowing
+E         ?                 ----
+E         + registry_value_narrowing)
+
+tests/test_r08v8_anchor_family.py:30: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 223 deselected in 0.82s
+
+
+=== AN22 value vocabulary admits false [KILLED]
+==========================
+____ test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false _____
+
+    def test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false():
+        assert f.VALUES == (A, N) and f.ANCHOR == A and f.NO_CHANGE == N and f.ANCHOR_FIELDS == (FIELD,) and f.ANCHOR_FIELD == "anchor_deadline_to_inputs"
+        assert f.stricter(A, N) == A and f.stricter(N, A) == A and f.stricter(A, A) == A and f.stricter(N, N) == N
+        assert f.SCHEMA_REVISION == 1 and type(f.SCHEMA_REVISION) is int and f.NOT_NARROWING == "registry_value_not_narrowing"
+        assert f.FAMILY_ANCHOR == "f5-anchor-deadline-to-inputs-policy"
+        for word in ("false", "False", "off", "no", "disabled", "unanchor", "unanchored", "none", "0", "no-change"):
+>           assert word not in f.VALUES and not f.is_value(word)
+E           AssertionError: assert ('false' not in ('anchor', 'no_change') and not True)
+E            +  where ('anchor', 'no_change') = f.VALUES
+E            +  and   True = <function is_value at 0x7fed01e940e0>('false')
+E            +    where <function is_value at 0x7fed01e940e0> = f.is_value
+
+tests/test_r08v8_anchor_family.py:33: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_vocabulary_is_the_closed_pair_strictest_first_and_names_no_false
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 223 deselected in 0.90s
+
+
+=== AN23 payload dict type not exact [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+...............................................                          [100%]
+551 passed, 223 deselected in 2.14s
+
+
+=== AN24 record body type not exact [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+...............................................                          [100%]
+551 passed, 223 deselected in 2.38s
+
+
+=== OB01 max-age floor lowered to 0 [KILLED]
+': 0}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 0}, deny_all=False, deny_all_fields=(), code=...ail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 0}, deny_all=False, deny_all_fields=(), code=None, detail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad16]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 137 passed, 223 deselected in 1.27s
+
+
+=== OB02 tolerance floor raised to 1 [KILLED]
+........................................................................ [ 13%]
+...........................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key4] ________
+
+key = ('r08-v8', 'f5-observation-clock-tolerance-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+>       assert own.kind == "applied" and own.operationally_authorized is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v8_cross_version.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 99 passed, 223 deselected in 0.94s
+
+
+=== OB03 ceiling off by one [KILLED]
+ge-policy-bad21] ___
+
+fam = 'f5-observation-max-age-policy'
+bad = {'observation_max_age_seconds': 2147483648}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad21]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 142 passed, 223 deselected in 1.24s
+
+
+=== OB04 max-age accepts bool/subclass [KILLED]
+e}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_max_age_seconds': True}, deny_all=False, deny_all_fields=(), co...ail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_max_age_seconds': True}, deny_all=False, deny_all_fields=(), code=None, detail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad15]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 136 passed, 223 deselected in 1.29s
+
+
+=== OB05 tolerance accepts bool/subclass [KILLED]
+observation-clock-tolerance-policy'
+bad = {'observation_clock_tolerance_seconds': True}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_clock_tolerance_seconds': 0}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_clock_tolerance_seconds': 0}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-clock-tolerance-policy-bad29]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 150 passed, 223 deselected in 1.22s
+
+
+=== OB06 max-age ceiling dropped [KILLED]
+ge-policy-bad21] ___
+
+fam = 'f5-observation-max-age-policy'
+bad = {'observation_max_age_seconds': 2147483648}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad21]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 142 passed, 223 deselected in 1.21s
+
+
+=== OB07 tolerance ceiling dropped [KILLED]
+ation-clock-tolerance-policy'
+bad = {'observation_clock_tolerance_seconds': 2147483648}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_clock_tolerance_seconds': 0}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_clock_tolerance_seconds': 0}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-clock-tolerance-policy-bad35]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 156 passed, 223 deselected in 1.22s
+
+
+=== OB08 tolerance floor dropped [KILLED]
+arametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_clock_tolerance_seconds': -1}, deny_all=False, deny_all_fields=...istry_value_not_narrowing:observation_clock_tolerance_seconds', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_clock_tolerance_seconds': -1}, deny_all=False, deny_all_fields=(), code=None, detail='registry_value_not_narrowing:observation_clock_tolerance_seconds', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-clock-tolerance-policy-bad31]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 152 passed, 223 deselected in 1.38s
+
+
+=== OB09 max-age floor dropped [KILLED]
+': 0}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 0}, deny_all=False, deny_all_fields=(), code=...ail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_max_age_seconds': 0}, deny_all=False, deny_all_fields=(), code=None, detail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad16]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 137 passed, 223 deselected in 1.16s
+
+
+=== OB10 payload unknown member tolerated [KILLED]
+................... [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+......................................F
+=================================== FAILURES ===================================
+_____________ test_extra_members_are_field_unknown[extra1-max_age] _____________
+
+fam = {'family': 'f5-observation-max-age-policy', 'field': 'observation_max_age_seconds', 'lo': 1, 'validator': <function max_age_payload_validator at 0x7fb45a63c860>, ...}
+extra = {'x': 1}
+
+    @BOTH
+    @pytest.mark.parametrize("extra", [{}, {"x": 1}, {"max_age_seconds": 60}, {"clock_tolerance_seconds": 5}, {"status_max_age_seconds": 60}, {"approval_max_age_seconds": 60}])
+    def test_extra_members_are_field_unknown(fam, extra):
+        pl = dict({fam["field"]: 60}, **extra)
+>       assert fam["validator"](pl) == ("field_unknown" if extra else None)
+E       AssertionError: assert None == 'field_unknown'
+E        +  where None = <function max_age_payload_validator at 0x7fb45a63c860>({'observation_max_age_seconds': 60, 'x': 1})
+
+tests/test_r08v8_observation_families.py:91: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_extra_members_are_field_unknown[extra1-max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 398 passed, 223 deselected in 1.79s
+
+
+=== OB11 payload missing member tolerated [KILLED]
+idator': <function max_age_payload_validator at 0x7f5ee6660860>, ...}
+
+    @BOTH
+    def test_missing_and_foreign_members(fam):
+>       assert fam["validator"]({}) == "field_missing"
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v8_observation_families.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+registry_successor/engine/families_observation.py:65: in max_age_payload_validator
+    return _payload_code(payload, MAX_AGE_FIELD, is_max_age)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+payload = {}, field = 'observation_max_age_seconds'
+ok = <function is_max_age at 0x7f5ee66605e0>
+
+    def _payload_code(payload: Any, field: str, ok) -> Optional[str]:
+        if type(payload) is not dict or not all(type(k) is str for k in payload):
+            return "field_type_invalid"
+        keys = set(payload)
+        if keys - {field}:
+            return "field_unknown"
+>       if type(payload[field]) is not int:
+                ^^^^^^^^^^^^^^
+E       KeyError: 'observation_max_age_seconds'
+
+registry_successor/engine/families_observation.py:58: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_missing_and_foreign_members[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 408 passed, 223 deselected in 1.93s
+
+
+=== OB12 payload value type check dropped [KILLED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+.........................................F
+=================================== FAILURES ===================================
+_ test_malformed_payload_typed_validator_code_and_decision_refusal[f5-observation-max-age-policy-payload16-field_type_invalid] _
+
+fam = 'f5-observation-max-age-policy'
+payload = {'observation_max_age_seconds': True}, code = 'field_type_invalid'
+
+    @pytest.mark.parametrize("fam,payload,code", [(f, p, k) for f in t.FAMILIES for p, k in MALFORMED[f]])
+    def test_malformed_payload_typed_validator_code_and_decision_refusal(fam, payload, code):
+        rec = rec_(fam, payload)
+>       assert validate(r.dumps(rec)).code == code
+E       AssertionError: assert 'field_invalid' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         ?      -----
+E         + field_invalid
+
+tests/test_r08v8_decision_path.py:169: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_malformed_payload_typed_validator_code_and_decision_refusal[f5-observation-max-age-policy-payload16-field_type_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 185 passed, 223 deselected in 1.28s
+
+
+=== OB13 composition takes the maximum [KILLED]
+........................................................................ [ 13%]
+.........................................F
+=================================== FAILURES ===================================
+___ test_valid_selection_narrows_the_caller_and_authorizes_nothing[max_age] ____
+
+fam = 'f5-observation-max-age-policy'
+
+    @FAMS
+    def test_valid_selection_narrows_the_caller_and_authorizes_nothing(fam):
+        d = t.decide(family=fam)
+        assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+>       assert d.effective == pl(fam, EXPECT[fam]) and d.detail == "" and d.deny_all_fields == ()
+E       AssertionError: assert ({'observation...seconds': 300} == {'observation..._seconds': 60}
+E         
+E         Differing items:
+E         {'observation_max_age_seconds': 300} != {'observation_max_age_seconds': 60}
+E         Use -v to get more diff)
+
+tests/test_r08v8_decision_path.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_valid_selection_narrows_the_caller_and_authorizes_nothing[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 113 passed, 223 deselected in 1.07s
+
+
+=== OB14 registry overrides caller [KILLED]
+ge", "anchor", "registry_value_not_narrowing:anchor_deadline_to_inputs"),
+                       ("anchor", "anchor", "anchor", "")],
+                 AGE: [(300, 60, 60, ""), (60, 300, 60, "registry_value_not_narrowing:observation_max_age_seconds"), (60, 60, 60, ""), (INT_MAX, 1, 1, ""), (1, INT_MAX, 1, "registry_value_not_narrowing:observation_max_age_seconds")],
+                 TOL: [(5, 0, 0, ""), (0, 5, 0, "registry_value_not_narrowing:observation_clock_tolerance_seconds"), (5, 5, 5, ""), (INT_MAX, 0, 0, ""), (0, 0, 0, "")]}
+        for host, reg, eff, detail in cases[fam]:
+            d = t.decide(rec=rec_(fam, pl(fam, reg)), cl=pl(fam, host))
+>           assert d.kind == "applied" and d.effective == pl(fam, eff) and d.detail == detail, (host, reg)
+E           AssertionError: (60, 300)
+E           assert ('applied' == 'applied'
+E             
+E               applied and {'observation...seconds': 300} == {'observation..._seconds': 60}
+E             
+E             Differing items:
+E             {'observation_max_age_seconds': 300} != {'observation_max_age_seconds': 60}
+E             Use -v to get more diff)
+
+tests/test_r08v8_decision_path.py:66: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 116 passed, 223 deselected in 1.03s
+
+
+=== OB15 not-narrowing reported on equal values [KILLED]
+nputs"),
+                       ("anchor", "anchor", "anchor", "")],
+                 AGE: [(300, 60, 60, ""), (60, 300, 60, "registry_value_not_narrowing:observation_max_age_seconds"), (60, 60, 60, ""), (INT_MAX, 1, 1, ""), (1, INT_MAX, 1, "registry_value_not_narrowing:observation_max_age_seconds")],
+                 TOL: [(5, 0, 0, ""), (0, 5, 0, "registry_value_not_narrowing:observation_clock_tolerance_seconds"), (5, 5, 5, ""), (INT_MAX, 0, 0, ""), (0, 0, 0, "")]}
+        for host, reg, eff, detail in cases[fam]:
+            d = t.decide(rec=rec_(fam, pl(fam, reg)), cl=pl(fam, host))
+>           assert d.kind == "applied" and d.effective == pl(fam, eff) and d.detail == detail, (host, reg)
+E           AssertionError: (60, 60)
+E           assert ('applied' == 'applied'
+E             
+E               applied and {'observation..._seconds': 60} == {'observation..._seconds': 60}
+E             
+E             Omitting 1 identical items, use -vv to show
+E             Use -v to get more diff and 'registry_val...x_age_seconds' == ''
+E             
+E             + registry_value_not_narrowing:observation_max_age_seconds)
+
+tests/test_r08v8_decision_path.py:66: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 116 passed, 223 deselected in 1.09s
+
+
+=== OB16 family not checked in composer [KILLED]
+
+    @BOTH
+    def test_invalid_or_foreign_records_refuse(fam):
+        field = fam["field"]
+        good = rec(fam, {field: 60})
+        assert good.ok
+        assert fam["composer"]({field: 100}, None).code == "composition_record_invalid"
+        assert fam["composer"]({field: 100}, object()).code == "composition_record_invalid"
+        other_fam = TOL if fam is MAXAGE else MAXAGE
+        other_family = type("Rec", (), {"ok": True, "record": dict(good.record, family=other_fam["family"])})()
+>       assert fam["composer"]({field: 100}, other_family).code == "composition_family_unsupported"
+E       AssertionError: assert None == 'composition_family_unsupported'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()) = <function compose_max_age at 0x7f85b2460d60>({'observation_max_age_seconds': 100}, <test_r08v8_observation_families.Rec object at 0x7f85b288ea50>)
+
+tests/test_r08v8_observation_families.py:263: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_invalid_or_foreign_records_refuse[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 488 passed, 223 deselected in 2.11s
+
+
+=== OB17 operator not checked [KILLED]
+...................................................................... [ 65%]
+........................................................................ [ 78%]
+............................................F
+=================================== FAILURES ===================================
+_______ test_only_the_intersection_operator_is_supported[union-max_age] ________
+
+fam = {'family': 'f5-observation-max-age-policy', 'field': 'observation_max_age_seconds', 'lo': 1, 'validator': <function max_age_payload_validator at 0x7f8e5e4c0860>, ...}
+operator = 'union'
+
+    @BOTH
+    @pytest.mark.parametrize("operator", ["union", "", None, "Intersection", 1, b"intersection"])
+    def test_only_the_intersection_operator_is_supported(fam, operator):
+        res = fam["composer"]({fam["field"]: 100}, rec(fam), operator)
+>       assert not res.ok and res.code == "composition_operator_unsupported" and res.effective is None
+E       AssertionError: assert (not True)
+E        +  where True = CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()).ok
+
+tests/test_r08v8_observation_families.py:251: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_only_the_intersection_operator_is_supported[union-max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 476 passed, 223 deselected in 2.21s
+
+
+=== OB18 caller domain not checked [KILLED]
+e}
+
+    @pytest.mark.parametrize("fam,bad", [(f, b) for f in t.FAMILIES for b in BAD_CALLERS[f]], ids=lambda x: x if isinstance(x, str) and x.startswith("f5") else None)
+    def test_invalid_caller_refuses_required(fam, bad):
+>       assert_refused(t.decide(family=fam, cl=bad), "composition_caller_invalid")
+
+tests/test_r08v8_decision_path.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'observation_max_age_seconds': True}, deny_all=False, deny_all_fields=(), co...ail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'observation_max_age_seconds': True}, deny_all=False, deny_all_fields=(), code=None, detail='registry_value_not_narrowing:observation_max_age_seconds', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v8_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_invalid_caller_refuses_required[f5-observation-max-age-policy-bad15]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 136 passed, 223 deselected in 1.25s
+
+
+=== OB19 tolerance composer uses the max-age validator [KILLED]
+........................................................................ [ 13%]
+...........................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key4] ________
+
+key = ('r08-v8', 'f5-observation-clock-tolerance-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+>       assert own.kind == "applied" and own.operationally_authorized is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v8_cross_version.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 99 passed, 223 deselected in 1.07s
+
+
+=== OB20 tolerance composer uses the max-age normalizer [KILLED]
+........................................................................ [ 13%]
+...........................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key4] ________
+
+key = ('r08-v8', 'f5-observation-clock-tolerance-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+>       assert own.kind == "applied" and own.operationally_authorized is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v8_cross_version.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 99 passed, 223 deselected in 0.98s
+
+
+=== OB21 tolerance member aliases the held constructor name [KILLED]
+ion_max_age_seconds"), (60, 60, 60, ""), (INT_MAX, 1, 1, ""), (1, INT_MAX, 1, "registry_value_not_narrowing:observation_max_age_seconds")],
+                 TOL: [(5, 0, 0, ""), (0, 5, 0, "registry_value_not_narrowing:observation_clock_tolerance_seconds"), (5, 5, 5, ""), (INT_MAX, 0, 0, ""), (0, 0, 0, "")]}
+        for host, reg, eff, detail in cases[fam]:
+            d = t.decide(rec=rec_(fam, pl(fam, reg)), cl=pl(fam, host))
+>           assert d.kind == "applied" and d.effective == pl(fam, eff) and d.detail == detail, (host, reg)
+E           AssertionError: (0, 5)
+E           assert ('applied' == 'applied'
+E             
+E               applied and {'clock_tolerance_seconds': 0} == {'clock_tolerance_seconds': 0}
+E             
+E             Omitting 1 identical items, use -vv to show
+E             Use -v to get more diff and 'registry_val...rance_seconds' == 'registry_val...rance_seconds'
+E             
+E             - registry_value_not_narrowing:observation_clock_tolerance_seconds
+E             ?                              ------------
+E             + registry_value_not_narrowing:clock_tolerance_seconds)
+
+tests/test_r08v8_decision_path.py:66: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[tolerance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 117 passed, 223 deselected in 1.13s
+
+
+=== OB22 max-age member loses its prefix [KILLED]
+_value_not_narrowing:observation_max_age_seconds"), (60, 60, 60, ""), (INT_MAX, 1, 1, ""), (1, INT_MAX, 1, "registry_value_not_narrowing:observation_max_age_seconds")],
+                 TOL: [(5, 0, 0, ""), (0, 5, 0, "registry_value_not_narrowing:observation_clock_tolerance_seconds"), (5, 5, 5, ""), (INT_MAX, 0, 0, ""), (0, 0, 0, "")]}
+        for host, reg, eff, detail in cases[fam]:
+            d = t.decide(rec=rec_(fam, pl(fam, reg)), cl=pl(fam, host))
+>           assert d.kind == "applied" and d.effective == pl(fam, eff) and d.detail == detail, (host, reg)
+E           AssertionError: (60, 300)
+E           assert ('applied' == 'applied'
+E             
+E               applied and {'max_age_seconds': 60} == {'max_age_seconds': 60}
+E             
+E             Omitting 1 identical items, use -vv to show
+E             Use -v to get more diff and 'registry_val...x_age_seconds' == 'registry_val...x_age_seconds'
+E             
+E             - registry_value_not_narrowing:observation_max_age_seconds
+E             ?                              ------------
+E             + registry_value_not_narrowing:max_age_seconds)
+
+tests/test_r08v8_decision_path.py:66: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 116 passed, 223 deselected in 1.09s
+
+
+=== OB23 deny_all set [KILLED]
+........................................................................ [ 13%]
+...........................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key4] ________
+
+key = ('r08-v8', 'f5-observation-clock-tolerance-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+>       assert own.kind == "applied" and own.operationally_authorized is False
+E       AssertionError: assert ('applied_deny_all' == 'applied'
+E         
+E         - applied
+E         + applied_deny_all)
+
+tests/test_r08v8_cross_version.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key4]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 99 passed, 223 deselected in 1.21s
+
+
+=== OB24 caller snapshot bound off by one [KILLED]
+     class Counting(Mapping):
+            def __iter__(self):
+                return iter(())
+    
+            def __len__(self):
+                return 10 ** 9
+    
+            def __getitem__(self, k):
+                return 5
+    
+            def items(self):
+                def gen():
+                    for i in itertools.count():
+                        consumed.append(i)
+                        yield (field if i == 0 else "k%d" % i), 5
+                return gen()
+>       assert fam["normalizer"](Counting()) is None and len(consumed) == 2
+E       AssertionError: assert (None is None and 3 == 2)
+E        +  where None = <function normalize_caller_max_age at 0x7f9588c68ae0>(<test_r08v8_observation_families.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7f958908ea50>)
+E        +    where <test_r08v8_observation_families.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7f958908ea50> = <class 'test_r08v8_observation_families.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting'>()
+E        +  and   3 = len([0, 1, 2])
+
+tests/test_r08v8_observation_families.py:349: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_a_caller_mapping_is_read_for_at_most_two_items[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 519 passed, 223 deselected in 2.36s
+
+
+=== OB25 payload key type check dropped [KILLED]
+........................... [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+................................................F
+=================================== FAILURES ===================================
+__________________ test_missing_and_foreign_members[max_age] ___________________
+
+fam = {'family': 'f5-observation-max-age-policy', 'field': 'observation_max_age_seconds', 'lo': 1, 'validator': <function max_age_payload_validator at 0x7f9e6d20c860>, ...}
+
+    @BOTH
+    def test_missing_and_foreign_members(fam):
+        assert fam["validator"]({}) == "field_missing"
+        assert fam["validator"]({"clock_tolerance_seconds": 5}) == "field_unknown"
+>       assert fam["validator"]({1: 5}) == "field_type_invalid"
+E       AssertionError: assert 'field_unknown' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         + field_unknown
+
+tests/test_r08v8_observation_families.py:98: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_missing_and_foreign_members[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 408 passed, 223 deselected in 2.05s
+
+
+=== OB26 str-subclass family accepted by the composer [KILLED]
+        assert fam["composer"]({field: 100}, not_ok).code == "composition_record_invalid"
+        truthy = type("Rec", (), {"ok": 1, "record": good.record})()
+        assert fam["composer"]({field: 100}, truthy).code == "composition_record_invalid"
+        not_dict = type("Rec", (), {"ok": True, "record": [1]})()
+        assert fam["composer"]({field: 100}, not_dict).code == "composition_record_invalid"
+        sub = type("Rec", (), {"ok": True, "record": dict(good.record, family=S(fam["family"]))})()
+>       assert fam["composer"]({field: 100}, sub).code == "composition_family_unsupported"
+E       AssertionError: assert None == 'composition_family_unsupported'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()) = <function compose_max_age at 0x7f17e416cd60>({'observation_max_age_seconds': 100}, <test_r08v8_observation_families.Rec object at 0x7f17e40b5a90>)
+
+tests/test_r08v8_observation_families.py:278: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_invalid_or_foreign_records_refuse[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 488 passed, 223 deselected in 2.47s
+
+
+=== OB27 payload copy skipped (aliased) [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+...............................................                          [100%]
+551 passed, 223 deselected in 2.23s
+
+
+=== OB28 schema revision changed [KILLED]
+============ FAILURES ===================================
+___________________________ test_v8_profile_content ____________________________
+
+    def test_v8_profile_content():
+        assert V8.version == "r08-v8" and V8.selection_signing_domain == b"ocs-reg/r08-v8/selection\n" and V8.effective_policy_domain == b"ocs-reg/r08-v8/effective-policy\n"
+        assert profiles.CONTRACT_V8 == "r08-v8" and profiles.SELECTION_DOMAIN_V8 == V8.selection_signing_domain and profiles.EFFECTIVE_DOMAIN_V8 == V8.effective_policy_domain
+        assert list(V8.families) == [ANC, AGE, TOL] and list(V8.identity) == [ANC, AGE, TOL]
+        for fam in (ANC, AGE, TOL):
+            entry = V8.families[fam]
+>           assert entry.schema_revision == 1 and type(entry.schema_revision) is int and entry.spec.enforcing_component == "control-plane"
+E           AssertionError: assert (2 == 1)
+E            +  where 2 = FamilyEntry(spec=FamilySpec(family='f5-observation-max-age-policy', payload_fields=('observation_max_age_seconds',), p...malizer=<function normalize_caller_max_age at 0x7efde923cae0>, enforcing_component='control-plane'), schema_revision=2).schema_revision
+
+tests/test_r08v8_engine_profile.py:41: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_v8_profile_content - Assertio...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 331 passed, 223 deselected in 2.24s
+
+
+=== OB29 not-narrowing detail text changed [KILLED]
+y_value_not_narrowing:observation_max_age_seconds"), (60, 60, 60, ""), (INT_MAX, 1, 1, ""), (1, INT_MAX, 1, "registry_value_not_narrowing:observation_max_age_seconds")],
+                 TOL: [(5, 0, 0, ""), (0, 5, 0, "registry_value_not_narrowing:observation_clock_tolerance_seconds"), (5, 5, 5, ""), (INT_MAX, 0, 0, ""), (0, 0, 0, "")]}
+        for host, reg, eff, detail in cases[fam]:
+            d = t.decide(rec=rec_(fam, pl(fam, reg)), cl=pl(fam, host))
+>           assert d.kind == "applied" and d.effective == pl(fam, eff) and d.detail == detail, (host, reg)
+E           AssertionError: (60, 300)
+E           assert ('applied' == 'applied'
+E             
+E               applied and {'observation..._seconds': 60} == {'observation..._seconds': 60}
+E             
+E             Omitting 1 identical items, use -vv to show
+E             Use -v to get more diff and 'registry_val...x_age_seconds' == 'registry_val...x_age_seconds'
+E             
+E             - registry_value_not_narrowing:observation_max_age_seconds
+E             ?               ----
+E             + registry_value_narrowing:observation_max_age_seconds)
+
+tests/test_r08v8_decision_path.py:66: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_signed_path_applies_the_family_specific_composition[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 116 passed, 223 deselected in 1.21s
+
+
+=== OB30 family id of max-age changed [KILLED]
+eadline-to-inputs-policy'
+
+    @FAMS
+    def test_signed_vector_is_deterministic_and_verifies(fam):
+        vec = VECTOR[fam]
+        rec, stmt = vec["record"], vec["statement"]
+        assert rec == t.record(family=fam) and stmt == t.statement(t.record(family=fam))
+        assert selection_e.signing_input(V8, stmt).hex() == vec["signing_input_hex"]
+        assert t.sign(stmt) == vec["signature"] == base64.b64encode(bytes.fromhex(vec["signature_hex"])).decode()
+        assert t.nb.crypto_sign_open(bytes.fromhex(vec["signature_hex"]) + bytes.fromhex(vec["signing_input_hex"]), t.PK) == bytes.fromhex(vec["signing_input_hex"])
+        d = t.decide(family=fam, rec=rec, sel=json.dumps(vec["envelope"]), cl=vec["caller"])
+        assert d.kind == "applied" and d.effective == vec["effective"]
+>       assert set(VECTOR) == set(t.FAMILIES)
+E       AssertionError: assert {'f5-anchor-d...x-age-policy'} == {'f5-anchor-d...tion-max-age'}
+E         
+E         Extra items in the left set:
+E         'f5-observation-max-age-policy'
+E         Extra items in the right set:
+E         'f5-observation-max-age'
+E         Use -v to get more diff
+
+tests/test_r08v8_decision_path.py:458: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_signed_vector_is_deterministic_and_verifies[anchor]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 328 passed, 223 deselected in 2.08s
+
+
+=== OB31 family id of tolerance changed [KILLED]
+s-policy'
+
+    @FAMS
+    def test_signed_vector_is_deterministic_and_verifies(fam):
+        vec = VECTOR[fam]
+        rec, stmt = vec["record"], vec["statement"]
+        assert rec == t.record(family=fam) and stmt == t.statement(t.record(family=fam))
+        assert selection_e.signing_input(V8, stmt).hex() == vec["signing_input_hex"]
+        assert t.sign(stmt) == vec["signature"] == base64.b64encode(bytes.fromhex(vec["signature_hex"])).decode()
+        assert t.nb.crypto_sign_open(bytes.fromhex(vec["signature_hex"]) + bytes.fromhex(vec["signing_input_hex"]), t.PK) == bytes.fromhex(vec["signing_input_hex"])
+        d = t.decide(family=fam, rec=rec, sel=json.dumps(vec["envelope"]), cl=vec["caller"])
+        assert d.kind == "applied" and d.effective == vec["effective"]
+>       assert set(VECTOR) == set(t.FAMILIES)
+E       AssertionError: assert {'f5-anchor-d...x-age-policy'} == {'f5-anchor-d...x-age-policy'}
+E         
+E         Extra items in the left set:
+E         'f5-observation-clock-tolerance-policy'
+E         Extra items in the right set:
+E         'f5-observation-clock-tolerance'
+E         Use -v to get more diff
+
+tests/test_r08v8_decision_path.py:458: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_decision_path.py::test_signed_vector_is_deterministic_and_verifies[anchor]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 328 passed, 223 deselected in 2.04s
+
+
+=== OB32 max-age composer reads the tolerance field [KILLED]
+........................................................................ [ 13%]
+............................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key5] ________
+
+key = ('r08-v8', 'f5-observation-max-age-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+>       assert own.kind == "applied" and own.operationally_authorized is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v8_cross_version.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key5]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 100 passed, 223 deselected in 0.95s
+
+
+=== OB33 record ok flag truthy accepted [KILLED]
+assert fam["composer"]({field: 100}, bad_rec).code == "composition_record_invalid", bad
+        not_payload = type("Rec", (), {"ok": True, "record": dict(good.record, payload=[60])})()
+        assert fam["composer"]({field: 100}, not_payload).code == "composition_record_invalid"
+        not_ok = type("Rec", (), {"ok": False, "record": good.record})()
+        assert fam["composer"]({field: 100}, not_ok).code == "composition_record_invalid"
+        truthy = type("Rec", (), {"ok": 1, "record": good.record})()
+>       assert fam["composer"]({field: 100}, truthy).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()) = <function compose_max_age at 0x7f6242d60d60>({'observation_max_age_seconds': 100}, <test_r08v8_observation_families.Rec object at 0x7f6242f7e270>)
+
+tests/test_r08v8_observation_families.py:274: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_invalid_or_foreign_records_refuse[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 488 passed, 223 deselected in 2.14s
+
+
+=== OB34 record body type not exact [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+...............................................                          [100%]
+551 passed, 223 deselected in 2.08s
+
+
+=== OB35 payload dict type not exact [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+...............................................                          [100%]
+551 passed, 223 deselected in 2.06s
+
+
+=== SI01 scalar-int type check dropped [KILLED]
+h_is_selected_by_the_row_kind_only():
+        """A scalar-int row with the enum vocabulary refuses a string by type; a scalar-enum row refuses an int by type (the kinds do not leak into each other)."""
+        assert identity_e.validate_effective_payload(V8, AGE, {obs.MAX_AGE_FIELD: 60}) == {obs.MAX_AGE_FIELD: 60}
+        assert identity_e.validate_effective_payload(V8, ANC, {anc.ANCHOR_FIELD: "anchor"}) == {anc.ANCHOR_FIELD: "anchor"}
+        with pytest.raises(identity_e.IdentityRefusal) as e:
+            identity_e.validate_effective_payload(V8, ANC, {anc.ANCHOR_FIELD: 60})
+        assert (e.value.code, e.value.member) == ("field_type_invalid", anc.ANCHOR_FIELD)
+        with pytest.raises(identity_e.IdentityRefusal) as e:
+            identity_e.validate_effective_payload(V8, AGE, {obs.MAX_AGE_FIELD: "anchor"})
+>       assert (e.value.code, e.value.member) == ("field_type_invalid", obs.MAX_AGE_FIELD)
+E       AssertionError: assert ('field_inval..._age_seconds') == ('field_type_..._age_seconds')
+E         
+E         At index 0 diff: 'field_invalid' != 'field_type_invalid'
+E         Use -v to get more diff
+
+tests/test_r08v8_engine_profile.py:111: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 338 passed, 223 deselected in 1.68s
+
+
+=== SI02 scalar-int type check accepts bool [KILLED]
+ode(v8.effective_policy_digest, fam, {}) == ("field_missing", field)
+        assert code(v8.effective_policy_digest, fam, {field: 5, "zzz": 1}) == ("field_unknown", "zzz")
+        assert code(v8.effective_policy_digest, fam, {"clock_tolerance_seconds": 5}) == ("field_missing", field)  # missing is reported before unknown
+        assert code(v8.effective_policy_digest, fam, {"clock_tolerance_seconds": 5, field: 5}) == ("field_unknown", "clock_tolerance_seconds")
+        assert code(v8.effective_policy_digest, fam, None) == ("field_type_invalid", None)
+        assert code(v8.effective_policy_digest, fam, []) == ("field_type_invalid", None)
+        for bad in (True, False, None, 1.0, 60.0, "60", "1", "", b"60", [60], {"a": 1}, I(5), float("nan")):
+>           assert code(v8.effective_policy_digest, fam, {field: bad}) == ("field_type_invalid", field), bad
+E           AssertionError: True
+E           assert ('field_inval..._age_seconds') == ('field_type_..._age_seconds')
+E             
+E             At index 0 diff: 'field_invalid' != 'field_type_invalid'
+E             Use -v to get more diff
+
+tests/test_r08v8_policy_identity.py:190: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_policy_identity.py::test_scalar_int_refusals[f5-observation-max-age-policy-observation_max_age_seconds-1]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 543 passed, 223 deselected in 1.98s
+
+
+=== SI03 scalar-int value domain not checked [KILLED]
+....... [ 78%]
+........................................................................ [ 91%]
+.................................F
+=================================== FAILURES ===================================
+________________ test_the_families_are_not_deny_all_dimensions _________________
+
+    def test_the_families_are_not_deny_all_dimensions():
+        assert v8.deny_all_dimensions(ANC, {AF: "anchor"}) == [] and v8.deny_all_dimensions(AGE, {GF: 60}) == [] and v8.deny_all_dimensions(TOL, {TF: 0}) == []
+        assert v8.effective_preimage(TOL, {TF: 0})["deny_all"] == []
+>       assert code(v8.deny_all_dimensions, AGE, {GF: 0}) == ("field_invalid", GF)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v8_policy_identity.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fn = <function deny_all_dimensions at 0x7f8c5770d580>
+a = ('f5-observation-max-age-policy', {'observation_max_age_seconds': 0})
+k = {}
+
+    def code(fn, *a, **k):
+>       with pytest.raises(v8.IdentityRefusal) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE IdentityRefusal
+
+tests/test_r08v8_policy_identity.py:40: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_policy_identity.py::test_the_families_are_not_deny_all_dimensions
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 537 passed, 223 deselected in 2.01s
+
+
+=== SI04 scalar-int branch selected for scalar-enum [KILLED]
+calar-enum row refuses an int by type (the kinds do not leak into each other)."""
+>       assert identity_e.validate_effective_payload(V8, AGE, {obs.MAX_AGE_FIELD: 60}) == {obs.MAX_AGE_FIELD: 60}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v8_engine_profile.py:104: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+registry_successor/engine/identity.py:80: in validate_effective_payload
+    pid._type_refusal(field, value)
+registry_successor/v2_policy_identity.py:608: in _type_refusal
+    _refuse("field_type_invalid", path, evidence={"observed_value_class": _value_class(value)})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'field_type_invalid', member = 'observation_max_age_seconds'
+stage = None, evidence = {'observed_value_class': 'integer'}
+
+    def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+>       raise IdentityRefusal(code, member, stage, evidence)
+E       registry_successor.v2_policy_identity.IdentityRefusal: field_type_invalid
+
+registry_successor/v2_policy_identity.py:162: IdentityRefusal
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 338 passed, 223 deselected in 1.88s
+
+
+=== SI05 scalar-int refuses with the wrong code [KILLED]
+.......................................... [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+.................................F
+=================================== FAILURES ===================================
+________________ test_the_families_are_not_deny_all_dimensions _________________
+
+    def test_the_families_are_not_deny_all_dimensions():
+        assert v8.deny_all_dimensions(ANC, {AF: "anchor"}) == [] and v8.deny_all_dimensions(AGE, {GF: 60}) == [] and v8.deny_all_dimensions(TOL, {TF: 0}) == []
+        assert v8.effective_preimage(TOL, {TF: 0})["deny_all"] == []
+>       assert code(v8.deny_all_dimensions, AGE, {GF: 0}) == ("field_invalid", GF)
+E       AssertionError: assert ('field_type_..._age_seconds') == ('field_inval..._age_seconds')
+E         
+E         At index 0 diff: 'field_type_invalid' != 'field_invalid'
+E         Use -v to get more diff
+
+tests/test_r08v8_policy_identity.py:118: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_policy_identity.py::test_the_families_are_not_deny_all_dimensions
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 537 passed, 223 deselected in 2.13s
+
+
+=== SI06 scalar-int member path wrong [KILLED]
+ranch_is_selected_by_the_row_kind_only():
+        """A scalar-int row with the enum vocabulary refuses a string by type; a scalar-enum row refuses an int by type (the kinds do not leak into each other)."""
+        assert identity_e.validate_effective_payload(V8, AGE, {obs.MAX_AGE_FIELD: 60}) == {obs.MAX_AGE_FIELD: 60}
+        assert identity_e.validate_effective_payload(V8, ANC, {anc.ANCHOR_FIELD: "anchor"}) == {anc.ANCHOR_FIELD: "anchor"}
+        with pytest.raises(identity_e.IdentityRefusal) as e:
+            identity_e.validate_effective_payload(V8, ANC, {anc.ANCHOR_FIELD: 60})
+        assert (e.value.code, e.value.member) == ("field_type_invalid", anc.ANCHOR_FIELD)
+        with pytest.raises(identity_e.IdentityRefusal) as e:
+            identity_e.validate_effective_payload(V8, AGE, {obs.MAX_AGE_FIELD: "anchor"})
+>       assert (e.value.code, e.value.member) == ("field_type_invalid", obs.MAX_AGE_FIELD)
+E       AssertionError: assert ('field_type_invalid', None) == ('field_type_..._age_seconds')
+E         
+E         At index 1 diff: None != 'observation_max_age_seconds'
+E         Use -v to get more diff
+
+tests/test_r08v8_engine_profile.py:111: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 338 passed, 223 deselected in 2.01s
+
+
+=== SI07 KINDS lacks scalar-int [KILLED]
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_r08v8_anchor_family.py ______________
+tests/test_r08v8_anchor_family.py:15: in <module>
+    from registry_successor.engine import profiles
+registry_successor/engine/profiles.py:72: in <module>
+    V8 = ContractProfile(
+<string>:8: in __init__
+    ???
+registry_successor/engine/profile.py:75: in __post_init__
+    _fail("identity row " + repr(key))
+registry_successor/engine/profile.py:46: in _fail
+    raise ValueError("invalid ContractProfile: " + message)
+E   ValueError: invalid ContractProfile: identity row 'f5-observation-max-age-policy'
+=========================== short test summary info ============================
+ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.28s
+
+
+=== SI08 KINDS admits an unknown kind [KILLED]
+  def test_scalar_int_rows_are_validated_at_construction():
+        p = parts()
+        ContractProfile(**p)  # control: the unmodified parts construct
+        row = V8.identity[AGE]
+        for bad in (IdentityRow(AGE, "scalar-int", (obs.MAX_AGE_FIELD, obs.TOLERANCE_FIELD), row.is_value, row.version_member, 1),
+                    IdentityRow(AGE, "scalar-int", (obs.TOLERANCE_FIELD,), row.is_value, row.version_member, 1),
+                    IdentityRow(AGE, "scalar-int", row.members, None, row.version_member, 1),
+                    IdentityRow(AGE, "scalar-int", row.members, row.is_value, row.version_member, 2),
+                    IdentityRow(AGE, "scalar-int", row.members, row.is_value, "family_version", "v8"),
+                    IdentityRow(AGE, "scalar-float", row.members, row.is_value, row.version_member, 1),
+                    IdentityRow(TOL, "scalar-int", row.members, row.is_value, row.version_member, 1)):
+            q = parts()
+            q["identity"] = dict(q["identity"], **{AGE: bad})
+>           with pytest.raises(ValueError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/test_r08v8_engine_profile.py:98: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_scalar_int_rows_are_validated_at_construction
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 337 passed, 223 deselected in 2.34s
+
+
+=== PV01 v8 selection domain wrong [KILLED]
+........................................................................ [ 13%]
+..........................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key3] ________
+
+key = ('r08-v8', 'f5-anchor-deadline-to-inputs-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+>       assert own.kind == "applied" and own.operationally_authorized is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v8_cross_version.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key3]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 98 passed, 223 deselected in 0.89s
+
+
+=== PV02 v8 effective domain wrong [KILLED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+...........................................F
+=================================== FAILURES ===================================
+___________________________ test_v8_profile_content ____________________________
+
+    def test_v8_profile_content():
+>       assert V8.version == "r08-v8" and V8.selection_signing_domain == b"ocs-reg/r08-v8/selection\n" and V8.effective_policy_domain == b"ocs-reg/r08-v8/effective-policy\n"
+E       AssertionError: assert ('r08-v8' == 'r08-v8'
+E         
+E           r08-v8 and b'ocs-reg/r08-v8/selection\n' == b'ocs-reg/r08-v8/selection\n'
+E         
+E         Use -v to get more diff and b'ocs-reg/r08...tive-policx\n' == b'ocs-reg/r08...tive-policy\n'
+E         
+E         At index 30 diff: b'x' != b'y'
+E         Use -v to get more diff)
+
+tests/test_r08v8_engine_profile.py:36: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_v8_profile_content - Assertio...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 331 passed, 223 deselected in 1.87s
+
+
+=== PV03 v8 anchor identity kind is scalar-int [KILLED]
+_payload(V8, AGE, {obs.MAX_AGE_FIELD: 60}) == {obs.MAX_AGE_FIELD: 60}
+>       assert identity_e.validate_effective_payload(V8, ANC, {anc.ANCHOR_FIELD: "anchor"}) == {anc.ANCHOR_FIELD: "anchor"}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v8_engine_profile.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+registry_successor/engine/identity.py:75: in validate_effective_payload
+    pid._type_refusal(field, value)
+registry_successor/v2_policy_identity.py:608: in _type_refusal
+    _refuse("field_type_invalid", path, evidence={"observed_value_class": _value_class(value)})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'field_type_invalid', member = 'anchor_deadline_to_inputs', stage = None
+evidence = {'observed_value_class': 'string'}
+
+    def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+>       raise IdentityRefusal(code, member, stage, evidence)
+E       registry_successor.v2_policy_identity.IdentityRefusal: field_type_invalid
+
+registry_successor/v2_policy_identity.py:162: IdentityRefusal
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 338 passed, 223 deselected in 2.01s
+
+
+=== PV04 v8 max-age identity kind is scalar-enum [KILLED]
+calar-enum row refuses an int by type (the kinds do not leak into each other)."""
+>       assert identity_e.validate_effective_payload(V8, AGE, {obs.MAX_AGE_FIELD: 60}) == {obs.MAX_AGE_FIELD: 60}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v8_engine_profile.py:104: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+registry_successor/engine/identity.py:80: in validate_effective_payload
+    pid._type_refusal(field, value)
+registry_successor/v2_policy_identity.py:608: in _type_refusal
+    _refuse("field_type_invalid", path, evidence={"observed_value_class": _value_class(value)})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'field_type_invalid', member = 'observation_max_age_seconds'
+stage = None, evidence = {'observed_value_class': 'integer'}
+
+    def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+>       raise IdentityRefusal(code, member, stage, evidence)
+E       registry_successor.v2_policy_identity.IdentityRefusal: field_type_invalid
+
+registry_successor/v2_policy_identity.py:162: IdentityRefusal
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_scalar_int_identity_branch_is_selected_by_the_row_kind_only
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 338 passed, 223 deselected in 1.86s
+
+
+=== PV05 v8 tolerance value vocabulary is max-age's [KILLED]
+ obs.compose_tolerance
+>       assert V8.identity[AGE].is_value is obs.is_max_age and V8.identity[TOL].is_value is obs.is_tolerance and V8.identity[ANC].is_value is anc.is_value
+E       AssertionError: assert (<function is_max_age at 0x7f85494605e0> is <function is_max_age at 0x7f85494605e0> and <function is_max_age at 0x7f85494605e0> is <function is_tolerance at 0x7f8549460720>)
+E        +  where <function is_max_age at 0x7f85494605e0> = IdentityRow(family='f5-observation-max-age-policy', kind='scalar-int', members=('observation_max_age_seconds',), is_value=<function is_max_age at 0x7f85494605e0>, version_member='family_schema_revision', version_value=1).is_value
+E        +  and   <function is_max_age at 0x7f85494605e0> = obs.is_max_age
+E        +  and   <function is_max_age at 0x7f85494605e0> = IdentityRow(family='f5-observation-clock-tolerance-policy', kind='scalar-int', members=('observation_clock_tolerance_seconds',), is_value=<function is_max_age at 0x7f85494605e0>, version_member='family_schema_revision', version_value=1).is_value
+E        +  and   <function is_tolerance at 0x7f8549460720> = obs.is_tolerance
+
+tests/test_r08v8_engine_profile.py:72: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_v8_specs_are_the_family_module_functions_not_copies
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 335 passed, 223 deselected in 1.88s
+
+
+=== PV06 v8 max-age value vocabulary is tolerance's [KILLED]
+========================= FAILURES ===================================
+_________ test_the_v8_specs_are_the_family_module_functions_not_copies _________
+
+    def test_the_v8_specs_are_the_family_module_functions_not_copies():
+        assert V8.families[ANC].spec.composer is anc.compose_anchor and V8.families[ANC].spec.payload_validator is anc.payload_validator
+        assert V8.families[AGE].spec.composer is obs.compose_max_age and V8.families[TOL].spec.composer is obs.compose_tolerance
+>       assert V8.identity[AGE].is_value is obs.is_max_age and V8.identity[TOL].is_value is obs.is_tolerance and V8.identity[ANC].is_value is anc.is_value
+E       AssertionError: assert (<function is_tolerance at 0x7f1a3db60720> is <function is_max_age at 0x7f1a3db605e0>)
+E        +  where <function is_tolerance at 0x7f1a3db60720> = IdentityRow(family='f5-observation-max-age-policy', kind='scalar-int', members=('observation_max_age_seconds',), is_value=<function is_tolerance at 0x7f1a3db60720>, version_member='family_schema_revision', version_value=1).is_value
+E        +  and   <function is_max_age at 0x7f1a3db605e0> = obs.is_max_age
+
+tests/test_r08v8_engine_profile.py:72: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_v8_specs_are_the_family_module_functions_not_copies
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 335 passed, 223 deselected in 1.75s
+
+
+=== PV07 v8 enforcing component runtime [KILLED]
+........................................................................ [ 13%]
+......F
+=================================== FAILURES ===================================
+______________________ test_the_family_registration_facts ______________________
+
+    def test_the_family_registration_facts():
+        spec = profiles.V8.families[f.FAMILY_ANCHOR].spec
+>       assert spec.enforcing_component == "control-plane" and spec.payload_fields == (FIELD,) and spec.evaluator_binding == (c.EVALUATOR_ID, c.EVALUATOR_BINDING)
+E       AssertionError: assert ('runtime' == 'control-plane'
+E         
+E         - control-plane
+E         + runtime)
+
+tests/test_r08v8_anchor_family.py:221: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_the_family_registration_facts
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 78 passed, 223 deselected in 0.89s
+
+
+=== PV08 v8 evaluator binding swapped [KILLED]
+...........................................F
+=================================== FAILURES ===================================
+__ test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor] ___
+
+host = 'anchor', reg = 'anchor'
+
+    @pytest.mark.parametrize("host,reg", list(itertools.product((A, N), repeat=2)))
+    def test_composition_matrix_is_anchor_if_either_side_is_anchor(host, reg):
+        res = f.compose_anchor({FIELD: host}, rec({FIELD: reg}))
+>       assert res.ok and res.deny_all is False and res.deny_all_fields == () and res.code is None
+E       AssertionError: assert (False)
+E        +  where False = CompositionResult(ok=False, code='composition_record_invalid', detail='', effective=None, deny_all=False, deny_all_fields=()).ok
+
+tests/test_r08v8_anchor_family.py:82: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_composition_matrix_is_anchor_if_either_side_is_anchor[anchor-anchor]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 43 passed, 223 deselected in 0.81s
+
+
+=== PV09 v8 anchor composer swapped [KILLED]
+yload_validator is f.payload_validator and spec.composer is f.compose_anchor and spec.caller_normalizer is f.normalize_caller
+E       AssertionError: assert (<function payload_validator at 0x7fc5a0638220> is <function payload_validator at 0x7fc5a0638220> and <function compose_max_age at 0x7fc5a0638d60> is <function compose_anchor at 0x7fc5a0638540>)
+E        +  where <function payload_validator at 0x7fc5a0638220> = FamilySpec(family='f5-anchor-deadline-to-inputs-policy', payload_fields=('anchor_deadline_to_inputs',), payload_valida...code-reference'), caller_normalizer=<function normalize_caller at 0x7fc5a0638360>, enforcing_component='control-plane').payload_validator
+E        +  and   <function payload_validator at 0x7fc5a0638220> = f.payload_validator
+E        +  and   <function compose_max_age at 0x7fc5a0638d60> = FamilySpec(family='f5-anchor-deadline-to-inputs-policy', payload_fields=('anchor_deadline_to_inputs',), payload_valida...code-reference'), caller_normalizer=<function normalize_caller at 0x7fc5a0638360>, enforcing_component='control-plane').composer
+E        +  and   <function compose_anchor at 0x7fc5a0638540> = f.compose_anchor
+
+tests/test_r08v8_anchor_family.py:222: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_the_family_registration_facts
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 78 passed, 223 deselected in 0.97s
+
+
+=== PV10 v8 tolerance schema revision 2 [KILLED]
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_r08v8_anchor_family.py ______________
+tests/test_r08v8_anchor_family.py:15: in <module>
+    from registry_successor.engine import profiles
+registry_successor/engine/profiles.py:72: in <module>
+    V8 = ContractProfile(
+<string>:8: in __init__
+    ???
+registry_successor/engine/profile.py:79: in __post_init__
+    _fail("schema revision of " + key)
+registry_successor/engine/profile.py:46: in _fail
+    raise ValueError("invalid ContractProfile: " + message)
+E   ValueError: invalid ContractProfile: schema revision of f5-observation-clock-tolerance-policy
+=========================== short test summary info ============================
+ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.28s
+
+
+=== PV11 v8 family order changed [KILLED]
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_r08v8_anchor_family.py ______________
+tests/test_r08v8_anchor_family.py:15: in <module>
+    from registry_successor.engine import profiles
+registry_successor/engine/profiles.py:72: in <module>
+    V8 = ContractProfile(
+<string>:8: in __init__
+    ???
+registry_successor/engine/profile.py:67: in __post_init__
+    _fail("families and identity rows must be non-empty with the same keys in the same order")
+registry_successor/engine/profile.py:46: in _fail
+    raise ValueError("invalid ContractProfile: " + message)
+E   ValueError: invalid ContractProfile: families and identity rows must be non-empty with the same keys in the same order
+=========================== short test summary info ============================
+ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.30s
+
+
+=== PV12 v8 contract version changed [KILLED]
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_r08v8_anchor_family.py ______________
+tests/test_r08v8_anchor_family.py:15: in <module>
+    from registry_successor.engine import profiles
+registry_successor/engine/profiles.py:72: in <module>
+    V8 = ContractProfile(
+<string>:8: in __init__
+    ???
+registry_successor/engine/profile.py:62: in __post_init__
+    _fail(name)
+registry_successor/engine/profile.py:46: in _fail
+    raise ValueError("invalid ContractProfile: " + message)
+E   ValueError: invalid ContractProfile: selection_signing_domain
+=========================== short test summary info ============================
+ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.28s
+
+
+=== PV13 v8 registered in PROFILES [KILLED]
+ntractProfile(version='r08-v7', selection_signing_domain=b'ocs-reg/r08-v7/selection\n', effective_policy_domain=b'oc...rsible',), is_value=<function is_value at 0x7f13b99cc860>, version_member='family_schema_revision', version_value=1)})) is ContractProfile(version='r08-v7', selection_signing_domain=b'ocs-reg/r08-v7/selection\n', effective_policy_domain=b'oc...rsible',), is_value=<function is_value at 0x7f13b99cc860>, version_member='family_schema_revision', version_value=1)})) and ContractProfile(version='r08-v6', selection_signing_domain=b'ocs-reg/r08-v6/selection\n', effective_policy_domain=b'oc..._revocation',), is_value=<function is_value at 0x7f13b98225c0>, version_member='family_version', version_value='v6')})) is ContractProfile(version='r08-v6', selection_signing_domain=b'ocs-reg/r08-v6/selection\n', effective_policy_domain=b'oc..._revocation',), is_value=<function is_value at 0x7f13b98225c0>, version_member='family_version', version_value='v6')})) and {'r08-v6', 'r08-v7', 'r08-v8'} == {'r08-v6', 'r08-v7'}
+E         
+E         Extra items in the left set:
+E         'r08-v8'
+E         Use -v to get more diff)
+
+tests/test_r08v8_engine_profile.py:60: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_v7_and_v6_compat_and_the_profiles_table_are_untouched
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 333 passed, 223 deselected in 1.92s
+
+
+=== PV14 v8 anchor uses the legacy tag member [KILLED]
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_r08v8_anchor_family.py ______________
+tests/test_r08v8_anchor_family.py:15: in <module>
+    from registry_successor.engine import profiles
+registry_successor/engine/profiles.py:72: in <module>
+    V8 = ContractProfile(
+<string>:8: in __init__
+    ???
+registry_successor/engine/profile.py:82: in __post_init__
+    _fail("family version tag of " + key)
+registry_successor/engine/profile.py:46: in _fail
+    raise ValueError("invalid ContractProfile: " + message)
+E   ValueError: invalid ContractProfile: family version tag of f5-anchor-deadline-to-inputs-policy
+=========================== short test summary info ============================
+ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.26s
+
+
+=== PV15 v8 max-age family id mapped to the tolerance spec [KILLED]
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_r08v8_anchor_family.py ______________
+tests/test_r08v8_anchor_family.py:15: in <module>
+    from registry_successor.engine import profiles
+registry_successor/engine/profiles.py:72: in <module>
+    V8 = ContractProfile(
+<string>:8: in __init__
+    ???
+registry_successor/engine/profile.py:72: in __post_init__
+    _fail("family entry " + repr(key))
+registry_successor/engine/profile.py:46: in _fail
+    raise ValueError("invalid ContractProfile: " + message)
+E   ValueError: invalid ContractProfile: family entry 'f5-observation-max-age-policy'
+=========================== short test summary info ============================
+ERROR tests/test_r08v8_anchor_family.py - ValueError: invalid ContractProfile...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.27s
+
+
+=== PV16 v7 selection domain changed (v7 untouched) [KILLED]
+........................................................................ [ 13%]
+.........................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key2] ________
+
+key = ('r08-v7', 'f5-action-class-irreversibility-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+>       assert own.kind == "applied" and own.operationally_authorized is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v8_cross_version.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key2]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 97 passed, 223 deselected in 0.95s
+
+
+=== TH01 v8 families bound to the v7 profile [KILLED]
+.............................................................. [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+...................................................F
+=================================== FAILURES ===================================
+____ test_the_v8_table_dispatches_by_exact_string_and_the_contract_version _____
+
+    def test_the_v8_table_dispatches_by_exact_string_and_the_contract_version():
+>       assert set(v8_families.FAMILIES_V8) == {ANC, AGE, TOL} and v8_families.CONTRACT_V8 == "r08-v8"
+E       AssertionError: assert ({'f5-action-c...ility-policy'} == {'f5-anchor-d...x-age-policy'}
+E         
+E         Extra items in the left set:
+E         'f5-action-class-irreversibility-policy'
+E         Extra items in the right set:
+E         'f5-anchor-deadline-to-inputs-policy'
+E         'f5-observation-clock-tolerance-policy'
+E         'f5-observation-max-age-policy'
+E         Use -v to get more diff)
+
+tests/test_r08v8_engine_profile.py:115: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_v8_table_dispatches_by_exact_string_and_the_contract_version
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 339 passed, 223 deselected in 1.84s
+
+
+=== TH02 v8 lookup bound to the v7 profile [KILLED]
+7.selection_text(rec7)), "contract_unsupported")
+        relabelled = r.dumps(s.envelope(t7.statement(rec7), domain=t7.V7_DOMAIN, contract="r08-v8", signature=t7.sign(t7.statement(rec7)), pub=t7.PK))
+        t8.assert_refused(run("r08-v8", t7.caller(), rec7, relabelled), "family_unsupported")
+>       assert v8_families.lookup_v8(t7.FAMILY) is None
+E       AssertionError: assert FamilySpec(family='f5-action-class-irreversibility-policy', payload_fields=('class_irreversible',), payload_validator=...code-reference'), caller_normalizer=<function normalize_caller at 0x7f7a65604ae0>, enforcing_component='control-plane') is None
+E        +  where FamilySpec(family='f5-action-class-irreversibility-policy', payload_fields=('class_irreversible',), payload_validator=...code-reference'), caller_normalizer=<function normalize_caller at 0x7f7a65604ae0>, enforcing_component='control-plane') = <function lookup_v8 at 0x7f7a65671a80>('f5-action-class-irreversibility-policy')
+E        +    where <function lookup_v8 at 0x7f7a65671a80> = v8_families.lookup_v8
+E        +    and   'f5-action-class-irreversibility-policy' = t7.FAMILY
+
+tests/test_r08v8_cross_version.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_v8_refuses_irreversibility_in_records_selections_and_decisions
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 104 passed, 223 deselected in 1.02s
+
+
+=== TH03 v8 table selector bound to the v7 profile [KILLED]
+..................................................F
+=================================== FAILURES ===================================
+____ test_the_v8_table_dispatches_by_exact_string_and_the_contract_version _____
+
+    def test_the_v8_table_dispatches_by_exact_string_and_the_contract_version():
+        assert set(v8_families.FAMILIES_V8) == {ANC, AGE, TOL} and v8_families.CONTRACT_V8 == "r08-v8"
+        for bad in ("F5-OBSERVATION-MAX-AGE-POLICY", " f5-observation-max-age-policy", None, 1, ["x"], "f5-action-class-irreversibility-policy", ANC + "\n"):
+            assert v8_families.lookup_v8(bad) is None
+>       assert v8_families.table_for_contract_version_v8("r08-v8").ok
+E       AssertionError: assert False
+E        +  where False = TableSelection(ok=False, code='contract_unsupported', version=None, table=None).ok
+E        +    where TableSelection(ok=False, code='contract_unsupported', version=None, table=None) = <function table_for_contract_version_v8 at 0x7fa9e0529d00>('r08-v8')
+E        +      where <function table_for_contract_version_v8 at 0x7fa9e0529d00> = v8_families.table_for_contract_version_v8
+
+tests/test_r08v8_engine_profile.py:118: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_v8_table_dispatches_by_exact_string_and_the_contract_version
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 339 passed, 223 deselected in 1.85s
+
+
+=== TH04 v8 compose bound to the v7 profile [KILLED]
+ordResult
+        rec = t.record(family=AGE)
+        ok = RecordResult(True, None, "", rec, rec["record_digest"])
+>       assert v8_families.compose_v8(t.caller(AGE), ok).ok
+E       AssertionError: assert False
+E        +  where False = CompositionResult(ok=False, code='composition_family_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=()).ok
+E        +    where CompositionResult(ok=False, code='composition_family_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=()) = <function compose_v8 at 0x7f192eb59b20>({'observation_max_age_seconds': 300}, RecordResult(ok=True, code=None, detail='', record={'contract_version': 'r08-v8', 'kind': 'record', 'family': 'f5-obse...f4f36dad9f4b92e33d35efe4aeb'}, record_digest='sha256:3a4e50c68b6805471880167d2a0f74dbc601ff4f36dad9f4b92e33d35efe4aeb'))
+E        +      where <function compose_v8 at 0x7f192eb59b20> = v8_families.compose_v8
+E        +      and   {'observation_max_age_seconds': 300} = <function caller at 0x7f192ea3ccc0>('f5-observation-max-age-policy')
+E        +        where <function caller at 0x7f192ea3ccc0> = t.caller
+
+tests/test_r08v8_engine_profile.py:129: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_dispatch_enforces_operator_record_validity_and_family
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 340 passed, 223 deselected in 2.00s
+
+
+=== TH05 v8 compose_for bound to the v7 profile [KILLED]
+t.caller(AGE), RecordResult(True, None, "", other, "x")).code == "composition_family_unsupported"
+>       assert v8_families.compose_for_v8("r08-v8", t.caller(AGE), ok).ok
+E       AssertionError: assert False
+E        +  where False = CompositionResult(ok=False, code='contract_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=()).ok
+E        +    where CompositionResult(ok=False, code='contract_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=()) = <function compose_for_v8 at 0x7fc72bccdda0>('r08-v8', {'observation_max_age_seconds': 300}, RecordResult(ok=True, code=None, detail='', record={'contract_version': 'r08-v8', 'kind': 'record', 'family': 'f5-obse...f4f36dad9f4b92e33d35efe4aeb'}, record_digest='sha256:3a4e50c68b6805471880167d2a0f74dbc601ff4f36dad9f4b92e33d35efe4aeb'))
+E        +      where <function compose_for_v8 at 0x7fc72bccdda0> = v8_families.compose_for_v8
+E        +      and   {'observation_max_age_seconds': 300} = <function caller at 0x7fc72bbfccc0>('f5-observation-max-age-policy')
+E        +        where <function caller at 0x7fc72bbfccc0> = t.caller
+
+tests/test_r08v8_engine_profile.py:134: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_dispatch_enforces_operator_record_validity_and_family
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 340 passed, 223 deselected in 1.97s
+
+
+=== TH06 v8 decision bound to the v7 profile [KILLED]
+........................................................ [ 13%]
+.........................F
+=================================== FAILURES ===================================
+_______ test_each_document_is_applied_by_its_own_entry_point_only[key2] ________
+
+key = ('r08-v7', 'f5-action-class-irreversibility-policy')
+
+    @pytest.mark.parametrize("key", sorted(DOCS))
+    def test_each_document_is_applied_by_its_own_entry_point_only(key):
+        contract, fam = key
+        rec, sel, cl = DOCS[key]
+        own = run(contract, cl, rec, sel)
+        assert own.kind == "applied" and own.operationally_authorized is False
+        for entry in ENTRIES:
+            if entry == contract:
+                continue
+            got = run(entry, cl, rec, sel)
+>           assert got.kind == "required_policy_unavailable" and got.effective is None and got.operationally_authorized is False, (entry, key)
+E           AssertionError: ('r08-v8', ('r08-v7', 'f5-action-class-irreversibility-policy'))
+E           assert ('applied' == 'required_policy_unavailable'
+E             
+E             - required_policy_unavailable
+E             + applied)
+
+tests/test_r08v8_cross_version.py:60: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_cross_version.py::test_each_document_is_applied_by_its_own_entry_point_only[key2]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 97 passed, 223 deselected in 1.05s
+
+
+=== TH07 v8 identity digest bound to the v7 profile [KILLED]
+ [n for n in fn.body if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
+                assert len(body) == 1 and isinstance(body[0], ast.Return) and isinstance(body[0].value, ast.Call), (module.__name__, name)
+                assert not [n for n in ast.walk(fn) if isinstance(n, (ast.If, ast.Try, ast.For, ast.While, ast.BoolOp))], (module.__name__, name)
+>               assert "_profiles.V8" in ast.unparse(fn) and "V7" not in ast.unparse(fn) and "V6" not in ast.unparse(fn)
+E               AssertionError: assert ('_profiles.V8' in 'def effective_policy_digest(family: Any, payload: Any, contract_version: Any=CONTRACT_VERSION) -> str:\n    return _id.effective_policy_digest(_profiles.V7, family, payload, contract_version)')
+E                +  where 'def effective_policy_digest(family: Any, payload: Any, contract_version: Any=CONTRACT_VERSION) -> str:\n    return _id.effective_policy_digest(_profiles.V7, family, payload, contract_version)' = <function unparse at 0x7fa7bec83880>(<ast.FunctionDef object at 0x7fa7bdccfcd0>)
+E                +    where <function unparse at 0x7fa7bec83880> = ast.unparse
+
+tests/test_r08v8_engine_profile.py:168: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed, 223 deselected in 1.89s
+
+
+=== TH08 v8 identity default contract version [KILLED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+.......................................................F
+=================================== FAILURES ===================================
+___ test_the_public_v8_entry_points_take_no_contract_version_in_the_decision ___
+
+    def test_the_public_v8_entry_points_take_no_contract_version_in_the_decision():
+        assert "contract_version" not in inspect.signature(v8_decision.verify_and_decide_v8).parameters
+>       assert inspect.signature(v8_policy_identity.effective_policy_digest).parameters["contract_version"].default == "r08-v8"
+E       AssertionError: assert 'r08-v7' == 'r08-v8'
+E         
+E         - r08-v8
+E         ?      ^
+E         + r08-v7
+E         ?      ^
+
+tests/test_r08v8_engine_profile.py:173: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_entry_points_take_no_contract_version_in_the_decision
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 343 passed, 223 deselected in 1.75s
+
+
+=== TH09 v8 preimage bound to the v7 profile [KILLED]
+            body = [n for n in fn.body if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
+                assert len(body) == 1 and isinstance(body[0], ast.Return) and isinstance(body[0].value, ast.Call), (module.__name__, name)
+                assert not [n for n in ast.walk(fn) if isinstance(n, (ast.If, ast.Try, ast.For, ast.While, ast.BoolOp))], (module.__name__, name)
+>               assert "_profiles.V8" in ast.unparse(fn) and "V7" not in ast.unparse(fn) and "V6" not in ast.unparse(fn)
+E               AssertionError: assert ('_profiles.V8' in 'def effective_preimage(family: Any, payload: Any, contract_version: Any=CONTRACT_VERSION) -> dict:\n    return _id.effective_preimage(_profiles.V7, family, payload, contract_version)')
+E                +  where 'def effective_preimage(family: Any, payload: Any, contract_version: Any=CONTRACT_VERSION) -> dict:\n    return _id.effective_preimage(_profiles.V7, family, payload, contract_version)' = <function unparse at 0x7f7e68383880>(<ast.FunctionDef object at 0x7f7e673db710>)
+E                +    where <function unparse at 0x7f7e68383880> = ast.unparse
+
+tests/test_r08v8_engine_profile.py:168: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed, 223 deselected in 1.96s
+
+
+=== TH10 v8 payload validation bound to the v7 profile [KILLED]
+next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
+                body = [n for n in fn.body if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
+                assert len(body) == 1 and isinstance(body[0], ast.Return) and isinstance(body[0].value, ast.Call), (module.__name__, name)
+                assert not [n for n in ast.walk(fn) if isinstance(n, (ast.If, ast.Try, ast.For, ast.While, ast.BoolOp))], (module.__name__, name)
+>               assert "_profiles.V8" in ast.unparse(fn) and "V7" not in ast.unparse(fn) and "V6" not in ast.unparse(fn)
+E               AssertionError: assert ('_profiles.V8' in 'def validate_effective_payload(family: Any, payload: Any) -> dict:\n    return _id.validate_effective_payload(_profiles.V7, family, payload)')
+E                +  where 'def validate_effective_payload(family: Any, payload: Any) -> dict:\n    return _id.validate_effective_payload(_profiles.V7, family, payload)' = <function unparse at 0x7f25fff33880>(<ast.FunctionDef object at 0x7f25fef16a90>)
+E                +    where <function unparse at 0x7f25fff33880> = ast.unparse
+
+tests/test_r08v8_engine_profile.py:168: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed, 223 deselected in 1.83s
+
+
+=== TH11 v8 registered version bound to the v7 profile [KILLED]
+st.Constant))]
+                assert len(body) == 1 and isinstance(body[0], ast.Return) and isinstance(body[0].value, ast.Call), (module.__name__, name)
+                assert not [n for n in ast.walk(fn) if isinstance(n, (ast.If, ast.Try, ast.For, ast.While, ast.BoolOp))], (module.__name__, name)
+>               assert "_profiles.V8" in ast.unparse(fn) and "V7" not in ast.unparse(fn) and "V6" not in ast.unparse(fn)
+E               assert ('_profiles.V8' in 'def registered_family_version(family: Any, contract_version: Any) -> int:\n    """The family schema revision (an int)...ed family under exactly `r08-v8`."""\n    return _id.registered_family_version(_profiles.V7, family, contract_version)')
+E                +  where 'def registered_family_version(family: Any, contract_version: Any) -> int:\n    """The family schema revision (an int)...ed family under exactly `r08-v8`."""\n    return _id.registered_family_version(_profiles.V7, family, contract_version)' = <function unparse at 0x7fdd61887880>(<ast.FunctionDef object at 0x7fdd60ca5350>)
+E                +    where <function unparse at 0x7fdd61887880> = ast.unparse
+
+tests/test_r08v8_engine_profile.py:168: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed, 223 deselected in 2.07s
+
+
+=== TH12 v8 deny-all dimensions bound to the v7 profile [KILLED]
+names:
+                fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
+                body = [n for n in fn.body if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
+                assert len(body) == 1 and isinstance(body[0], ast.Return) and isinstance(body[0].value, ast.Call), (module.__name__, name)
+                assert not [n for n in ast.walk(fn) if isinstance(n, (ast.If, ast.Try, ast.For, ast.While, ast.BoolOp))], (module.__name__, name)
+>               assert "_profiles.V8" in ast.unparse(fn) and "V7" not in ast.unparse(fn) and "V6" not in ast.unparse(fn)
+E               AssertionError: assert ('_profiles.V8' in 'def deny_all_dimensions(family: Any, payload: Any) -> list:\n    return _id.deny_all_dimensions(_profiles.V7, family, payload)')
+E                +  where 'def deny_all_dimensions(family: Any, payload: Any) -> list:\n    return _id.deny_all_dimensions(_profiles.V7, family, payload)' = <function unparse at 0x7f64df183880>(<ast.FunctionDef object at 0x7f64de210190>)
+E                +    where <function unparse at 0x7f64df183880> = ast.unparse
+
+tests/test_r08v8_engine_profile.py:168: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed, 223 deselected in 1.94s
+
+
+=== TH13 v8 digest-of-preimage bound to the v7 profile [KILLED]
+n names:
+                fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
+                body = [n for n in fn.body if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
+                assert len(body) == 1 and isinstance(body[0], ast.Return) and isinstance(body[0].value, ast.Call), (module.__name__, name)
+                assert not [n for n in ast.walk(fn) if isinstance(n, (ast.If, ast.Try, ast.For, ast.While, ast.BoolOp))], (module.__name__, name)
+>               assert "_profiles.V8" in ast.unparse(fn) and "V7" not in ast.unparse(fn) and "V6" not in ast.unparse(fn)
+E               AssertionError: assert ('_profiles.V8' in 'def effective_digest_of_preimage(preimage: dict) -> str:\n    return _id.effective_digest_of_preimage(_profiles.V7, preimage)')
+E                +  where 'def effective_digest_of_preimage(preimage: dict) -> str:\n    return _id.effective_digest_of_preimage(_profiles.V7, preimage)' = <function unparse at 0x7f120ad33880>(<ast.FunctionDef object at 0x7f120a037490>)
+E                +    where <function unparse at 0x7f120ad33880> = ast.unparse
+
+tests/test_r08v8_engine_profile.py:168: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_engine_profile.py::test_the_public_v8_modules_are_thin_bindings_to_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed, 223 deselected in 1.86s
+
+
+=== TH14 v8 effective prefix of the v7 profile [KILLED]
+.................................................. [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+..........................F
+=================================== FAILURES ===================================
+________ test_vectors_cover_all_three_families_and_the_domain_is_pinned ________
+
+    def test_vectors_cover_all_three_families_and_the_domain_is_pinned():
+        assert {v["family"] for v in VECTORS["vectors"]} == {ANC, AGE, TOL}
+>       assert VECTORS["domain"].encode().decode("unicode_escape").encode() == DOMAIN == v8.EFFECTIVE_PREFIX == profiles.V8.effective_policy_domain
+E       AssertionError: assert b'ocs-reg/r08...tive-policy\n' == b'ocs-reg/r08...tive-policy\n'
+E         
+E         At index 13 diff: b'8' != b'7'
+E         Use -v to get more diff
+
+tests/test_r08v8_policy_identity.py:62: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_policy_identity.py::test_vectors_cover_all_three_families_and_the_domain_is_pinned
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 530 passed, 223 deselected in 2.32s
+
+
+=== TH15 v8 identity rows of the v7 profile [KILLED]
+.................... [ 39%]
+........................................................................ [ 52%]
+........................................................................ [ 65%]
+........................................................................ [ 78%]
+........................................................................ [ 91%]
+.............................F
+=================================== FAILURES ===================================
+__ test_family_rows_are_exactly_the_three_registered_families_with_revision_1 __
+
+    def test_family_rows_are_exactly_the_three_registered_families_with_revision_1():
+>       assert list(v8.IDENTITY_FAMILIES) == [ANC, AGE, TOL] and v8.REGISTERED_CONTRACT_VERSIONS == ("r08-v8",) and v8.CONTRACT_VERSION == "r08-v8"
+E       AssertionError: assert (['f5-action-c...ility-policy'] == ['f5-anchor-d...rance-policy']
+E         
+E         At index 0 diff: 'f5-action-class-irreversibility-policy' != 'f5-anchor-deadline-to-inputs-policy'
+E         Right contains 2 more items, first extra item: 'f5-observation-max-age-policy'
+E         Use -v to get more diff)
+
+tests/test_r08v8_policy_identity.py:86: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_policy_identity.py::test_family_rows_are_exactly_the_three_registered_families_with_revision_1
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 533 passed, 223 deselected in 2.17s
+

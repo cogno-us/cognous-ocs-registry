@@ -70,6 +70,11 @@ def validate_effective_payload(profile: p.ContractProfile, family: Any, payload:
         for cls in sorted(value):
             if not row.is_value(value[cls]):
                 pid._refuse("field_invalid", field + "." + cls)
+    elif row.kind == "scalar-int":  # additive (r08-v8): one strict int; bool, float, str and subclasses are type refusals
+        if type(value) is not int:
+            pid._type_refusal(field, value)
+        if not row.is_value(value):
+            pid._refuse("field_invalid", field)
     else:  # scalar-enum
         if type(value) is not str:
             pid._type_refusal(field, value)

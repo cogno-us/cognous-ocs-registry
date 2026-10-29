@@ -931,6 +931,9 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
                                                                           "registry_successor/engine/selection.py", "registry_successor/engine/record.py", "registry_successor/engine/verify.py",
                                                                           "registry_successor/engine/decide.py", "registry_successor/engine/identity.py",
                                                                           "registry_successor/engine/families_irreversibility.py",
+                                                                          # r08-v8 remaining-families prep (DRAFT / GATED; allowlist-only): two NEW engine family modules and three NEW thin v8 modules
+                                                                          "registry_successor/engine/families_anchor.py", "registry_successor/engine/families_observation.py",
+                                                                          "registry_successor/v8_decision.py", "registry_successor/v8_families.py", "registry_successor/v8_policy_identity.py",
                                                                           "registry_successor/v7_decision.py", "registry_successor/v7_families.py", "registry_successor/v7_policy_identity.py"}, diff
 
 
