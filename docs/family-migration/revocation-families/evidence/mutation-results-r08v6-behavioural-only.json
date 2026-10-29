@@ -1,0 +1,412 @@
+{
+ "tests": [
+  "tests/test_r08v6_decision_path.py",
+  "tests/test_r08v6_frozen_baseline.py",
+  "tests/test_r08v6_lifecycle_boundaries.py",
+  "tests/test_r08v6_policy_identity.py",
+  "tests/test_r08v6_revocation_assurance_family.py",
+  "tests/test_r08v6_terminal_revocation_family.py"
+ ],
+ "results": [
+  [
+   "RA01 order inverted",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes"
+  ],
+  [
+   "RA02 stricter picks the looser",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes"
+  ],
+  [
+   "RA03 is_value accepts str subclass",
+   "KILLED",
+   "FAILED tests/test_r08v6_revocation_assurance_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value"
+  ],
+  [
+   "RA04 payload sort check dropped",
+   "KILLED",
+   "FAILED tests/test_r08v6_revocation_assurance_family.py::test_payload_shape_codes[payload7-field_invalid]"
+  ],
+  [
+   "RA05 class limit off by one",
+   "KILLED",
+   "FAILED tests/test_r08v6_revocation_assurance_family.py::test_oversized_class_map_is_refused"
+  ],
+  [
+   "RA06 empty class map accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_malformed_payload_typed_validator_code_and_decision_refusal[pl11-field_invalid]"
+  ],
+  [
+   "RA07 unknown registry class accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_unknown_registry_class_refuses_and_is_never_created"
+  ],
+  [
+   "RA08 caller value domain not checked",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_invalid_caller_refuses_required[bad3]"
+  ],
+  [
+   "RA09 empty caller map accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_invalid_caller_refuses_required[bad2]"
+  ],
+  [
+   "RA10 not-narrowing reported on equal values",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_registry_equal_to_host_is_applied_without_a_not_narrowing_report"
+  ],
+  [
+   "RA11 family not checked in composer",
+   "KILLED",
+   "FAILED tests/test_r08v6_revocation_assurance_family.py::test_invalid_or_foreign_records_refuse"
+  ],
+  [
+   "RA12 payload str-subclass value accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_revocation_assurance_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value"
+  ],
+  [
+   "RA13 operator not checked",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact"
+  ],
+  [
+   "RA14 registry overrides caller (widening)",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_registry_not_required_never_widens_a_required_host_value_through_the_signed_path"
+  ],
+  [
+   "RA15 deny_all set",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes"
+  ],
+  [
+   "RA16 record ok flag truthy accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact"
+  ],
+  [
+   "RA17 payload type before value order lost",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_malformed_payload_typed_validator_code_and_decision_refusal[pl3-field_type_invalid]"
+  ],
+  [
+   "RA18 caller class tokens unchecked",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_invalid_caller_refuses_required[bad7]"
+  ],
+  [
+   "RA19 caller class map unsorted/aliased not copied",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through"
+  ],
+  [
+   "TR01 order inverted",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-on-on-]"
+  ],
+  [
+   "TR02 stricter picks the looser",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-on-on-]"
+  ],
+  [
+   "TR03 either-side-on lost (registry wins)",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[on-off-on-registry_value_not_narrowing:terminal_revocation]"
+  ],
+  [
+   "TR04 either-side-on lost (caller wins)",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-on-on-]"
+  ],
+  [
+   "TR05 not-narrowing reported on equal values",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-off-off-]"
+  ],
+  [
+   "TR06 not-narrowing never reported",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[on-off-on-registry_value_not_narrowing:terminal_revocation]"
+  ],
+  [
+   "TR07 is_value accepts str subclass",
+   "KILLED",
+   "FAILED tests/test_r08v6_terminal_revocation_family.py::test_str_subclass_values_and_keys_are_refused"
+  ],
+  [
+   "TR08 payload type check dropped",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_malformed_payload_typed_validator_code_and_decision_refusal[pl3-field_type_invalid]"
+  ],
+  [
+   "TR09 caller value domain not checked",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_invalid_caller_refuses_required[bad3]"
+  ],
+  [
+   "TR10 family not checked in composer",
+   "KILLED",
+   "FAILED tests/test_r08v6_terminal_revocation_family.py::test_invalid_or_foreign_records_refuse"
+  ],
+  [
+   "TR11 deny_all set",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-off-off-]"
+  ],
+  [
+   "TR12 operator not checked",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact"
+  ],
+  [
+   "TR13 invalid caller replaced by default",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_invalid_caller_refuses_required[bad0]"
+  ],
+  [
+   "TR14 caller extra key tolerated",
+   "SURVIVED",
+   "v6 tests pass"
+  ],
+  [
+   "TR15 payload extra key tolerated",
+   "KILLED",
+   "FAILED tests/test_r08v6_terminal_revocation_family.py::test_payload_shape_codes[payload1-field_unknown]"
+  ],
+  [
+   "TR16 record ok flag truthy accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact"
+  ],
+  [
+   "FA01 lookup accepts non-exact str",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch"
+  ],
+  [
+   "FA02 table selector accepts str subclass",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch"
+  ],
+  [
+   "FA03 dispatch always the first family",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-off-off-]"
+  ],
+  [
+   "FA04 dispatch always the second family",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes"
+  ],
+  [
+   "FA05 compose_for ignores contract version",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch"
+  ],
+  [
+   "FA06 unknown family composes",
+   "KILLED",
+   "ERROR tests/test_r08v6_decision_path.py"
+  ],
+  [
+   "FA07 table contract constant changed",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes"
+  ],
+  [
+   "ID01 effective domain is the v5 prefix",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]"
+  ],
+  [
+   "ID02 preimage omits contract_version",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]"
+  ],
+  [
+   "ID03 preimage omits family",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]"
+  ],
+  [
+   "ID04 preimage omits family_version",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]"
+  ],
+  [
+   "ID05 preimage omits effective",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]"
+  ],
+  [
+   "ID06 family version tag v5",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch"
+  ],
+  [
+   "ID07 scalar value domain not checked",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_neither_family_is_a_deny_all_dimension"
+  ],
+  [
+   "ID08 class limit off by one",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_f5ra_too_many_classes_refused_and_the_limit_accepted"
+  ],
+  [
+   "ID09 deny_all non-empty in preimage",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]"
+  ],
+  [
+   "ID10 older contract versions registered",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_family_rows_are_exactly_the_two_registered_families_with_version_v6"
+  ],
+  [
+   "ID11 class value domain not checked",
+   "KILLED",
+   "ERROR tests/test_r08v6_lifecycle_boundaries.py"
+  ],
+  [
+   "ID12 empty class map accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_policy_identity.py::test_f5ra_class_key_and_size_refusals[m0]"
+  ],
+  [
+   "SE01 signing domain is the v5 prefix",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes"
+  ],
+  [
+   "SE02 parser accepts any contract version",
+   "KILLED",
+   "FAILED tests/test_r08v6_frozen_baseline.py::test_v6_selection_and_record_are_refused_by_v5_v4_v3_and_the_reverse[f5-action-class-revocation-assurance-policy]"
+  ],
+  [
+   "SE03 statement family unchecked",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_other_families_are_unsupported_in_the_v6_table"
+  ],
+  [
+   "SE04 evaluator binding unchecked",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_selection_and_record_must_name_the_registered_evaluator[revocation-assurance]"
+  ],
+  [
+   "RE01 record accepts any contract version",
+   "KILLED",
+   "FAILED tests/test_r08v6_frozen_baseline.py::test_v6_selection_and_record_are_refused_by_v5_v4_v3_and_the_reverse[f5-action-class-revocation-assurance-policy]"
+  ],
+  [
+   "RE02 record family unchecked",
+   "KILLED",
+   "ERROR tests/test_r08v6_decision_path.py"
+  ],
+  [
+   "VE01 verifier accepts a foreign envelope version",
+   "KILLED",
+   "FAILED tests/test_r08v6_frozen_baseline.py::test_the_v6_verifier_takes_no_contract_version_and_rejects_a_foreign_envelope_object"
+  ],
+  [
+   "VE02 revoked key not checked",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse[revocation-assurance]"
+  ],
+  [
+   "VE03 withdrawal not refused",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_withdrawn_selection_refuses[revocation-assurance]"
+  ],
+  [
+   "VE04 expiry boundary inclusive",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_time_bounds_are_start_inclusive_and_end_exclusive[revocation-assurance]"
+  ],
+  [
+   "VE05 not-yet-effective boundary exclusive",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_time_bounds_are_start_inclusive_and_end_exclusive[revocation-assurance]"
+  ],
+  [
+   "VE06 epoch floor exclusive",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_epoch_floor_is_inclusive_and_revocation_is_exact[revocation-assurance]"
+  ],
+  [
+   "VE07 authority not enforced",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_signer_without_exact_authority_is_not_authorized[revocation-assurance]"
+  ],
+  [
+   "VE08 operation mismatch ignored",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_each_family_is_its_own_record_and_selection_with_its_own_operation"
+  ],
+  [
+   "VE09 selection revocation ignored",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse[revocation-assurance]"
+  ],
+  [
+   "VE10 key admission optional",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_trust_snapshot_missing_unverifier_and_bad_key[revocation-assurance]"
+  ],
+  [
+   "VE11 trust expiry boundary inclusive",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_trust_snapshot_expiry_is_exclusive[revocation-assurance]"
+  ],
+  [
+   "VE12 consumer mismatch ignored",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_wrong_tenant_scope_consumer_operation_refuse[revocation-assurance-ctx0-selection_consumer_mismatch]"
+  ],
+  [
+   "VE13 signature domain of the verifier is the v5 one",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes"
+  ],
+  [
+   "DE01 participation not compared",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse[revocation-assurance]"
+  ],
+  [
+   "DE02 pinned record digest not compared",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[revocation-assurance]"
+  ],
+  [
+   "DE03 binding layer not required",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[revocation-assurance]"
+  ],
+  [
+   "DE04 optional caller not normalized",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through"
+  ],
+  [
+   "DE05 withdrawn/failed report accepted",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application[revocation-assurance]"
+  ],
+  [
+   "DE06 required refusal returns the caller",
+   "KILLED",
+   "FAILED tests/test_r08v6_decision_path.py::test_ra_unknown_registry_class_refuses_and_is_never_created"
+  ],
+  [
+   "DE07 record digest recompute skipped",
+   "KILLED",
+   "FAILED tests/test_r08v6_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[revocation-assurance]"
+  ]
+ ]
+}
