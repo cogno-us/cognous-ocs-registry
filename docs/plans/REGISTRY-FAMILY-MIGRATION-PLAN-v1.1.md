@@ -6,6 +6,8 @@
 **Execution authorization:** PAUSED pending audit adoption and new Architect authorization. Existing merged M2/M3 code is preserved; M11 PRs remain unmerged.  
 **Relationship to existing program:** Successor expansion after OCS Plan v1.5 V09 freeze-candidate preparation; not a modification of the frozen V01–V09 scope, and not a release plan.
 
+> **Implementation closeout (2026-10-29):** The proposed/paused status below is historical. The 19/19 parameter implementation has since merged. See [implementation closeout](../family-migration/IMPLEMENTATION-CLOSEOUT-2026-10-29.md) for exact Registry and Control Plane merge identities and open qualification obligations. **0 independently accepted; release HOLD.** This does not overwrite the plan's original authority snapshot.
+
 ## 1. Purpose and completion definition
 
 Systematically externalize **all eligible configurable policy values** currently embedded in, or supplied outside, the Cognous Registry across the relevant OCS components, without externalizing the enforcement constitution. Eligibility is **not equivalent to every literal or branch in source**. A family is eligible only when its value can be represented as a versioned, authenticated, bounded, qualified Registry record and consumed through an existing, source-owned enforcement boundary without widening authority or weakening a mandatory invariant.
