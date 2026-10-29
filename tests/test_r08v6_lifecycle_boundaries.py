@@ -179,6 +179,11 @@ def test_the_decision_step_rechecks_report_binding_and_record_digests_itself(fam
         altered["payload"]["terminal_revocation"] = "off"
     forged = type("Rec", (), {"ok": True, "record": altered, "record_digest": rec.record_digest, "code": None})()
     t.assert_refused(v6_decision._decide_verified("required", caller, forged, report()), "digest_mismatch")
+    # a non-payload member altered while the recorded digests are left as they were: the record digest no longer matches the body
+    altered3 = copy.deepcopy(rec.record)
+    altered3["record_id"] = "f5-altered-record"
+    forged3 = type("Rec", (), {"ok": True, "record": altered3, "record_digest": rec.record_digest, "code": None})()
+    t.assert_refused(v6_decision._decide_verified("required", caller, forged3, report()), "digest_mismatch")
     # payload digest wrong but record digest recomputed over it: still refused
     altered2 = copy.deepcopy(rec.record)
     altered2["payload_digest"] = "sha256:" + "1" * 64
