@@ -1,0 +1,8 @@
+== tests/test_f4_age_governance.py
+73 passed in 3.30s
+== tests/test_f5_class_age_governance.py
+111 passed in 14.06s
+== tests/test_f5_class_unreadable_governance.py
+148 passed in 16.89s
+== tests/test_governed_policy_composition.py
+99 passed in 10.26s

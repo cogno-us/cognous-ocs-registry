@@ -50,3 +50,15 @@ Status: documentation only; non-authorizing; append-only. 2026-10-28. Governing 
 
 ## Standing holds
 Registry #58/#59 and Control Plane #87 held; constructor clock tolerance and further migrations NOT AUTHORIZED; independent Tier 1 DEFERRED, NOT WAIVED; V09 SEPARATE; Ed25519 #26/#34 SECURITY-HELD; Release, Publication, Production HOLD; no automatic merges.
+
+## Final correction (Architect "CONSOLIDATION FINAL CORRECTION", 2026-10-29) - appended, earlier text unchanged
+
+Control Plane #91 head is now `fa5f3aab650987f41df09e074c9109edbb81a7a4` (supersedes the `592cc61` figures above). Scope: `GovernedActivationLedger` only.
+
+- **Finding (confirmed from the code):** (1) the ledger configuration identity omitted the host values, each family's Registry effective-policy digest and values, the F4 scalars and the final profile digest, so two differently governed configurations for the same families and scope could claim the same identity; (2) the claim was made before the base constructor, so a failed construction left a stale claim.
+- **Disposition: corrected, not removed.** The identity now covers the existing bound identity material (no new authority, no new commitment format, no new preimage). The claim is the last construction step and stays atomic under the ledger lock. The ledger remains local, in-process, advisory and refuse-only; deployment-wide exclusivity is still deferred (no activation boundary exists, see the CP consolidation document).
+- **Tests:** composition module 99 (new: collision x5 variants, determinism, failed construction, failed source, barrier-synchronised concurrent claims, 16-thread single holder). Targeted with pinned Registry: 73 + 111 + 148 + 99 passed, 0 skipped (`evidence/targeted-suites-correction.txt`).
+- **Regression** (branch `fa5f3aa`, Python 3.11 and 3.12): 1359 passed / 101 skipped / 0 failed on both; main `ae47a04` is 1359 / 100 (the extra skip is the pin-gated composition module; logs `evidence/cp-full-branch-correction-*.log`).
+- **Mutation:** 56 mutants (51 prior + 5 new for the changed guards: identity omits bound, identity omits host, claim before construction, non-atomic claim, claim result ignored). 55 killed, 1 survivor (P11) unchanged and classified equivalent as before. C05's first run had a pattern error (count 0); corrected and rerun separately: killed (`mutation-cp-correction.log`, `mutation-results-cp-correction*.json`).
+- **CI:** #91 at the exact head: `test (3.11)`, `test (3.12)`, `manifest-validator-parity`, CodeQL, Analyze all success (push and pull_request runs).
+- **Material limitations unchanged:** local advisory ledger only; F4 scalars not in the persisted decision or approval commitment (U-1 unresolved for qualification); shared Registry orchestration deferred (v3/v4 frozen); cached-purpose path not governed by `on_unreadable`; commit gate not inside the destination transaction; selection-source custody is a host duty, no ratchet.
