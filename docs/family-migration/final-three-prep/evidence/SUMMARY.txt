@@ -1,6 +1,6 @@
 r08-v8 remaining-families preparation evidence (DRAFT / PROPOSED / GATED; BUILDER_TESTED; non-authorizing; not independently qualified)
 Interpreter: scratchpad venv-g1-212 python 3.13.17 (pytest, pynacl); pytest.ini supplies pythonpath. Same interpreter for every run below.
-Branch: r08-v8-remaining-families-prep, based on Registry main 67512a71546748cd888e4cf790485ea0bef9199a. Not pushed; no pull request.
+Branch: r08-v8-remaining-families-prep, based on Registry main 67512a71546748cd888e4cf790485ea0bef9199a. Carried by a DRAFT, gated preparation pull request; not for merge.
 
 New tests (tests/test_r08v8_*.py): 777 passed
   anchor_family 81, observation_families 177, policy_identity 30, engine_profile 15, decision_path 219, cross_version 17, frozen_baseline 223, ast_scan 15.
@@ -25,8 +25,8 @@ Equivalent survivors:
      which returns None for any mapping with more than one entry, so snap has at most one entry. For snap = {} both conditions are true; for snap = {k: v} both are true iff k != ANCHOR_FIELD.
      The two conditions refuse exactly the same inputs (same argument as the r08-v7 survivor IR26). Empirical backstop: equiv-check.out, 161 callers, 0 differences.
   AN20 / OB27 (payload copy skipped, `snap = payload` for `snap = dict(payload)`): the line is reached only after `type(payload) is dict` (an exact dict, no overridden __getitem__/__iter__) and
-     the code between the copy and the last use of snap is the validator and a read of one key: no user code runs in between and nothing mutates the payload, so the copy and the original
-     are indistinguishable (equiv-check.out: the composer never mutates the payload it reads). A subclass or non-dict payload is refused before this line (AN23 killed).
+     the code between the copy and the last use of snap is the validator and a read of one key: no user code runs in between and the composer never mutates the payload, so the copy and the original
+     are indistinguishable SINGLE-THREADED only. The copy (AN20/OB27) is a real defence against post-validation mutation by another thread, signal handler or finalizer (independent review probe4: the OB27 mutant then returns an out-of-domain 0); AN20/OB27 are therefore NOT strictly equivalent and are recorded as survivors of the single-threaded test suite (equiv-check.out: the composer never mutates the payload it reads). A subclass or non-dict payload is refused before this line (AN23 killed).
 Notes: a mutation pattern for engine/identity.py in the r08-v7 harness (mut_r7.py ID07) no longer matches exactly once after the additive branch (the same two lines now occur in two
   branches); mut_r7.py is historical evidence of the r08-v7 commit and was not edited. The scalar-int branch has its own mutants SI01 to SI08 in mut_r8.py.
 Independent-encoder identity vectors: genvec8.py -> tests/vectors/r08v8/identity_vectors.json (9 vectors). Signed vectors (SYNTHETIC test keys): genvec8s.py -> signed_selection_vector.json.
