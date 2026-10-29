@@ -1,0 +1,374 @@
+{
+ "f5-anchor-deadline-to-inputs-policy": {
+  "caller": {
+   "anchor_deadline_to_inputs": "no_change"
+  },
+  "effective": {
+   "anchor_deadline_to_inputs": "anchor"
+  },
+  "envelope": {
+   "contract_version": "r08-v8",
+   "kind": "selection-envelope",
+   "signatures": [
+    {
+     "alg": "ed25519",
+     "key_id": "key-test-1",
+     "signature": "5HO/E+Y/jSagUTgav7pbVGNcPDU1BRoY25bQispgKH33N110w8K8JTqYAKZhIyrxuG1Op+ReO8IAhjcGklNoAg=="
+    }
+   ],
+   "statement": {
+    "consumer_id": "consumer-test",
+    "disposition": "select",
+    "effective": {
+     "valid_from": "2026-10-25T00:00:00Z",
+     "valid_until": "2026-10-26T00:00:00Z"
+    },
+    "epoch": 1,
+    "evaluator": {
+     "binding": "registered-code-reference",
+     "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+     "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+     "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+    },
+    "family": "f5-anchor-deadline-to-inputs-policy",
+    "issued_at": "2026-10-24T00:00:00Z",
+    "kind": "selection",
+    "operation": "op-test",
+    "participation": "required",
+    "record": {
+     "record_digest": "sha256:66b2b5e3e016ad4e2dcd01fea697c9b23a21e1aa0b9783f10a83fda2d594f692",
+     "record_id": "f5anc-test-record",
+     "record_version": 1
+    },
+    "revocation_ref": "revocation-test-1",
+    "scope": {
+     "authority_domain": "domain-a",
+     "institution": "inst-a",
+     "tenant": "tenant-a"
+    },
+    "selection_id": "sel-test-1",
+    "selector_ref": "selector-test-1",
+    "supersedes": null
+   },
+   "statement_digest": "sha256:798eefad84df0cbb06281cce5f410e593807113fb701f825cf28cb7ab5b0af9b"
+  },
+  "note": "SYNTHETIC test keys; BUILDER_TESTED; non-authorizing",
+  "record": {
+   "contract_version": "r08-v8",
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-anchor-deadline-to-inputs-policy",
+   "kind": "record",
+   "non_authorizing": true,
+   "payload": {
+    "anchor_deadline_to_inputs": "anchor"
+   },
+   "payload_digest": "sha256:61afc394759dc977473d3b868202da5d498b6d252e0ed23133191827b6bdc7df",
+   "provenance": {
+    "authored_at": "2026-10-25T00:00:00Z",
+    "authored_by": "test-author",
+    "decision_ref": "decision-test-1"
+   },
+   "record_digest": "sha256:66b2b5e3e016ad4e2dcd01fea697c9b23a21e1aa0b9783f10a83fda2d594f692",
+   "record_id": "f5anc-test-record",
+   "record_version": 1,
+   "source": {
+    "blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "commit": "ec728da6dc301a664b331ac8986afd6e850a1273",
+    "path": "engine/safe_executor.py",
+    "repository": "cogno-us/cognous-execution-runtime",
+    "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "supersedes": null
+  },
+  "signature": "5HO/E+Y/jSagUTgav7pbVGNcPDU1BRoY25bQispgKH33N110w8K8JTqYAKZhIyrxuG1Op+ReO8IAhjcGklNoAg==",
+  "signature_hex": "e473bf13e63f8d26a051381abfba5b54635c3c3535051a18db96d08aca60287df7375d74c3c2bc253a9800a661232af1b86d4ea7e45e3bc20086370692536802",
+  "signing_input_hex": "6f63732d7265672f7230382d76382f73656c656374696f6e0a7b22636f6e73756d65725f6964223a22636f6e73756d65722d74657374222c22646973706f736974696f6e223a2273656c656374222c22656666656374697665223a7b2276616c69645f66726f6d223a22323032362d31302d32355430303a30303a30305a222c2276616c69645f756e74696c223a22323032362d31302d32365430303a30303a30305a227d2c2265706f6368223a312c226576616c7561746f72223a7b2262696e64696e67223a22726567697374657265642d636f64652d7265666572656e6365222c226576616c7561746f725f6964223a22656e67696e652e736166655f6578656375746f722e4c6f63616c457865637574696f6e506f6c6963792e636865636b222c22736f757263655f626c6f625f6964223a2232666338383064616533376561633736653530373435333334333537343063653036383432303964222c22736f757263655f736861323536223a227368613235363a39343065373831393334353432613761636437626265326636383333663964333239333235643934623439343235616664396432626564636632336335623638227d2c2266616d696c79223a2266352d616e63686f722d646561646c696e652d746f2d696e707574732d706f6c696379222c226973737565645f6174223a22323032362d31302d32345430303a30303a30305a222c226b696e64223a2273656c656374696f6e222c226f7065726174696f6e223a226f702d74657374222c2270617274696369706174696f6e223a227265717569726564222c227265636f7264223a7b227265636f72645f646967657374223a227368613235363a36366232623565336530313661643465326463643031666561363937633962323361323165316161306239373833663130613833666461326435393466363932222c227265636f72645f6964223a226635616e632d746573742d7265636f7264222c227265636f72645f76657273696f6e223a317d2c227265766f636174696f6e5f726566223a227265766f636174696f6e2d746573742d31222c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f6964223a2273656c2d746573742d31222c2273656c6563746f725f726566223a2273656c6563746f722d746573742d31222c2273757065727365646573223a6e756c6c7d",
+  "statement": {
+   "consumer_id": "consumer-test",
+   "disposition": "select",
+   "effective": {
+    "valid_from": "2026-10-25T00:00:00Z",
+    "valid_until": "2026-10-26T00:00:00Z"
+   },
+   "epoch": 1,
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-anchor-deadline-to-inputs-policy",
+   "issued_at": "2026-10-24T00:00:00Z",
+   "kind": "selection",
+   "operation": "op-test",
+   "participation": "required",
+   "record": {
+    "record_digest": "sha256:66b2b5e3e016ad4e2dcd01fea697c9b23a21e1aa0b9783f10a83fda2d594f692",
+    "record_id": "f5anc-test-record",
+    "record_version": 1
+   },
+   "revocation_ref": "revocation-test-1",
+   "scope": {
+    "authority_domain": "domain-a",
+    "institution": "inst-a",
+    "tenant": "tenant-a"
+   },
+   "selection_id": "sel-test-1",
+   "selector_ref": "selector-test-1",
+   "supersedes": null
+  }
+ },
+ "f5-observation-clock-tolerance-policy": {
+  "caller": {
+   "observation_clock_tolerance_seconds": 5
+  },
+  "effective": {
+   "observation_clock_tolerance_seconds": 0
+  },
+  "envelope": {
+   "contract_version": "r08-v8",
+   "kind": "selection-envelope",
+   "signatures": [
+    {
+     "alg": "ed25519",
+     "key_id": "key-test-1",
+     "signature": "RSZ9n7YNGcZBw4yXXiN3mD3yb3sJnw/6kTraW1P4O2fi4W9Eplc30c1ye2ILljQj/fPhgxt47y2ZD7EOLmDUBw=="
+    }
+   ],
+   "statement": {
+    "consumer_id": "consumer-test",
+    "disposition": "select",
+    "effective": {
+     "valid_from": "2026-10-25T00:00:00Z",
+     "valid_until": "2026-10-26T00:00:00Z"
+    },
+    "epoch": 1,
+    "evaluator": {
+     "binding": "registered-code-reference",
+     "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+     "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+     "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+    },
+    "family": "f5-observation-clock-tolerance-policy",
+    "issued_at": "2026-10-24T00:00:00Z",
+    "kind": "selection",
+    "operation": "op-test",
+    "participation": "required",
+    "record": {
+     "record_digest": "sha256:7652e79537db00f7f2393c54dd7ac1b54821d0130f698b1aa1c6c1075c6d9d3a",
+     "record_id": "f5obstol-test-record",
+     "record_version": 1
+    },
+    "revocation_ref": "revocation-test-1",
+    "scope": {
+     "authority_domain": "domain-a",
+     "institution": "inst-a",
+     "tenant": "tenant-a"
+    },
+    "selection_id": "sel-test-1",
+    "selector_ref": "selector-test-1",
+    "supersedes": null
+   },
+   "statement_digest": "sha256:1f57d430c7fc320543b33d2767502e31b463ed59d2c17c8778f4a691477f825b"
+  },
+  "note": "SYNTHETIC test keys; BUILDER_TESTED; non-authorizing",
+  "record": {
+   "contract_version": "r08-v8",
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-observation-clock-tolerance-policy",
+   "kind": "record",
+   "non_authorizing": true,
+   "payload": {
+    "observation_clock_tolerance_seconds": 0
+   },
+   "payload_digest": "sha256:87e40912fbb77a4aabb33dba86b79f865cc8ca46243c4a1bad400d6e58f0fb9b",
+   "provenance": {
+    "authored_at": "2026-10-25T00:00:00Z",
+    "authored_by": "test-author",
+    "decision_ref": "decision-test-1"
+   },
+   "record_digest": "sha256:7652e79537db00f7f2393c54dd7ac1b54821d0130f698b1aa1c6c1075c6d9d3a",
+   "record_id": "f5obstol-test-record",
+   "record_version": 1,
+   "source": {
+    "blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "commit": "ec728da6dc301a664b331ac8986afd6e850a1273",
+    "path": "engine/safe_executor.py",
+    "repository": "cogno-us/cognous-execution-runtime",
+    "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "supersedes": null
+  },
+  "signature": "RSZ9n7YNGcZBw4yXXiN3mD3yb3sJnw/6kTraW1P4O2fi4W9Eplc30c1ye2ILljQj/fPhgxt47y2ZD7EOLmDUBw==",
+  "signature_hex": "45267d9fb60d19c641c38c975e2377983df26f7b099f0ffa913ada5b53f83b67e2e16f44a65737d1cd727b620b963423fdf3e1831b78ef2d990fb10e2e60d407",
+  "signing_input_hex": "6f63732d7265672f7230382d76382f73656c656374696f6e0a7b22636f6e73756d65725f6964223a22636f6e73756d65722d74657374222c22646973706f736974696f6e223a2273656c656374222c22656666656374697665223a7b2276616c69645f66726f6d223a22323032362d31302d32355430303a30303a30305a222c2276616c69645f756e74696c223a22323032362d31302d32365430303a30303a30305a227d2c2265706f6368223a312c226576616c7561746f72223a7b2262696e64696e67223a22726567697374657265642d636f64652d7265666572656e6365222c226576616c7561746f725f6964223a22656e67696e652e736166655f6578656375746f722e4c6f63616c457865637574696f6e506f6c6963792e636865636b222c22736f757263655f626c6f625f6964223a2232666338383064616533376561633736653530373435333334333537343063653036383432303964222c22736f757263655f736861323536223a227368613235363a39343065373831393334353432613761636437626265326636383333663964333239333235643934623439343235616664396432626564636632336335623638227d2c2266616d696c79223a2266352d6f62736572766174696f6e2d636c6f636b2d746f6c6572616e63652d706f6c696379222c226973737565645f6174223a22323032362d31302d32345430303a30303a30305a222c226b696e64223a2273656c656374696f6e222c226f7065726174696f6e223a226f702d74657374222c2270617274696369706174696f6e223a227265717569726564222c227265636f7264223a7b227265636f72645f646967657374223a227368613235363a37363532653739353337646230306637663233393363353464643761633162353438323164303133306636393862316161316336633130373563366439643361222c227265636f72645f6964223a2266356f6273746f6c2d746573742d7265636f7264222c227265636f72645f76657273696f6e223a317d2c227265766f636174696f6e5f726566223a227265766f636174696f6e2d746573742d31222c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f6964223a2273656c2d746573742d31222c2273656c6563746f725f726566223a2273656c6563746f722d746573742d31222c2273757065727365646573223a6e756c6c7d",
+  "statement": {
+   "consumer_id": "consumer-test",
+   "disposition": "select",
+   "effective": {
+    "valid_from": "2026-10-25T00:00:00Z",
+    "valid_until": "2026-10-26T00:00:00Z"
+   },
+   "epoch": 1,
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-observation-clock-tolerance-policy",
+   "issued_at": "2026-10-24T00:00:00Z",
+   "kind": "selection",
+   "operation": "op-test",
+   "participation": "required",
+   "record": {
+    "record_digest": "sha256:7652e79537db00f7f2393c54dd7ac1b54821d0130f698b1aa1c6c1075c6d9d3a",
+    "record_id": "f5obstol-test-record",
+    "record_version": 1
+   },
+   "revocation_ref": "revocation-test-1",
+   "scope": {
+    "authority_domain": "domain-a",
+    "institution": "inst-a",
+    "tenant": "tenant-a"
+   },
+   "selection_id": "sel-test-1",
+   "selector_ref": "selector-test-1",
+   "supersedes": null
+  }
+ },
+ "f5-observation-max-age-policy": {
+  "caller": {
+   "observation_max_age_seconds": 300
+  },
+  "effective": {
+   "observation_max_age_seconds": 60
+  },
+  "envelope": {
+   "contract_version": "r08-v8",
+   "kind": "selection-envelope",
+   "signatures": [
+    {
+     "alg": "ed25519",
+     "key_id": "key-test-1",
+     "signature": "iHllx5Eu9CTUynxuSvQTsbp13WfgtSHE7Qzl8gWzw/Ji7lTuTZpdZmx7adZ1keQaGRFviP5+GncF73DVKEeSAA=="
+    }
+   ],
+   "statement": {
+    "consumer_id": "consumer-test",
+    "disposition": "select",
+    "effective": {
+     "valid_from": "2026-10-25T00:00:00Z",
+     "valid_until": "2026-10-26T00:00:00Z"
+    },
+    "epoch": 1,
+    "evaluator": {
+     "binding": "registered-code-reference",
+     "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+     "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+     "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+    },
+    "family": "f5-observation-max-age-policy",
+    "issued_at": "2026-10-24T00:00:00Z",
+    "kind": "selection",
+    "operation": "op-test",
+    "participation": "required",
+    "record": {
+     "record_digest": "sha256:3a4e50c68b6805471880167d2a0f74dbc601ff4f36dad9f4b92e33d35efe4aeb",
+     "record_id": "f5obsage-test-record",
+     "record_version": 1
+    },
+    "revocation_ref": "revocation-test-1",
+    "scope": {
+     "authority_domain": "domain-a",
+     "institution": "inst-a",
+     "tenant": "tenant-a"
+    },
+    "selection_id": "sel-test-1",
+    "selector_ref": "selector-test-1",
+    "supersedes": null
+   },
+   "statement_digest": "sha256:9424b05f47c51cf70fe1c8fe25592e6dad655e7720c5a4898c472427a3695e98"
+  },
+  "note": "SYNTHETIC test keys; BUILDER_TESTED; non-authorizing",
+  "record": {
+   "contract_version": "r08-v8",
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-observation-max-age-policy",
+   "kind": "record",
+   "non_authorizing": true,
+   "payload": {
+    "observation_max_age_seconds": 60
+   },
+   "payload_digest": "sha256:62bd551fdfb1475a54f2603217262e7ec85281862e3a10b795e564d69ff74845",
+   "provenance": {
+    "authored_at": "2026-10-25T00:00:00Z",
+    "authored_by": "test-author",
+    "decision_ref": "decision-test-1"
+   },
+   "record_digest": "sha256:3a4e50c68b6805471880167d2a0f74dbc601ff4f36dad9f4b92e33d35efe4aeb",
+   "record_id": "f5obsage-test-record",
+   "record_version": 1,
+   "source": {
+    "blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "commit": "ec728da6dc301a664b331ac8986afd6e850a1273",
+    "path": "engine/safe_executor.py",
+    "repository": "cogno-us/cognous-execution-runtime",
+    "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "supersedes": null
+  },
+  "signature": "iHllx5Eu9CTUynxuSvQTsbp13WfgtSHE7Qzl8gWzw/Ji7lTuTZpdZmx7adZ1keQaGRFviP5+GncF73DVKEeSAA==",
+  "signature_hex": "887965c7912ef424d4ca7c6e4af413b1ba75dd67e0b521c4ed0ce5f205b3c3f262ee54ee4d9a5d666c7b69d67591e41a19116f88fe7e1a7705ef70d528479200",
+  "signing_input_hex": "6f63732d7265672f7230382d76382f73656c656374696f6e0a7b22636f6e73756d65725f6964223a22636f6e73756d65722d74657374222c22646973706f736974696f6e223a2273656c656374222c22656666656374697665223a7b2276616c69645f66726f6d223a22323032362d31302d32355430303a30303a30305a222c2276616c69645f756e74696c223a22323032362d31302d32365430303a30303a30305a227d2c2265706f6368223a312c226576616c7561746f72223a7b2262696e64696e67223a22726567697374657265642d636f64652d7265666572656e6365222c226576616c7561746f725f6964223a22656e67696e652e736166655f6578656375746f722e4c6f63616c457865637574696f6e506f6c6963792e636865636b222c22736f757263655f626c6f625f6964223a2232666338383064616533376561633736653530373435333334333537343063653036383432303964222c22736f757263655f736861323536223a227368613235363a39343065373831393334353432613761636437626265326636383333663964333239333235643934623439343235616664396432626564636632336335623638227d2c2266616d696c79223a2266352d6f62736572766174696f6e2d6d61782d6167652d706f6c696379222c226973737565645f6174223a22323032362d31302d32345430303a30303a30305a222c226b696e64223a2273656c656374696f6e222c226f7065726174696f6e223a226f702d74657374222c2270617274696369706174696f6e223a227265717569726564222c227265636f7264223a7b227265636f72645f646967657374223a227368613235363a33613465353063363862363830353437313838303136376432613066373464626336303166663466333664616439663462393265333364333565666534616562222c227265636f72645f6964223a2266356f62736167652d746573742d7265636f7264222c227265636f72645f76657273696f6e223a317d2c227265766f636174696f6e5f726566223a227265766f636174696f6e2d746573742d31222c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f6964223a2273656c2d746573742d31222c2273656c6563746f725f726566223a2273656c6563746f722d746573742d31222c2273757065727365646573223a6e756c6c7d",
+  "statement": {
+   "consumer_id": "consumer-test",
+   "disposition": "select",
+   "effective": {
+    "valid_from": "2026-10-25T00:00:00Z",
+    "valid_until": "2026-10-26T00:00:00Z"
+   },
+   "epoch": 1,
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-observation-max-age-policy",
+   "issued_at": "2026-10-24T00:00:00Z",
+   "kind": "selection",
+   "operation": "op-test",
+   "participation": "required",
+   "record": {
+    "record_digest": "sha256:3a4e50c68b6805471880167d2a0f74dbc601ff4f36dad9f4b92e33d35efe4aeb",
+    "record_id": "f5obsage-test-record",
+    "record_version": 1
+   },
+   "revocation_ref": "revocation-test-1",
+   "scope": {
+    "authority_domain": "domain-a",
+    "institution": "inst-a",
+    "tenant": "tenant-a"
+   },
+   "selection_id": "sel-test-1",
+   "selector_ref": "selector-test-1",
+   "supersedes": null
+  }
+ }
+}

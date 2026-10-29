@@ -1,0 +1,34 @@
+r08-v8 remaining-families preparation evidence (DRAFT / PROPOSED / GATED; BUILDER_TESTED; non-authorizing; not independently qualified)
+Interpreter: scratchpad venv-g1-212 python 3.13.17 (pytest, pynacl); pytest.ini supplies pythonpath. Same interpreter for every run below.
+Branch: r08-v8-remaining-families-prep, based on Registry main 67512a71546748cd888e4cf790485ea0bef9199a. Not pushed; no pull request.
+
+New tests (tests/test_r08v8_*.py): 777 passed
+  anchor_family 81, observation_families 177, policy_identity 30, engine_profile 15, decision_path 219, cross_version 17, frozen_baseline 223, ast_scan 15.
+Whole suite:
+  branch (working tree = committed content)           -> 2 failed, 9245 passed, 2 skipped (suite-branch.log; suite-branch-first-pass.log is an earlier pass before 6 late tests: 9242 passed)
+  main 67512a7 (separate clean git worktree)           -> 2 failed, 8468 passed, 2 skipped (suite-main-clean.log)
+  difference: 9245 - 8468 = 777 = exactly the new r08v8 tests. The same two failures occur on both, unchanged:
+    tests/test_adapter_ed25519.py::test_installed_cryptography_matches_the_test_only_lock (installed cryptography differs from the lock in this environment)
+    tests/test_r08v7_frozen_baseline.py::test_every_other_committed_registry_file_is_unchanged_from_the_baseline_except_the_allowlisted_guards
+      (pre-existing on main: it diffs against the r08-v6 head 42a6663 and sees docs/family-migration/contract-version-allocation.md and docs/plans/REGISTRY-FAMILY-MIGRATION-PLAN-v1.1.md,
+       edited by #72 after that baseline; the identical two paths on branch and main; not caused or worsened by this change; NOT fixed here).
+  r08-v7 suites, the V6_COMPAT engine differential, the frozen v1..v7 baselines and test_ext_s1_5_identity_module.py pass unchanged on the branch.
+Mutation: mut_r8.py, 98 mutants on the NEW modules (engine/families_anchor.py, engine/families_observation.py, v8_decision/families/policy_identity), the V8 block of engine/profiles.py,
+  the scalar-int branch of engine/identity.py and the KINDS tuple of engine/profile.py.
+  mut-full.out / mutation-results-r08v8.json / mutation-raw-log-r08v8.txt (all r08v8 tests): 89 KILLED, 9 SURVIVED.
+  mut-behavioural.out / ...-behavioural-only.* (the byte-identity frozen_baseline tests deselected, so profile/identity mutants are killed by behaviour): 91 KILLED, 7 SURVIVED.
+  Round 2 (mut-round2.out, the 9 survivors re-run after tests were added): 6 KILLED, 3 SURVIVED (AN11, AN20, OB27), all equivalent (proofs below).
+  Round history: AN19 and OB24 (caller snapshot bound off by one) were killed by a new read-count test; AN23, AN24, OB34, OB35 (exact dict type of record body or payload relaxed to
+  isinstance) were killed by new dict-subclass tests. Net: 95 of 98 killed, 3 equivalent.
+Equivalent survivors:
+  AN11 (caller extra key tolerated: `set(snap) != set(ANCHOR_FIELDS)` -> `ANCHOR_FIELD not in snap`): normalize_caller reads the caller with _snapshot(caller, len(ANCHOR_FIELDS)) = _snapshot(caller, 1),
+     which returns None for any mapping with more than one entry, so snap has at most one entry. For snap = {} both conditions are true; for snap = {k: v} both are true iff k != ANCHOR_FIELD.
+     The two conditions refuse exactly the same inputs (same argument as the r08-v7 survivor IR26). Empirical backstop: equiv-check.out, 161 callers, 0 differences.
+  AN20 / OB27 (payload copy skipped, `snap = payload` for `snap = dict(payload)`): the line is reached only after `type(payload) is dict` (an exact dict, no overridden __getitem__/__iter__) and
+     the code between the copy and the last use of snap is the validator and a read of one key: no user code runs in between and nothing mutates the payload, so the copy and the original
+     are indistinguishable (equiv-check.out: the composer never mutates the payload it reads). A subclass or non-dict payload is refused before this line (AN23 killed).
+Notes: a mutation pattern for engine/identity.py in the r08-v7 harness (mut_r7.py ID07) no longer matches exactly once after the additive branch (the same two lines now occur in two
+  branches); mut_r7.py is historical evidence of the r08-v7 commit and was not edited. The scalar-int branch has its own mutants SI01 to SI08 in mut_r8.py.
+Independent-encoder identity vectors: genvec8.py -> tests/vectors/r08v8/identity_vectors.json (9 vectors). Signed vectors (SYNTHETIC test keys): genvec8s.py -> signed_selection_vector.json.
+Frozen manifest: genman8.py -> tests/vectors/r08v8/frozen_baseline_manifest.json (213 frozen files from main, plus the three additive engine edits recorded as exact line-level diffs).
+Allowlist-only edits to existing tests: tests/test_ext_s1_5_identity_module.py (five new permitted module paths), tests/test_r08v7_frozen_baseline.py (ENGINE_MODULES += two names).

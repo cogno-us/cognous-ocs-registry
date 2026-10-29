@@ -1,0 +1,168 @@
+=== AN11 caller extra key tolerated [SURVIVED]
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 27%]
+........................................................................ [ 37%]
+........................................................................ [ 46%]
+........................................................................ [ 55%]
+........................................................................ [ 64%]
+.................................................................s...... [ 74%]
+........................................................................ [ 83%]
+........................................................................ [ 92%]
+.........................................................                [100%]
+776 passed, 1 skipped in 2.61s
+
+
+=== AN19 caller snapshot bound off by one [KILLED]
+(Mapping):
+            def __iter__(self):
+                return iter(())
+    
+            def __len__(self):
+                return 10 ** 9
+    
+            def __getitem__(self, k):
+                return A
+    
+            def items(self):
+                def gen():
+                    for i in itertools.count():
+                        consumed.append(i)
+                        yield (FIELD if i == 0 else "k%d" % i), A
+                return gen()
+>       assert f.normalize_caller(Counting()) is None and len(consumed) == 2
+E       AssertionError: assert (None is None and 3 == 2)
+E        +  where None = <function normalize_caller at 0x7fb362b38360>(<test_r08v8_anchor_family.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7fb362e8ea50>)
+E        +    where <function normalize_caller at 0x7fb362b38360> = f.normalize_caller
+E        +    and   <test_r08v8_anchor_family.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7fb362e8ea50> = <class 'test_r08v8_anchor_family.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting'>()
+E        +  and   3 = len([0, 1, 2])
+
+tests/test_r08v8_anchor_family.py:245: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_a_caller_mapping_is_read_for_at_most_two_items
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 79 passed in 1.08s
+
+
+=== AN20 payload copy skipped (aliased) [SURVIVED]
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 27%]
+........................................................................ [ 37%]
+........................................................................ [ 46%]
+........................................................................ [ 55%]
+........................................................................ [ 64%]
+.................................................................s...... [ 74%]
+........................................................................ [ 83%]
+........................................................................ [ 92%]
+.........................................................                [100%]
+776 passed, 1 skipped in 2.57s
+
+
+=== AN23 payload dict type not exact [KILLED]
+d.record, payload=D({FIELD: A}))})()).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()) = <function compose_anchor at 0x7f8f1c52c540>({'anchor_deadline_to_inputs': 'no_change'}, <test_r08v8_anchor_family.Rec object at 0x7f8f1c88ea50>)
+E        +      where <function compose_anchor at 0x7f8f1c52c540> = f.compose_anchor
+E        +      and   <test_r08v8_anchor_family.Rec object at 0x7f8f1c88ea50> = <class 'test_r08v8_anchor_family.Rec'>()
+E        +        where <class 'test_r08v8_anchor_family.Rec'> = type('Rec', (), {'ok': True, 'record': {'contract_version': 'r08-v8', 'evaluator': {'binding': 'registered-code-reference', 'evaluator...e2f6833f9d329325d94b49425afd9d2bedcf23c5b68'}, 'family': 'f5-anchor-deadline-to-inputs-policy', 'kind': 'record', ...}})
+
+tests/test_r08v8_anchor_family.py:255: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 80 passed in 0.98s
+
+
+=== AN24 record body type not exact [KILLED]
+: True, "record": D(good.record)})()).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'anchor_deadline_to_inputs': 'anchor'}, deny_all=False, deny_all_fields=()) = <function compose_anchor at 0x7f64f55a4540>({'anchor_deadline_to_inputs': 'no_change'}, <test_r08v8_anchor_family.Rec object at 0x7f64f588ea50>)
+E        +      where <function compose_anchor at 0x7f64f55a4540> = f.compose_anchor
+E        +      and   <test_r08v8_anchor_family.Rec object at 0x7f64f588ea50> = <class 'test_r08v8_anchor_family.Rec'>()
+E        +        where <class 'test_r08v8_anchor_family.Rec'> = type('Rec', (), {'ok': True, 'record': {'contract_version': 'r08-v8', 'evaluator': {'binding': 'registered-code-reference', 'evaluator...on-runtime', 'sha256': 'sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68'}, 'supersedes': None}})
+
+tests/test_r08v8_anchor_family.py:254: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_anchor_family.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 80 passed in 0.84s
+
+
+=== OB24 caller snapshot bound off by one [KILLED]
+ 
+        class Counting(Mapping):
+            def __iter__(self):
+                return iter(())
+    
+            def __len__(self):
+                return 10 ** 9
+    
+            def __getitem__(self, k):
+                return 5
+    
+            def items(self):
+                def gen():
+                    for i in itertools.count():
+                        consumed.append(i)
+                        yield (field if i == 0 else "k%d" % i), 5
+                return gen()
+>       assert fam["normalizer"](Counting()) is None and len(consumed) == 2
+E       AssertionError: assert (None is None and 3 == 2)
+E        +  where None = <function normalize_caller_max_age at 0x7f12d7854ae0>(<test_r08v8_observation_families.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7f12d7c6ea50>)
+E        +    where <test_r08v8_observation_families.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting object at 0x7f12d7c6ea50> = <class 'test_r08v8_observation_families.test_a_caller_mapping_is_read_for_at_most_two_items.<locals>.Counting'>()
+E        +  and   3 = len([0, 1, 2])
+
+tests/test_r08v8_observation_families.py:349: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_a_caller_mapping_is_read_for_at_most_two_items[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 742 passed, 1 skipped in 2.58s
+
+
+=== OB27 payload copy skipped (aliased) [SURVIVED]
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 27%]
+........................................................................ [ 37%]
+........................................................................ [ 46%]
+........................................................................ [ 55%]
+........................................................................ [ 64%]
+.................................................................s...... [ 74%]
+........................................................................ [ 83%]
+........................................................................ [ 92%]
+.........................................................                [100%]
+776 passed, 1 skipped in 2.43s
+
+
+=== OB34 record body type not exact [KILLED]
+{field: 100}, type("Rec", (), {"ok": True, "record": D(good.record)})()).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()) = <function compose_max_age at 0x7f7d41ea8d60>({'observation_max_age_seconds': 100}, <test_r08v8_observation_families.Rec object at 0x7f7d4228ea50>)
+E        +      where <test_r08v8_observation_families.Rec object at 0x7f7d4228ea50> = <class 'test_r08v8_observation_families.Rec'>()
+E        +        where <class 'test_r08v8_observation_families.Rec'> = type('Rec', (), {'ok': True, 'record': {'contract_version': 'r08-v8', 'evaluator': {'binding': 'registered-code-reference', 'evaluator...on-runtime', 'sha256': 'sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68'}, 'supersedes': None}})
+
+tests/test_r08v8_observation_families.py:360: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 744 passed, 1 skipped in 2.49s
+
+
+=== OB35 payload dict type not exact [KILLED]
+), {"ok": True, "record": dict(good.record, payload=D({field: 60}))})()).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'observation_max_age_seconds': 60}, deny_all=False, deny_all_fields=()) = <function compose_max_age at 0x7f81234e0d60>({'observation_max_age_seconds': 100}, <test_r08v8_observation_families.Rec object at 0x7f8123812a50>)
+E        +      where <test_r08v8_observation_families.Rec object at 0x7f8123812a50> = <class 'test_r08v8_observation_families.Rec'>()
+E        +        where <class 'test_r08v8_observation_families.Rec'> = type('Rec', (), {'ok': True, 'record': {'contract_version': 'r08-v8', 'evaluator': {'binding': 'registered-code-reference', 'evaluator...acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68'}, 'family': 'f5-observation-max-age-policy', 'kind': 'record', ...}})
+
+tests/test_r08v8_observation_families.py:361: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v8_observation_families.py::test_a_dict_subclass_record_body_or_payload_is_refused_by_the_composer[max_age]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 744 passed, 1 skipped in 2.58s
+

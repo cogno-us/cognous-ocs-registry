@@ -1,0 +1,168 @@
+{
+ "domain": "ocs-reg/r08-v8/effective-policy\\n",
+ "profile": "ocs-effective-policy/1",
+ "vectors": [
+  {
+   "digest": "sha256:86bc19b385edf5556d1f070bfd57d1b3663a098e7ae12134e802da4ab693757b",
+   "effective": {
+    "anchor_deadline_to_inputs": "anchor"
+   },
+   "family": "f5-anchor-deadline-to-inputs-policy",
+   "id": "anchor-anchor",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "anchor_deadline_to_inputs": "anchor"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-anchor-deadline-to-inputs-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:6af67234f84da842633d8c000faebd5f3461e9a839b137011e054593c802dfb7",
+   "effective": {
+    "anchor_deadline_to_inputs": "no_change"
+   },
+   "family": "f5-anchor-deadline-to-inputs-policy",
+   "id": "anchor-no-change",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "anchor_deadline_to_inputs": "no_change"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-anchor-deadline-to-inputs-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:ba50ddd9b4b223c56adc5a08e0ca1f634e8d1a0ca3a417689d5323542e56c6e7",
+   "effective": {
+    "observation_max_age_seconds": 1
+   },
+   "family": "f5-observation-max-age-policy",
+   "id": "max-age-min",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "observation_max_age_seconds": 1
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-observation-max-age-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:5c4f58a3713719a5399534314927a843228f59da09b0bb362202239313a02bdc",
+   "effective": {
+    "observation_max_age_seconds": 60
+   },
+   "family": "f5-observation-max-age-policy",
+   "id": "max-age-60",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "observation_max_age_seconds": 60
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-observation-max-age-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:a55afd920001f2174023fd81ec76f9c893c6bb9f84d6136275647ba106f63c3b",
+   "effective": {
+    "observation_max_age_seconds": 300
+   },
+   "family": "f5-observation-max-age-policy",
+   "id": "max-age-300",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "observation_max_age_seconds": 300
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-observation-max-age-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:ec8e0b35a531214e4c018a76af1842a958473382fc5fdb1d51cab7b7e01abd2b",
+   "effective": {
+    "observation_max_age_seconds": 2147483647
+   },
+   "family": "f5-observation-max-age-policy",
+   "id": "max-age-token-ceiling",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "observation_max_age_seconds": 2147483647
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-observation-max-age-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:525c4286e4168115fa89d274a88517437db1cb258efb6eda07d790600a0893b8",
+   "effective": {
+    "observation_clock_tolerance_seconds": 0
+   },
+   "family": "f5-observation-clock-tolerance-policy",
+   "id": "tolerance-zero",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "observation_clock_tolerance_seconds": 0
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-observation-clock-tolerance-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:077ce60c0bb85992578b935e296216f41d50f41ec7c566b5cc0233c9834ac99b",
+   "effective": {
+    "observation_clock_tolerance_seconds": 5
+   },
+   "family": "f5-observation-clock-tolerance-policy",
+   "id": "tolerance-5",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "observation_clock_tolerance_seconds": 5
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-observation-clock-tolerance-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:d69f5da5b8053cdad4b1b2c78ec0a78ccc7458098d83ae175b6a197e38a6c235",
+   "effective": {
+    "observation_clock_tolerance_seconds": 2147483647
+   },
+   "family": "f5-observation-clock-tolerance-policy",
+   "id": "tolerance-token-ceiling",
+   "preimage": {
+    "contract_version": "r08-v8",
+    "deny_all": [],
+    "effective": {
+     "observation_clock_tolerance_seconds": 2147483647
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-observation-clock-tolerance-policy",
+    "family_schema_revision": 1
+   }
+  }
+ ]
+}

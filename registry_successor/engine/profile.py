@@ -23,7 +23,7 @@ from registry_successor.families import FamilySpec, TableSelection
 
 VERSION_MEMBER_TAG = "family_version"  # legacy string tag member (frozen r08-v2..r08-v6 preimages)
 VERSION_MEMBER_REVISION = "family_schema_revision"  # integer schema revision member (r08-v7 onward)
-KINDS = ("classmap-enum", "scalar-enum")
+KINDS = ("classmap-enum", "scalar-enum", "scalar-int")  # scalar-int: one strict int value (r08-v8, additive)
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class FamilyEntry:
 @dataclass(frozen=True)
 class IdentityRow:
     family: str
-    kind: str  # classmap-enum (map of class -> value) | scalar-enum (one scalar value)
+    kind: str  # classmap-enum (map of class -> value) | scalar-enum (one scalar str value) | scalar-int (one strict int value)
     members: tuple  # the payload member names, exactly one
     is_value: Callable[[Any], bool]  # the closed value vocabulary of the family
     version_member: str  # VERSION_MEMBER_TAG | VERSION_MEMBER_REVISION
