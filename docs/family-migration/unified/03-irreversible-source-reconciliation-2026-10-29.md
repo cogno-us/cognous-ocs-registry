@@ -1,0 +1,16 @@
+# Parameter 16: `ActionClass.irreversible` - source reconciliation and disposition (2026-10-29)
+
+Status: BUILDER_TESTED developer record. Non-authorizing. Not independently qualified (DEFERRED, NOT WAIVED). Governing: Engineering Constitution `1c2e920f4e58e07a52e8e2408a506cf7dbc1292b`, Static Plan v1.1 s.12, Engineering Plan v1.5, audit #60, #65/#67, architecture v1.0 (#68, `d7eb6be`). Control Plane source read on the #92 branch (`a62ca8d8e4088c95407c2000dcca081383d8dd4d`, base `4780abe`). Evidence from an independent read-only source-reconciliation worker; line numbers are `src/agent_control_plane/`.
+
+| Question | Finding |
+|---|---|
+| Owner, domain | `ActionClass` in `RuntimeAuthorityProfile.actions[action_id]`; `bool`, default **True** (undeclared means irreversible); no `exclude_if`, always dumped (runtime_authority.py:125-131). With `reversibility` declared it must equal `reversibility == "irreversible"` (reversibility.py:141-143, `irreversible_flag_mismatch`). |
+| Consumers | `_resolve_journal` bounded.py:2111: `irreversible and on_unreadable != "refuse"` gives `action_class_invalid` (decision and effect). `_read_grant` bounded.py:2189 via `effectively_irreversible` (reversibility.py:183-187): cached-grant fallback only if not irreversible and `bounded_tolerance`. `_class_age_bound` and `judge_cached_purpose` use `effective_reversibility` (already strict when undeclared). No other reader. |
+| True strictly more restrictive? | Yes in every consumer: can add `action_class_invalid`, can remove the cached-grant tolerance, skips nothing and weakens no reason. A flipped `bounded_tolerance` class changes from tolerant to refused (an availability change, stricter). |
+| Dependent members | A flip is valid only when the host class has `reversibility=None`, no `reversible_until`/`reversal_cost`, `on_unreadable == refuse`, and default producer facts (`reads_protected_data`, `counterparty_observable`). Otherwise the profile constructor or evaluator would reject it. A flip must NEVER be healed by rewriting `reversibility`, nulling members or narrowing `on_unreadable` (the unreadable family composes first, so the check uses the HOST value or it would hide a host defect). |
+| Interactions | Hard coupling with on_unreadable (`derive_unreadable` refuses `registry_would_heal_invalid_class`). Independent of class age, revocation assurance and terminal revocation. Actions sharing a `class_id` must all flip, or the host is ambiguous and refuses. |
+| Commitment and persisted binding | In the profile dump, so `approval_commitment` and `catalogue_digest` change on a flip; no preimage or persisted-field change. |
+| Enforcement boundary | Existing, supported, unchanged (bounded.py:2111, 2189 at decision and effect). No protected evaluator edit. |
+
+## Disposition: IMPLEMENT (strengthen-only; refuse, never repair)
+Registry family `f5-action-class-irreversibility-policy`, member `class_irreversible`, class map `irreversible|no_change` in contract `r08-v7`. The Registry never asserts reversibility and never carries the producer-fact members (the audit row P-RG-C-011-reversibility is LOW confidence with `registry_contract: none` and rests on the AUD-D06 override; this implementation does not widen it).

@@ -23,3 +23,7 @@ Status: documentation only; non-authorizing; append-only. Created 2026-10-28 in 
 
 ## Update 2026-10-28 (revocation families; append-only)
 - `r08-v6` is ALLOCATED to the two revocation families (`f5-action-class-revocation-assurance-policy`, `f5-terminal-revocation-enablement-policy`), proposed in Registry PR #69 (head `42a666328b974a7581013358bcf8bc7b9eac7761`), not merged. If #69 is not merged, `r08-v6` is not in force; `r08-v7` is then the next free identifier only after the Architect decides. PR #58 (held) still may not use `r08-v5`.
+
+## Update 2026-10-29 (unified engine; append-only)
+- DEC-5 resolved per the Architect directive: `r08-v6` (two revocation families; Registry #69, open) is preserved as the compatible TRANSITIONAL contract and is not repurposed. `r08-v7` is proposed as the unified successor on one parameterised engine, carrying the irreversibility family (`f5-action-class-irreversibility-policy`, schema revision 1) in Registry #71 (head `b73c59e6769acd5af7263397e81dfc6fa4561f38`, stacked on #69, open). `r08-v7` is CONDITIONAL on final version-allocation review; until it is merged and frozen it is not in force and `r08-v8` is next free.
+- No family is registered for the BLOCKED parameters. Envelope protocol version is separate from family schema revision. See `docs/family-migration/unified/02-...`.
