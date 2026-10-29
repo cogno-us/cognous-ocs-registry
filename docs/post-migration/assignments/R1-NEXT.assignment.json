@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "cognous-orchestrator-assignment-v1",
+  "identity": {
+    "workPackage": "OCS-REG-R1-NEXT",
+    "role": "implementation_owner",
+    "primaryArchetype": "A",
+    "archetypeMeaning": "Inventory related items; reconcile shared invariants, interfaces, versioning, failure semantics; select one canonical writer; freeze the common contract before migration. (Here: reconcile existing architectural evidence, frozen interfaces, acceptance prerequisites and dependencies before authorizing implementation.)",
+    "repository": "cogno-us/cognous-ocs-registry",
+    "baseCommitSha": "2815643c3e15fbc6aadadbf88dc7596f10120992",
+    "targetPr": 79
+  },
+  "authority": {
+    "objective": "Close R1-START planning, reconcile R1-E (#76), prepare independent F3-A/F3-B assignments, support the Control Plane duplication estimate with a bounded source crosswalk, and produce a decision-ready R1 proposal. Documentation and planning only.",
+    "sourceDecision": "Architect directive \"R1 NEXT WORK PACKAGE\", 2026-10-29",
+    "allowedActions": [
+      "Inspect current heads and PRs",
+      "Review R1-START deliverables and repair documentation inconsistencies (new text; historical evidence not rewritten)",
+      "Prepare PR #79 for Architect review",
+      "Reconcile R1-E #76 and recommend one disposition",
+      "Prepare F3-A/F3-B assignments for an independent owner",
+      "Produce a decision-ready R1 proposal"
+    ],
+    "prohibitedActions": [
+      "Production-code refactoring",
+      "New Registry contract versions",
+      "Changes to protected evaluators",
+      "Independent qualification self-certification",
+      "Paid tests or external effects",
+      "Automatic PR merges",
+      "Release or deployment",
+      "Registry #58/#59: HELD",
+      "Control Plane #87: HELD",
+      "Constructor tolerance: NOT AUTHORIZED",
+      "Ed25519 #26/#34: HELD",
+      "V09: SEPARATE",
+      "Tier 1 final qualification: DEFERRED, NOT WAIVED",
+      "Publication, release, production: HOLD",
+      "DEF-OBS-TOL-OVERFLOW-1 remains a separate unresolved defect and is outside every scope here"
+    ],
+    "paidExecution": {
+      "authorized": false,
+      "maximumUsd": 0
+    },
+    "mergeAuthorized": false,
+    "deploymentAuthorized": false
+  },
+  "ownership": {
+    "designatedWriter": "Lead Builder (one designated writer for canonical architectural records)",
+    "writablePaths": [
+      "cogno-us/cognous-ocs-registry: docs/post-migration/ (PR #79 branch r1-start-post-migration-readiness)"
+    ],
+    "protectedPaths": [
+      "All source, tests, schemas, vectors, workflows and frozen contracts in both repositories",
+      "docs/family-migration/final-three/ and other historical evidence (add new text only)",
+      "cogno-us/cognous-open-control-stack-ergonomics (read-only)"
+    ],
+    "parallelWorkers": [
+      {
+        "role": "read-only reviewers/inspectors (non-overlapping output files only)",
+        "writablePaths": [
+          "scratchpad output files only"
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "projectPlan": "docs/plans/REGISTRY-R1-POST19-CONSOLIDATION-PLAN-v1.0.md (Registry main); docs/post-migration/ (PR #79)",
+    "frozenSources": [
+      {
+        "location": "cogno-us/cognous-ocs-registry main",
+        "identity": "2815643c3e15fbc6aadadbf88dc7596f10120992",
+        "purpose": "closeout merge #78"
+      },
+      {
+        "location": "cogno-us/cognous-control-plane main",
+        "identity": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69",
+        "purpose": "PR #97 merge"
+      },
+      {
+        "location": "cogno-us/cognous-ocs-registry PR #79",
+        "identity": "4c343b52a0baffde8631e3867cfbe55134fa50f4",
+        "purpose": "R1-START deliverables"
+      },
+      {
+        "location": "cogno-us/cognous-ocs-registry PR #76",
+        "identity": "138e222998345e021c7f5adf68bf2d2aa719c8a9",
+        "purpose": "R1-E addendum (open, unmerged)"
+      },
+      {
+        "location": "cogno-us/cognous-open-control-stack-ergonomics main",
+        "identity": "bea582b378af1b0d6854ffe3a1de40df5ad7a0ab",
+        "purpose": "read-only ergonomics layer"
+      }
+    ],
+    "interfacesAndDependencies": [
+      "Registry r08-v1..v8 frozen contracts and signature domains",
+      "Control Plane protected evaluators (byte-pinned)",
+      "Control Plane tests accept Registry pin a40fe755 only"
+    ],
+    "knownBaselineFailures": [
+      "41 environmental Control Plane failures (baseline-failures.txt)"
+    ]
+  },
+  "acceptance": {
+    "riskTier": "T0",
+    "riskRationale": "Documentation, inspection and planning only; no source, test, schema or workflow change; no reachable production effect.",
+    "successConditions": [
+      "R1-START documentation reconciled with exact-head review and CI Scope Declaration on #79",
+      "R1-E #76 reconciled with one disposition or a recorded blocker",
+      "F3-A/F3-B assignments ready for a designated independent owner (owner status stated)",
+      "Control Plane duplication estimate supported by a bounded source crosswalk or corrected",
+      "Candidates ranked by actual value, complexity and risk",
+      "No claim promoted beyond its evidence"
+    ],
+    "negativeControls": [
+      "No statement of qualification, acceptance, security clearance or release readiness",
+      "No savings stated as measured unless traceable to a script or output",
+      "No change to any file outside docs/post-migration/"
+    ],
+    "newEvidence": [
+      {
+        "test": "Exact-head documentation review of PR #79 by an independent reviewer worker",
+        "purpose": "Source fidelity of pins, clauses and figures",
+        "result": "PLANNED"
+      },
+      {
+        "test": "Schema validation of the three assignment packets against orchestrator-assignment-v1.schema.json",
+        "purpose": "Packet validity",
+        "result": "PLANNED"
+      }
+    ],
+    "reusedEvidence": [
+      {
+        "source": {
+          "location": "docs/post-migration/annex in PR #79",
+          "identity": "4c343b52a0baffde8631e3867cfbe55134fa50f4",
+          "purpose": "read-only worker inventories"
+        },
+        "applicability": "Static measurements at the pinned heads; re-derived or independently reviewed where used"
+      }
+    ],
+    "notRun": [
+      {
+        "test": "Full regression suites, F3, Tier 1",
+        "reason": "Not authorized for this work package; documentation only"
+      },
+      {
+        "test": "Mutation testing",
+        "reason": "No code change"
+      }
+    ],
+    "qualificationBoundary": "Developer/inspection record only; not independent qualification."
+  },
+  "delivery": {
+    "artifacts": [
+      "PR #79 (updated)",
+      "docs/post-migration/assignments/ (three schema-validated packets)",
+      "R1-E reconciliation record",
+      "Control Plane crosswalk"
+    ],
+    "reportFields": [
+      "Current exact source heads",
+      "PR #79 disposition",
+      "R1-E #76 disposition",
+      "F3 readiness and owner status",
+      "Top Control Plane simplification opportunities",
+      "Recommended bounded R1 sequence",
+      "PR links",
+      "Remaining Architect decisions"
+    ],
+    "pullRequest": "https://github.com/cogno-us/cognous-ocs-registry/pull/79"
+  },
+  "boundaries": {
+    "stopConditions": [
+      "A candidate needs a protected evaluator, persisted schema, approval preimage or frozen byte change",
+      "A claim cannot be supported by source",
+      "A required check would have to be bypassed"
+    ],
+    "escalationOwner": "Architect (Cognous)",
+    "outOfScope": [
+      "Production-code refactoring",
+      "F3 execution",
+      "Ergonomics implementation",
+      "DEF-OBS-TOL-OVERFLOW-1"
+    ]
+  },
+  "governance": {
+    "constitutionalRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+    "projectAdoption": {
+      "status": "CONFLICT",
+      "evidence": "OCS records pin different constitutional revisions (Registry plans and R1 plan: 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b; the final-three directive: 230c0aff1c2d1e054652cfc1be175147260b8aae); the Architect directives of 2026-10-29 name dcdbe3b76843d672ca3cfb1f000124ecd78ed03c as the prompt-engineering policy revision, and its Orchestrator Prompt Engineering Addendum states it is not adopted by publication or merge. No formal adoption record selecting dcdbe3b for OCS was found; existing project adoption records are preserved unchanged. Architect decision D7 in docs/post-migration/04-architect-decision-packet-2026-10-29.md."
+    },
+    "complianceAddendumRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+    "testingPolicyRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+    "archetypeSource": "ENGINEERING_COMPLIANCE_ADDENDUM.md §3 Archetype A at dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+    "clauses": [
+      {
+        "article": "CA01",
+        "requiredBehavior": "Inspect and reuse qualified, versioned components.",
+        "prohibitedShortcut": "Duplicate an owned capability for convenience.",
+        "binding": "Reuse the existing Registry r08-v8 unified engine and the Control Plane composition mechanisms; propose no new abstraction where an existing shared helper is not demonstrably present."
+      },
+      {
+        "article": "CA03",
+        "requiredBehavior": "Identify the controlling source, external reliance boundary, duties, expected acceptance and the authority by which a proposed change may acquire canonical standing.",
+        "prohibitedShortcut": "Start against an unnamed or mutable contract.",
+        "binding": "Freeze exact source identities and interfaces (Registry main, Control Plane main, PR heads) before proposing any implementation change."
+      },
+      {
+        "article": "CA04",
+        "requiredBehavior": "Distinguish implementation inspection, independent qualification, competent certification and final integration; preserve independence wherever required.",
+        "prohibitedShortcut": "Fit an oracle to implementation or substitute developer tests.",
+        "binding": "Prepare independent F3 expectations and assignments before any acceptance claim; the Lead Builder issues no verdict."
+      },
+      {
+        "article": "CA18",
+        "requiredBehavior": "Version, authenticate and review governance-critical policy and rule changes; protect established mandatory invariants against configuration override.",
+        "prohibitedShortcut": "Treat unreviewed settings or evaluator changes as governing authority, weaken mandatory checks or introduce an unaccountable decision path.",
+        "binding": "Preserve all mandatory governance and security invariants (four mandatory boundaries, revocation, authentication, held-state checks)."
+      },
+      {
+        "article": "CA21",
+        "requiredBehavior": "Preserve relied-upon external semantics or obtain an explicit authorized compatibility transition.",
+        "prohibitedShortcut": "Introduce silent contract, rights, evidence or interface regressions through internal refactoring.",
+        "binding": "Preserve external semantics, historical signatures, approval commitments, persisted bindings and compatibility."
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 # OCS-REG-R1-START — post-migration source inventory and assignment record
 
-Status: BUILDER_TESTED planning/inspection record. **Non-authorizing.** No behavior is changed. Nothing here is independent qualification, acceptance, release or a security clearance. Independent acceptance count: **0**. Migration implementation: CLOSED (see `docs/family-migration/IMPLEMENTATION-CLOSEOUT-2026-10-29.md`). Date: 2026-10-29.
+Status: static inspection and planning record (developer-inspected; no tests were run for it). **Non-authorizing.** No behavior is changed. Nothing here is independent qualification, acceptance, release or a security clearance. Independent acceptance count: **0**. Migration implementation: CLOSED (see `docs/family-migration/IMPLEMENTATION-CLOSEOUT-2026-10-29.md`). Date: 2026-10-29.
 
 ## 1. Assignment (eight fields, condensed)
 
@@ -42,8 +42,8 @@ Verified facts on Control Plane `main` (sha256 of the working file): `src/agent_
 
 ## 4. Known limitations carried unchanged (not promoted to guarantees)
 
-Unsigned persistence store; no durable anti-rollback guarantee; `legacy_cutoff` has no durable provenance; mixed-fleet legacy writers; a host change fully masked by a narrower Registry value is not refused; the anchor guarantee depends on the D-07 correction; `reconcile()` is not guarded against post-construction mutation of `observation_policy` (pre-existing); the 41 Control Plane test failures in the baseline are environmental (pytest-asyncio absent, older Registry pins) and unchanged by the final three.
+Unsigned persistence store; no durable anti-rollback guarantee; `legacy_cutoff` has no durable provenance; mixed-fleet legacy writers; a host change fully masked by a stricter Registry value is not refused; the anchor guarantee depends on the D-07 correction; `reconcile()` is not guarded against post-construction mutation of `observation_policy` (pre-existing); the 41 Control Plane test failures in the baseline are environmental (pytest-asyncio absent, older Registry pins) and unchanged by the final three.
 
-## 5. Holds (verbatim, unchanged)
+## 5. Holds (as stated in the Architect directives; unchanged)
 
 Registry #58/#59: HELD. Control Plane #87: HELD. Constructor tolerance: NOT AUTHORIZED. Ed25519 #26/#34: HELD. V09: SEPARATE. Tier 1 final qualification: DEFERRED, NOT WAIVED. Publication, release, production: HOLD.

@@ -1,5 +1,8 @@
 # R1 ranked candidates and bounded work-package plan (STATIC; no dispatch)
 
+> **Superseded in part by `05-...` (2026-10-29): the line savings, tiers and the package list in this file were corrected by the bounded source crosswalk (annex D). Supported Control Plane net reduction is -96 lines (3.6%), not about 205; CP-9 is not hoistable; CP-2/CP-4/CP-6 are LEAVE; CP-1 and CP-3 are T3 and touch F3-A subject files. Read `05-...` for the current ranking; the text below is retained as the original R1-START record.**
+
+
 Status: planning record. **Non-authorizing.** No production-code change is authorized or dispatched by it. Each package below is dispatchable only after Gate 2 (Architect review of the inventory and packages) and Gate 3 (explicit authorization), each in its own typed eight-field assignment with the archetype-B verbatim clauses (CA02, CA04, CA05, CA09, CA15) injected by the orchestrator at dispatch time. Pins: Registry `2815643c3e15fbc6aadadbf88dc7596f10120992`, Control Plane `739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69`; they must be re-discovered and re-pinned at dispatch (live source, not these values). Savings are measured or labelled estimates (annex C).
 
 ## 1. Top five refactoring opportunities (ranked by benefit, cost and regression risk)
