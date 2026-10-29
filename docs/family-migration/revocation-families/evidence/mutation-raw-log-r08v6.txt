@@ -1,0 +1,1966 @@
+=== RA01 order inverted [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes _
+
+    def test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes():
+        d = t.decide()
+        assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+>       assert d.effective == {RF: {"class-a": REQ, "class-b": REQ, "class-c": REQ}} and d.detail == ""
+E       AssertionError: assert ({'class_requi...: 'required'}} == {'class_requi...: 'required'}}
+E         
+E         Differing items:
+E         {'class_requires_revocation_assurance': {'class-a': 'not_required', 'class-b': 'not_required', 'class-c': 'required'}} != {'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:52: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.66s
+
+
+=== RA02 stricter picks the looser [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes _
+
+    def test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes():
+        d = t.decide()
+        assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+>       assert d.effective == {RF: {"class-a": REQ, "class-b": REQ, "class-c": REQ}} and d.detail == ""
+E       AssertionError: assert ({'class_requi...: 'required'}} == {'class_requi...: 'required'}}
+E         
+E         Differing items:
+E         {'class_requires_revocation_assurance': {'class-a': 'not_required', 'class-b': 'not_required', 'class-c': 'required'}} != {'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:52: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.64s
+
+
+=== RA03 is_value accepts str subclass [KILLED]
+............................. [ 53%]
+........................................................................ [ 66%]
+.........................................................F
+=================================== FAILURES ===================================
+_____ test_str_subclass_values_and_keys_are_refused_not_compared_by_value ______
+
+    def test_str_subclass_values_and_keys_are_refused_not_compared_by_value():
+        class S(str):
+            pass
+        assert f.payload_validator({FIELD: {"class-a": S("required")}}) == "field_type_invalid"
+        assert f.payload_validator({FIELD: {S("class-a"): "required"}}) == "field_type_invalid"
+>       assert f.normalize_caller({FIELD: {"class-a": S("required")}}) is None
+E       AssertionError: assert {'class_requires_revocation_assurance': {'class-a': 'required'}} is None
+E        +  where {'class_requires_revocation_assurance': {'class-a': 'required'}} = <function normalize_caller at 0x7f375a584180>({'class_requires_revocation_assurance': {'class-a': 'required'}})
+E        +    where <function normalize_caller at 0x7f375a584180> = f.normalize_caller
+
+tests/test_r08v6_revocation_assurance_family.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_revocation_assurance_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 417 passed in 1.45s
+
+
+=== RA04 payload sort check dropped [KILLED]
+t.mark.parametrize("payload,code", [
+        ({}, "field_missing"), ({FIELD: {"class-a": R}, "extra": 1}, "field_unknown"), ({"other": {"class-a": R}}, "field_unknown"),
+        ({FIELD: []}, "field_type_invalid"), ({FIELD: "required"}, "field_type_invalid"), ({FIELD: None}, "field_type_invalid"),
+        ({FIELD: {}}, "field_invalid"), ({FIELD: {"class-b": R, "class-a": R}}, "field_invalid"), ({FIELD: {"*": R}}, "field_invalid"),
+        ({FIELD: {"": R}}, "field_invalid"), ({FIELD: {"a" * 129: R}}, "field_invalid"), ({FIELD: {"class a": R}}, "field_invalid"),
+        ({FIELD: {"class-a": R, "class-b": "x"}}, "field_invalid"), ({1: {"class-a": R}}, "field_type_invalid"), ({FIELD: {1: R}}, "field_type_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+E       AssertionError: assert None == 'field_invalid'
+E        +  where None = <function payload_validator at 0x7f90bbea0040>({'class_requires_revocation_assurance': {'class-b': 'required', 'class-a': 'required'}})
+E        +    where <function payload_validator at 0x7f90bbea0040> = f.payload_validator
+
+tests/test_r08v6_revocation_assurance_family.py:70: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_revocation_assurance_family.py::test_payload_shape_codes[payload7-field_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 426 passed in 1.50s
+
+
+=== RA05 class limit off by one [KILLED]
+............................................... [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+........................................................................ [ 79%]
+..F
+=================================== FAILURES ===================================
+_____________________ test_oversized_class_map_is_refused ______________________
+
+    def test_oversized_class_map_is_refused():
+        big = {("c%03d" % i): R for i in range(c.MAX_ENTRIES + 1)}
+>       assert f.payload_validator({FIELD: big}) == "field_invalid"
+E       AssertionError: assert None == 'field_invalid'
+E        +  where None = <function payload_validator at 0x7f2bb287c040>({'class_requires_revocation_assurance': {'c000': 'required', 'c001': 'required', 'c002': 'required', 'c003': 'required', ...}})
+E        +    where <function payload_validator at 0x7f2bb287c040> = f.payload_validator
+
+tests/test_r08v6_revocation_assurance_family.py:75: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_revocation_assurance_family.py::test_oversized_class_map_is_refused
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 434 passed in 1.50s
+
+
+=== RA06 empty class map accepted [KILLED]
+='', record={'contract_version': 'r08-v6', 'evaluator': {'binding': 'registered...3c5b68'}, 'supersedes': None}, record_digest='sha256:bd7049f1bb92d7ebe0ed9744edca613c490d5386d2539aceea657637cb3e5e0e') = <function validate_record_text_v6 at 0x7f453e189620>('{"contract_version": "r08-v6", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}')
+E        +      where <function validate_record_text_v6 at 0x7f453e189620> = v6_record.validate_record_text_v6
+E        +      and   '{"contract_version": "r08-v6", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}' = <function dumps at 0x7f453e1ab880>({'contract_version': 'r08-v6', 'kind': 'record', 'family': 'f5-action-class-revocation-assurance-policy', 'record_id': 'f5ra-test-record', ...})
+E        +        where <function dumps at 0x7f453e1ab880> = r.dumps
+
+tests/test_r08v6_decision_path.py:142: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_malformed_payload_typed_validator_code_and_decision_refusal[pl11-field_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 49 passed in 0.82s
+
+
+=== RA07 unknown registry class accepted [KILLED]
+.......F
+=================================== FAILURES ===================================
+_________ test_ra_unknown_registry_class_refuses_and_is_never_created __________
+
+    def test_ra_unknown_registry_class_refuses_and_is_never_created():
+>       assert_refused(t.decide(rec=rec_(cmap(class_a=REQ, class_zz=REQ)), cl=cmap(class_a=NREQ)), "composition_record_invalid")
+
+tests/test_r08v6_decision_path.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_record_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_unknown_registry_class_refuses_and_is_never_created
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed in 0.69s
+
+
+=== RA08 caller value domain not checked [KILLED]
+ad", [{}, 5, {RF: {}}, {RF: {"class-a": "x"}}, {RF: {"class-a": 1}}, {RF: {"class-a": None}}, {RF: {"class-a": True}},
+                                     {RF: {"class a": NREQ}}, {RF: {"class-a": NREQ}, "x": 1}, "x", {TF: ON}])
+    def test_ra_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(cl=bad), "composition_caller_invalid")
+
+tests/test_r08v6_decision_path.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:94: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_invalid_caller_refuses_required[bad3]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 11 passed in 0.71s
+
+
+=== RA09 empty caller map accepted [KILLED]
+ad", [{}, 5, {RF: {}}, {RF: {"class-a": "x"}}, {RF: {"class-a": 1}}, {RF: {"class-a": None}}, {RF: {"class-a": True}},
+                                     {RF: {"class a": NREQ}}, {RF: {"class-a": NREQ}, "x": 1}, "x", {TF: ON}])
+    def test_ra_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(cl=bad), "composition_caller_invalid")
+
+tests/test_r08v6_decision_path.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:94: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_invalid_caller_refuses_required[bad2]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 10 passed in 0.68s
+
+
+=== RA10 not-narrowing reported on equal values [KILLED]
+..F
+=================================== FAILURES ===================================
+___ test_ra_registry_equal_to_host_is_applied_without_a_not_narrowing_report ___
+
+    def test_ra_registry_equal_to_host_is_applied_without_a_not_narrowing_report():
+        d = t.decide(rec=rec_(cmap(class_a=NREQ)), cl=cmap(class_a=NREQ, class_b=NREQ))
+>       assert d.kind == "applied" and d.effective == cmap(class_a=NREQ, class_b=NREQ) and d.detail == ""
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'class_requi...ot_required'}} == {'class_requi...ot_required'}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Use -v to get more diff and 'registry_val...owing:class-a' == ''
+E         
+E         + registry_value_not_narrowing:class-a)
+
+tests/test_r08v6_decision_path.py:64: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_registry_equal_to_host_is_applied_without_a_not_narrowing_report
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed in 0.68s
+
+
+=== RA11 family not checked in composer [KILLED]
+ok
+        assert f.compose_f5ra({FIELD: {"class-a": B}}, None).code == "composition_record_invalid"
+        assert f.compose_f5ra({FIELD: {"class-a": B}}, object()).code == "composition_record_invalid"
+        other_family = type("Rec", (), {"ok": True, "record": dict(good.record, family="f5-action-class-age-bounds")})()
+>       assert f.compose_f5ra({FIELD: {"class-a": B}}, other_family).code == "composition_family_unsupported"
+E       AssertionError: assert None == 'composition_family_unsupported'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'class_requires_revocation_assurance': {'class-a': 'required'}}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'class_requires_revocation_assurance': {'class-a': 'required'}}, deny_all=False, deny_all_fields=()) = <function compose_f5ra at 0x7fdc9818c360>({'class_requires_revocation_assurance': {'class-a': 'not_required'}}, <test_r08v6_revocation_assurance_family.Rec object at 0x7fdc9828ea50>)
+E        +      where <function compose_f5ra at 0x7fdc9818c360> = f.compose_f5ra
+
+tests/test_r08v6_revocation_assurance_family.py:192: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_revocation_assurance_family.py::test_invalid_or_foreign_records_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 466 passed in 1.58s
+
+
+=== RA12 payload str-subclass value accepted [KILLED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+.........................................................F
+=================================== FAILURES ===================================
+_____ test_str_subclass_values_and_keys_are_refused_not_compared_by_value ______
+
+    def test_str_subclass_values_and_keys_are_refused_not_compared_by_value():
+        class S(str):
+            pass
+>       assert f.payload_validator({FIELD: {"class-a": S("required")}}) == "field_type_invalid"
+E       AssertionError: assert 'field_invalid' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         ?      -----
+E         + field_invalid
+
+tests/test_r08v6_revocation_assurance_family.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_revocation_assurance_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 417 passed in 1.50s
+
+
+=== RA13 operator not checked [KILLED]
+ {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=()) = <function compose_f5ra at 0x7f180d684360>({'class_requires_revocation_assurance': {'class-a': 'not_required', 'class-b': 'not_required', 'class-c': 'required'}}, <test_r08v6_lifecycle_boundaries.R object at 0x7f180d6d7e00>, 'intersection')
+E            +      where <function compose_f5ra at 0x7f180d684360> = ra.compose_f5ra
+E            +      and   {'class_requires_revocation_assurance': {'class-a': 'not_required', 'class-b': 'not_required', 'class-c': 'required'}} = <function caller at 0x7f180d28c900>('f5-action-class-revocation-assurance-policy')
+E            +        where <function caller at 0x7f180d28c900> = t.caller
+E            +      and   <test_r08v6_lifecycle_boundaries.R object at 0x7f180d6d7e00> = <class 'test_r08v6_lifecycle_boundaries.R'>()
+E            +        where <class 'test_r08v6_lifecycle_boundaries.R'> = type('R', (), {'ok': True, 'record': {'family': 'f5-action-class-revocation-assurance-policy', 'payload': {'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required'}}}})
+
+tests/test_r08v6_lifecycle_boundaries.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 347 passed in 1.31s
+
+
+=== RA14 registry overrides caller (widening) [KILLED]
+.F
+=================================== FAILURES ===================================
+_ test_ra_registry_not_required_never_widens_a_required_host_value_through_the_signed_path _
+
+    def test_ra_registry_not_required_never_widens_a_required_host_value_through_the_signed_path():
+        d = t.decide(rec=rec_(cmap(class_a=NREQ, class_b=NREQ)), cl=cmap(class_a=REQ, class_b=REQ))
+>       assert d.kind == "applied" and d.effective == cmap(class_a=REQ, class_b=REQ) and d.detail == "registry_value_not_narrowing:class-a,class-b"
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'class_requi...ot_required'}} == {'class_requi...: 'required'}}
+E         
+E         Differing items:
+E         {'class_requires_revocation_assurance': {'class-a': 'not_required', 'class-b': 'not_required'}} != {'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required'}}
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:57: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_registry_not_required_never_widens_a_required_host_value_through_the_signed_path
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed in 0.66s
+
+
+=== RA15 deny_all set [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes _
+
+    def test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('applied_deny_all' == 'applied'
+E         
+E         - applied
+E         + applied_deny_all)
+
+tests/test_r08v6_decision_path.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.71s
+
+
+=== RA16 record ok flag truthy accepted [KILLED]
+d_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=()) = <function compose_f5ra at 0x7f1322b5c360>({'class_requires_revocation_assurance': {'class-a': 'not_required', 'class-b': 'not_required', 'class-c': 'required'}}, <test_r08v6_lifecycle_boundaries.R object at 0x7f1323062a50>)
+E        +      where <function compose_f5ra at 0x7f1322b5c360> = ra.compose_f5ra
+E        +      and   {'class_requires_revocation_assurance': {'class-a': 'not_required', 'class-b': 'not_required', 'class-c': 'required'}} = <function caller at 0x7f1322b189a0>('f5-action-class-revocation-assurance-policy')
+E        +        where <function caller at 0x7f1322b189a0> = t.caller
+
+tests/test_r08v6_lifecycle_boundaries.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 347 passed in 1.31s
+
+
+=== RA17 payload type before value order lost [KILLED]
+assurance': {'class-a': 1}}
+code = 'field_type_invalid'
+
+    @pytest.mark.parametrize("pl,code", [
+        ({}, "field_missing"), ({RF: {"class-a": REQ}, "x": 1}, "field_unknown"), ({"other": {"class-a": REQ}}, "field_unknown"),
+        ({RF: {"class-a": 1}}, "field_type_invalid"), ({RF: {"class-a": None}}, "field_type_invalid"), ({RF: {"class-a": True}}, "field_type_invalid"),
+        ({RF: {"class-a": False}}, "field_type_invalid"), ({RF: REQ}, "field_type_invalid"), ({RF: [REQ]}, "field_type_invalid"),
+        ({RF: {"class-a": "optional"}}, "field_invalid"), ({RF: {"class-a": "Required"}}, "field_invalid"), ({RF: {}}, "field_invalid"),
+        ({RF: {"*": REQ}}, "field_invalid"), ({RF: {"class a": REQ}}, "field_invalid"), ({TF: ON}, "field_unknown"),
+    ])
+    def test_ra_malformed_payload_typed_validator_code_and_decision_refusal(pl, code):
+        rec = rec_(pl)
+>       assert v6_record.validate_record_text_v6(r.dumps(rec)).code == code
+E       AssertionError: assert 'field_invalid' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         ?      -----
+E         + field_invalid
+
+tests/test_r08v6_decision_path.py:142: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_malformed_payload_typed_validator_code_and_decision_refusal[pl3-field_type_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 41 passed in 0.71s
+
+
+=== RA18 caller class tokens unchecked [KILLED]
+ad", [{}, 5, {RF: {}}, {RF: {"class-a": "x"}}, {RF: {"class-a": 1}}, {RF: {"class-a": None}}, {RF: {"class-a": True}},
+                                     {RF: {"class a": NREQ}}, {RF: {"class-a": NREQ}, "x": 1}, "x", {TF: ON}])
+    def test_ra_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(cl=bad), "composition_caller_invalid")
+
+tests/test_r08v6_decision_path.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:94: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_invalid_caller_refuses_required[bad7]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 15 passed in 0.73s
+
+
+=== RA19 caller class map unsorted/aliased not copied [KILLED]
+.....................................F
+=================================== FAILURES ===================================
+_ test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through _
+
+    def test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through():
+        unsigned = "{}"
+        d = t.decide(participation="optional", sel=unsigned, cl={RF: dict(reversed(list({"class-a": REQ, "class-b": NREQ}.items())))})
+>       assert d.kind == "overlay_not_applied" and d.effective == {RF: {"class-a": REQ, "class-b": NREQ}} and list(d.effective[RF]) == ["class-a", "class-b"]
+E       AssertionError: assert ('overlay_not_applied' == 'overlay_not_applied'
+E         
+E           overlay_not_applied and {'class_requi...: 'required'}} == {'class_requi...ot_required'}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Use -v to get more diff and ['class-b', 'class-a'] == ['class-a', 'class-b']
+E         
+E         At index 0 diff: 'class-b' != 'class-a'
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:124: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 37 passed in 0.77s
+
+
+=== TR01 order inverted [KILLED]
+....................F
+=================================== FAILURES ===================================
+______________________ test_tr_signed_matrix[off-on-on-] _______________________
+
+host = 'off', reg = 'on', eff = 'on', detail = ''
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'terminal_revocation': 'off'} == {'terminal_revocation': 'on'}
+E         
+E         Differing items:
+E         {'terminal_revocation': 'off'} != {'terminal_revocation': 'on'}
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-on-on-]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 20 passed in 0.70s
+
+
+=== TR02 stricter picks the looser [KILLED]
+....................F
+=================================== FAILURES ===================================
+______________________ test_tr_signed_matrix[off-on-on-] _______________________
+
+host = 'off', reg = 'on', eff = 'on', detail = ''
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'terminal_revocation': 'off'} == {'terminal_revocation': 'on'}
+E         
+E         Differing items:
+E         {'terminal_revocation': 'off'} != {'terminal_revocation': 'on'}
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-on-on-]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 20 passed in 0.70s
+
+
+=== TR03 either-side-on lost (registry wins) [KILLED]
+.....................F
+=================================== FAILURES ===================================
+_ test_tr_signed_matrix[on-off-on-registry_value_not_narrowing:terminal_revocation] _
+
+host = 'on', reg = 'off', eff = 'on'
+detail = 'registry_value_not_narrowing:terminal_revocation'
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'terminal_revocation': 'off'} == {'terminal_revocation': 'on'}
+E         
+E         Differing items:
+E         {'terminal_revocation': 'off'} != {'terminal_revocation': 'on'}
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[on-off-on-registry_value_not_narrowing:terminal_revocation]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 21 passed in 0.69s
+
+
+=== TR04 either-side-on lost (caller wins) [KILLED]
+....................F
+=================================== FAILURES ===================================
+______________________ test_tr_signed_matrix[off-on-on-] _______________________
+
+host = 'off', reg = 'on', eff = 'on', detail = ''
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'terminal_revocation': 'off'} == {'terminal_revocation': 'on'}
+E         
+E         Differing items:
+E         {'terminal_revocation': 'off'} != {'terminal_revocation': 'on'}
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-on-on-]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 20 passed in 0.72s
+
+
+=== TR05 not-narrowing reported on equal values [KILLED]
+...................F
+=================================== FAILURES ===================================
+_____________________ test_tr_signed_matrix[off-off-off-] ______________________
+
+host = 'off', reg = 'off', eff = 'off', detail = ''
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'terminal_revocation': 'off'} == {'terminal_revocation': 'off'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Use -v to get more diff and 'registry_val...al_revocation' == ''
+E         
+E         + registry_value_not_narrowing:terminal_revocation)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-off-off-]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 19 passed in 0.68s
+
+
+=== TR06 not-narrowing never reported [KILLED]
+.....................F
+=================================== FAILURES ===================================
+_ test_tr_signed_matrix[on-off-on-registry_value_not_narrowing:terminal_revocation] _
+
+host = 'on', reg = 'off', eff = 'on'
+detail = 'registry_value_not_narrowing:terminal_revocation'
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'terminal_revocation': 'on'} == {'terminal_revocation': 'on'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Use -v to get more diff and '' == 'registry_val...al_revocation'
+E         
+E         - registry_value_not_narrowing:terminal_revocation)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[on-off-on-registry_value_not_narrowing:terminal_revocation]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 21 passed in 0.65s
+
+
+=== TR07 is_value accepts str subclass [KILLED]
+....................................................................... [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+........................................................................ [ 79%]
+...............................................................F
+=================================== FAILURES ===================================
+________________ test_str_subclass_values_and_keys_are_refused _________________
+
+    def test_str_subclass_values_and_keys_are_refused():
+        class S(str):
+            pass
+        assert f.payload_validator({FIELD: S("on")}) == "field_type_invalid"
+        assert f.payload_validator({S(FIELD): "on"}) == "field_type_invalid"
+>       assert f.normalize_caller({FIELD: S("on")}) is None
+E       AssertionError: assert {'terminal_revocation': 'on'} is None
+E        +  where {'terminal_revocation': 'on'} = <function normalize_caller at 0x7f091175c900>({'terminal_revocation': 'on'})
+E        +    where <function normalize_caller at 0x7f091175c900> = f.normalize_caller
+
+tests/test_r08v6_terminal_revocation_family.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_terminal_revocation_family.py::test_str_subclass_values_and_keys_are_refused
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 495 passed in 1.59s
+
+
+=== TR08 payload type check dropped [KILLED]
+===================== FAILURES ===================================
+_ test_tr_malformed_payload_typed_validator_code_and_decision_refusal[pl3-field_type_invalid] _
+
+pl = {'terminal_revocation': True}, code = 'field_type_invalid'
+
+    @pytest.mark.parametrize("pl,code", [
+        ({}, "field_missing"), ({TF: ON, "x": 1}, "field_unknown"), ({"other": ON}, "field_unknown"), ({TF: True}, "field_type_invalid"),
+        ({TF: False}, "field_type_invalid"), ({TF: 1}, "field_type_invalid"), ({TF: None}, "field_type_invalid"), ({TF: [ON]}, "field_type_invalid"),
+        ({TF: {"class-a": ON}}, "field_type_invalid"), ({TF: "enabled"}, "field_invalid"), ({TF: "ON"}, "field_invalid"), ({TF: ""}, "field_invalid"),
+        ({RF: {"class-a": REQ}}, "field_unknown"),
+    ])
+    def test_tr_malformed_payload_typed_validator_code_and_decision_refusal(pl, code):
+        rec = rec_(pl, TR)
+>       assert v6_record.validate_record_text_v6(r.dumps(rec)).code == code
+E       AssertionError: assert 'field_invalid' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         ?      -----
+E         + field_invalid
+
+tests/test_r08v6_decision_path.py:154: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_malformed_payload_typed_validator_code_and_decision_refusal[pl3-field_type_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 56 passed in 0.77s
+
+
+=== TR09 caller value domain not checked [KILLED]
+ler_refuses_required[bad3] _________________
+
+bad = {'terminal_revocation': 'x'}
+
+    @pytest.mark.parametrize("bad", [{}, 5, "on", {TF: "x"}, {TF: True}, {TF: 1}, {TF: None}, {TF: {"class-a": ON}}, {TF: ON, "x": 1}, {TF: "ON"}, cmap(class_a=REQ)])
+    def test_tr_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(rec=rec_(family=TR), cl=bad), "composition_caller_invalid")
+
+tests/test_r08v6_decision_path.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='unexpected input', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='unexpected input', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:94: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_invalid_caller_refuses_required[bad3]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 26 passed in 0.71s
+
+
+=== TR10 family not checked in composer [KILLED]
+records_refuse ____________________
+
+    def test_invalid_or_foreign_records_refuse():
+        good = rec({FIELD: ON})
+        assert good.ok
+        assert f.compose_tr({FIELD: OFF}, None).code == "composition_record_invalid"
+        assert f.compose_tr({FIELD: OFF}, object()).code == "composition_record_invalid"
+        other_family = type("Rec", (), {"ok": True, "record": dict(good.record, family="f5-action-class-revocation-assurance-policy")})()
+>       assert f.compose_tr({FIELD: OFF}, other_family).code == "composition_family_unsupported"
+E       AssertionError: assert None == 'composition_family_unsupported'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=()) = <function compose_tr at 0x7f6af2d88ae0>({'terminal_revocation': 'off'}, <test_r08v6_terminal_revocation_family.Rec object at 0x7f6af2ddbe00>)
+E        +      where <function compose_tr at 0x7f6af2d88ae0> = f.compose_tr
+
+tests/test_r08v6_terminal_revocation_family.py:175: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_terminal_revocation_family.py::test_invalid_or_foreign_records_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 538 passed in 1.68s
+
+
+=== TR11 deny_all set [KILLED]
+...................F
+=================================== FAILURES ===================================
+_____________________ test_tr_signed_matrix[off-off-off-] ______________________
+
+host = 'off', reg = 'off', eff = 'off', detail = ''
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('applied_deny_all' == 'applied'
+E         
+E         - applied
+E         + applied_deny_all)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-off-off-]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 19 passed in 0.77s
+
+
+=== TR12 operator not checked [KILLED]
+t None == 'composition_operator_unsupported'
+E            +  where None = CompositionResult(ok=True, code=None, detail='', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=()).code
+E            +    where CompositionResult(ok=True, code=None, detail='', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=()) = <function compose_tr at 0x7f7653654ae0>({'terminal_revocation': 'off'}, <test_r08v6_lifecycle_boundaries.R object at 0x7f76536a7e00>, 'intersection')
+E            +      where <function compose_tr at 0x7f7653654ae0> = tr.compose_tr
+E            +      and   {'terminal_revocation': 'off'} = <function caller at 0x7f765325c9a0>('f5-terminal-revocation-enablement-policy')
+E            +        where <function caller at 0x7f765325c9a0> = t.caller
+E            +      and   <test_r08v6_lifecycle_boundaries.R object at 0x7f76536a7e00> = <class 'test_r08v6_lifecycle_boundaries.R'>()
+E            +        where <class 'test_r08v6_lifecycle_boundaries.R'> = type('R', (), {'ok': True, 'record': {'family': 'f5-terminal-revocation-enablement-policy', 'payload': {'terminal_revocation': 'on'}}})
+
+tests/test_r08v6_lifecycle_boundaries.py:52: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 347 passed in 1.33s
+
+
+=== TR13 invalid caller replaced by default [KILLED]
+====================== FAILURES ===================================
+________________ test_tr_invalid_caller_refuses_required[bad0] _________________
+
+bad = {}
+
+    @pytest.mark.parametrize("bad", [{}, 5, "on", {TF: "x"}, {TF: True}, {TF: 1}, {TF: None}, {TF: {"class-a": ON}}, {TF: ON, "x": 1}, {TF: "ON"}, cmap(class_a=REQ)])
+    def test_tr_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(rec=rec_(family=TR), cl=bad), "composition_caller_invalid")
+
+tests/test_r08v6_decision_path.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_invalid_caller_refuses_required[bad0]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 23 passed in 0.73s
+
+
+=== TR14 caller extra key tolerated [SURVIVED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+........................................................................ [ 79%]
+........................................................................ [ 92%]
+.......................................                                  [100%]
+543 passed in 1.58s
+
+
+=== TR15 payload extra key tolerated [KILLED]
+...... [ 79%]
+..................................................................F
+=================================== FAILURES ===================================
+_______________ test_payload_shape_codes[payload1-field_unknown] _______________
+
+payload = {'terminal_revocation': 'on', 'extra': 1}, code = 'field_unknown'
+
+    @pytest.mark.parametrize("payload,code", [
+        ({}, "field_missing"), ({FIELD: ON, "extra": 1}, "field_unknown"), ({"other": ON}, "field_unknown"), ({"other": ON, FIELD: ON}, "field_unknown"),
+        ({FIELD: {"class-a": ON}}, "field_type_invalid"),  # a map is not the scalar shape
+        ({FIELD: [ON]}, "field_type_invalid"), ({FIELD: None}, "field_type_invalid"), ({1: ON}, "field_type_invalid"), ({FIELD: "maybe"}, "field_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+E       AssertionError: assert None == 'field_unknown'
+E        +  where None = <function payload_validator at 0x7f9029954400>({'terminal_revocation': 'on', 'extra': 1})
+E        +    where <function payload_validator at 0x7f9029954400> = f.payload_validator
+
+tests/test_r08v6_terminal_revocation_family.py:64: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_terminal_revocation_family.py::test_payload_shape_codes[payload1-field_unknown]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 498 passed in 1.58s
+
+
+=== TR16 record ok flag truthy accepted [KILLED]
+ra = type("R", (), {"ok": 1, "record": {"family": RA, "payload": t.payload(RA)}})()
+        rec_tr = type("R", (), {"ok": 1, "record": {"family": TR, "payload": t.payload(TR)}})()
+        assert ra.compose_f5ra(t.caller(RA), rec_ra).code == "composition_record_invalid"
+>       assert tr.compose_tr(t.caller(TR), rec_tr).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'terminal_revocation': 'on'}, deny_all=False, deny_all_fields=()) = <function compose_tr at 0x7f0fb996cae0>({'terminal_revocation': 'off'}, <test_r08v6_lifecycle_boundaries.R object at 0x7f0fb9d93cb0>)
+E        +      where <function compose_tr at 0x7f0fb996cae0> = tr.compose_tr
+E        +      and   {'terminal_revocation': 'off'} = <function caller at 0x7f0fb993c9a0>('f5-terminal-revocation-enablement-policy')
+E        +        where <function caller at 0x7f0fb993c9a0> = t.caller
+
+tests/test_r08v6_lifecycle_boundaries.py:48: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 347 passed in 1.43s
+
+
+=== FA01 lookup accepts non-exact str [KILLED]
+_dispatch __________________
+
+    def test_exact_type_family_and_version_dispatch():
+        for family in (RA, TR):
+            assert fam.lookup_v6(family) is not None
+>           assert fam.lookup_v6(S(family)) is None  # equal and same hash, but not an exact str
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: assert FamilySpec(family='f5-action-class-revocation-assurance-policy', payload_fields=('class_requires_revocation_assurance'...code-reference'), caller_normalizer=<function normalize_caller at 0x7f2598084180>, enforcing_component='control-plane') is None
+E            +  where FamilySpec(family='f5-action-class-revocation-assurance-policy', payload_fields=('class_requires_revocation_assurance'...code-reference'), caller_normalizer=<function normalize_caller at 0x7f2598084180>, enforcing_component='control-plane') = <function lookup_v6 at 0x7f2597c8e2a0>('f5-action-class-revocation-assurance-policy')
+E            +    where <function lookup_v6 at 0x7f2597c8e2a0> = fam.lookup_v6
+E            +    and   'f5-action-class-revocation-assurance-policy' = S('f5-action-class-revocation-assurance-policy')
+
+tests/test_r08v6_lifecycle_boundaries.py:31: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 346 passed in 1.31s
+
+
+=== FA02 table selector accepts str subclass [KILLED]
+___________ test_exact_type_family_and_version_dispatch __________________
+
+    def test_exact_type_family_and_version_dispatch():
+        for family in (RA, TR):
+            assert fam.lookup_v6(family) is not None
+            assert fam.lookup_v6(S(family)) is None  # equal and same hash, but not an exact str
+            assert v6pi.registered_family_version(family, "r08-v6") == "v6"
+            with pytest.raises(v6pi.IdentityRefusal):
+                v6pi.registered_family_version(S(family), "r08-v6")
+            with pytest.raises(v6pi.IdentityRefusal):
+                v6pi.registered_family_version(family, S("r08-v6"))
+        assert fam.table_for_contract_version_v6("r08-v6").ok
+        sel = fam.table_for_contract_version_v6(S("r08-v6"))
+>       assert not sel.ok and sel.code == "contract_unsupported" and sel.table is None
+E       AssertionError: assert (not True)
+E        +  where True = TableSelection(ok=True, code=None, version='r08-v6', table=mappingproxy({'f5-action-class-revocation-assurance-policy'...e-reference'), caller_normalizer=<function normalize_caller at 0x7fb6e2b80900>, enforcing_component='control-plane')})).ok
+
+tests/test_r08v6_lifecycle_boundaries.py:39: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 346 passed in 1.29s
+
+
+=== FA03 dispatch always the first family [KILLED]
+...................F
+=================================== FAILURES ===================================
+_____________________ test_tr_signed_matrix[off-off-off-] ______________________
+
+host = 'off', reg = 'off', eff = 'off', detail = ''
+
+    @pytest.mark.parametrize("host,reg,eff,detail", [
+        (OFF, OFF, OFF, ""), (OFF, ON, ON, ""), (ON, OFF, ON, "registry_value_not_narrowing:terminal_revocation"), (ON, ON, ON, "")])
+    def test_tr_signed_matrix(host, reg, eff, detail):
+        d = t.decide(rec=rec_({TF: reg}, TR), cl={TF: host})
+>       assert d.kind == "applied" and d.effective == {TF: eff} and d.detail == detail and d.deny_all is False and d.deny_all_fields == ()
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v6_decision_path.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_tr_signed_matrix[off-off-off-]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 19 passed in 0.69s
+
+
+=== FA04 dispatch always the second family [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes _
+
+    def test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v6_decision_path.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.62s
+
+
+=== FA05 compose_for ignores contract version [KILLED]
+____________ test_exact_type_family_and_version_dispatch __________________
+
+    def test_exact_type_family_and_version_dispatch():
+        for family in (RA, TR):
+            assert fam.lookup_v6(family) is not None
+            assert fam.lookup_v6(S(family)) is None  # equal and same hash, but not an exact str
+            assert v6pi.registered_family_version(family, "r08-v6") == "v6"
+            with pytest.raises(v6pi.IdentityRefusal):
+                v6pi.registered_family_version(S(family), "r08-v6")
+            with pytest.raises(v6pi.IdentityRefusal):
+                v6pi.registered_family_version(family, S("r08-v6"))
+        assert fam.table_for_contract_version_v6("r08-v6").ok
+        sel = fam.table_for_contract_version_v6(S("r08-v6"))
+        assert not sel.ok and sel.code == "contract_unsupported" and sel.table is None
+>       assert fam.compose_for_v6(S("r08-v6"), t.caller(), type("R", (), {"ok": True, "record": {}})()).code == "contract_unsupported"
+E       AssertionError: assert 'composition_...y_unsupported' == 'contract_unsupported'
+E         
+E         - contract_unsupported
+E         + composition_family_unsupported
+
+tests/test_r08v6_lifecycle_boundaries.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 346 passed in 1.27s
+
+
+=== FA06 unknown family composes [KILLED]
+3/site-packages/_pytest/python.py:508: in importtestmodule
+    mod = import_path(
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/pathlib.py:596: in import_path
+    importlib.import_module(module_name)
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1404: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1369: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1340: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+tests/test_r08v6_decision_path.py:22: in <module>
+    from registry_successor import v6_record
+registry_successor/v6_record.py:12: in <module>
+    from registry_successor import v6_families
+E     File "/tmp/mut_r6_ue9ux88t/registry_successor/v6_families.py", line 82
+E       return spec.composer(caller, record, operator)
+E   IndentationError: unexpected indent
+=========================== short test summary info ============================
+ERROR tests/test_r08v6_decision_path.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.28s
+
+
+=== FA07 table contract constant changed [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes _
+
+    def test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v6_decision_path.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.61s
+
+
+=== ID01 effective domain is the v5 prefix [KILLED]
+.................... [ 53%]
+........................................................................ [ 66%]
+........F
+=================================== FAILURES ===================================
+_______________________ test_pinned_vectors[ra-baseline] _______________________
+
+vec = {'digest': 'sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0', 'effective': {'class_requires_re...uired', 'class-b': 'not_required'}}, 'family': 'f5-action-class-revocation-assurance-policy', 'id': 'ra-baseline', ...}
+
+    @pytest.mark.parametrize("vec", VECTORS["vectors"], ids=[x["id"] for x in VECTORS["vectors"]])
+    def test_pinned_vectors(vec):
+        pre = v6.effective_preimage(vec["family"], vec["effective"])
+        assert pre == vec["preimage"]
+>       assert v6.effective_policy_digest(vec["family"], vec["effective"]) == vec["digest"] == independent_digest(vec["preimage"])
+E       AssertionError: assert 'sha256:08234...840e22ca4fd05' == 'sha256:e93c9...7c98c6baba1d0'
+E         
+E         - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E         + sha256:082345bae78fb638e1f955d3bc4375c81c8183a3ff2ae1d174c840e22ca4fd05
+
+tests/test_r08v6_policy_identity.py:52: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 368 passed in 1.38s
+
+
+=== ID02 preimage omits contract_version [KILLED]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+........F
+=================================== FAILURES ===================================
+_______________________ test_pinned_vectors[ra-baseline] _______________________
+
+vec = {'digest': 'sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0', 'effective': {'class_requires_re...uired', 'class-b': 'not_required'}}, 'family': 'f5-action-class-revocation-assurance-policy', 'id': 'ra-baseline', ...}
+
+    @pytest.mark.parametrize("vec", VECTORS["vectors"], ids=[x["id"] for x in VECTORS["vectors"]])
+    def test_pinned_vectors(vec):
+        pre = v6.effective_preimage(vec["family"], vec["effective"])
+>       assert pre == vec["preimage"]
+E       AssertionError: assert {'effective_p...all': [], ...} == {'contract_ve...olicy/1', ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'contract_version': 'r08-v6'}
+E         Use -v to get more diff
+
+tests/test_r08v6_policy_identity.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 368 passed in 1.40s
+
+
+=== ID03 preimage omits family [KILLED]
+............................................. [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+........F
+=================================== FAILURES ===================================
+_______________________ test_pinned_vectors[ra-baseline] _______________________
+
+vec = {'digest': 'sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0', 'effective': {'class_requires_re...uired', 'class-b': 'not_required'}}, 'family': 'f5-action-class-revocation-assurance-policy', 'id': 'ra-baseline', ...}
+
+    @pytest.mark.parametrize("vec", VECTORS["vectors"], ids=[x["id"] for x in VECTORS["vectors"]])
+    def test_pinned_vectors(vec):
+        pre = v6.effective_preimage(vec["family"], vec["effective"])
+>       assert pre == vec["preimage"]
+E       AssertionError: assert {'effective_p...all': [], ...} == {'contract_ve...olicy/1', ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'family': 'f5-action-class-revocation-assurance-policy'}
+E         Use -v to get more diff
+
+tests/test_r08v6_policy_identity.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 368 passed in 1.45s
+
+
+=== ID04 preimage omits family_version [KILLED]
+ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+........F
+=================================== FAILURES ===================================
+_______________________ test_pinned_vectors[ra-baseline] _______________________
+
+vec = {'digest': 'sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0', 'effective': {'class_requires_re...uired', 'class-b': 'not_required'}}, 'family': 'f5-action-class-revocation-assurance-policy', 'id': 'ra-baseline', ...}
+
+    @pytest.mark.parametrize("vec", VECTORS["vectors"], ids=[x["id"] for x in VECTORS["vectors"]])
+    def test_pinned_vectors(vec):
+        pre = v6.effective_preimage(vec["family"], vec["effective"])
+>       assert pre == vec["preimage"]
+E       AssertionError: assert {'effective_p...all': [], ...} == {'contract_ve...olicy/1', ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'family_version': 'v6'}
+E         Use -v to get more diff
+
+tests/test_r08v6_policy_identity.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 368 passed in 1.50s
+
+
+=== ID05 preimage omits effective [KILLED]
+.................................................................. [ 53%]
+........................................................................ [ 66%]
+........F
+=================================== FAILURES ===================================
+_______________________ test_pinned_vectors[ra-baseline] _______________________
+
+vec = {'digest': 'sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0', 'effective': {'class_requires_re...uired', 'class-b': 'not_required'}}, 'family': 'f5-action-class-revocation-assurance-policy', 'id': 'ra-baseline', ...}
+
+    @pytest.mark.parametrize("vec", VECTORS["vectors"], ids=[x["id"] for x in VECTORS["vectors"]])
+    def test_pinned_vectors(vec):
+        pre = v6.effective_preimage(vec["family"], vec["effective"])
+>       assert pre == vec["preimage"]
+E       AssertionError: assert {'effective_p...n': 'v6', ...} == {'contract_ve...olicy/1', ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {'effective': {}} != {'effective': {'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'not_required'}}}
+E         Use -v to get more diff
+
+tests/test_r08v6_policy_identity.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 368 passed in 1.57s
+
+
+=== ID06 family version tag v5 [KILLED]
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+..........................................................F
+=================================== FAILURES ===================================
+_________________ test_exact_type_family_and_version_dispatch __________________
+
+    def test_exact_type_family_and_version_dispatch():
+        for family in (RA, TR):
+            assert fam.lookup_v6(family) is not None
+            assert fam.lookup_v6(S(family)) is None  # equal and same hash, but not an exact str
+>           assert v6pi.registered_family_version(family, "r08-v6") == "v6"
+E           AssertionError: assert 'v5' == 'v6'
+E             
+E             - v6
+E             + v5
+
+tests/test_r08v6_lifecycle_boundaries.py:32: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_lifecycle_boundaries.py::test_exact_type_family_and_version_dispatch
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 346 passed in 1.43s
+
+
+=== ID07 scalar value domain not checked [KILLED]
+................................................... [ 66%]
+.....................F
+=================================== FAILURES ===================================
+_________________ test_neither_family_is_a_deny_all_dimension __________________
+
+    def test_neither_family_is_a_deny_all_dimension():
+        assert v6.deny_all_dimensions(RA, eff({"class-a": "required"})) == []
+        assert v6.deny_all_dimensions(TR, tr("on")) == []
+        assert v6.effective_preimage(RA, eff({"class-a": "required"}))["deny_all"] == []
+        assert v6.effective_preimage(TR, tr("on"))["deny_all"] == []
+>       assert code(v6.deny_all_dimensions, TR, tr("x")) == ("field_invalid", TF)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v6_policy_identity.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fn = <function deny_all_dimensions at 0x7fb0200131a0>
+a = ('f5-terminal-revocation-enablement-policy', {'terminal_revocation': 'x'})
+k = {}
+
+    def code(fn, *a, **k):
+>       with pytest.raises(v6.IdentityRefusal) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE IdentityRefusal
+
+tests/test_r08v6_policy_identity.py:43: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_neither_family_is_a_deny_all_dimension
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 381 passed in 1.50s
+
+
+=== ID08 class limit off by one [KILLED]
+....................... [ 53%]
+........................................................................ [ 66%]
+................................F
+=================================== FAILURES ===================================
+__________ test_f5ra_too_many_classes_refused_and_the_limit_accepted ___________
+
+    def test_f5ra_too_many_classes_refused_and_the_limit_accepted():
+>       assert code(v6.effective_policy_digest, RA, eff({("c%03d" % i): "required" for i in range(257)})) == ("field_invalid", RF)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v6_policy_identity.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fn = <function effective_policy_digest at 0x7f88671c7380>
+a = ('f5-action-class-revocation-assurance-policy', {'class_requires_revocation_assurance': {'c000': 'required', 'c001': 'required', 'c002': 'required', 'c003': 'required', ...}})
+k = {}
+
+    def code(fn, *a, **k):
+>       with pytest.raises(v6.IdentityRefusal) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE IdentityRefusal
+
+tests/test_r08v6_policy_identity.py:43: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_f5ra_too_many_classes_refused_and_the_limit_accepted
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 392 passed in 1.39s
+
+
+=== ID09 deny_all non-empty in preimage [KILLED]
+]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+........F
+=================================== FAILURES ===================================
+_______________________ test_pinned_vectors[ra-baseline] _______________________
+
+vec = {'digest': 'sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0', 'effective': {'class_requires_re...uired', 'class-b': 'not_required'}}, 'family': 'f5-action-class-revocation-assurance-policy', 'id': 'ra-baseline', ...}
+
+    @pytest.mark.parametrize("vec", VECTORS["vectors"], ids=[x["id"] for x in VECTORS["vectors"]])
+    def test_pinned_vectors(vec):
+        pre = v6.effective_preimage(vec["family"], vec["effective"])
+>       assert pre == vec["preimage"]
+E       AssertionError: assert {'effective_p...n': 'v6', ...} == {'contract_ve...olicy/1', ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {'deny_all': ['x']} != {'deny_all': []}
+E         Use -v to get more diff
+
+tests/test_r08v6_policy_identity.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_pinned_vectors[ra-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 368 passed in 1.47s
+
+
+=== ID10 older contract versions registered [KILLED]
+3%]
+........................................................................ [ 66%]
+.................F
+=================================== FAILURES ===================================
+___ test_family_rows_are_exactly_the_two_registered_families_with_version_v6 ___
+
+    def test_family_rows_are_exactly_the_two_registered_families_with_version_v6():
+        assert set(v6.IDENTITY_FAMILIES) == {RA, TR}
+        assert v6.IDENTITY_FAMILIES[RA].family_version == v6.IDENTITY_FAMILIES[TR].family_version == "v6" == v6.FAMILY_VERSION
+        assert v6.IDENTITY_FAMILIES[RA].kind == "classmap-enum" and v6.IDENTITY_FAMILIES[TR].kind == "scalar-enum"
+        assert v6.IDENTITY_FAMILIES[RA].members == f.F5RA_FIELDS and v6.IDENTITY_FAMILIES[TR].members == ft.TR_FIELDS
+        assert v6.registered_family_version(RA, "r08-v6") == v6.registered_family_version(TR, "r08-v6") == "v6"
+>       assert v6.REGISTERED_CONTRACT_VERSIONS == ("r08-v6",) and v6.CONTRACT_VERSION == "r08-v6"
+E       AssertionError: assert (('r08-v6', 'r08-v5') == ('r08-v6',)
+E         
+E         Left contains one more item: 'r08-v5'
+E         Use -v to get more diff)
+
+tests/test_r08v6_policy_identity.py:81: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_family_rows_are_exactly_the_two_registered_families_with_version_v6
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 377 passed in 1.40s
+
+
+=== ID11 class value domain not checked [KILLED]
+64f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/python.py:508: in importtestmodule
+    mod = import_path(
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/pathlib.py:596: in import_path
+    importlib.import_module(module_name)
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1404: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1369: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1340: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+tests/test_r08v6_lifecycle_boundaries.py:17: in <module>
+    from registry_successor import v6_policy_identity as v6pi
+E     File "/tmp/mut_r6_ue9ux88t/registry_successor/v6_policy_identity.py", line 79
+E       else:  # scalar-enum
+E   IndentationError: expected an indented block after 'for' statement on line 78
+=========================== short test summary info ============================
+ERROR tests/test_r08v6_lifecycle_boundaries.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.45s
+
+
+=== ID12 empty class map accepted [KILLED]
+... [ 39%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+..........................F
+=================================== FAILURES ===================================
+__________________ test_f5ra_class_key_and_size_refusals[m0] ___________________
+
+m = {}
+
+    @pytest.mark.parametrize("m", [{}, {"*": "required"}, {"": "required"}, {"a" * 129: "required"}, {"class a": "required"}, {"a\n": "required"}])
+    def test_f5ra_class_key_and_size_refusals(m):
+>       assert code(v6.effective_policy_digest, RA, eff(m)) == ("field_invalid", RF)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v6_policy_identity.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fn = <function effective_policy_digest at 0x7f4f7cd67380>
+a = ('f5-action-class-revocation-assurance-policy', {'class_requires_revocation_assurance': {}})
+k = {}
+
+    def code(fn, *a, **k):
+>       with pytest.raises(v6.IdentityRefusal) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE IdentityRefusal
+
+tests/test_r08v6_policy_identity.py:43: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_policy_identity.py::test_f5ra_class_key_and_size_refusals[m0]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 386 passed in 1.47s
+
+
+=== SE01 signing domain is the v5 prefix [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes _
+
+    def test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v6_decision_path.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.67s
+
+
+=== SE02 parser accepts any contract version [KILLED]
+required", t5.caller(), *args), "contract_unsupported")
+        assert _refused_with(v4_decision.verify_and_decide_v4("required", t4.caller(), *args), "contract_unsupported")
+        assert _refused_with(v3_decision.verify_and_decide_v3("required", t3.caller(), *args), "contract_unsupported")
+        for rec_other, text_other, caller_other in ((t5.record(), t5.selection_text, t5.caller()), (t4.record(), t4.selection_text, t4.caller()),
+                                                    (t3.record(), t3.selection_text, t3.caller())):
+            d = v6_decision.verify_and_decide_v6("required", t.caller(family), r.dumps(rec_other), text_other(rec_other), s.CTX, s.trust(pub=t.PK), ad, r.NOW, ad.key_admission)
+>           assert _refused_with(d, "contract_unsupported")
+E           AssertionError: assert False
+E            +  where False = _refused_with(PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='family_unsupported', detail='statement', caller_unchanged=False, operationally_authorized=False), 'contract_unsupported')
+
+tests/test_r08v6_frozen_baseline.py:118: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_selection_and_record_are_refused_by_v5_v4_v3_and_the_reverse[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 310 passed in 1.24s
+
+
+=== SE03 statement family unchecked [KILLED]
+ract="r08-v6", signature=t.sign(stmt), pub=t.PK))
+>           assert v6_selection.parse_selection_envelope_v6(text).code == "family_unsupported"
+E           assert None == 'family_unsupported'
+E            +  where None = SelectionResult(ok=True, code=None, detail='', envelope={'contract_version': 'r08-v6', 'kind': 'selection-envelope', '...key-test-1', 'signature': 'FpIyJe15qHEwXPaPxZwmRzKsnbUrqTTfcgzxYgyVNznt/MXpUnm/mIfNTRKAVLKxgsTszXGQvC0Yx1TQuxxOCA=='}]).code
+E            +    where SelectionResult(ok=True, code=None, detail='', envelope={'contract_version': 'r08-v6', 'kind': 'selection-envelope', '...key-test-1', 'signature': 'FpIyJe15qHEwXPaPxZwmRzKsnbUrqTTfcgzxYgyVNznt/MXpUnm/mIfNTRKAVLKxgsTszXGQvC0Yx1TQuxxOCA=='}]) = <function parse_selection_envelope_v6 at 0x7f89fb0628e0>('{"contract_version": "r08-v6", "kind": "selection-envelope", "signatures": [{"alg": "ed25519", "key_id": "key-test-1"...", "supersedes": null}, "statement_digest": "sha256:c9fe10362630bacb4771a5b0be4a207639faf65bc846c7408900c4abd80d5ed1"}')
+E            +      where <function parse_selection_envelope_v6 at 0x7f89fb0628e0> = v6_selection.parse_selection_envelope_v6
+
+tests/test_r08v6_decision_path.py:196: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_other_families_are_unsupported_in_the_v6_table
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 88 passed in 0.81s
+
+
+=== SE04 evaluator binding unchecked [KILLED]
+for name5, name6 in (("_statement_code_v5", "_statement_code_v6"), ("_parse", "_parse"), ("parse_selection_envelope_v5", "parse_selection_envelope_v6"),
+                             ("signing_input_v5", "signing_input_v6")):
+            a, b = inspect.getsource(getattr(v5_selection, name5)), inspect.getsource(getattr(v6_selection, name6))
+>           assert _norm(a, "5").replace(name5, "_f").replace("_parse", "_f") == _norm(b, "6").replace(name6, "_f").replace("_parse", "_f")
+E           assert 'def _stateme..._code(stmt)\n' == 'def _stateme..._code(stmt)\n'
+E             
+E             Skipping 1970 identical leading characters in diff, use -v to show
+E             +        if (ev["evaluator_id"], ev["binding"]) != spec.evaluator_binding:
+E             +             return "evaluator_unsupported"
+E             -        if not (c.valid_hex40(ev["source_blob_id"]) and c.valid_sha_ref(ev["source_sha256"])):
+E             +         if not (c.valid_hex40(ev["source_blob_id"]) and c.valid_sha_ref(ev["source_sha256"])):
+E             ? +...
+E             
+E             ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:237: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_record_and_selection_are_the_v5_ones_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 344 passed in 1.32s
+
+
+=== RE01 record accepts any contract version [KILLED]
+d(), t4.selection_text, t4.caller()),
+                                                    (t3.record(), t3.selection_text, t3.caller())):
+            d = v6_decision.verify_and_decide_v6("required", t.caller(family), r.dumps(rec_other), text_other(rec_other), s.CTX, s.trust(pub=t.PK), ad, r.NOW, ad.key_admission)
+            assert _refused_with(d, "contract_unsupported")
+        # a v5 record under a v6 selection and a v6 record under a v5 selection
+        rec5 = t5.record()
+        # (a v5 record under a v6 selection: the record itself is unsupported at the v6 validator, so the selection cannot bind it)
+        d = v6_decision.verify_and_decide_v6("required", t.caller(family), r.dumps(rec5), t.selection_text(rec6), s.CTX, s.trust(pub=t.PK), ad, r.NOW, ad.key_admission)
+        assert _refused_with(d, "composition_record_invalid")
+>       assert v6_record.validate_record_text_v6(r.dumps(rec5)).code == "contract_unsupported"
+E       AssertionError: assert 'family_unsupported' == 'contract_unsupported'
+E         
+E         - contract_unsupported
+E         + family_unsupported
+
+tests/test_r08v6_frozen_baseline.py:124: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_selection_and_record_are_refused_by_v5_v4_v3_and_the_reverse[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 310 passed in 1.19s
+
+
+=== RE02 record family unchecked [KILLED]
+139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/python.py:508: in importtestmodule
+    mod = import_path(
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/pathlib.py:596: in import_path
+    importlib.import_module(module_name)
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1404: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1369: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1340: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+tests/test_r08v6_decision_path.py:22: in <module>
+    from registry_successor import v6_record
+E     File "/tmp/mut_r6_ue9ux88t/registry_successor/v6_record.py", line 29
+E       code = record_mod._shape(body, spec) or record_mod._values(body, spec)
+E   IndentationError: unexpected indent
+=========================== short test summary info ============================
+ERROR tests/test_r08v6_decision_path.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.30s
+
+
+=== VE01 verifier accepts a foreign envelope version [KILLED]
+      stmt = t.statement(t.record(family=family))
+            digest = __import__("registry_successor.common", fromlist=["digest"]).digest(stmt)
+            for foreign_version in ("r08-v2", "r08-v5", None, 6):
+                foreign = type("P", (), {"ok": True, "code": None, "envelope": {"contract_version": foreign_version}, "statement": stmt,
+                                         "statement_digest": digest, "signatures": []})()
+                rep = v6_verify.verify_selection_v6(foreign, s.CTX, s.trust(pub=t.PK), t.ev.Ed25519Verifier(), r.NOW, None)
+>               assert rep.ok is False and rep.code == "contract_unsupported"
+E               AssertionError: assert (False is False and 'signature_missing' == 'contract_unsupported'
+E                +  where False = VerificationReport(ok=False, code='signature_missing', detail='statement carries no signature', layers={'structural': ...uthenticated=False, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None).ok
+E                 
+E                 - contract_unsupported
+E                 + signature_missing)
+
+tests/test_r08v6_frozen_baseline.py:198: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_the_v6_verifier_takes_no_contract_version_and_rejects_a_foreign_envelope_object
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 340 passed in 1.36s
+
+
+=== VE02 revoked key not checked [KILLED]
+= "applied"  # only the exact epoch
+        assert_refused(t.decide(rec=rec, trust=s.trust(pub=t.PK, min_epochs=(("sel-test-1", 2),))), "selection_epoch_stale")
+>       assert_refused(t.decide(rec=rec, trust=s.trust(pub=t.PK, revoked_key_ids=frozenset({s.KEY_ID}))), "issuer_key_revoked")
+
+tests/test_r08v6_decision_path.py:345: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'issuer_key_revoked'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse[revocation-assurance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 119 passed in 1.05s
+
+
+=== VE03 withdrawal not refused [KILLED]
+
+=================================== FAILURES ===================================
+____________ test_withdrawn_selection_refuses[revocation-assurance] ____________
+
+fam = 'f5-action-class-revocation-assurance-policy'
+
+    def test_withdrawn_selection_refuses(fam):
+        rec = rec_(family=fam)
+        wd = s.withdraw_statement(t.statement(rec))
+>       assert_refused(t.decide(rec=rec, sel=r.dumps(t.envelope(wd))), "selection_withdrawn")
+
+tests/test_r08v6_decision_path.py:334: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_missing', detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_withdrawn'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_missing', detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:94: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_withdrawn_selection_refuses[revocation-assurance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 117 passed in 1.06s
+
+
+=== VE04 expiry boundary inclusive [KILLED]
+ [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 53%]
+......................................................F
+=================================== FAILURES ===================================
+__ test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names ___
+
+    def test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names():
+        a, b = inspect.getsource(v5_verify._verify_v5), inspect.getsource(v6_verify._verify_v6)
+>       assert _norm(a, "5").replace("_verify_vN", "_verify") == _norm(b, "6").replace("_verify_vN", "_verify")
+E       assert 'def _verify(... else None)\n' == 'def _verify(... else None)\n'
+E         
+E         Skipping 6892 identical leading characters in diff, use -v to show
+E         - lif when > end:
+E         + lif when >= end:
+E         ?           +
+E                       mark("time", "selection_expired", "now is at or after valid_until")
+E                   else:...
+E         
+E         ...Full output truncated (36 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:217: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed in 1.35s
+
+
+=== VE05 not-yet-effective boundary exclusive [KILLED]
+............................................................ [ 39%]
+........................................................................ [ 53%]
+......................................................F
+=================================== FAILURES ===================================
+__ test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names ___
+
+    def test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names():
+        a, b = inspect.getsource(v5_verify._verify_v5), inspect.getsource(v6_verify._verify_v6)
+>       assert _norm(a, "5").replace("_verify_vN", "_verify") == _norm(b, "6").replace("_verify_vN", "_verify")
+E       assert 'def _verify(... else None)\n' == 'def _verify(... else None)\n'
+E         
+E         Skipping 6781 identical leading characters in diff, use -v to show
+E         - lif when <= start:
+E         ?           -
+E         + lif when < start:
+E                       mark("time", "selection_not_yet_effective", "now is before valid_from")
+E                   elif when >= end:...
+E         
+E         ...Full output truncated (38 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:217: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed in 1.39s
+
+
+=== VE06 epoch floor exclusive [KILLED]
+........................................................... [ 39%]
+........................................................................ [ 53%]
+......................................................F
+=================================== FAILURES ===================================
+__ test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names ___
+
+    def test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names():
+        a, b = inspect.getsource(v5_verify._verify_v5), inspect.getsource(v6_verify._verify_v6)
+>       assert _norm(a, "5").replace("_verify_vN", "_verify") == _norm(b, "6").replace("_verify_vN", "_verify")
+E       assert 'def _verify(... else None)\n' == 'def _verify(... else None)\n'
+E         
+E         Skipping 7445 identical leading characters in diff, use -v to show
+E         - nd epoch <= floor):
+E         ?           -
+E         + nd epoch < floor):
+E                           mark("epoch", "selection_epoch_stale", "epoch is below the trusted floor")
+E                       else:...
+E         
+E         ...Full output truncated (27 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:217: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed in 1.43s
+
+
+=== VE07 authority not enforced [KILLED]
+t("consumer-other", "tenant-a", "inst-a", "domain-a", "op-test")):
+            tr_ = v.TrustSnapshot("snap-test-1", 1, "2026-10-27T00:00:00Z", (v.IssuerEntry(s.KEY_ID, "issuer-test-1", "ed25519", t.PK, (other,)),))
+>           assert_refused(t.decide(rec=rec_(family=fam), trust=tr_), "issuer_not_authorized")
+
+tests/test_r08v6_decision_path.py:257: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'issuer_not_authorized'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_signer_without_exact_authority_is_not_authorized[revocation-assurance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 103 passed in 0.92s
+
+
+=== VE08 operation mismatch ignored [KILLED]
+} if family == RA else {TF})
+            other_ctx = c.ExpectedContext("consumer-test", "tenant-a", "inst-a", "domain-a", "op-tr" if op == "op-ra" else "op-ra")
+>           assert_refused(t.decide(rec=rec, sel=t.selection_text(rec, operation=op), ctx=other_ctx, trust=trust), "selection_operation_mismatch")
+
+tests/test_r08v6_decision_path.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_operation_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_each_family_is_its_own_record_and_selection_with_its_own_operation
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 90 passed in 0.90s
+
+
+=== VE09 selection revocation ignored [KILLED]
+vocation-assurance-policy'
+
+    def test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse(fam):
+        rec = rec_(family=fam)
+>       assert_refused(t.decide(rec=rec, trust=s.trust(pub=t.PK, revoked_selections=frozenset({("sel-test-1", 1)}))), "selection_revoked")
+
+tests/test_r08v6_decision_path.py:342: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_revoked'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse[revocation-assurance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 119 passed in 1.09s
+
+
+=== VE10 key admission optional [KILLED]
+   args = ("required", t.caller(fam), r.dumps(rec), t.selection_text(rec), s.CTX)
+        assert_refused(verify_and_decide_v6(*args, None, ad, r.NOW), "trust_snapshot_missing")
+        assert_refused(verify_and_decide_v6(*args, s.trust(pub=t.PK), None, r.NOW), "verifier_unavailable")
+>       assert_refused(verify_and_decide_v6(*args, s.trust(pub=bytes.fromhex("01" + "00" * 31)), ad, r.NOW), "trust_snapshot_invalid")
+
+tests/test_r08v6_decision_path.py:361: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='signature_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'trust_snapshot_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='signature_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:94: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_trust_snapshot_missing_unverifier_and_bad_key[revocation-assurance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 121 passed in 1.05s
+
+
+=== VE11 trust expiry boundary inclusive [KILLED]
+........................................ [ 53%]
+......................................................F
+=================================== FAILURES ===================================
+__ test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names ___
+
+    def test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names():
+        a, b = inspect.getsource(v5_verify._verify_v5), inspect.getsource(v6_verify._verify_v6)
+>       assert _norm(a, "5").replace("_verify_vN", "_verify") == _norm(b, "6").replace("_verify_vN", "_verify")
+E       assert 'def _verify(... else None)\n' == 'def _verify(... else None)\n'
+E         
+E         Skipping 3608 identical leading characters in diff, use -v to show
+E         - lif when > trust["valid_until"]:
+E         + lif when >= trust["valid_until"]:
+E         ?           +
+E                   mark("trust_snapshot", "trust_snapshot_expired", "trust snapshot is past valid_until")
+E               elif not v._floor_inputs_ok(min_trust_snapshot_version, last_accepted_snapshot):...
+E         
+E         ...Full output truncated (86 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:217: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_verify_orchestration_is_the_v5_orchestration_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 342 passed in 1.38s
+
+
+=== VE12 consumer mismatch ignored [KILLED]
+    d = t.decide(rec=rec, ctx=ctx)
+        else:
+            ad = t.ev.Ed25519Verifier()
+            d = verify_and_decide_v6("required", t.caller(fam), r.dumps(rec), t.selection_text(rec), None, s.trust(pub=t.PK), ad, r.NOW, ad.key_admission)
+>       assert_refused(d, code)
+
+tests/test_r08v6_decision_path.py:249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_consumer_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_wrong_tenant_scope_consumer_operation_refuse[revocation-assurance-ctx0-selection_consumer_mismatch]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed in 0.92s
+
+
+=== VE13 signature domain of the verifier is the v5 one [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes _
+
+    def test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v6_decision_path.py:51: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_valid_selection_narrows_not_required_to_required_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.68s
+
+
+=== DE01 participation not compared [KILLED]
+required", t.caller(fam), r.dumps(rec), t.selection_text(rec), s.CTX, s.trust(pub=t.PK), ad, None, ad.key_admission), "time_unavailable")
+>       assert_refused(t.decide(participation="required", rec=rec, sel=t.selection_text(rec, participation="optional")), "participation_mismatch")
+
+tests/test_r08v6_decision_path.py:352: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'participation_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v6_support.py:93: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse[revocation-assurance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 119 passed in 0.97s
+
+
+=== DE02 pinned record digest not compared [KILLED]
+....F
+=================================== FAILURES ===================================
+_ test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names __
+
+    def test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names():
+        a, b = inspect.getsource(v5_decision._decide_verified), inspect.getsource(v6_decision._decide_verified)
+>       assert _norm(a, "5").replace("_decide_verifiedN", "_d") == _norm(b, "6").replace("_decide_verifiedN", "_d")
+E       assert 'def _decide_...ted input")\n' == 'def _decide_...ted input")\n'
+E         
+E         Skipping 2413 identical leading characters in diff, use -v to show
+E         -        if False:
+E         +        if getattr(report, "bound_record_digest", None) != recomputed:
+E                       return _refusal(participation, caller, "record_digest_mismatch", "the record is not the one the verified selection pinned")
+E                   result = vN_families.compose_for_vN(vN_families.CONTRACT_VN, caller, record)
+E                   if not result.ok:...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:226: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 343 passed in 1.37s
+
+
+=== DE03 binding layer not required [KILLED]
+...F
+=================================== FAILURES ===================================
+_ test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names __
+
+    def test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names():
+        a, b = inspect.getsource(v5_decision._decide_verified), inspect.getsource(v6_decision._decide_verified)
+>       assert _norm(a, "5").replace("_decide_verifiedN", "_d") == _norm(b, "6").replace("_decide_verifiedN", "_d")
+E       assert 'def _decide_...ted input")\n' == 'def _decide_...ted input")\n'
+E         
+E         Skipping 1673 identical leading characters in diff, use -v to show
+E         -  dict) or False:
+E         +  dict) or layers.get("record_binding") != "pass":
+E                       return _refusal(participation, caller, "record_identity_mismatch", "the verification report has no passing record binding")
+E                   body = getattr(record, "record", None)
+E                   if not isinstance(body, dict) or not isinstance(body.get("payload"), dict):...
+E         
+E         ...Full output truncated (13 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:226: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 343 passed in 1.34s
+
+
+=== DE04 optional caller not normalized [KILLED]
+.....................................F
+=================================== FAILURES ===================================
+_ test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through _
+
+    def test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through():
+        unsigned = "{}"
+        d = t.decide(participation="optional", sel=unsigned, cl={RF: dict(reversed(list({"class-a": REQ, "class-b": NREQ}.items())))})
+>       assert d.kind == "overlay_not_applied" and d.effective == {RF: {"class-a": REQ, "class-b": NREQ}} and list(d.effective[RF]) == ["class-a", "class-b"]
+E       AssertionError: assert ('overlay_not_applied' == 'overlay_not_applied'
+E         
+E           overlay_not_applied and {'class_requi...: 'required'}} == {'class_requi...ot_required'}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Use -v to get more diff and ['class-b', 'class-a'] == ['class-a', 'class-b']
+E         
+E         At index 0 diff: 'class-b' != 'class-a'
+E         Use -v to get more diff)
+
+tests/test_r08v6_decision_path.py:124: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_optional_refusal_normalizes_a_well_formed_caller_of_either_shape_and_passes_others_through
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 37 passed in 0.77s
+
+
+=== DE05 withdrawn/failed report accepted [KILLED]
+urance-policy'
+
+    def test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application(fam):
+        rec = rec_(family=fam)
+        sel = r.dumps(t.envelope(t.statement(rec, participation="optional")))
+        bad_caller = cmap(class_a="x") if fam == RA else {TF: "x"}
+        d = t.decide(participation="optional", rec=rec, sel=sel, cl=bad_caller)
+        assert d.kind == "overlay_not_applied" and d.code == "composition_caller_invalid" and d.caller_unchanged is True
+        assert d.operationally_authorized is False and d.deny_all is False and d.effective == bad_caller
+        good = cmap(class_a=NREQ, class_b=NREQ) if fam == RA else {TF: OFF}
+        bad_sig = r.dumps(t.envelope(t.statement(rec, participation="optional"), sk=t.OTHER_SK))
+        d3 = t.decide(participation="optional", rec=rec, sel=bad_sig, cl=good)
+>       assert d3.kind == "overlay_not_applied" and d3.code == "signature_invalid" and d3.caller_unchanged is True
+E       AssertionError: assert ('applied' == 'overlay_not_applied'
+E         
+E         - overlay_not_applied
+E         + applied)
+
+tests/test_r08v6_decision_path.py:115: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application[revocation-assurance]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 35 passed in 0.73s
+
+
+=== DE06 required refusal returns the caller [KILLED]
+======================== FAILURES ===================================
+_________ test_ra_unknown_registry_class_refuses_and_is_never_created __________
+
+    def test_ra_unknown_registry_class_refuses_and_is_never_created():
+>       assert_refused(t.decide(rec=rec_(cmap(class_a=REQ, class_zz=REQ)), cl=cmap(class_a=NREQ)), "composition_record_invalid")
+
+tests/test_r08v6_decision_path.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective={'class_requires_revocation_assurance': {'class-a': 'not_...record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_record_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+        assert d.code == code, d
+>       assert d.effective is None and d.caller_unchanged is False and d.operationally_authorized is False and d.deny_all is False
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+tests/r08v6_support.py:95: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_decision_path.py::test_ra_unknown_registry_class_refuses_and_is_never_created
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed in 0.65s
+
+
+=== DE07 record digest recompute skipped [KILLED]
+== FAILURES ===================================
+_ test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names __
+
+    def test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names():
+        a, b = inspect.getsource(v5_decision._decide_verified), inspect.getsource(v6_decision._decide_verified)
+>       assert _norm(a, "5").replace("_decide_verifiedN", "_d") == _norm(b, "6").replace("_decide_verifiedN", "_d")
+E       assert 'def _decide_...ted input")\n' == 'def _decide_...ted input")\n'
+E         
+E         Skipping 2185 identical leading characters in diff, use -v to show
+E         -        if False or c.digest(body["payload"]) != body.get("payload_digest"):
+E         ?           ^^^^ ^
+E         +        if recomputed != body.get("record_digest") or c.digest(body["payload"]) != body.get("payload_digest"):
+E         ?           ^ ^^^^^^^^^^^^^^^^^^^^^^^^^  +++++++++++++
+E                       return _refusal(participation, caller, "digest_mismatch", "record content was altered after validation")...
+E         
+E         ...Full output truncated (9 lines hidden), use '-vv' to show
+
+tests/test_r08v6_frozen_baseline.py:226: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v6_frozen_baseline.py::test_v6_decision_orchestration_is_the_v5_orchestration_modulo_version_names
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 343 passed in 1.33s
+

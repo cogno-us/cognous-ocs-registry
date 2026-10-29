@@ -1,0 +1,14 @@
+r08-v6 evidence (BUILDER_TESTED, non-authorizing; not independently qualified)
+Interpreter: venv-g1-212 python (CPython with pytest, pynacl, cryptography); pytest.ini supplies pythonpath.
+v6 tests:      python -m pytest -q -p no:cacheprovider tests/test_r08v6_*.py          -> 543 passed (v6-tests.txt)
+Whole suite:   branch r08-v6-revocation-families  -> 1 failed, 8019 passed, 2 skipped (suite-branch.txt)
+               main e8b572cc (separate checkout, same interpreter) -> 1 failed, 7476 passed, 2 skipped (suite-main-e8b572c.txt)
+               The single failure is identical on main: tests/test_adapter_ed25519.py::test_installed_cryptography_matches_the_test_only_lock
+               (installed cryptography differs from the test-only lock in this environment); no regression: 8019 - 7476 = 543 = the new v6 tests.
+Mutation:      mut_r6.py, 80 mutants on v6 modules. mutation-results-r08v6.json / mut-full.out (all v6 tests),
+               mutation-results-r08v6-behavioural-only.json / mut-behavioural.out (source-parity tests deselected: behavioural tests alone).
+               Both passes: 79 KILLED, 1 SURVIVED.
+Survivor TR14 (caller extra key tolerated): EQUIVALENT. normalize_caller reads the caller through _snapshot(caller, len(TR_FIELDS)),
+               which already returns None for more than one entry, so `set(snap) != set(TR_FIELDS)` and `TR_FIELD not in snap` accept and
+               refuse exactly the same inputs (a one-entry mapping lacking the key is refused by both).
+Generators:    genman6.py (frozen manifest, 174 files from e8b572c), genvec6.py (independent-encoder identity vectors), genvec6s.py (signed vectors).
