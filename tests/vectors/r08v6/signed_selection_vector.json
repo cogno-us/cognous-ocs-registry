@@ -1,0 +1,251 @@
+{
+ "f5-action-class-revocation-assurance-policy": {
+  "effective": {
+   "class_requires_revocation_assurance": {
+    "class-a": "required",
+    "class-b": "required",
+    "class-c": "required"
+   }
+  },
+  "envelope": {
+   "contract_version": "r08-v6",
+   "kind": "selection-envelope",
+   "signatures": [
+    {
+     "alg": "ed25519",
+     "key_id": "key-test-1",
+     "signature": "vVRXvuC1r8mB9cTQnr2pXdLl7TTjD3FG4LWio8aJ/e2NYD05yMDtII8rl2793ZrH+S9wwbgHdRLDpAfVIPJbDg=="
+    }
+   ],
+   "statement": {
+    "consumer_id": "consumer-test",
+    "disposition": "select",
+    "effective": {
+     "valid_from": "2026-10-25T00:00:00Z",
+     "valid_until": "2026-10-26T00:00:00Z"
+    },
+    "epoch": 1,
+    "evaluator": {
+     "binding": "registered-code-reference",
+     "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+     "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+     "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+    },
+    "family": "f5-action-class-revocation-assurance-policy",
+    "issued_at": "2026-10-24T00:00:00Z",
+    "kind": "selection",
+    "operation": "op-test",
+    "participation": "required",
+    "record": {
+     "record_digest": "sha256:5e10601049d5a51753de5e059ecd43bc05932a3f8ecfd689e76e04f011cf0539",
+     "record_id": "f5ra-test-record",
+     "record_version": 1
+    },
+    "revocation_ref": "revocation-test-1",
+    "scope": {
+     "authority_domain": "domain-a",
+     "institution": "inst-a",
+     "tenant": "tenant-a"
+    },
+    "selection_id": "sel-test-1",
+    "selector_ref": "selector-test-1",
+    "supersedes": null
+   },
+   "statement_digest": "sha256:37d3998dd175eaf7c665491e2dafb968cd080859e227d334939242a15e4dd619"
+  },
+  "note": "SYNTHETIC test keys; BUILDER_TESTED; non-authorizing",
+  "record": {
+   "contract_version": "r08-v6",
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-action-class-revocation-assurance-policy",
+   "kind": "record",
+   "non_authorizing": true,
+   "payload": {
+    "class_requires_revocation_assurance": {
+     "class-a": "required",
+     "class-b": "required"
+    }
+   },
+   "payload_digest": "sha256:b2c448a6c567a3d40c5d9589f92071f2bf1ac3a73d618695210781fe659c00f1",
+   "provenance": {
+    "authored_at": "2026-10-25T00:00:00Z",
+    "authored_by": "test-author",
+    "decision_ref": "decision-test-1"
+   },
+   "record_digest": "sha256:5e10601049d5a51753de5e059ecd43bc05932a3f8ecfd689e76e04f011cf0539",
+   "record_id": "f5ra-test-record",
+   "record_version": 1,
+   "source": {
+    "blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "commit": "ec728da6dc301a664b331ac8986afd6e850a1273",
+    "path": "engine/safe_executor.py",
+    "repository": "cogno-us/cognous-execution-runtime",
+    "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "supersedes": null
+  },
+  "signature": "vVRXvuC1r8mB9cTQnr2pXdLl7TTjD3FG4LWio8aJ/e2NYD05yMDtII8rl2793ZrH+S9wwbgHdRLDpAfVIPJbDg==",
+  "signature_hex": "bd5457bee0b5afc981f5c4d09ebda95dd2e5ed34e30f7146e0b5a2a3c689fded8d603d39c8c0ed208f2b976efddd9ac7f92f70c1b8077512c3a407d520f25b0e",
+  "signing_input_hex": "6f63732d7265672f7230382d76362f73656c656374696f6e0a7b22636f6e73756d65725f6964223a22636f6e73756d65722d74657374222c22646973706f736974696f6e223a2273656c656374222c22656666656374697665223a7b2276616c69645f66726f6d223a22323032362d31302d32355430303a30303a30305a222c2276616c69645f756e74696c223a22323032362d31302d32365430303a30303a30305a227d2c2265706f6368223a312c226576616c7561746f72223a7b2262696e64696e67223a22726567697374657265642d636f64652d7265666572656e6365222c226576616c7561746f725f6964223a22656e67696e652e736166655f6578656375746f722e4c6f63616c457865637574696f6e506f6c6963792e636865636b222c22736f757263655f626c6f625f6964223a2232666338383064616533376561633736653530373435333334333537343063653036383432303964222c22736f757263655f736861323536223a227368613235363a39343065373831393334353432613761636437626265326636383333663964333239333235643934623439343235616664396432626564636632336335623638227d2c2266616d696c79223a2266352d616374696f6e2d636c6173732d7265766f636174696f6e2d6173737572616e63652d706f6c696379222c226973737565645f6174223a22323032362d31302d32345430303a30303a30305a222c226b696e64223a2273656c656374696f6e222c226f7065726174696f6e223a226f702d74657374222c2270617274696369706174696f6e223a227265717569726564222c227265636f7264223a7b227265636f72645f646967657374223a227368613235363a35653130363031303439643561353137353364653565303539656364343362633035393332613366386563666436383965373665303466303131636630353339222c227265636f72645f6964223a22663572612d746573742d7265636f7264222c227265636f72645f76657273696f6e223a317d2c227265766f636174696f6e5f726566223a227265766f636174696f6e2d746573742d31222c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f6964223a2273656c2d746573742d31222c2273656c6563746f725f726566223a2273656c6563746f722d746573742d31222c2273757065727365646573223a6e756c6c7d",
+  "statement": {
+   "consumer_id": "consumer-test",
+   "disposition": "select",
+   "effective": {
+    "valid_from": "2026-10-25T00:00:00Z",
+    "valid_until": "2026-10-26T00:00:00Z"
+   },
+   "epoch": 1,
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-action-class-revocation-assurance-policy",
+   "issued_at": "2026-10-24T00:00:00Z",
+   "kind": "selection",
+   "operation": "op-test",
+   "participation": "required",
+   "record": {
+    "record_digest": "sha256:5e10601049d5a51753de5e059ecd43bc05932a3f8ecfd689e76e04f011cf0539",
+    "record_id": "f5ra-test-record",
+    "record_version": 1
+   },
+   "revocation_ref": "revocation-test-1",
+   "scope": {
+    "authority_domain": "domain-a",
+    "institution": "inst-a",
+    "tenant": "tenant-a"
+   },
+   "selection_id": "sel-test-1",
+   "selector_ref": "selector-test-1",
+   "supersedes": null
+  }
+ },
+ "f5-terminal-revocation-enablement-policy": {
+  "effective": {
+   "terminal_revocation": "on"
+  },
+  "envelope": {
+   "contract_version": "r08-v6",
+   "kind": "selection-envelope",
+   "signatures": [
+    {
+     "alg": "ed25519",
+     "key_id": "key-test-1",
+     "signature": "TOx7GXg/gP08WXPJc0XlJTkvW1r7LZRpx7Er17CAQL+CUThNnjglE76N9KjQ0tZQPpHhR06T4yPfECLptgfeDA=="
+    }
+   ],
+   "statement": {
+    "consumer_id": "consumer-test",
+    "disposition": "select",
+    "effective": {
+     "valid_from": "2026-10-25T00:00:00Z",
+     "valid_until": "2026-10-26T00:00:00Z"
+    },
+    "epoch": 1,
+    "evaluator": {
+     "binding": "registered-code-reference",
+     "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+     "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+     "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+    },
+    "family": "f5-terminal-revocation-enablement-policy",
+    "issued_at": "2026-10-24T00:00:00Z",
+    "kind": "selection",
+    "operation": "op-test",
+    "participation": "required",
+    "record": {
+     "record_digest": "sha256:82186c0e9881b2c848ed11002004d4df1d122a936ae2d5f638295d40a716ee61",
+     "record_id": "f5tr-test-record",
+     "record_version": 1
+    },
+    "revocation_ref": "revocation-test-1",
+    "scope": {
+     "authority_domain": "domain-a",
+     "institution": "inst-a",
+     "tenant": "tenant-a"
+    },
+    "selection_id": "sel-test-1",
+    "selector_ref": "selector-test-1",
+    "supersedes": null
+   },
+   "statement_digest": "sha256:fa1b8b64dac47c9080b8a71bb6e2a4b4c83999c0195d1c355b38c17e72e1b0f2"
+  },
+  "note": "SYNTHETIC test keys; BUILDER_TESTED; non-authorizing",
+  "record": {
+   "contract_version": "r08-v6",
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-terminal-revocation-enablement-policy",
+   "kind": "record",
+   "non_authorizing": true,
+   "payload": {
+    "terminal_revocation": "on"
+   },
+   "payload_digest": "sha256:b5201a575a0540a15f1e991edffc97e2899a996ca97f9d72b23c0f96ac6cf9d2",
+   "provenance": {
+    "authored_at": "2026-10-25T00:00:00Z",
+    "authored_by": "test-author",
+    "decision_ref": "decision-test-1"
+   },
+   "record_digest": "sha256:82186c0e9881b2c848ed11002004d4df1d122a936ae2d5f638295d40a716ee61",
+   "record_id": "f5tr-test-record",
+   "record_version": 1,
+   "source": {
+    "blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "commit": "ec728da6dc301a664b331ac8986afd6e850a1273",
+    "path": "engine/safe_executor.py",
+    "repository": "cogno-us/cognous-execution-runtime",
+    "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "supersedes": null
+  },
+  "signature": "TOx7GXg/gP08WXPJc0XlJTkvW1r7LZRpx7Er17CAQL+CUThNnjglE76N9KjQ0tZQPpHhR06T4yPfECLptgfeDA==",
+  "signature_hex": "4cec7b19783f80fd3c5973c97345e525392f5b5afb2d9469c7b12bd7b08040bf8251384d9e382513be8df4a8d0d2d6503e91e1474e93e323df1022e9b607de0c",
+  "signing_input_hex": "6f63732d7265672f7230382d76362f73656c656374696f6e0a7b22636f6e73756d65725f6964223a22636f6e73756d65722d74657374222c22646973706f736974696f6e223a2273656c656374222c22656666656374697665223a7b2276616c69645f66726f6d223a22323032362d31302d32355430303a30303a30305a222c2276616c69645f756e74696c223a22323032362d31302d32365430303a30303a30305a227d2c2265706f6368223a312c226576616c7561746f72223a7b2262696e64696e67223a22726567697374657265642d636f64652d7265666572656e6365222c226576616c7561746f725f6964223a22656e67696e652e736166655f6578656375746f722e4c6f63616c457865637574696f6e506f6c6963792e636865636b222c22736f757263655f626c6f625f6964223a2232666338383064616533376561633736653530373435333334333537343063653036383432303964222c22736f757263655f736861323536223a227368613235363a39343065373831393334353432613761636437626265326636383333663964333239333235643934623439343235616664396432626564636632336335623638227d2c2266616d696c79223a2266352d7465726d696e616c2d7265766f636174696f6e2d656e61626c656d656e742d706f6c696379222c226973737565645f6174223a22323032362d31302d32345430303a30303a30305a222c226b696e64223a2273656c656374696f6e222c226f7065726174696f6e223a226f702d74657374222c2270617274696369706174696f6e223a227265717569726564222c227265636f7264223a7b227265636f72645f646967657374223a227368613235363a38323138366330653938383162326338343865643131303032303034643464663164313232613933366165326435663633383239356434306137313665653631222c227265636f72645f6964223a22663574722d746573742d7265636f7264222c227265636f72645f76657273696f6e223a317d2c227265766f636174696f6e5f726566223a227265766f636174696f6e2d746573742d31222c2273636f7065223a7b22617574686f726974795f646f6d61696e223a22646f6d61696e2d61222c22696e737469747574696f6e223a22696e73742d61222c2274656e616e74223a2274656e616e742d61227d2c2273656c656374696f6e5f6964223a2273656c2d746573742d31222c2273656c6563746f725f726566223a2273656c6563746f722d746573742d31222c2273757065727365646573223a6e756c6c7d",
+  "statement": {
+   "consumer_id": "consumer-test",
+   "disposition": "select",
+   "effective": {
+    "valid_from": "2026-10-25T00:00:00Z",
+    "valid_until": "2026-10-26T00:00:00Z"
+   },
+   "epoch": 1,
+   "evaluator": {
+    "binding": "registered-code-reference",
+    "evaluator_id": "engine.safe_executor.LocalExecutionPolicy.check",
+    "source_blob_id": "2fc880dae37eac76e5074533435740ce0684209d",
+    "source_sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"
+   },
+   "family": "f5-terminal-revocation-enablement-policy",
+   "issued_at": "2026-10-24T00:00:00Z",
+   "kind": "selection",
+   "operation": "op-test",
+   "participation": "required",
+   "record": {
+    "record_digest": "sha256:82186c0e9881b2c848ed11002004d4df1d122a936ae2d5f638295d40a716ee61",
+    "record_id": "f5tr-test-record",
+    "record_version": 1
+   },
+   "revocation_ref": "revocation-test-1",
+   "scope": {
+    "authority_domain": "domain-a",
+    "institution": "inst-a",
+    "tenant": "tenant-a"
+   },
+   "selection_id": "sel-test-1",
+   "selector_ref": "selector-test-1",
+   "supersedes": null
+  }
+ }
+}

@@ -1,0 +1,136 @@
+{
+ "domain": "ocs-reg/r08-v6/effective-policy\\n",
+ "profile": "ocs-effective-policy/1",
+ "vectors": [
+  {
+   "digest": "sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0",
+   "effective": {
+    "class_requires_revocation_assurance": {
+     "class-a": "required",
+     "class-b": "not_required"
+    }
+   },
+   "family": "f5-action-class-revocation-assurance-policy",
+   "id": "ra-baseline",
+   "preimage": {
+    "contract_version": "r08-v6",
+    "deny_all": [],
+    "effective": {
+     "class_requires_revocation_assurance": {
+      "class-a": "required",
+      "class-b": "not_required"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-revocation-assurance-policy",
+    "family_version": "v6"
+   }
+  },
+  {
+   "digest": "sha256:e85a5096639de985ef89c28ada445a81ddc8b5339d63ed5ec9ac657ae010749f",
+   "effective": {
+    "class_requires_revocation_assurance": {
+     "class-a": "required",
+     "class-b": "required",
+     "class-c": "required"
+    }
+   },
+   "family": "f5-action-class-revocation-assurance-policy",
+   "id": "ra-all-required",
+   "preimage": {
+    "contract_version": "r08-v6",
+    "deny_all": [],
+    "effective": {
+     "class_requires_revocation_assurance": {
+      "class-a": "required",
+      "class-b": "required",
+      "class-c": "required"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-revocation-assurance-policy",
+    "family_version": "v6"
+   }
+  },
+  {
+   "digest": "sha256:e728cc1b6e0bdbee23198b0e09c7edf307e059dc20667b29fc72387ff5034b12",
+   "effective": {
+    "class_requires_revocation_assurance": {
+     "class-a": "not_required"
+    }
+   },
+   "family": "f5-action-class-revocation-assurance-policy",
+   "id": "ra-all-not-required",
+   "preimage": {
+    "contract_version": "r08-v6",
+    "deny_all": [],
+    "effective": {
+     "class_requires_revocation_assurance": {
+      "class-a": "not_required"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-revocation-assurance-policy",
+    "family_version": "v6"
+   }
+  },
+  {
+   "digest": "sha256:e5406ac62ac24cae6b942004e3d7099434953106bf76dd1632370affad95a9e7",
+   "effective": {
+    "class_requires_revocation_assurance": {
+     "class-a": "required"
+    }
+   },
+   "family": "f5-action-class-revocation-assurance-policy",
+   "id": "ra-single-required",
+   "preimage": {
+    "contract_version": "r08-v6",
+    "deny_all": [],
+    "effective": {
+     "class_requires_revocation_assurance": {
+      "class-a": "required"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-revocation-assurance-policy",
+    "family_version": "v6"
+   }
+  },
+  {
+   "digest": "sha256:567c4fe9e5054634abb1de8dd696459d3919f633456f1f644433a53fa1b39b6f",
+   "effective": {
+    "terminal_revocation": "on"
+   },
+   "family": "f5-terminal-revocation-enablement-policy",
+   "id": "tr-on",
+   "preimage": {
+    "contract_version": "r08-v6",
+    "deny_all": [],
+    "effective": {
+     "terminal_revocation": "on"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-terminal-revocation-enablement-policy",
+    "family_version": "v6"
+   }
+  },
+  {
+   "digest": "sha256:c3f09983322131d8e9ba3e6fab21f6db126c9c665b46b5f02bfc0cf7143a37d3",
+   "effective": {
+    "terminal_revocation": "off"
+   },
+   "family": "f5-terminal-revocation-enablement-policy",
+   "id": "tr-off",
+   "preimage": {
+    "contract_version": "r08-v6",
+    "deny_all": [],
+    "effective": {
+     "terminal_revocation": "off"
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-terminal-revocation-enablement-policy",
+    "family_version": "v6"
+   }
+  }
+ ]
+}
