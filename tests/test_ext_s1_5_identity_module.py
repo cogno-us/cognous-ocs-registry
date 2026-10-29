@@ -921,7 +921,11 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
                                                                           # r08-v5 on_unreadable increment: the seven NEW v5 modules only (no existing successor module is touched)
                                                                           "registry_successor/v5_class_unreadable.py", "registry_successor/v5_families.py", "registry_successor/v5_record.py",
                                                                           "registry_successor/v5_selection.py", "registry_successor/v5_verify.py", "registry_successor/v5_policy_identity.py",
-                                                                          "registry_successor/v5_decision.py"}, diff
+                                                                          "registry_successor/v5_decision.py",
+                                                                          # r08-v6 revocation-families increment: the eight NEW v6 modules only (no existing successor module is touched)
+                                                                          "registry_successor/v6_class_revocation_assurance.py", "registry_successor/v6_terminal_revocation.py",
+                                                                          "registry_successor/v6_families.py", "registry_successor/v6_record.py", "registry_successor/v6_selection.py",
+                                                                          "registry_successor/v6_verify.py", "registry_successor/v6_policy_identity.py", "registry_successor/v6_decision.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():

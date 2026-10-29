@@ -100,7 +100,8 @@ PY = os.environ.get("MUT_PY", sys.executable)
 TESTS = sorted(str(p.relative_to(work)) for p in (work / "tests").glob("test_r08v6_*.py"))
 def run():
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
-    return subprocess.run([PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider"] + TESTS, cwd=work, capture_output=True, text=True, env=env)
+    k = ["-k", os.environ["MUT_K"]] if os.environ.get("MUT_K") else []  # e.g. "not modulo_version_names" to prove behavioural tests kill without the source-parity tests
+    return subprocess.run([PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider"] + k + TESTS, cwd=work, capture_output=True, text=True, env=env)
 base = run()
 assert base.returncode == 0, "unmutated tree must pass:\n" + base.stdout[-2000:]
 res, log = [], []
@@ -119,6 +120,6 @@ for name, fn, a, b in M:
         F.write_text(orig)
     res.append((name, status, detail)); print(*res[-1], flush=True)
 out_dir.mkdir(parents=True, exist_ok=True)
-(out_dir / "mutation-results-r08v6.json").write_text(json.dumps({"tests": TESTS, "results": res}, indent=1))
-(out_dir / "mutation-raw-log-r08v6.txt").write_text("\n".join(log))
+(out_dir / ("mutation-results-r08v6%s.json" % os.environ.get("MUT_SUFFIX", ""))).write_text(json.dumps({"tests": TESTS, "results": res}, indent=1))
+(out_dir / ("mutation-raw-log-r08v6%s.txt" % os.environ.get("MUT_SUFFIX", ""))).write_text("\n".join(log))
 print("TOTAL", len(res), "KILLED", sum(1 for x in res if x[1] == "KILLED"), "SURVIVED", [x[0] for x in res if x[1] == "SURVIVED"], "PATTERN", [x[0] for x in res if x[1].startswith("PATTERN")])

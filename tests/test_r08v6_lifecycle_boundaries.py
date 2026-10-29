@@ -3,6 +3,7 @@
 These pin the edges the broader decision-path tests do not: inclusive/exclusive time bounds, the epoch floor, exact-type dispatch (a str subclass
 never selects a family or a table), truthy-but-not-True record objects, and that each verification layer refuses on its own.
 """
+import copy
 import datetime
 
 import pytest
@@ -131,3 +132,56 @@ def test_selection_of_one_authority_cannot_be_used_by_a_signer_holding_only_anot
     grant = v.AuthorityGrant("consumer-test", "tenant-a", "inst-a", "domain-a", "op-other")
     tr_ = v.TrustSnapshot("snap-test-1", 1, "2026-10-27T00:00:00Z", (v.IssuerEntry(s.KEY_ID, "issuer-test-1", "ed25519", t.PK, (grant,)),))
     t.assert_refused(t.decide(rec=rec, trust=tr_), "issuer_not_authorized")
+
+
+# ---- evaluator pin and the defence-in-depth checks of the decision step (reachable only by handing it a hand-built report)
+@FAMS
+def test_selection_and_record_must_name_the_registered_evaluator(family):
+    from registry_successor import v6_record, v6_selection
+    rec = t.record(family=family)
+    for field, value in (("evaluator_id", "other.evaluator"), ("binding", "other-binding")):
+        stmt = t.statement(rec)
+        stmt["evaluator"] = dict(stmt["evaluator"], **{field: value})
+        parsed = v6_selection.parse_selection_envelope_v6(r.dumps(t.envelope(stmt)))
+        assert not parsed.ok and parsed.code == "evaluator_unsupported"
+        bad_rec = r.seal_record(dict(rec, evaluator=dict(rec["evaluator"], **{field: value})))
+        assert v6_record.validate_record_text_v6(r.dumps(bad_rec)).code in ("evaluator_unsupported", "field_invalid")
+        t.assert_refused(t.decide(rec=bad_rec, sel=r.dumps(t.envelope(stmt))), "evaluator_unsupported")
+
+
+@FAMS
+def test_the_decision_step_rechecks_report_binding_and_record_digests_itself(family):
+    from registry_successor import v6_decision, v6_record
+    rec_text = r.dumps(t.record(family=family))
+    rec = v6_record.validate_record_text_v6(rec_text)
+    assert rec.ok
+
+    def report(**over):
+        base = {"ok": True, "code": None, "participation": "required", "layers": {"record_binding": "pass"}, "bound_record_digest": rec.record_digest}
+        base.update(over)
+        return type("Rep", (), base)()
+    caller = t.caller(family)
+    good = v6_decision._decide_verified("required", caller, rec, report())
+    assert good.kind == "applied"
+    t.assert_refused(v6_decision._decide_verified("required", caller, rec, report(bound_record_digest="sha256:" + "0" * 64)), "record_digest_mismatch")
+    t.assert_refused(v6_decision._decide_verified("required", caller, rec, report(layers={"record_binding": "refuse"})), "record_identity_mismatch")
+    t.assert_refused(v6_decision._decide_verified("required", caller, rec, report(layers={})), "record_identity_mismatch")
+    t.assert_refused(v6_decision._decide_verified("required", caller, rec, report(layers=None)), "record_identity_mismatch")
+    t.assert_refused(v6_decision._decide_verified("required", caller, rec, report(participation="optional")), "participation_mismatch")
+    t.assert_refused(v6_decision._decide_verified("required", caller, rec, report(ok=False, code="signature_invalid")), "signature_invalid")
+    t.assert_refused(v6_decision._decide_verified("required", caller, rec, None), "selection_missing")
+    t.assert_refused(v6_decision._decide_verified("required", caller, None, report()), "composition_record_invalid")
+    # a validated record whose body was altered after validation (payload widened, digests left as recorded)
+    altered = copy.deepcopy(rec.record)
+    if family == RA:
+        altered["payload"]["class_requires_revocation_assurance"]["class-a"] = "not_required"
+    else:
+        altered["payload"]["terminal_revocation"] = "off"
+    forged = type("Rec", (), {"ok": True, "record": altered, "record_digest": rec.record_digest, "code": None})()
+    t.assert_refused(v6_decision._decide_verified("required", caller, forged, report()), "digest_mismatch")
+    # payload digest wrong but record digest recomputed over it: still refused
+    altered2 = copy.deepcopy(rec.record)
+    altered2["payload_digest"] = "sha256:" + "1" * 64
+    altered2["record_digest"] = c.digest({k: v for k, v in altered2.items() if k != "record_digest"})
+    forged2 = type("Rec", (), {"ok": True, "record": altered2, "record_digest": altered2["record_digest"], "code": None})()
+    t.assert_refused(v6_decision._decide_verified("required", caller, forged2, report(bound_record_digest=altered2["record_digest"])), "digest_mismatch")
