@@ -183,3 +183,34 @@ Standard deliverables: `candidate-ledger.json` (source-backed accounting), `fami
 5. Completion means every **confirmed** manageable parameter is integrated and qualified, or has an explicit approved deferral/exclusion. Keep represented, implemented and independently accepted counts separate; blocked/unresolved items remain visible.
 
 **Standing holds:** independent V07/V08 and Tier 1 acceptance pending; Ed25519 #26/#34 SECURITY-HELD; release, publication, production HOLD.
+
+
+---
+
+## 12. Architect-approved execution-method amendment — design-first 19-parameter completion (2026-10-28)
+
+**Authority and precedence.** This append-only amendment supersedes the *future execution sequencing* in §§5, 11.3 and 11.5 insofar as they prescribe one parameter/family per implementation sprint. It does not alter the frozen v1.0 plan, audit denominator, eligibility adjudications, historical decisions, released contract bytes or established authority rules. Historical text above remains as provenance; a subsequent v1.2 plan may consolidate the wording only after Architect review.
+
+**Architect direction:** first design the complete 19-parameter Registry, next define its contracts, then replace qualified embedded configuration access with typed, verified effective-policy references while leaving mandatory evaluator invariants executable, and conduct **one comprehensive integrated test and independent-qualification campaign after the migration**. Keep inexpensive developer checks (schema, import/compile, focused integration tests and CI) during implementation; do not claim that a final test campaign excuses leaving a knowingly broken intermediate main branch.
+
+### 12.1 Ordered deliverables and gates
+
+**D1 — Canonical target architecture:** \`docs/architecture/REGISTRY-TARGET-ARCHITECTURE-v1.0.md\` describes all 19 parameters by stable audit ID; typed family catalogue, scope/applicability for tenant/consumer/institution/domain/operation/action class, signed selection and trust custody, host floor/non-widening composition, identity/commitment, activation, revocation, rollback/recovery, architecture invariants and administration boundaries. It explicitly distinguishes *implemented*, *proposed*, *unresolved* and *blocked*; it must not invent generalized per-agent or per-task policy identity.
+
+**D2 — Contract and migration specification:** \`docs/architecture/REGISTRY-CONTRACT-AND-MIGRATION-SPEC-v1.0.md\` defines the versioned successor strategy (candidate \`r08-v6\`, **not implemented or allocated by this document**), per-family exact schemas and admissible narrowing operators, verification APIs, typed effective-policy carrier and binding, a 19-row source-to-policy/consumer mapping and the integration/test gates. Unresolved contractual choices are explicit Architect decision gates, not silently assigned semantics.
+
+**D3 — One integrated engineering work package:** only after Architect acceptance of D1/D2, implement the remaining eligible parameters against the target model, retaining previously merged functionality and historical frozen signatures/records. Reuse the merged shared lifecycle. Do not translate mandatory invariants, issuer/host authority or provider-owned controls into Registry data. A configuration reference is verified, scoped, bound and revalidated; it is not an untrusted mutable variable loaded mid-effect.
+
+**D4 — Final integrated assurance:** after exact-head code/evidence freeze, run full cross-repository functional, adversarial, replay/rollback, revocation, concurrency, differential, mutation, security and independent Tier 1 qualification once as a coordinated campaign. Targeted builder/CI checks continue at intermediate PR heads. Publication, release and production HOLD pending their separate gates.
+
+### 12.2 Status, scope and non-authorizations
+
+At adoption of this amendment the last verified merged accounting is **13 of 19 integrated; six outstanding; zero independently accepted**. Current separately authorized builder work on \`requires_revocation_assurance\` and terminal-revocation enablement is not counted as merged, and must be reconciled to D1/D2 before any final architecture freeze. This planning change does not withdraw historical evidence or automatically merge/approve an open PR.
+
+The 19 parameters map to **12 canonical audit rules**, not 19 of 444 rules. Maintain the audit's 19-parameter denominator; \`allowed_target_prefixes\` and \`target_match\` are two parameters but one jointly narrowable unit. Three blocked age/tolerance parameters and the funded-authority unresolved item remain outside the denominator.
+
+**Explicit decisions still required:** binding of F4 constructor scalars to persisted decisions/approvals; deployment-wide applicable-family activation and mutually exclusive configurations; host selection-source monotonic rollback custody; ObservationPolicy binding and temporal precedence; coupling with \`policy_binding.age_ceilings\` and deadline anchoring; reversible-to-irreversible profile transformation and validity; qualified revocation flags and required evidence; successor-contract allocation and compatibility. Do not convert these into accepted design merely because the target architecture names them.
+
+The held Registry #58/#59 and Control Plane #87 remain held. Constructor \`clock_tolerance_seconds\` (distinct from \`ObservationPolicy.clock_tolerance_seconds\`), identity/mandate ages and unrelated features are NOT authorized. Existing \`r08-v1\`–\`r08-v5\` signatures, validators, frozen vectors and reason semantics remain preserved. Registry remains non-authorizing and narrowing-only; Control Plane, Runtime and host continue to own original authorization and effects.
+
+**Review rule:** D1/D2 are architecture proposals until the Architect adopts the exact GitHub heads; their presence in this PR does not authorize implementation or supersede a constitutional safeguard.
