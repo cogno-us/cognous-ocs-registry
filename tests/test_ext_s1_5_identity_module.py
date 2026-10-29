@@ -925,7 +925,13 @@ def test_module_boundaries_are_static_and_checked_from_source_text():
                                                                           # r08-v6 revocation-families increment: the eight NEW v6 modules only (no existing successor module is touched)
                                                                           "registry_successor/v6_class_revocation_assurance.py", "registry_successor/v6_terminal_revocation.py",
                                                                           "registry_successor/v6_families.py", "registry_successor/v6_record.py", "registry_successor/v6_selection.py",
-                                                                          "registry_successor/v6_verify.py", "registry_successor/v6_policy_identity.py", "registry_successor/v6_decision.py"}, diff
+                                                                          "registry_successor/v6_verify.py", "registry_successor/v6_policy_identity.py", "registry_successor/v6_decision.py",
+                                                                          # r08-v7 unified engine increment: the NEW engine package and the three NEW thin v7 modules only (no existing successor module is touched)
+                                                                          "registry_successor/engine/__init__.py", "registry_successor/engine/profile.py", "registry_successor/engine/profiles.py",
+                                                                          "registry_successor/engine/selection.py", "registry_successor/engine/record.py", "registry_successor/engine/verify.py",
+                                                                          "registry_successor/engine/decide.py", "registry_successor/engine/identity.py",
+                                                                          "registry_successor/engine/families_irreversibility.py",
+                                                                          "registry_successor/v7_decision.py", "registry_successor/v7_families.py", "registry_successor/v7_policy_identity.py"}, diff
 
 
 def test_effective_list_rules_and_bounds():

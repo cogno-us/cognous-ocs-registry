@@ -1,0 +1,2933 @@
+=== IR01 order inverted [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+        assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+>       assert d.effective == {F: {"class-a": IRR, "class-b": IRR, "class-c": IRR}} and d.detail == "" and d.deny_all_fields == ()
+E       AssertionError: assert ({'class_irrev...rreversible'}} == {'class_irrev...rreversible'}}
+E         
+E         Differing items:
+E         {'class_irreversible': {'class-a': 'no_change', 'class-b': 'no_change', 'class-c': 'irreversible'}} != {'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}
+E         Use -v to get more diff)
+
+tests/test_r08v7_decision_path.py:50: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.69s
+
+
+=== IR02 stricter picks the looser [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+        assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+>       assert d.effective == {F: {"class-a": IRR, "class-b": IRR, "class-c": IRR}} and d.detail == "" and d.deny_all_fields == ()
+E       AssertionError: assert ({'class_irrev...rreversible'}} == {'class_irrev...rreversible'}}
+E         
+E         Differing items:
+E         {'class_irreversible': {'class-a': 'no_change', 'class-b': 'no_change', 'class-c': 'irreversible'}} != {'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}
+E         Use -v to get more diff)
+
+tests/test_r08v7_decision_path.py:50: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.73s
+
+
+=== IR03 is_value accepts str subclass [KILLED]
+................................. [ 48%]
+........................................................................ [ 64%]
+........................................s.......................F
+=================================== FAILURES ===================================
+_____ test_str_subclass_values_and_keys_are_refused_not_compared_by_value ______
+
+    def test_str_subclass_values_and_keys_are_refused_not_compared_by_value():
+        class S(str):
+            pass
+        assert f.payload_validator({FIELD: {"class-a": S("irreversible")}}) == "field_type_invalid"
+        assert f.payload_validator({FIELD: {S("class-a"): "irreversible"}}) == "field_type_invalid"
+>       assert f.normalize_caller({FIELD: {"class-a": S("irreversible")}}) is None
+E       AssertionError: assert {'class_irreversible': {'class-a': 'irreversible'}} is None
+E        +  where {'class_irreversible': {'class-a': 'irreversible'}} = <function normalize_caller at 0x7f3cc21984a0>({'class_irreversible': {'class-a': 'irreversible'}})
+E        +    where <function normalize_caller at 0x7f3cc21984a0> = f.normalize_caller
+
+tests/test_r08v7_irreversibility_family.py:52: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 351 passed, 1 skipped, 5 deselected in 11.82s
+
+
+=== IR04 payload sort check dropped [KILLED]
+metrize("payload,code", [
+        ({}, "field_missing"), ({FIELD: {"class-a": R}, "extra": 1}, "field_unknown"), ({"other": {"class-a": R}}, "field_unknown"),
+        ({FIELD: []}, "field_type_invalid"), ({FIELD: "irreversible"}, "field_type_invalid"), ({FIELD: None}, "field_type_invalid"),
+        ({FIELD: {}}, "field_invalid"), ({FIELD: {"class-b": R, "class-a": R}}, "field_invalid"), ({FIELD: {"*": R}}, "field_invalid"),
+        ({FIELD: {"": R}}, "field_invalid"), ({FIELD: {"a" * 129: R}}, "field_invalid"), ({FIELD: {"class a": R}}, "field_invalid"),
+        ({FIELD: {"class-a": R, "class-b": "x"}}, "field_invalid"), ({1: {"class-a": R}}, "field_type_invalid"), ({FIELD: {1: R}}, "field_type_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+E       AssertionError: assert None == 'field_invalid'
+E        +  where None = <function payload_validator at 0x7fbab2e5c360>({'class_irreversible': {'class-b': 'irreversible', 'class-a': 'irreversible'}})
+E        +    where <function payload_validator at 0x7fbab2e5c360> = f.payload_validator
+
+tests/test_r08v7_irreversibility_family.py:71: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_payload_shape_codes[payload7-field_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 360 passed, 1 skipped, 5 deselected in 11.38s
+
+
+=== IR05 class limit off by one [KILLED]
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................s............................... [ 80%]
+.........F
+=================================== FAILURES ===================================
+_____________________ test_oversized_class_map_is_refused ______________________
+
+    def test_oversized_class_map_is_refused():
+        big = {("c%03d" % i): R for i in range(c.MAX_ENTRIES + 1)}
+>       assert f.payload_validator({FIELD: big}) == "field_invalid"
+E       AssertionError: assert None == 'field_invalid'
+E        +  where None = <function payload_validator at 0x7fc3419b8360>({'class_irreversible': {'c000': 'irreversible', 'c001': 'irreversible', 'c002': 'irreversible', 'c003': 'irreversible', ...}})
+E        +    where <function payload_validator at 0x7fc3419b8360> = f.payload_validator
+
+tests/test_r08v7_irreversibility_family.py:76: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_oversized_class_map_is_refused
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 368 passed, 1 skipped, 5 deselected in 11.84s
+
+
+=== IR06 empty class map accepted [KILLED]
+d_digest='sha256:7cce17a00a7399c523eba3ac417a97ff5fb2fcbf86a0fb7abc474c2178ea27e4').code
+E        +    where RecordResult(ok=True, code=None, detail='', record={'contract_version': 'r08-v7', 'evaluator': {'binding': 'registered...3c5b68'}, 'supersedes': None}, record_digest='sha256:7cce17a00a7399c523eba3ac417a97ff5fb2fcbf86a0fb7abc474c2178ea27e4') = validate('{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}')
+E        +      where '{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}' = <function dumps at 0x7f6c0679fc40>({'contract_version': 'r08-v7', 'kind': 'record', 'family': 'f5-action-class-irreversibility-policy', 'record_id': 'f5irr-test-record', ...})
+E        +        where <function dumps at 0x7f6c0679fc40> = r.dumps
+
+tests/test_r08v7_decision_path.py:130: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_malformed_payload_typed_validator_code_and_decision_refusal[pl11-field_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 35 passed, 5 deselected in 0.72s
+
+
+=== IR07 unknown registry class accepted [KILLED]
+.......F
+=================================== FAILURES ===================================
+___________ test_unknown_registry_class_refuses_and_is_never_created ___________
+
+    def test_unknown_registry_class_refuses_and_is_never_created():
+>       assert_refused(t.decide(rec=rec_(cmap(class_a=IRR, class_zz=IRR)), cl=cmap(class_a=NC)), "composition_record_invalid")
+
+tests/test_r08v7_decision_path.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_record_invalid'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_unknown_registry_class_refuses_and_is_never_created
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed, 5 deselected in 0.73s
+
+
+=== IR08 caller value domain not checked [KILLED]
+     {F: {"class-a": False}}, {F: {"class a": NC}}, {F: {"class-a": NC}, "x": 1}, "x", {"terminal_revocation": "on"},
+                                     {"class_requires_revocation_assurance": {"class-a": "required"}}])
+    def test_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(cl=bad), "composition_caller_invalid")
+
+tests/test_r08v7_decision_path.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_invalid_caller_refuses_required[bad3]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 11 passed, 5 deselected in 0.65s
+
+
+=== IR09 empty caller map accepted [KILLED]
+     {F: {"class-a": False}}, {F: {"class a": NC}}, {F: {"class-a": NC}, "x": 1}, "x", {"terminal_revocation": "on"},
+                                     {"class_requires_revocation_assurance": {"class-a": "required"}}])
+    def test_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(cl=bad), "composition_caller_invalid")
+
+tests/test_r08v7_decision_path.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_invalid_caller_refuses_required[bad2]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 10 passed, 5 deselected in 0.66s
+
+
+=== IR10 not-narrowing reported on equal values [KILLED]
+..F
+=================================== FAILURES ===================================
+____ test_registry_equal_to_host_is_applied_without_a_not_narrowing_report _____
+
+    def test_registry_equal_to_host_is_applied_without_a_not_narrowing_report():
+        d = t.decide(rec=rec_(cmap(class_a=NC)), cl=cmap(class_a=NC, class_b=NC))
+>       assert d.kind == "applied" and d.effective == cmap(class_a=NC, class_b=NC) and d.detail == ""
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'class_irrev... 'no_change'}} == {'class_irrev... 'no_change'}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Use -v to get more diff and 'registry_val...owing:class-a' == ''
+E         
+E         + registry_value_not_narrowing:class-a)
+
+tests/test_r08v7_decision_path.py:62: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_registry_equal_to_host_is_applied_without_a_not_narrowing_report
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed, 5 deselected in 0.65s
+
+
+=== IR11 family not checked in composer [KILLED]
+eversibility({FIELD: {"class-a": B}}, None).code == "composition_record_invalid"
+        assert f.compose_irreversibility({FIELD: {"class-a": B}}, object()).code == "composition_record_invalid"
+        other_family = type("Rec", (), {"ok": True, "record": dict(good.record, family="f5-action-class-age-bounds")})()
+>       assert f.compose_irreversibility({FIELD: {"class-a": B}}, other_family).code == "composition_family_unsupported"
+E       AssertionError: assert None == 'composition_family_unsupported'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'class_irreversible': {'class-a': 'irreversible'}}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'class_irreversible': {'class-a': 'irreversible'}}, deny_all=False, deny_all_fields=()) = <function compose_irreversibility at 0x7f6784d50680>({'class_irreversible': {'class-a': 'no_change'}}, <test_r08v7_irreversibility_family.Rec object at 0x7f6785236a50>)
+E        +      where <function compose_irreversibility at 0x7f6784d50680> = f.compose_irreversibility
+
+tests/test_r08v7_irreversibility_family.py:193: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_invalid_or_foreign_records_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 400 passed, 1 skipped, 5 deselected in 11.89s
+
+
+=== IR12 payload str-subclass value accepted [KILLED]
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................s.......................F
+=================================== FAILURES ===================================
+_____ test_str_subclass_values_and_keys_are_refused_not_compared_by_value ______
+
+    def test_str_subclass_values_and_keys_are_refused_not_compared_by_value():
+        class S(str):
+            pass
+>       assert f.payload_validator({FIELD: {"class-a": S("irreversible")}}) == "field_type_invalid"
+E       AssertionError: assert 'field_invalid' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         ?      -----
+E         + field_invalid
+
+tests/test_r08v7_irreversibility_family.py:50: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_str_subclass_values_and_keys_are_refused_not_compared_by_value
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 351 passed, 1 skipped, 5 deselected in 11.56s
+
+
+=== IR13 operator not checked [KILLED]
+................................................................... [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................s............................... [ 80%]
+....................................F
+=================================== FAILURES ===================================
+___________ test_only_the_intersection_operator_is_supported[union] ____________
+
+operator = 'union'
+
+    @pytest.mark.parametrize("operator", ["union", "", None, "Intersection", 1])
+    def test_only_the_intersection_operator_is_supported(operator):
+        res = f.compose_irreversibility({FIELD: {"class-a": B}}, rec({FIELD: {"class-a": R}}), operator)
+>       assert not res.ok and res.code == "composition_operator_unsupported" and res.effective is None
+E       AssertionError: assert (not True)
+E        +  where True = CompositionResult(ok=True, code=None, detail='', effective={'class_irreversible': {'class-a': 'irreversible'}}, deny_all=False, deny_all_fields=()).ok
+
+tests/test_r08v7_irreversibility_family.py:184: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_only_the_intersection_operator_is_supported[union]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 395 passed, 1 skipped, 5 deselected in 11.59s
+
+
+=== IR14 registry overrides caller (lowering) [KILLED]
+.F
+=================================== FAILURES ===================================
+_ test_registry_no_change_never_lowers_an_irreversible_host_value_through_the_signed_path _
+
+    def test_registry_no_change_never_lowers_an_irreversible_host_value_through_the_signed_path():
+        d = t.decide(rec=rec_(cmap(class_a=NC, class_b=NC)), cl=cmap(class_a=IRR, class_b=IRR))
+>       assert d.kind == "applied" and d.effective == cmap(class_a=IRR, class_b=IRR) and d.detail == "registry_value_not_narrowing:class-a,class-b"
+E       AssertionError: assert ('applied' == 'applied'
+E         
+E           applied and {'class_irrev... 'no_change'}} == {'class_irrev...rreversible'}}
+E         
+E         Differing items:
+E         {'class_irreversible': {'class-a': 'no_change', 'class-b': 'no_change'}} != {'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible'}}
+E         Use -v to get more diff)
+
+tests/test_r08v7_decision_path.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_registry_no_change_never_lowers_an_irreversible_host_value_through_the_signed_path
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed, 5 deselected in 0.65s
+
+
+=== IR15 deny_all set [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('applied_deny_all' == 'applied'
+E         
+E         - applied
+E         + applied_deny_all)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.70s
+
+
+=== IR16 record ok flag truthy accepted [KILLED]
+c_ok1).code == "composition_record_invalid"
+E       AssertionError: assert None == 'composition_record_invalid'
+E        +  where None = CompositionResult(ok=True, code=None, detail='', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=()) = <function compose_irreversibility at 0x7f0c475d8680>({'class_irreversible': {'class-a': 'no_change', 'class-b': 'no_change', 'class-c': 'irreversible'}}, <test_r08v7_lifecycle_boundaries.R object at 0x7f0c47a8ea50>)
+E        +      where <function compose_irreversibility at 0x7f0c475d8680> = irr.compose_irreversibility
+E        +      and   {'class_irreversible': {'class-a': 'no_change', 'class-b': 'no_change', 'class-c': 'irreversible'}} = <function caller at 0x7f0c4757c540>()
+E        +        where <function caller at 0x7f0c4757c540> = t.caller
+
+tests/test_r08v7_lifecycle_boundaries.py:48: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_lifecycle_boundaries.py::test_composer_operator_and_record_flags_are_exact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 406 passed, 1 skipped, 5 deselected in 11.46s
+
+
+=== IR17 payload type before value order lost [KILLED]
+ode", [
+        ({}, "field_missing"), ({F: {"class-a": IRR}, "x": 1}, "field_unknown"), ({"other": {"class-a": IRR}}, "field_unknown"),
+        ({F: {"class-a": 1}}, "field_type_invalid"), ({F: {"class-a": None}}, "field_type_invalid"), ({F: {"class-a": True}}, "field_type_invalid"),
+        ({F: {"class-a": False}}, "field_type_invalid"), ({F: IRR}, "field_type_invalid"), ({F: [IRR]}, "field_type_invalid"),
+        ({F: {"class-a": "reversible"}}, "field_invalid"), ({F: {"class-a": "Irreversible"}}, "field_invalid"), ({F: {}}, "field_invalid"),
+        ({F: {"*": IRR}}, "field_invalid"), ({F: {"class a": IRR}}, "field_invalid"), ({"terminal_revocation": "on"}, "field_unknown"),
+        ({"class_requires_revocation_assurance": {"class-a": "required"}}, "field_unknown"),
+    ])
+    def test_malformed_payload_typed_validator_code_and_decision_refusal(pl, code):
+        rec = rec_(pl)
+>       assert validate(r.dumps(rec)).code == code
+E       AssertionError: assert 'field_invalid' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         ?      -----
+E         + field_invalid
+
+tests/test_r08v7_decision_path.py:130: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_malformed_payload_typed_validator_code_and_decision_refusal[pl3-field_type_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 27 passed, 5 deselected in 0.76s
+
+
+=== IR18 caller class tokens unchecked [KILLED]
+     {F: {"class-a": False}}, {F: {"class a": NC}}, {F: {"class-a": NC}, "x": 1}, "x", {"terminal_revocation": "on"},
+                                     {"class_requires_revocation_assurance": {"class-a": "required"}}])
+    def test_invalid_caller_refuses_required(bad):
+>       assert_refused(t.decide(cl=bad), "composition_caller_invalid")
+
+tests/test_r08v7_decision_path.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_caller_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composition_record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_invalid_caller_refuses_required[bad8]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 16 passed, 5 deselected in 0.71s
+
+
+=== IR19 caller class map not sorted/copied [KILLED]
+.......................F
+=================================== FAILURES ===================================
+_ test_optional_refusal_normalizes_a_well_formed_caller_and_passes_others_through _
+
+    def test_optional_refusal_normalizes_a_well_formed_caller_and_passes_others_through():
+        unsigned = "{}"
+        d = t.decide(participation="optional", sel=unsigned, cl={F: dict(reversed(list({"class-a": IRR, "class-b": NC}.items())))})
+>       assert d.kind == "overlay_not_applied" and d.effective == {F: {"class-a": IRR, "class-b": NC}} and list(d.effective[F]) == ["class-a", "class-b"]
+E       AssertionError: assert ('overlay_not_applied' == 'overlay_not_applied'
+E         
+E           overlay_not_applied and {'class_irrev...rreversible'}} == {'class_irrev... 'no_change'}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Use -v to get more diff and ['class-b', 'class-a'] == ['class-a', 'class-b']
+E         
+E         At index 0 diff: 'class-b' != 'class-a'
+E         Use -v to get more diff)
+
+tests/test_r08v7_decision_path.py:109: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_optional_refusal_normalizes_a_well_formed_caller_and_passes_others_through
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 23 passed, 5 deselected in 0.76s
+
+
+=== IR20 vocabulary order swapped [KILLED]
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................sF
+=================================== FAILURES ===================================
+_______ test_vocabulary_is_the_closed_control_plane_pair_strictest_first _______
+
+    def test_vocabulary_is_the_closed_control_plane_pair_strictest_first():
+>       assert f.VALUES == (R, B) and f.IRREVERSIBLE == R and f.NO_CHANGE == B
+E       AssertionError: assert (('no_change', 'irreversible') == ('irreversible', 'no_change')
+E         
+E         At index 0 diff: 'no_change' != 'irreversible'
+E         Use -v to get more diff)
+
+tests/test_r08v7_irreversibility_family.py:33: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_vocabulary_is_the_closed_control_plane_pair_strictest_first
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 328 passed, 1 skipped, 5 deselected in 11.08s
+
+
+=== IR21 schema revision changed [KILLED]
+........................................................................ [ 16%]
+...........................F
+=================================== FAILURES ===================================
+___________________________ test_v7_profile_content ____________________________
+
+    def test_v7_profile_content():
+        assert V7.version == "r08-v7" and V7.selection_signing_domain == b"ocs-reg/r08-v7/selection\n" and V7.effective_policy_domain == b"ocs-reg/r08-v7/effective-policy\n"
+        assert list(V7.families) == [IRR] and list(V7.identity) == [IRR]
+        entry = V7.families[IRR]
+>       assert entry.schema_revision == 1 and type(entry.schema_revision) is int and entry.spec.enforcing_component == "control-plane"
+E       AssertionError: assert (2 == 1)
+E        +  where 2 = FamilyEntry(spec=FamilySpec(family='f5-action-class-irreversibility-policy', payload_fields=('class_irreversible',), p...ller_normalizer=<function normalize_caller at 0x7fe6a21b84a0>, enforcing_component='control-plane'), schema_revision=2).schema_revision
+
+tests/test_r08v7_engine_profile.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_v7_profile_content - Assertio...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 99 passed, 5 deselected in 11.74s
+
+
+=== IR22 payload key type check dropped [KILLED]
+_shape_codes[payload13-field_type_invalid] ____________
+
+payload = {1: {'class-a': 'irreversible'}}, code = 'field_type_invalid'
+
+    @pytest.mark.parametrize("payload,code", [
+        ({}, "field_missing"), ({FIELD: {"class-a": R}, "extra": 1}, "field_unknown"), ({"other": {"class-a": R}}, "field_unknown"),
+        ({FIELD: []}, "field_type_invalid"), ({FIELD: "irreversible"}, "field_type_invalid"), ({FIELD: None}, "field_type_invalid"),
+        ({FIELD: {}}, "field_invalid"), ({FIELD: {"class-b": R, "class-a": R}}, "field_invalid"), ({FIELD: {"*": R}}, "field_invalid"),
+        ({FIELD: {"": R}}, "field_invalid"), ({FIELD: {"a" * 129: R}}, "field_invalid"), ({FIELD: {"class a": R}}, "field_invalid"),
+        ({FIELD: {"class-a": R, "class-b": "x"}}, "field_invalid"), ({1: {"class-a": R}}, "field_type_invalid"), ({FIELD: {1: R}}, "field_type_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+E       AssertionError: assert 'field_unknown' == 'field_type_invalid'
+E         
+E         - field_type_invalid
+E         + field_unknown
+
+tests/test_r08v7_irreversibility_family.py:71: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_payload_shape_codes[payload13-field_type_invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 366 passed, 1 skipped, 5 deselected in 11.89s
+
+
+=== IR23 caller map bound off by one [KILLED]
+ deny_all_fields=()).code
+E        +    where CompositionResult(ok=True, code=None, detail='', effective={'class_irreversible': {'c000': 'irreversible', 'c001': 'ir...ersible', 'c254': 'irreversible', 'c255': 'irreversible', 'c256': 'irreversible'}}, deny_all=False, deny_all_fields=()) = <function compose_irreversibility at 0x7f044ba90680>({'class_irreversible': {'c000': 'irreversible', 'c001': 'irreversible', 'c002': 'irreversible', 'c003': 'irreversible', ...}}, RecordResult(ok=True, code=None, detail='', record={'contract_version': 'r08-v7', 'evaluator': {'binding': 'registered...3c5b68'}, 'supersedes': None}, record_digest='sha256:1105a1fbe4bf2d81b48903b74614291acbcd93b13acdfcd06aa9b81abe6bceb2'))
+E        +      where <function compose_irreversibility at 0x7f044ba90680> = f.compose_irreversibility
+E        +      and   RecordResult(ok=True, code=None, detail='', record={'contract_version': 'r08-v7', 'evaluator': {'binding': 'registered...3c5b68'}, 'supersedes': None}, record_digest='sha256:1105a1fbe4bf2d81b48903b74614291acbcd93b13acdfcd06aa9b81abe6bceb2') = rec({'class_irreversible': {'c000': 'irreversible'}})
+
+tests/test_r08v7_irreversibility_family.py:143: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_oversized_caller_map_refuses
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 393 passed, 1 skipped, 5 deselected in 11.92s
+
+
+=== IR24 payload member unknown tolerated [KILLED]
+ytest.mark.parametrize("payload,code", [
+        ({}, "field_missing"), ({FIELD: {"class-a": R}, "extra": 1}, "field_unknown"), ({"other": {"class-a": R}}, "field_unknown"),
+        ({FIELD: []}, "field_type_invalid"), ({FIELD: "irreversible"}, "field_type_invalid"), ({FIELD: None}, "field_type_invalid"),
+        ({FIELD: {}}, "field_invalid"), ({FIELD: {"class-b": R, "class-a": R}}, "field_invalid"), ({FIELD: {"*": R}}, "field_invalid"),
+        ({FIELD: {"": R}}, "field_invalid"), ({FIELD: {"a" * 129: R}}, "field_invalid"), ({FIELD: {"class a": R}}, "field_invalid"),
+        ({FIELD: {"class-a": R, "class-b": "x"}}, "field_invalid"), ({1: {"class-a": R}}, "field_type_invalid"), ({FIELD: {1: R}}, "field_type_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+E       AssertionError: assert None == 'field_unknown'
+E        +  where None = <function payload_validator at 0x7fbd5917c360>({'class_irreversible': {'class-a': 'irreversible'}, 'extra': 1})
+E        +    where <function payload_validator at 0x7fbd5917c360> = f.payload_validator
+
+tests/test_r08v7_irreversibility_family.py:71: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_payload_shape_codes[payload1-field_unknown]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 354 passed, 1 skipped, 5 deselected in 11.70s
+
+
+=== IR25 payload member missing tolerated [KILLED]
+ELD: {"*": R}}, "field_invalid"),
+        ({FIELD: {"": R}}, "field_invalid"), ({FIELD: {"a" * 129: R}}, "field_invalid"), ({FIELD: {"class a": R}}, "field_invalid"),
+        ({FIELD: {"class-a": R, "class-b": "x"}}, "field_invalid"), ({1: {"class-a": R}}, "field_type_invalid"), ({FIELD: {1: R}}, "field_type_invalid"),
+    ])
+    def test_payload_shape_codes(payload, code):
+>       assert f.payload_validator(payload) == code
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r08v7_irreversibility_family.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+payload = {}
+
+    def payload_validator(payload: dict) -> Optional[str]:
+        """None when valid, else a shape code (`field_type_invalid` before `field_invalid`). Safe to call alone."""
+        if type(payload) is not dict or not all(type(k) is str for k in payload):
+            return "field_type_invalid"
+        keys = set(payload)
+        if keys - set(IRR_FIELDS):
+            return "field_unknown"
+>       m = payload[IRR_FIELD]
+            ^^^^^^^^^^^^^^^^^^
+E       KeyError: 'class_irreversible'
+
+registry_successor/engine/families_irreversibility.py:61: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_payload_shape_codes[payload0-field_missing]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 353 passed, 1 skipped, 5 deselected in 12.03s
+
+
+=== IR26 caller extra key tolerated [SURVIVED]
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................s............................... [ 80%]
+........................................................................ [ 97%]
+.............                                                            [100%]
+444 passed, 1 skipped, 5 deselected in 12.19s
+
+
+=== PR01 lookup accepts non-exact str [KILLED]
+........................................................................ [ 16%]
+.....................F
+=================================== FAILURES ===================================
+______________ test_table_dispatch_and_composition_are_identical _______________
+
+    def test_table_dispatch_and_composition_are_identical():
+        class S(str):
+            pass
+        for fam_ in (RA, TR, "x", None, 5, S(RA), [RA], {}):
+            a, b = v6_families.lookup_v6(fam_), profile_e.lookup(P6, fam_)
+>           assert a is b
+E           AssertionError: assert None is FamilySpec(family='f5-action-class-revocation-assurance-policy', payload_fields=('class_requires_revocation_assurance'...code-reference'), caller_normalizer=<function normalize_caller at 0x7f3587eb16c0>, enforcing_component='control-plane')
+
+tests/test_r08v7_engine_differential.py:419: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_table_dispatch_and_composition_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 93 passed, 5 deselected in 11.31s
+
+
+=== PR02 table selector accepts str subclass [KILLED]
+........................................................................ [ 16%]
+.....................F
+=================================== FAILURES ===================================
+______________ test_table_dispatch_and_composition_are_identical _______________
+
+    def test_table_dispatch_and_composition_are_identical():
+        class S(str):
+            pass
+        for fam_ in (RA, TR, "x", None, 5, S(RA), [RA], {}):
+            a, b = v6_families.lookup_v6(fam_), profile_e.lookup(P6, fam_)
+            assert a is b
+        for ver in ("r08-v6", "r08-v7", "r08-v5", None, 6, S("r08-v6"), "R08-V6", ""):
+            a, b = v6_families.table_for_contract_version_v6(ver), profile_e.table_for_contract_version(P6, ver)
+>           assert (a.ok, a.code, a.version) == (b.ok, b.code, b.version) and (a.table is None) == (b.table is None)
+E           AssertionError: assert ((False, 'cont...ported', None) == (True, None, 'r08-v6')
+E             
+E             At index 0 diff: False != True
+E             Use -v to get more diff)
+
+tests/test_r08v7_engine_differential.py:422: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_table_dispatch_and_composition_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 93 passed, 5 deselected in 11.83s
+
+
+=== PR03 compose_for ignores contract version [KILLED]
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = CompositionResult(ok=False, code='contract_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=())
+b = CompositionResult(ok=True, code=None, detail='', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=())
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (CompositionResult(ok=False, code='contract_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=(...ssurance': {'class-a': 'required', 'class-b': 'required', 'class-c': 'required'}}, deny_all=False, deny_all_fields=()))
+E       assert CompositionRe...all_fields=()) == CompositionRe...all_fields=())
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing attributes:
+E         ['ok', 'code', 'effective']
+E         
+E         Drill down into differing attribute ok:
+E           ok: False != True...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_table_dispatch_and_composition_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 93 passed, 5 deselected in 11.24s
+
+
+=== PR04 unknown family composes [KILLED]
+ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = CompositionResult(ok=False, code='composition_family_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=())
+b = CompositionResult(ok=False, code='composition_record_invalid', detail='unexpected input', effective=None, deny_all=False, deny_all_fields=())
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (CompositionResult(ok=False, code='composition_family_unsupported', detail='', effective=None, deny_all=False, deny_al...lse, code='composition_record_invalid', detail='unexpected input', effective=None, deny_all=False, deny_all_fields=()))
+E       assert CompositionRe...all_fields=()) == CompositionRe...all_fields=())
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail']
+E         
+E         Drill down into differing attribute code:
+E           code: 'composition_family_unsupported' != 'composition_record_invalid'...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_table_dispatch_and_composition_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 93 passed, 5 deselected in 11.28s
+
+
+=== PR05 compose operator not checked [KILLED]
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = CompositionResult(ok=False, code='composition_operator_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=())
+b = CompositionResult(ok=False, code='composition_record_invalid', detail='', effective=None, deny_all=False, deny_all_fields=())
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (CompositionResult(ok=False, code='composition_operator_unsupported', detail='', effective=None, deny_all=False, deny_...tionResult(ok=False, code='composition_record_invalid', detail='', effective=None, deny_all=False, deny_all_fields=()))
+E       assert CompositionRe...all_fields=()) == CompositionRe...all_fields=())
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing attributes:
+E         ['code']
+E         
+E         Drill down into differing attribute code:
+E           code: 'composition_operator_unsupported' != 'composition_record_invalid'
+E           - composition_record_invalid
+E           + composition_operator_unsupported
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_table_dispatch_and_composition_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 93 passed, 5 deselected in 12.36s
+
+
+=== PR06 require_profile accepts subclasses [KILLED]
+xactly_a_contract_profile():
+        class Sub(ContractProfile):
+            pass
+        fake = Sub(**parts())
+        for bad in (None, "r08-v7", {"version": "r08-v7"}, object(), fake, V7.version):
+            for fn, args in ((selection_e.parse_selection_envelope, ("{}",)), (record_e.validate_record_text, ("{}",)),
+                             (selection_e.signing_input, ({},)), (verify_e.verify_selection, (None, None, None, None, None)),
+                             (decide_e.verify_and_decide, ("required", {}, "{}", "{}", None, None, None, None)),
+                             (decide_e.decide_verified, ("required", {}, None, None)), (identity_e.effective_policy_digest, (IRR, {})),
+                             (identity_e.validate_effective_payload, (IRR, {})), (identity_e.registered_family_version, (IRR, "r08-v7")),
+                             (identity_e.effective_preimage, (IRR, {})), (identity_e.deny_all_dimensions, (IRR, {})), (identity_e.effective_digest_of_preimage, ({},))):
+>               with pytest.raises(TypeError):
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE TypeError
+
+tests/test_r08v7_engine_profile.py:214: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_engine_entry_points_accept_exactly_a_contract_profile
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 123 passed, 5 deselected in 11.16s
+
+
+=== PR07 identical domains allowed [KILLED]
+ILURES ===================================
+_ test_invalid_profile_construction_is_refused[effective_policy_domain-ocs-reg/r08-v7/selection\n] _
+
+field = 'effective_policy_domain', value = b'ocs-reg/r08-v7/selection\n'
+
+    @pytest.mark.parametrize("field,value", [
+        ("version", "r08 v9"), ("version", ""), ("version", b"r08-v9"), ("version", None), ("version", "r08-v6"),  # domains carry r08-v7, version mismatch
+        ("selection_signing_domain", b"ocs-reg/r08-v7/selection"), ("selection_signing_domain", "ocs-reg/r08-v7/selection\n"),
+        ("selection_signing_domain", b"ocs-reg/r08-v6/selection\n"), ("effective_policy_domain", b"ocs-reg/r08-v7/selection\n"),
+        ("effective_policy_domain", b"ocs-reg/r08-v6/effective-policy\n"), ("effective_policy_domain", None),
+        ("families", {}), ("families", None), ("identity", {}), ("identity", None)])
+    def test_invalid_profile_construction_is_refused(field, value):
+        p = parts()
+        p[field] = value
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:109: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_invalid_profile_construction_is_refused[effective_policy_domain-ocs-reg/r08-v7/selection\n]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 113 passed, 5 deselected in 11.32s
+
+
+=== PR08 domain need not name the version [KILLED]
+........ [ 16%]
+.....................................F
+=================================== FAILURES ===================================
+_________ test_invalid_profile_construction_is_refused[version-r08-v6] _________
+
+field = 'version', value = 'r08-v6'
+
+    @pytest.mark.parametrize("field,value", [
+        ("version", "r08 v9"), ("version", ""), ("version", b"r08-v9"), ("version", None), ("version", "r08-v6"),  # domains carry r08-v7, version mismatch
+        ("selection_signing_domain", b"ocs-reg/r08-v7/selection"), ("selection_signing_domain", "ocs-reg/r08-v7/selection\n"),
+        ("selection_signing_domain", b"ocs-reg/r08-v6/selection\n"), ("effective_policy_domain", b"ocs-reg/r08-v7/selection\n"),
+        ("effective_policy_domain", b"ocs-reg/r08-v6/effective-policy\n"), ("effective_policy_domain", None),
+        ("families", {}), ("families", None), ("identity", {}), ("identity", None)])
+    def test_invalid_profile_construction_is_refused(field, value):
+        p = parts()
+        p[field] = value
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:109: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_invalid_profile_construction_is_refused[version-r08-v6]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 109 passed, 5 deselected in 11.29s
+
+
+=== PR09 domain need not end in newline [KILLED]
+ FAILURES ===================================
+_ test_invalid_profile_construction_is_refused[selection_signing_domain-ocs-reg/r08-v7/selection] _
+
+field = 'selection_signing_domain', value = b'ocs-reg/r08-v7/selection'
+
+    @pytest.mark.parametrize("field,value", [
+        ("version", "r08 v9"), ("version", ""), ("version", b"r08-v9"), ("version", None), ("version", "r08-v6"),  # domains carry r08-v7, version mismatch
+        ("selection_signing_domain", b"ocs-reg/r08-v7/selection"), ("selection_signing_domain", "ocs-reg/r08-v7/selection\n"),
+        ("selection_signing_domain", b"ocs-reg/r08-v6/selection\n"), ("effective_policy_domain", b"ocs-reg/r08-v7/selection\n"),
+        ("effective_policy_domain", b"ocs-reg/r08-v6/effective-policy\n"), ("effective_policy_domain", None),
+        ("families", {}), ("families", None), ("identity", {}), ("identity", None)])
+    def test_invalid_profile_construction_is_refused(field, value):
+        p = parts()
+        p[field] = value
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:109: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_invalid_profile_construction_is_refused[selection_signing_domain-ocs-reg/r08-v7/selection]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 110 passed, 5 deselected in 11.57s
+
+
+=== PR10 schema revision 0 allowed [KILLED]
+.......................F
+=================================== FAILURES ===================================
+_________ test_profile_rejects_inconsistent_family_and_identity_tables _________
+
+    def test_profile_rejects_inconsistent_family_and_identity_tables():
+        p = parts()
+        # key / spec family mismatch
+        spec_other = V6.families["f5-terminal-revocation-enablement-policy"]
+        bad = parts()
+        bad["families"] = {IRR: spec_other}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        # revision mismatch between entry and identity row
+        bad = parts()
+        bad["families"] = {IRR: FamilyEntry(V7.families[IRR].spec, 2)}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        for rev in (0, -1, True, "1", None, 1.0):
+            bad = parts()
+            bad["families"] = {IRR: FamilyEntry(V7.families[IRR].spec, rev)}
+            bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], version_value=rev)}
+>           with pytest.raises(ValueError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:130: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_profile_rejects_inconsistent_family_and_identity_tables
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 120 passed, 5 deselected in 11.49s
+
+
+=== PR11 tag profile may carry a revision [KILLED]
+mily mismatch
+        spec_other = V6.families["f5-terminal-revocation-enablement-policy"]
+        bad = parts()
+        bad["families"] = {IRR: spec_other}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        # revision mismatch between entry and identity row
+        bad = parts()
+        bad["families"] = {IRR: FamilyEntry(V7.families[IRR].spec, 2)}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        for rev in (0, -1, True, "1", None, 1.0):
+            bad = parts()
+            bad["families"] = {IRR: FamilyEntry(V7.families[IRR].spec, rev)}
+            bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], version_value=rev)}
+            with pytest.raises(ValueError):
+                ContractProfile(**bad)
+        # a tag row must not carry a revision and a revision row must not carry a tag
+        bad = parts()
+        bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], version_member="family_version", version_value="v7")}
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:135: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_profile_rejects_inconsistent_family_and_identity_tables
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 120 passed, 5 deselected in 11.87s
+
+
+=== PR12 family table aliased not copied [KILLED]
+........................................................................ [ 16%]
+................................F
+=================================== FAILURES ===================================
+_ test_a_profile_copies_its_inputs_so_later_mutation_of_the_source_dicts_changes_nothing _
+
+    def test_a_profile_copies_its_inputs_so_later_mutation_of_the_source_dicts_changes_nothing():
+        p = parts()
+        prof = ContractProfile(**p)
+        p["families"].clear()
+        p["identity"].clear()
+>       assert list(prof.families) == [IRR] and list(prof.identity) == [IRR]
+E       AssertionError: assert ([] == ['f5-action-c...ility-policy']
+E         
+E         Right contains one more item: 'f5-action-class-irreversibility-policy'
+E         Use -v to get more diff)
+
+tests/test_r08v7_engine_profile.py:97: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_a_profile_copies_its_inputs_so_later_mutation_of_the_source_dicts_changes_nothing
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 104 passed, 5 deselected in 11.39s
+
+
+=== PR13 record ok flag truthy accepted [KILLED]
+0x7f85178f53a0>(ContractProfile(version='r08-v9', selection_signing_domain=b'ocs-reg/r08-v9/selection\n', effective_policy_domain=b'oc...rsible',), is_value=<function is_value at 0x7f8517798180>, version_member='family_schema_revision', version_value=1)})), {'class_irreversible': {'class-a': 'no_change', 'class-b': 'no_change', 'class-c': 'irreversible'}}, <test_r08v7_engine_profile.R object at 0x7f851749e510>)
+E        +      where <function compose at 0x7f85178f53a0> = profile_e.compose
+E        +      and   {'class_irreversible': {'class-a': 'no_change', 'class-b': 'no_change', 'class-c': 'irreversible'}} = <function caller at 0x7f851774c540>()
+E        +        where <function caller at 0x7f851774c540> = t.caller
+E        +      and   <test_r08v7_engine_profile.R object at 0x7f851749e510> = <class 'test_r08v7_engine_profile.R'>()
+E        +        where <class 'test_r08v7_engine_profile.R'> = type('R', (), {'ok': 1, 'record': {'family': 'f5-action-class-irreversibility-policy', 'payload': {'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible'}}}})
+
+tests/test_r08v7_engine_profile.py:193: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_the_dispatch_itself_enforces_record_validity_operator_and_family_even_for_a_composer_that_does_not
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 122 passed, 5 deselected in 11.84s
+
+
+=== PR14 table order not compared [KILLED]
+ersion_value="v7")}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        bad = parts(V6)
+        bad["families"] = {k: FamilyEntry(e.spec, 1) for k, e in V6.families.items()}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        bad = parts()
+        bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], version_member="other")}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        # identity row members must equal the spec's payload fields; kind must be known; a family key mismatch
+        for change in ({"members": ("other",)}, {"kind": "map"}, {"family": "x"}, {"is_value": None}):
+            bad = parts()
+            bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], **change)}
+            with pytest.raises(ValueError):
+                ContractProfile(**bad)
+        # key order of the two tables must agree
+        bad = parts(V6)
+        bad["identity"] = dict(reversed(list(V6.identity.items())))
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:154: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_profile_rejects_inconsistent_family_and_identity_tables
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 120 passed, 5 deselected in 11.64s
+
+
+=== PR15 family entry type unchecked [KILLED]
+init__(self):
+        if type(self.version) is not str or not c.valid_token(self.version):
+            _fail("version")
+        for name, prefix in (("selection_signing_domain", self.selection_signing_domain), ("effective_policy_domain", self.effective_policy_domain)):
+            if type(prefix) is not bytes or not prefix.endswith(b"\n") or ("/" + self.version + "/").encode("ascii") not in prefix:
+                _fail(name)
+        if self.selection_signing_domain == self.effective_policy_domain:
+            _fail("domains must differ")
+        fam, ident = self.families, self.identity
+        if not isinstance(fam, Mapping) or not isinstance(ident, Mapping) or not fam or list(fam) != list(ident):
+            _fail("families and identity rows must be non-empty with the same keys in the same order")
+        families, rows = {}, {}
+        for key in fam:
+            entry, row = fam[key], ident[key]
+>           if type(key) is not str or type(entry.spec) is not FamilySpec or entry.spec.family != key:
+                                            ^^^^^^^^^^
+E           AttributeError: 'FamilySpec' object has no attribute 'spec'
+
+registry_successor/engine/profile.py:71: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_profile_rejects_wrongly_typed_table_members
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 121 passed, 5 deselected in 11.96s
+
+
+=== PR16 revision bool accepted [KILLED]
+........................................................................ [ 16%]
+.................................................F
+=================================== FAILURES ===================================
+_______________ test_profile_rejects_wrongly_typed_table_members _______________
+
+    def test_profile_rejects_wrongly_typed_table_members():
+        spec = V7.families[IRR].spec
+        bad = parts()
+        bad["families"] = {IRR: spec}  # a bare FamilySpec is not a FamilyEntry
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        bad = parts()
+        bad["families"] = {IRR: FamilyEntry(spec, True)}  # a bool is not a revision, even when the identity row says 1
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:167: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_profile_rejects_wrongly_typed_table_members
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 121 passed, 5 deselected in 11.50s
+
+
+=== PR17 spec family vs key unchecked [KILLED]
+........................................................................ [ 16%]
+.................................................F
+=================================== FAILURES ===================================
+_______________ test_profile_rejects_wrongly_typed_table_members _______________
+
+    def test_profile_rejects_wrongly_typed_table_members():
+        spec = V7.families[IRR].spec
+        bad = parts()
+        bad["families"] = {IRR: spec}  # a bare FamilySpec is not a FamilyEntry
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        bad = parts()
+        bad["families"] = {IRR: FamilyEntry(spec, True)}  # a bool is not a revision, even when the identity row says 1
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        bad = parts()
+        bad["families"] = {IRR: FamilyEntry(dataclasses.replace(spec, family="other-family"), 1)}  # the spec must be registered under its own family id
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:171: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_profile_rejects_wrongly_typed_table_members
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 121 passed, 5 deselected in 11.74s
+
+
+=== PR18 identity members vs spec unchecked [KILLED]
+        # a tag row must not carry a revision and a revision row must not carry a tag
+        bad = parts()
+        bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], version_member="family_version", version_value="v7")}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        bad = parts(V6)
+        bad["families"] = {k: FamilyEntry(e.spec, 1) for k, e in V6.families.items()}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        bad = parts()
+        bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], version_member="other")}
+        with pytest.raises(ValueError):
+            ContractProfile(**bad)
+        # identity row members must equal the spec's payload fields; kind must be known; a family key mismatch
+        for change in ({"members": ("other",)}, {"kind": "map"}, {"family": "x"}, {"is_value": None}):
+            bad = parts()
+            bad["identity"] = {IRR: dataclasses.replace(V7.identity[IRR], **change)}
+>           with pytest.raises(ValueError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/test_r08v7_engine_profile.py:149: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_profile_rejects_inconsistent_family_and_identity_tables
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 120 passed, 5 deselected in 11.93s
+
+
+=== PF01 v7 selection domain wrong [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.65s
+
+
+=== PF02 v7 effective domain wrong [KILLED]
+........................................................................ [ 16%]
+...........................F
+=================================== FAILURES ===================================
+___________________________ test_v7_profile_content ____________________________
+
+    def test_v7_profile_content():
+>       assert V7.version == "r08-v7" and V7.selection_signing_domain == b"ocs-reg/r08-v7/selection\n" and V7.effective_policy_domain == b"ocs-reg/r08-v7/effective-policy\n"
+E       AssertionError: assert ('r08-v7' == 'r08-v7'
+E         
+E           r08-v7 and b'ocs-reg/r08-v7/selection\n' == b'ocs-reg/r08-v7/selection\n'
+E         
+E         Use -v to get more diff and b'ocs-reg/r08...tive-policx\n' == b'ocs-reg/r08...tive-policy\n'
+E         
+E         At index 30 diff: b'x' != b'y'
+E         Use -v to get more diff)
+
+tests/test_r08v7_engine_profile.py:44: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_v7_profile_content - Assertio...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 99 passed, 5 deselected in 11.38s
+
+
+=== PF03 v7 evaluator binding swapped [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.70s
+
+
+=== PF04 v7 enforcing component runtime [KILLED]
+ V7.version == "r08-v7" and V7.selection_signing_domain == b"ocs-reg/r08-v7/selection\n" and V7.effective_policy_domain == b"ocs-reg/r08-v7/effective-policy\n"
+        assert list(V7.families) == [IRR] and list(V7.identity) == [IRR]
+        entry = V7.families[IRR]
+>       assert entry.schema_revision == 1 and type(entry.schema_revision) is int and entry.spec.enforcing_component == "control-plane"
+E       AssertionError: assert (1 == 1 and <class 'int'> is int and 'runtime' == 'control-plane'
+E        +  where 1 = FamilyEntry(spec=FamilySpec(family='f5-action-class-irreversibility-policy', payload_fields=('class_irreversible',), p...'), caller_normalizer=<function normalize_caller at 0x7fdd92f984a0>, enforcing_component='runtime'), schema_revision=1).schema_revision
+E        +  and   <class 'int'> = type(1)
+E        +    where 1 = FamilyEntry(spec=FamilySpec(family='f5-action-class-irreversibility-policy', payload_fields=('class_irreversible',), p...'), caller_normalizer=<function normalize_caller at 0x7fdd92f984a0>, enforcing_component='runtime'), schema_revision=1).schema_revision
+E         
+E         - control-plane
+E         + runtime)
+
+tests/test_r08v7_engine_profile.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_v7_profile_content - Assertio...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 99 passed, 5 deselected in 11.50s
+
+
+=== PF05 v6 compat tag value changed [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:ea787...c52df4ee20fe4' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:ea787a867110890dc5c2384ee1e1df3e9c7e9cad4bc8bcbd15fc52df4ee20fe4
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.34s
+
+
+=== PF06 v7 uses the legacy tag member [KILLED]
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_r08v7_decision_path.py ______________
+tests/test_r08v7_decision_path.py:20: in <module>
+    from registry_successor.engine import profiles
+registry_successor/engine/profiles.py:36: in <module>
+    V7 = ContractProfile(
+<string>:8: in __init__
+    ???
+registry_successor/engine/profile.py:82: in __post_init__
+    _fail("family version tag of " + key)
+registry_successor/engine/profile.py:46: in _fail
+    raise ValueError("invalid ContractProfile: " + message)
+E   ValueError: invalid ContractProfile: family version tag of f5-action-class-irreversibility-policy
+=========================== short test summary info ============================
+ERROR tests/test_r08v7_decision_path.py - ValueError: invalid ContractProfile...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.29s
+
+
+=== PF07 v6 compat value vocabulary of the wrong family [KILLED]
+ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+registry_successor/engine/identity.py:103: in effective_policy_digest
+    return effective_digest_of_preimage(profile, effective_preimage(profile, family, payload, contract_version))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:93: in effective_preimage
+    plain_payload = validate_effective_payload(profile, family, payload)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:72: in validate_effective_payload
+    pid._refuse("field_invalid", field + "." + cls)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'field_invalid', member = 'class_requires_revocation_assurance.class-a'
+stage = None, evidence = None
+
+    def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+>       raise IdentityRefusal(code, member, stage, evidence)
+E       registry_successor.v2_policy_identity.IdentityRefusal: field_invalid
+
+registry_successor/v2_policy_identity.py:162: IdentityRefusal
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.54s
+
+
+=== TH01 v7 families bound to the v6 profile [KILLED]
+(verify_e.verify_selection).parameters
+        assert "contract_version" not in inspect.signature(decide_e.verify_and_decide).parameters
+>       assert v7_families.FAMILIES_V7 == V7.specs and v7_families.CONTRACT_V7 == "r08-v7"
+E       AssertionError: assert (mappingproxy(...trol-plane')}) == mappingproxy(...trol-plane')})
+E         
+E         Left contains 2 more items:
+E         {'f5-action-class-revocation-assurance-policy': FamilySpec(family='f5-action-class-revocation-assurance-policy',
+E                                                                    payload_fields=('class_requires_revocation_assurance',),
+E                                                                    payload_validator=<function payload_validator at 0x7f2c5e271580>,
+E                                                                    composer=<function compose_f5ra at 0x7f2c5e2718a0>,
+E                                                                    evaluator_binding=('engine.safe_executor.LocalExecutionPolicy.check',...
+E         
+E         ...Full output truncated (21 lines hidden), use '-vv' to show)
+
+tests/test_r08v7_engine_profile.py:304: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_the_public_v7_entry_points_are_bound_to_the_v7_profile_and_take_no_contract_version
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 128 passed, 5 deselected in 11.67s
+
+
+=== TH02 v7 lookup bound to the v6 profile [KILLED]
+
+        assert v3_families.lookup_v3(irr) is None and v4_families.lookup_v4(irr) is None and v5_families.lookup_v5(irr) is None and v6_families.lookup_v6(irr) is None
+>       assert v7_families.lookup_v7(RA) is None and v7_families.lookup_v7(TR) is None and v7_families.lookup_v7(irr) is not None
+E       AssertionError: assert (FamilySpec(family='f5-action-class-revocation-assurance-policy', payload_fields=('class_requires_revocation_assurance'...code-reference'), caller_normalizer=<function normalize_caller at 0x7fc34b5816c0>, enforcing_component='control-plane') is None)
+E        +  where FamilySpec(family='f5-action-class-revocation-assurance-policy', payload_fields=('class_requires_revocation_assurance'...code-reference'), caller_normalizer=<function normalize_caller at 0x7fc34b5816c0>, enforcing_component='control-plane') = <function lookup_v7 at 0x7fc34b6bb2e0>('f5-action-class-revocation-assurance-policy')
+E        +    where <function lookup_v7 at 0x7fc34b6bb2e0> = <module 'registry_successor.v7_families' from '/tmp/mut_r7_ma4v9t7g/registry_successor/v7_families.py'>.lookup_v7
+
+tests/test_r08v7_engine_differential.py:542: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_frozen_dispatch_tables_still_refuse_r08_v7_and_no_family_leaks_between_tables
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 98 passed, 5 deselected in 12.15s
+
+
+=== TH03 v7 table selector bound to the v6 profile [KILLED]
+contract_version_v4("r08-v7").ok
+        assert not v5_families.table_for_contract_version_v5("r08-v7").ok and not v6_families.table_for_contract_version_v6("r08-v7").ok
+>       assert not v7_families.table_for_contract_version_v7("r08-v6").ok
+E       AssertionError: assert not True
+E        +  where True = TableSelection(ok=True, code=None, version='r08-v6', table=mappingproxy({'f5-action-class-revocation-assurance-policy'...e-reference'), caller_normalizer=<function normalize_caller at 0x7f5484cb60c0>, enforcing_component='control-plane')})).ok
+E        +    where TableSelection(ok=True, code=None, version='r08-v6', table=mappingproxy({'f5-action-class-revocation-assurance-policy'...e-reference'), caller_normalizer=<function normalize_caller at 0x7f5484cb60c0>, enforcing_component='control-plane')})) = <function table_for_contract_version_v7 at 0x7f5484dd65c0>('r08-v6')
+E        +      where <function table_for_contract_version_v7 at 0x7f5484dd65c0> = <module 'registry_successor.v7_families' from '/tmp/mut_r7_ma4v9t7g/registry_successor/v7_families.py'>.table_for_contract_version_v7
+
+tests/test_r08v7_engine_differential.py:538: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_frozen_dispatch_tables_still_refuse_r08_v7_and_no_family_leaks_between_tables
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 98 passed, 5 deselected in 11.98s
+
+
+=== TH04 v7 decision bound to the v6 profile [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.73s
+
+
+=== TH05 v7 identity bound to the v6 profile [KILLED]
+ry_successor/engine/identity.py:103: in effective_policy_digest
+    return effective_digest_of_preimage(profile, effective_preimage(profile, family, payload, contract_version))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:92: in effective_preimage
+    version_value = registered_family_version(profile, family, contract_version)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:39: in registered_family_version
+    row = _row(profile, family)
+          ^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:28: in _row
+    pid._refuse("family_unsupported", "family")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'family_unsupported', member = 'family', stage = None, evidence = None
+
+    def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+>       raise IdentityRefusal(code, member, stage, evidence)
+E       registry_successor.v2_policy_identity.IdentityRefusal: family_unsupported
+
+registry_successor/v2_policy_identity.py:162: IdentityRefusal
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_policy_identity.py::test_pinned_vectors[irr-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 419 passed, 1 skipped, 5 deselected in 12.58s
+
+
+=== TH06 v7 identity default contract version [KILLED]
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:103: in effective_policy_digest
+    return effective_digest_of_preimage(profile, effective_preimage(profile, family, payload, contract_version))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:92: in effective_preimage
+    version_value = registered_family_version(profile, family, contract_version)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:41: in registered_family_version
+    pid._refuse("contract_unsupported", "contract_version")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'contract_unsupported', member = 'contract_version', stage = None
+evidence = None
+
+    def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+>       raise IdentityRefusal(code, member, stage, evidence)
+E       registry_successor.v2_policy_identity.IdentityRefusal: contract_unsupported
+
+registry_successor/v2_policy_identity.py:162: IdentityRefusal
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_policy_identity.py::test_pinned_vectors[irr-baseline]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 419 passed, 1 skipped, 5 deselected in 12.81s
+
+
+=== TH07 v7 compose_for bound to the v6 profile [KILLED]
+ 1, ["x"], "f5-action-class-age-bounds",
+                    "f5-action-class-unreadable-policy", "f5-action-class-revocation-assurance-policy", "f5-terminal-revocation-enablement-policy",
+                    "anchor_deadline_to_inputs", "f5-observation-max-age-policy", "f5-observation-clock-tolerance-policy"):
+            assert fam.lookup_v7(bad) is None
+        assert fam.table_for_contract_version_v7("r08-v7").ok
+        for v in ("r08-v6", "r08-v5", "r08-v4", "r08-v2", "R08-V7", "r08-v7 ", None, 7):
+            sel = fam.table_for_contract_version_v7(v)
+            assert not sel.ok and sel.code == "contract_unsupported" and sel.table is None
+        assert not fam.compose_for_v7("r08-v6", {FIELD: {"class-a": B}}, rec()).ok
+        ok = fam.compose_for_v7("r08-v7", {FIELD: {"class-a": B}}, rec({FIELD: {"class-a": R}}))
+>       assert ok.ok and ok.effective == {FIELD: {"class-a": R}}
+E       AssertionError: assert (False)
+E        +  where False = CompositionResult(ok=False, code='contract_unsupported', detail='', effective=None, deny_all=False, deny_all_fields=()).ok
+
+tests/test_r08v7_irreversibility_family.py:234: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_irreversibility_family.py::test_the_v7_table_registers_exactly_one_family_and_dispatches_by_exact_string
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 403 passed, 1 skipped, 5 deselected in 12.50s
+
+
+=== SE01 parser accepts any contract version [KILLED]
+, signatures=None)
+b = SelectionResult(ok=True, code=None, detail='', envelope={'contract_version': 'r08-v1', 'kind': 'selection-envelope', '...key-test-1', 'signature': 'vVRXvuC1r8mB9cTQnr2pXdLl7TTjD3FG4LWio8aJ/e2NYD05yMDtII8rl2793ZrH+S9wwbgHdRLDpAfVIPJbDg=='}])
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (SelectionResult(ok=False, code='contract_unsupported', detail='', envelope=None, statement=None, statement_digest=Non...ey-test-1', 'signature': 'vVRXvuC1r8mB9cTQnr2pXdLl7TTjD3FG4LWio8aJ/e2NYD05yMDtII8rl2793ZrH+S9wwbgHdRLDpAfVIPJbDg=='}]))
+E       assert SelectionResu...gnatures=None) == SelectionResu...fVIPJbDg=='}])
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing attributes:
+E         ['ok', 'code', 'envelope', 'statement', 'statement_digest', 'signatures']
+E         
+E         Drill down into differing attribute ok:
+E           ok: False != True...
+E         
+E         ...Full output truncated (15 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_verification_reports_parse_and_validation_results_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 85 passed, 5 deselected in 10.01s
+
+
+=== SE02 signing input without the domain [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.67s
+
+
+=== SE03 statement family unchecked [KILLED]
+ code=None, detail='', envelope={'contract_version': 'r08-v7', 'kind': 'selection-envelope', '...key-test-1', 'signature': 'VDa7ZbKWuUsF99cKeNpFf/VEdE+LuMu1oFsJEt3Afsp/SIS0jZe0GYdcHXWIShAQKYhCmlAYSCili2TAlw/vDA=='}]).code
+E            +    where SelectionResult(ok=True, code=None, detail='', envelope={'contract_version': 'r08-v7', 'kind': 'selection-envelope', '...key-test-1', 'signature': 'VDa7ZbKWuUsF99cKeNpFf/VEdE+LuMu1oFsJEt3Afsp/SIS0jZe0GYdcHXWIShAQKYhCmlAYSCili2TAlw/vDA=='}]) = <function parse_selection_envelope at 0x7fdd4dae62a0>(ContractProfile(version='r08-v7', selection_signing_domain=b'ocs-reg/r08-v7/selection\n', effective_policy_domain=b'oc...rsible',), is_value=<function is_value at 0x7fdd4d930180>, version_member='family_schema_revision', version_value=1)})), '{"contract_version": "r08-v7", "kind": "selection-envelope", "signatures": [{"alg": "ed25519", "key_id": "key-test-1"...", "supersedes": null}, "statement_digest": "sha256:4b26d1bd9b2c7e58d2c3d7e4f30c27211cf3e77924d03f8f43c49e4a3778c12f"}')
+E            +      where <function parse_selection_envelope at 0x7fdd4dae62a0> = selection_e.parse_selection_envelope
+
+tests/test_r08v7_decision_path.py:199: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_other_families_are_unsupported_in_the_v7_table
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 53 passed, 5 deselected in 0.92s
+
+
+=== SE04 evaluator binding unchecked [KILLED]
+tor_unsupported', detail='statement', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='evaluator_mismatch', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='evaluato...lse, deny_all_fields=(), code='evaluator_mismatch', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 6 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail']
+E         
+E         Drill down into differing attribute code:
+E           code: 'evaluator_unsupported' != 'evaluator_mismatch'...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.22s
+
+
+=== SE05 withdrawal shape unchecked [KILLED]
+alid', detail='statement', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_withdrawn', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selectio...se, deny_all_fields=(), code='selection_withdrawn', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 6 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail']
+E         
+E         Drill down into differing attribute code:
+E           code: 'selection_supersession_invalid' != 'selection_withdrawn'...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.12s
+
+
+=== SE06 empty effective interval accepted [KILLED]
+s=(), code='field_invalid', detail='statement', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_expired', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='field_in...alse, deny_all_fields=(), code='selection_expired', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 6 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail']
+E         
+E         Drill down into differing attribute code:
+E           code: 'field_invalid' != 'selection_expired'...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.10s
+
+
+=== SE07 unknown disposition accepted [KILLED]
+ operationally_authorized=False)
+b = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='field_in...'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing attributes:
+E         ['kind', 'effective', 'code', 'detail']
+E         
+E         Drill down into differing attribute kind:
+E           kind: 'required_policy_unavailable' != 'applied'...
+E         
+E         ...Full output truncated (12 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.01s
+
+
+=== SE08 record_version zero accepted [KILLED]
+eld_invalid', detail='statement', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='record_identity_mismatch', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='field_in...eny_all_fields=(), code='record_identity_mismatch', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 6 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail']
+E         
+E         Drill down into differing attribute code:
+E           code: 'field_invalid' != 'record_identity_mismatch'...
+E         
+E         ...Full output truncated (6 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.06s
+
+
+=== SE09 statement digest not compared [KILLED]
+licy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='digest_mismatch', detail='statement_digest', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='digest_mismatch', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='digest_m...=False, deny_all_fields=(), code='digest_mismatch', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 7 identical items, use -vv to show
+E         Differing attributes:
+E         ['detail']
+E         
+E         Drill down into differing attribute detail:
+E           detail: 'statement_digest' != ''
+E           + statement_digest
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.22s
+
+
+=== SE10 statement kind unchecked [KILLED]
+ operationally_authorized=False)
+b = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='kind_uns...'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing attributes:
+E         ['kind', 'effective', 'code', 'detail']
+E         
+E         Drill down into differing attribute kind:
+E           kind: 'required_policy_unavailable' != 'applied'...
+E         
+E         ...Full output truncated (12 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.24s
+
+
+=== SE11 parse accepts a foreign envelope kind [KILLED]
+8-v7/selection\n', effective_policy_domain=b'oc...rsible',), is_value=<function is_value at 0x7fde41470180>, version_member='family_schema_revision', version_value=1)})), '{"contract_version": "r08-v7", "kind": "other", "signatures": [{"alg": "ed25519", "key_id": "key-test-1", "signature"...", "supersedes": null}, "statement_digest": "sha256:c499adefd3a27bd3a577b67985dcd2d80d30018d014715a65ff9563eeadfbd37"}')
+E        +      where <function parse_selection_envelope at 0x7fde415be2a0> = selection_e.parse_selection_envelope
+E        +      and   '{"contract_version": "r08-v7", "kind": "other", "signatures": [{"alg": "ed25519", "key_id": "key-test-1", "signature"...", "supersedes": null}, "statement_digest": "sha256:c499adefd3a27bd3a577b67985dcd2d80d30018d014715a65ff9563eeadfbd37"}' = <function dumps at 0x7fde41477c40>({'contract_version': 'r08-v7', 'kind': 'other', 'statement': {'kind': 'selection', 'selection_id': 'sel-test-1', 'epoc...nsumer-test', ...}, 'statement_digest': 'sha256:c499adefd3a27bd3a577b67985dcd2d80d30018d014715a65ff9563eeadfbd37', ...})
+E        +        where <function dumps at 0x7fde41477c40> = r.dumps
+
+tests/test_r08v7_decision_path.py:173: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_envelope_kind_and_the_record_digest_alone_are_checked
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 51 passed, 5 deselected in 0.97s
+
+
+=== RE01 record accepts any contract version [KILLED]
+='composition_record_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='record_digest_mismatch', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='composit... deny_all_fields=(), code='record_digest_mismatch', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 7 identical items, use -vv to show
+E         Differing attributes:
+E         ['code']
+E         
+E         Drill down into differing attribute code:
+E           code: 'composition_record_invalid' != 'record_digest_mismatch'
+E           - record_digest_mismatch
+E           + composition_record_invalid
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.16s
+
+
+=== RE02 record family unchecked [KILLED]
+.....................................................F
+=================================== FAILURES ===================================
+_____________ test_other_families_are_unsupported_in_the_v7_table ______________
+
+    def test_other_families_are_unsupported_in_the_v7_table():
+        for fam_id in ("f1abcd-local-execution-limits", "f1abc-local-execution-limits", "f1ab-local-execution-allowlist", c.FAMILY_F1A,
+                       "f4-control-plane-age-bounds", "f5-action-class-age-bounds", "f5-action-class-unreadable-policy",
+                       "f5-action-class-revocation-assurance-policy", "f5-terminal-revocation-enablement-policy", "unknown-family",
+                       "anchor_deadline_to_inputs", "f5-observation-max-age-policy"):
+            rec = rec_(family=fam_id)
+>           assert validate(r.dumps(rec)).code == "family_unsupported"
+E           AssertionError: assert 'field_type_invalid' == 'family_unsupported'
+E             
+E             - family_unsupported
+E             + field_type_invalid
+
+tests/test_r08v7_decision_path.py:196: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_other_families_are_unsupported_in_the_v7_table
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 53 passed, 5 deselected in 0.89s
+
+
+=== RE03 supersession unchecked [KILLED]
+f7ade3e4c5e7655771b98af89702e366fe9dd7') = validate('{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...:e6fe06e86a5c1493f7e5f2eada68860c6a9b74de4257b81d1c093b1a415be727", "record_id": "other-record", "record_version": 1}}')
+E            +      where '{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...:e6fe06e86a5c1493f7e5f2eada68860c6a9b74de4257b81d1c093b1a415be727", "record_id": "other-record", "record_version": 1}}' = <function dumps at 0x7fd886b73c40>({'contract_version': 'r08-v7', 'kind': 'record', 'family': 'f5-action-class-irreversibility-policy', 'record_id': 'f5irr-test-record', ...})
+E            +        where <function dumps at 0x7fd886b73c40> = r.dumps
+E            +        and   {'contract_version': 'r08-v7', 'kind': 'record', 'family': 'f5-action-class-irreversibility-policy', 'record_id': 'f5irr-test-record', ...} = rec_(record_version=2, supersedes={'record_id': 'other-record', 'record_version': 1, 'record_digest': 'sha256:e6fe06e86a5c1493f7e5f2eada68860c6a9b74de4257b81d1c093b1a415be727'})
+
+tests/test_r08v7_decision_path.py:164: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_record_supersession_is_validated
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 50 passed, 5 deselected in 0.91s
+
+
+=== RE04 payload digest unchecked [KILLED]
+, rtext))
+
+tests/test_r08v7_engine_differential.py:286: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = RecordResult(ok=False, code='digest_mismatch', detail='payload_digest', record=None, record_digest=None)
+b = RecordResult(ok=False, code='digest_mismatch', detail='record_digest', record=None, record_digest=None)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (RecordResult(ok=False, code='digest_mismatch', detail='payload_digest', record=None, record_digest=None), RecordResult(ok=False, code='digest_mismatch', detail='record_digest', record=None, record_digest=None))
+E       assert RecordResult(...d_digest=None) == RecordResult(...d_digest=None)
+E         
+E         Omitting 4 identical items, use -vv to show
+E         Differing attributes:
+E         ['detail']
+E         
+E         Drill down into differing attribute detail:
+E           detail: 'payload_digest' != 'record_digest'
+E           - record_digest
+E           + payload_digest
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_verification_reports_parse_and_validation_results_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 85 passed, 5 deselected in 9.67s
+
+
+=== RE05 record digest unchecked [KILLED]
+'supersedes': None}, record_digest='sha256:0000000000000000000000000000000000000000000000000000000000000000').code
+E        +    where RecordResult(ok=True, code=None, detail='', record={'contract_version': 'r08-v7', 'evaluator': {'binding': 'registered...3c5b68'}, 'supersedes': None}, record_digest='sha256:0000000000000000000000000000000000000000000000000000000000000000') = validate('{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}')
+E        +      where '{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}' = <function dumps at 0x7f4051677c40>({'contract_version': 'r08-v7', 'kind': 'record', 'family': 'f5-action-class-irreversibility-policy', 'record_id': 'f5irr-test-record', ...})
+E        +        where <function dumps at 0x7f4051677c40> = r.dumps
+
+tests/test_r08v7_decision_path.py:176: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_envelope_kind_and_the_record_digest_alone_are_checked
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 51 passed, 5 deselected in 1.07s
+
+
+=== RE06 record kind unchecked [KILLED]
+'', record={'contract_version': 'r08-v7', 'evaluator': {'binding': 'registered...3c5b68'}, 'supersedes': None}, record_digest='sha256:3e7774b7492c6a7422f5226e9026187dcf5d6b961bfdb1dbdc46fcb722a300a9') = validate('{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}')
+E        +      where '{"contract_version": "r08-v7", "evaluator": {"binding": "registered-code-reference", "evaluator_id": "engine.safe_exe...on-runtime", "sha256": "sha256:940e781934542a7acd7bbe2f6833f9d329325d94b49425afd9d2bedcf23c5b68"}, "supersedes": null}' = <function dumps at 0x7f72b9a9fc40>({'contract_version': 'r08-v7', 'kind': 'selection', 'family': 'f5-action-class-irreversibility-policy', 'record_id': 'f5irr-test-record', ...})
+E        +        where <function dumps at 0x7f72b9a9fc40> = r.dumps
+E        +        and   {'contract_version': 'r08-v7', 'kind': 'selection', 'family': 'f5-action-class-irreversibility-policy', 'record_id': 'f5irr-test-record', ...} = rec_(kind='selection')
+
+tests/test_r08v7_decision_path.py:184: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_record_top_level_checks - asse...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 52 passed, 5 deselected in 0.84s
+
+
+=== VE01 verifier accepts a foreign envelope version [KILLED]
+orized=False, participation=None, bound_record_digest=None)
+b = VerificationReport(ok=False, code='signature_missing', detail='statement carries no signature', layers={'structural': ...uthenticated=False, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (VerificationReport(ok=False, code='contract_unsupported', detail='selection is missing or not structurally valid', la...thenticated=False, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None))
+E       assert VerificationR...d_digest=None) == VerificationR...d_digest=None)
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail', 'layers', 'selection_digest', 'participation']
+E         
+E         Drill down into differing attribute code:
+E           code: 'contract_unsupported' != 'signature_missing'...
+E         
+E         ...Full output truncated (26 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_hostile_selection_objects_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 88 passed, 5 deselected in 11.76s
+
+
+=== VE02 revoked key not checked [KILLED]
+ 2)}))).kind == "applied"  # only the exact epoch
+        assert_refused(t.decide(rec=rec, trust=s.trust(pub=t.PK, min_epochs=(("sel-test-1", 2),))), "selection_epoch_stale")
+>       assert_refused(t.decide(rec=rec, trust=s.trust(pub=t.PK, revoked_key_ids=frozenset({s.KEY_ID}))), "issuer_key_revoked")
+
+tests/test_r08v7_decision_path.py:319: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'issuer_key_revoked'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 69 passed, 5 deselected in 0.88s
+
+
+=== VE03 withdrawal not refused [KILLED]
+....................................................................F
+=================================== FAILURES ===================================
+_______________________ test_withdrawn_selection_refuses _______________________
+
+    def test_withdrawn_selection_refuses():
+        rec = rec_()
+        wd = s.withdraw_statement(t.statement(rec))
+>       assert_refused(t.decide(rec=rec, sel=r.dumps(t.envelope(wd))), "selection_withdrawn")
+
+tests/test_r08v7_decision_path.py:309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_missing', detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_withdrawn'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_missing', detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_withdrawn_selection_refuses - ...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 68 passed, 5 deselected in 0.99s
+
+
+=== VE04 expiry boundary inclusive [KILLED]
+nged=False, operationally_authorized=False)
+b = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selectio...'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing attributes:
+E         ['kind', 'effective', 'code']
+E         
+E         Drill down into differing attribute kind:
+E           kind: 'required_policy_unavailable' != 'applied'...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.26s
+
+
+=== VE05 not-yet-effective boundary exclusive [KILLED]
+ code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_not_yet_effective', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': '..._all_fields=(), code='selection_not_yet_effective', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing attributes:
+E         ['kind', 'effective', 'code']
+E         
+E         Drill down into differing attribute kind:
+E           kind: 'applied' != 'required_policy_unavailable'...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.21s
+
+
+=== VE06 epoch floor exclusive [KILLED]
+ds=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+b = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='selection_epoch_stale', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': '..., deny_all_fields=(), code='selection_epoch_stale', detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing attributes:
+E         ['kind', 'effective', 'code']
+E         
+E         Drill down into differing attribute kind:
+E           kind: 'applied' != 'required_policy_unavailable'...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.21s
+
+
+=== VE07 authority not enforced [KILLED]
+                     v.AuthorityGrant("consumer-other", "tenant-a", "inst-a", "domain-a", "op-test")):
+            tr_ = v.TrustSnapshot("snap-test-1", 1, "2026-10-27T00:00:00Z", (v.IssuerEntry(s.KEY_ID, "issuer-test-1", "ed25519", t.PK, (other,)),))
+>           assert_refused(t.decide(trust=tr_), "issuer_not_authorized")
+
+tests/test_r08v7_decision_path.py:235: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'issuer_not_authorized'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_signer_without_exact_authority_is_not_authorized
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 61 passed, 5 deselected in 0.97s
+
+
+=== VE08 operation mismatch ignored [KILLED]
+one:
+            d = t.decide(rec=rec, ctx=ctx)
+        else:
+            ad = t.ev.Ed25519Verifier()
+            d = verify_and_decide_v7("required", t.caller(), r.dumps(rec), t.selection_text(rec), None, s.trust(pub=t.PK), ad, r.NOW, ad.key_admission)
+>       assert_refused(d, code)
+
+tests/test_r08v7_decision_path.py:227: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_operation_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_wrong_tenant_scope_consumer_operation_refuse[ctx4-selection_operation_mismatch]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 59 passed, 5 deselected in 0.96s
+
+
+=== VE09 selection revocation ignored [KILLED]
+election_stale_expired_and_not_yet_effective_refuse _
+
+    def test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse():
+        rec = rec_()
+>       assert_refused(t.decide(rec=rec, trust=s.trust(pub=t.PK, revoked_selections=frozenset({("sel-test-1", 1)}))), "selection_revoked")
+
+tests/test_r08v7_decision_path.py:316: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_revoked'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 69 passed, 5 deselected in 1.05s
+
+
+=== VE10 key admission optional [KILLED]
+fier()
+        args = ("required", t.caller(), r.dumps(rec), t.selection_text(rec), s.CTX)
+        assert_refused(verify_and_decide_v7(*args, None, ad, r.NOW), "trust_snapshot_missing")
+        assert_refused(verify_and_decide_v7(*args, s.trust(pub=t.PK), None, r.NOW), "verifier_unavailable")
+>       assert_refused(verify_and_decide_v7(*args, s.trust(pub=bytes.fromhex("01" + "00" * 31)), ad, r.NOW), "trust_snapshot_invalid")
+
+tests/test_r08v7_decision_path.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='signature_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'trust_snapshot_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='signature_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_trust_snapshot_missing_unverifier_and_bad_key
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 70 passed, 5 deselected in 1.37s
+
+
+=== VE11 trust expiry boundary inclusive [KILLED]
+nged=False, operationally_authorized=False)
+b = PolicyDecision(kind='applied', effective={'class_requires_revocation_assurance': {'class-a': 'required', 'class-b': 'r...d'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='trust_sn...'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False))
+E       assert PolicyDecisio...horized=False) == PolicyDecisio...horized=False)
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing attributes:
+E         ['kind', 'effective', 'code']
+E         
+E         Drill down into differing attribute kind:
+E           kind: 'required_policy_unavailable' != 'applied'...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.45s
+
+
+=== VE12 consumer mismatch ignored [KILLED]
+ None:
+            d = t.decide(rec=rec, ctx=ctx)
+        else:
+            ad = t.ev.Ed25519Verifier()
+            d = verify_and_decide_v7("required", t.caller(), r.dumps(rec), t.selection_text(rec), None, s.trust(pub=t.PK), ad, r.NOW, ad.key_admission)
+>       assert_refused(d, code)
+
+tests/test_r08v7_decision_path.py:227: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_consumer_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_wrong_tenant_scope_consumer_operation_refuse[ctx0-selection_consumer_mismatch]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 55 passed, 5 deselected in 0.90s
+
+
+=== VE13 verifier signs over a foreign domain [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.81s
+
+
+=== VE14 verifier signs over the bare statement [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.94s
+
+
+=== VE15 shape re-check of the private copy skipped [KILLED]
+authorized=False, participation=None, bound_record_digest=None)
+b = VerificationReport(ok=False, code='signature_invalid', detail='signature does not verify', layers={'structural': 'pass...uthenticated=False, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (VerificationReport(ok=False, code='kind_unsupported', detail='statement is not a valid r08-v6 statement', layers={'st...thenticated=False, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None))
+E       assert VerificationR...d_digest=None) == VerificationR...d_digest=None)
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail', 'layers', 'selection_digest', 'participation']
+E         
+E         Drill down into differing attribute code:
+E           code: 'kind_unsupported' != 'signature_invalid'...
+E         
+E         ...Full output truncated (26 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_hostile_selection_objects_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 88 passed, 5 deselected in 11.52s
+
+
+=== VE16 scope mismatch ignored [KILLED]
+is not None:
+            d = t.decide(rec=rec, ctx=ctx)
+        else:
+            ad = t.ev.Ed25519Verifier()
+            d = verify_and_decide_v7("required", t.caller(), r.dumps(rec), t.selection_text(rec), None, s.trust(pub=t.PK), ad, r.NOW, ad.key_admission)
+>       assert_refused(d, code)
+
+tests/test_r08v7_decision_path.py:227: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'selection_scope_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_wrong_tenant_scope_consumer_operation_refuse[ctx1-selection_scope_mismatch]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 56 passed, 5 deselected in 0.87s
+
+
+=== VE17 digest integrity not checked [KILLED]
+, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None)
+b = VerificationReport(ok=False, code='signature_invalid', detail='signature does not verify', layers={'structural': 'pass...uthenticated=False, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None)
+
+    def same(a, b):
+        assert type(a) is type(b), (type(a), type(b))
+>       assert a == b, (a, b)
+E       AssertionError: (VerificationReport(ok=False, code='digest_mismatch', detail='statement digest does not match canonical statement', la...thenticated=False, issuer_id=None, operationally_authorized=False, participation='required', bound_record_digest=None))
+E       assert VerificationR...d_digest=None) == VerificationR...d_digest=None)
+E         
+E         Omitting 7 identical items, use -vv to show
+E         Differing attributes:
+E         ['code', 'detail', 'layers']
+E         
+E         Drill down into differing attribute code:
+E           code: 'digest_mismatch' != 'signature_invalid'...
+E         
+E         ...Full output truncated (14 lines hidden), use '-vv' to show
+
+tests/test_r08v7_engine_differential.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_hostile_selection_objects_are_identical
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 88 passed, 5 deselected in 12.90s
+
+
+=== VE18 record binding skipped [KILLED]
+F
+=================================== FAILURES ===================================
+_ test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes _
+
+    def test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes():
+        d = t.decide()
+>       assert d.kind == "applied" and d.code is None and d.deny_all is False and d.operationally_authorized is False and d.caller_unchanged is False
+E       AssertionError: assert ('required_policy_unavailable' == 'applied'
+E         
+E         - applied
+E         + required_policy_unavailable)
+
+tests/test_r08v7_decision_path.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_valid_selection_flips_no_change_to_irreversible_and_keeps_unlisted_classes
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 deselected in 0.68s
+
+
+=== VE19 verifier missing not refused [KILLED]
+_bad_key ______________
+
+    def test_trust_snapshot_missing_unverifier_and_bad_key():
+        rec = rec_()
+        ad = t.ev.Ed25519Verifier()
+        args = ("required", t.caller(), r.dumps(rec), t.selection_text(rec), s.CTX)
+        assert_refused(verify_and_decide_v7(*args, None, ad, r.NOW), "trust_snapshot_missing")
+>       assert_refused(verify_and_decide_v7(*args, s.trust(pub=t.PK), None, r.NOW), "verifier_unavailable")
+
+tests/test_r08v7_decision_path.py:334: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='signature_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'verifier_unavailable'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='signature_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_trust_snapshot_missing_unverifier_and_bad_key
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 70 passed, 5 deselected in 0.90s
+
+
+=== VE20 non-canonical base64 tolerated [KILLED]
+   good = t.sign(stmt)
+        for noncanon in (good + "\n", good.replace("=", "") if "=" in good else good + "=", good[:-4], "!" + good[1:], good.replace("=", "").lower()):
+            sel = r.dumps(s.envelope(stmt, domain=t.V7_DOMAIN, contract="r08-v7", signature=noncanon, pub=t.PK))
+            d = t.decide(rec=rec, sel=sel)
+>           assert d.kind == "required_policy_unavailable" and d.effective is None and d.code == "signature_invalid", (noncanon, d.code)
+E           AssertionError: ('t8UIgaoygN0WkYDpi5YOJaSoCQo2AlLauk6CpszZfZz/ExtUEd6LBrU5nInZ2sQy6iSUKb6vrEf3xja7+UaPAw==
+E             ', 'field_invalid')
+E           assert ('required_policy_unavailable' == 'required_policy_unavailable'
+E             
+E               required_policy_unavailable and None is None and 'field_invalid' == 'signature_invalid'
+E            +  where None = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='field_invalid', detail='', caller_unchanged=False, operationally_authorized=False).effective
+E             
+E             - signature_invalid
+E             + field_invalid)
+
+tests/test_r08v7_decision_path.py:253: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_forged_wrong_key_missing_and_noncanonical_signatures_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 62 passed, 5 deselected in 0.90s
+
+
+=== DE01 participation not compared [KILLED]
+y_and_decide_v7("required", t.caller(), r.dumps(rec), t.selection_text(rec), s.CTX, s.trust(pub=t.PK), ad, None, ad.key_admission), "time_unavailable")
+>       assert_refused(t.decide(participation="required", rec=rec, sel=t.selection_text(rec, participation="optional")), "participation_mismatch")
+
+tests/test_r08v7_decision_path.py:326: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'participation_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_revoked_key_revoked_selection_stale_expired_and_not_yet_effective_refuse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 69 passed, 5 deselected in 1.07s
+
+
+=== DE02 pinned record digest not compared [KILLED]
+= decide_e.decide_verified(V7, "required", caller, rec, report())
+        assert good.kind == "applied"
+>       t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, report(bound_record_digest="sha256:" + "0" * 64)), "record_digest_mismatch")
+
+tests/test_r08v7_lifecycle_boundaries.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'record_digest_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[irreversibility]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 416 passed, 1 skipped, 5 deselected in 12.71s
+
+
+=== DE03 binding layer not required [KILLED]
+7, "required", caller, rec, report(bound_record_digest="sha256:" + "0" * 64)), "record_digest_mismatch")
+>       t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, report(layers={"record_binding": "refuse"})), "record_identity_mismatch")
+
+tests/test_r08v7_lifecycle_boundaries.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'record_identity_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[irreversibility]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 416 passed, 1 skipped, 5 deselected in 13.16s
+
+
+=== DE04 optional caller not normalized [KILLED]
+t key order, not only dict equality."""
+        unsorted_ra = {t6.FIELD: dict(reversed(list({"class-a": "required", "class-b": "not_required", "class-c": "required"}.items())))}
+        for family in (RA, TR):
+            base = base_args(family)
+            for cal in (unsorted_ra, {t6.TR_FIELD: "on"}, {t6.FIELD: {"class-a": "x"}}, {"zzz": 1}, None):
+                a = frozen_decide("optional", cal, base["record_text"], "{}", s.CTX, base["trust"], base["verifier"], r.NOW, base["key_admission"])
+                b = engine_decide("optional", cal, base["record_text"], "{}", s.CTX, base["trust"], base["verifier"], r.NOW, base["key_admission"])
+                same(a, b)
+                if a.effective is not None and isinstance(a.effective.get(t6.FIELD), dict):
+>                   assert list(a.effective[t6.FIELD]) == list(b.effective[t6.FIELD])
+E                   AssertionError: assert ['class-a', '...b', 'class-c'] == ['class-c', '...b', 'class-a']
+E                     
+E                     At index 0 diff: 'class-a' != 'class-c'
+E                     Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:321: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_optional_refusal_normalizes_with_the_first_matching_family_and_keeps_the_sorted_order
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 87 passed, 5 deselected in 11.56s
+
+
+=== DE05 failed report accepted [KILLED]
+=
+_ test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application _
+
+    def test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application():
+        rec = rec_()
+        sel = r.dumps(t.envelope(t.statement(rec, participation="optional")))
+        bad_caller = cmap(class_a="x")
+        d = t.decide(participation="optional", rec=rec, sel=sel, cl=bad_caller)
+        assert d.kind == "overlay_not_applied" and d.code == "composition_caller_invalid" and d.caller_unchanged is True
+        assert d.operationally_authorized is False and d.deny_all is False and d.effective == bad_caller
+        good = cmap(class_a=NC, class_b=NC)
+        bad_sig = r.dumps(t.envelope(t.statement(rec, participation="optional"), sk=t.OTHER_SK))
+        d3 = t.decide(participation="optional", rec=rec, sel=bad_sig, cl=good)
+>       assert d3.kind == "overlay_not_applied" and d3.code == "signature_invalid" and d3.caller_unchanged is True
+E       AssertionError: assert ('applied' == 'overlay_not_applied'
+E         
+E         - overlay_not_applied
+E         + applied)
+
+tests/test_r08v7_decision_path.py:100: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 22 passed, 5 deselected in 0.79s
+
+
+=== DE06 required refusal returns the caller [KILLED]
+================== FAILURES ===================================
+___________ test_unknown_registry_class_refuses_and_is_never_created ___________
+
+    def test_unknown_registry_class_refuses_and_is_never_created():
+>       assert_refused(t.decide(rec=rec_(cmap(class_a=IRR, class_zz=IRR)), cl=cmap(class_a=NC)), "composition_record_invalid")
+
+tests/test_r08v7_decision_path.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective={'class_irreversible': {'class-a': 'no_change'}}, deny_al...record_invalid', detail='registry class unknown to the caller', caller_unchanged=False, operationally_authorized=False)
+code = 'composition_record_invalid'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+        assert d.code == code, d
+>       assert d.effective is None and d.caller_unchanged is False and d.operationally_authorized is False and d.deny_all is False
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+tests/r08v7_support.py:90: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_unknown_registry_class_refuses_and_is_never_created
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed, 5 deselected in 0.86s
+
+
+=== DE07 record digest recompute skipped [KILLED]
+cord_id"] = "f5-altered-record"
+        forged3 = type("Rec", (), {"ok": True, "record": altered3, "record_digest": rec.record_digest, "code": None})()
+>       t.assert_refused(decide_e.decide_verified(V7, "required", caller, forged3, report()), "digest_mismatch")
+
+tests/test_r08v7_lifecycle_boundaries.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='record_di...tail='the record is not the one the verified selection pinned', caller_unchanged=False, operationally_authorized=False)
+code = 'digest_mismatch'
+
+    def assert_refused(d, code):
+        assert d.kind == "required_policy_unavailable", d
+>       assert d.code == code, d
+               ^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='record_digest_mismatch', detail='the record is not the one the verified selection pinned', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:89: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[irreversibility]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 416 passed, 1 skipped, 5 deselected in 12.39s
+
+
+=== DE08 compose with a version-less dispatch [SURVIVED]
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................s............................... [ 80%]
+........................................................................ [ 97%]
+.............                                                            [100%]
+444 passed, 1 skipped, 5 deselected in 12.31s
+
+
+=== DE09 typed detail dropped [KILLED]
+ne, deny_all=False, deny_all_fields=(), code='trust_snapshot_invalid', detail='', caller_unchanged=False, operationally_authorized=False)
+
+    def same(a, b):
+>       assert type(a) is type(b), (type(a), type(b))
+E       AssertionError: (<class 'registry_successor.decision.TypedPolicyDecision'>, <class 'registry_successor.decision.PolicyDecision'>)
+E       assert <class 'registry_successor.decision.TypedPolicyDecision'> is <class 'registry_successor.decision.PolicyDecision'>
+E        +  where <class 'registry_successor.decision.TypedPolicyDecision'> = type(TypedPolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='trus...ized=False, detail_code='key_admission_invalid', detail_cause='key_small_order', detail_stage=None, detail_member=None))
+E        +  and   <class 'registry_successor.decision.PolicyDecision'> = type(PolicyDecision(kind='required_policy_unavailable', effective=None, deny_all=False, deny_all_fields=(), code='trust_snapshot_invalid', detail='', caller_unchanged=False, operationally_authorized=False))
+
+tests/test_r08v7_engine_differential.py:46: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_one_axis_at_a_time_hostile_variations_are_identical[f5-action-class-revocation-assurance-policy]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 76 passed, 5 deselected in 1.14s
+
+
+=== DE10 payload digest recompute skipped [KILLED]
+ype("Rec", (), {"ok": True, "record": altered2, "record_digest": altered2["record_digest"], "code": None})()
+>       t.assert_refused(decide_e.decide_verified(V7, "required", caller, forged2, report(bound_record_digest=altered2["record_digest"])), "digest_mismatch")
+
+tests/test_r08v7_lifecycle_boundaries.py:186: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+d = PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible',...e'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+code = 'digest_mismatch'
+
+    def assert_refused(d, code):
+>       assert d.kind == "required_policy_unavailable", d
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: PolicyDecision(kind='applied', effective={'class_irreversible': {'class-a': 'irreversible', 'class-b': 'irreversible', 'class-c': 'irreversible'}}, deny_all=False, deny_all_fields=(), code=None, detail='', caller_unchanged=False, operationally_authorized=False)
+
+tests/r08v7_support.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[irreversibility]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 416 passed, 1 skipped, 5 deselected in 12.22s
+
+
+=== DE11 applied_deny_all never reported [KILLED]
+le, FamilyEntry
+        import dataclasses
+        spec = V7.families[FAM].spec
+        deny = dataclasses.replace(spec, composer=lambda caller, record, operator: CompositionResult(True, None, "", {"class_irreversible": {"class-a": "irreversible"}}, True, ("class_irreversible",)))
+        px = ContractProfile("r08-v9", b"ocs-reg/r08-v9/selection\n", b"ocs-reg/r08-v9/effective-policy\n", {FAM: FamilyEntry(deny, 1)}, V7.identity)
+        rec = record_e.validate_record_text(px, r.dumps(t.record(contract_version="r08-v9")))
+        assert rec.ok
+        report = type("Rep", (), {"ok": True, "code": None, "participation": "required", "layers": {"record_binding": "pass"}, "bound_record_digest": rec.record_digest})()
+        d = decide_e.decide_verified(px, "required", t.caller(), rec, report)
+>       assert d.kind == "applied_deny_all" and d.deny_all is True and d.deny_all_fields == ("class_irreversible",) and d.operationally_authorized is False
+E       AssertionError: assert ('applied' == 'applied_deny_all'
+E         
+E         - applied_deny_all
+E         + applied)
+
+tests/test_r08v7_lifecycle_boundaries.py:226: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_lifecycle_boundaries.py::test_a_composer_result_marked_deny_all_is_reported_as_applied_deny_all_and_never_as_applied
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 418 passed, 1 skipped, 5 deselected in 12.28s
+
+
+=== DE12 optional refusal flag [KILLED]
+=================================
+_ test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application _
+
+    def test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application():
+        rec = rec_()
+        sel = r.dumps(t.envelope(t.statement(rec, participation="optional")))
+        bad_caller = cmap(class_a="x")
+        d = t.decide(participation="optional", rec=rec, sel=sel, cl=bad_caller)
+>       assert d.kind == "overlay_not_applied" and d.code == "composition_caller_invalid" and d.caller_unchanged is True
+E       AssertionError: assert ('overlay_not_applied' == 'overlay_not_applied'
+E         
+E           overlay_not_applied and 'composition_caller_invalid' == 'composition_caller_invalid'
+E         
+E           composition_caller_invalid and False is True)
+E        +  where False = PolicyDecision(kind='overlay_not_applied', effective={'class_irreversible': {'class-a': 'x'}}, deny_all=False, deny_al...nal overlay not applied; caller policy unchanged (not denial)', caller_unchanged=False, operationally_authorized=False).caller_unchanged
+
+tests/test_r08v7_decision_path.py:95: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_decision_path.py::test_optional_participation_refusal_leaves_the_caller_policy_unchanged_not_an_application
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 22 passed, 5 deselected in 0.71s
+
+
+=== DE13 composer accepts a missing record [KILLED]
+, "required", caller, rec, report(layers={"record_binding": "refuse"})), "record_identity_mismatch")
+        t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, report(layers={})), "record_identity_mismatch")
+        t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, report(layers=None)), "record_identity_mismatch")
+        t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, report(participation="optional")), "participation_mismatch")
+        t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, report(ok=False, code="signature_invalid")), "signature_invalid")
+        t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, None), "selection_missing")
+        t.assert_refused(decide_e.decide_verified(V7, "required", caller, None, report()), "composition_record_invalid")
+>       assert decide_e.decide_verified(V7, "required", caller, None, report()).detail == "no record supplied"
+E       AssertionError: assert '' == 'no record supplied'
+E         
+E         - no record supplied
+
+tests/test_r08v7_lifecycle_boundaries.py:170: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_lifecycle_boundaries.py::test_the_decision_step_rechecks_report_binding_and_record_digests_itself[irreversibility]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 416 passed, 1 skipped, 5 deselected in 12.03s
+
+
+=== ID01 effective domain is the v5 prefix [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:08234...840e22ca4fd05' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:082345bae78fb638e1f955d3bc4375c81c8183a3ff2ae1d174c840e22ca4fd05
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.75s
+
+
+=== ID02 preimage omits contract_version [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:88ac3...6ff2cf3dbe98a' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:88ac3c32b0cfc4066013644b132a80588f0f2a06d9550801a476ff2cf3dbe98a
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.09s
+
+
+=== ID03 preimage omits family [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:952d8...6560e01bcdcc3' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:952d88503803c8d8360e5a008873c1fdab6377dc3ec605657066560e01bcdcc3
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.19s
+
+
+=== ID04 preimage omits the version member [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:10316...7402ac7b53fb9' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:10316c31dd6b730060f57dda668ab30831ee6bc7470d7e20d7c7402ac7b53fb9
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.73s
+
+
+=== ID05 preimage omits effective [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:5e178...87942209cef4a' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:5e178b7e1909dc5285be07d9df980b27b2214b0fe4fa9e3791487942209cef4a
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.63s
+
+
+=== ID06 preimage names a constant revision [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:a7464...3843f1ddfaf71' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:a74648296b21abb5bed65fcaac8b81311538a2523c28583a8f93843f1ddfaf71
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 11.23s
+
+
+=== ID07 scalar value domain not checked [KILLED]
+v.TR_FIELD: "ON"}, {trv.TR_FIELD: True}, {trv.TR_FIELD: 1}, {trv.TR_FIELD: None}, {trv.TR_FIELD: {"a": "on"}},
+            {trv.TR_FIELD: S("on")}, {}, {"zzz": 1}, dict({trv.TR_FIELD: "on"}, zzz=1), {ra.F5RA_FIELD: {"class-a": "required"}, trv.TR_FIELD: "on"},
+            None, [], "x", 5, {1: 2}, {"class_irreversible": {"class-a": "irreversible"}},
+        ]
+        fams = [RA, TR, "f5-action-class-irreversibility-policy", "f5-action-class-unreadable-policy", "nope", None, 5, S(RA), ""]
+        vers = ["r08-v6", "r08-v7", "r08-v5", "r08-v1", "R08-V6", "r08-v6 ", None, b"r08-v6", S("r08-v6"), 6]
+        n = 0
+        for fam_, pl in itertools.product(fams, payloads):
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl)
+E           AssertionError: assert ('refusal', '...on', None, {}) == ('ok', 'sha25...efb15867da7b')
+E             
+E             At index 0 diff: 'refusal' != 'ok'
+E             Left contains 3 more items, first extra item: 'terminal_revocation'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:397: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 11.35s
+
+
+=== ID08 class limit off by one [KILLED]
+}, {trv.TR_FIELD: True}, {trv.TR_FIELD: 1}, {trv.TR_FIELD: None}, {trv.TR_FIELD: {"a": "on"}},
+            {trv.TR_FIELD: S("on")}, {}, {"zzz": 1}, dict({trv.TR_FIELD: "on"}, zzz=1), {ra.F5RA_FIELD: {"class-a": "required"}, trv.TR_FIELD: "on"},
+            None, [], "x", 5, {1: 2}, {"class_irreversible": {"class-a": "irreversible"}},
+        ]
+        fams = [RA, TR, "f5-action-class-irreversibility-policy", "f5-action-class-unreadable-policy", "nope", None, 5, S(RA), ""]
+        vers = ["r08-v6", "r08-v7", "r08-v5", "r08-v1", "R08-V6", "r08-v6 ", None, b"r08-v6", S("r08-v6"), 6]
+        n = 0
+        for fam_, pl in itertools.product(fams, payloads):
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl)
+E           AssertionError: assert ('refusal', '...ce', None, {}) == ('ok', 'sha25...bea2f4e0a765')
+E             
+E             At index 0 diff: 'refusal' != 'ok'
+E             Left contains 3 more items, first extra item: 'class_requires_revocation_assurance'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:397: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 11.56s
+
+
+=== ID09 deny_all non-empty in preimage [KILLED]
+........................................................................ [ 16%]
+...................F
+=================================== FAILURES ===================================
+_______ test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine _______
+
+    def test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine():
+        vecs = json.loads((VEC / "identity_vectors.json").read_text())
+        for vec in vecs["vectors"]:
+>           assert identity_e.effective_policy_digest(P6, vec["family"], vec["effective"]) == vec["digest"] == v6pi.effective_policy_digest(vec["family"], vec["effective"])
+E           AssertionError: assert 'sha256:9fc75...cdf0b9a99a16d' == 'sha256:e93c9...7c98c6baba1d0'
+E             
+E             - sha256:e93c9e4fb6532146b1f3f6d1a59c5d97d0740593ad7c108e39f7c98c6baba1d0
+E             + sha256:9fc75da498683f2cf5c66bb8d8ac16a617bb87d200d735528a1cdf0b9a99a16d
+
+tests/test_r08v7_engine_differential.py:368: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_the_pinned_v6_identity_vectors_are_reproduced_by_the_engine
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed, 5 deselected in 12.15s
+
+
+=== ID10 other contract versions registered [KILLED]
+ty_e.effective_policy_digest, P6, fam_, pl)
+            assert identity_outcome(v6pi.effective_preimage, fam_, pl) == identity_outcome(identity_e.effective_preimage, P6, fam_, pl)
+            assert identity_outcome(v6pi.validate_effective_payload, fam_, pl) == identity_outcome(identity_e.validate_effective_payload, P6, fam_, pl)
+            assert identity_outcome(v6pi.deny_all_dimensions, fam_, pl) == identity_outcome(identity_e.deny_all_dimensions, P6, fam_, pl)
+            n += 4
+        good = {RA: {ra.F5RA_FIELD: {"class-a": "required"}}, TR: {trv.TR_FIELD: "on"}}
+        for fam_, ver in itertools.product(fams, vers):
+            pl = good.get(fam_, {})
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl, ver) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl, ver)
+E           AssertionError: assert ('refusal', '...on', None, {}) == ('ok', 'sha25...57dca6665946')
+E             
+E             At index 0 diff: 'refusal' != 'ok'
+E             Left contains 3 more items, first extra item: 'contract_version'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:405: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 11.41s
+
+
+=== ID11 class value domain not checked [KILLED]
+b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/python.py:508: in importtestmodule
+    mod = import_path(
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/pathlib.py:596: in import_path
+    importlib.import_module(module_name)
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1404: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1369: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1340: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+tests/test_r08v7_engine_differential.py:30: in <module>
+    from registry_successor.engine import identity as identity_e
+E     File "/tmp/mut_r7_ma4v9t7g/registry_successor/engine/identity.py", line 71
+E       else:  # scalar-enum
+E   IndentationError: expected an indented block after 'for' statement on line 70
+=========================== short test summary info ============================
+ERROR tests/test_r08v7_engine_differential.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.49s
+
+
+=== ID12 empty class map accepted [KILLED]
+}, {trv.TR_FIELD: True}, {trv.TR_FIELD: 1}, {trv.TR_FIELD: None}, {trv.TR_FIELD: {"a": "on"}},
+            {trv.TR_FIELD: S("on")}, {}, {"zzz": 1}, dict({trv.TR_FIELD: "on"}, zzz=1), {ra.F5RA_FIELD: {"class-a": "required"}, trv.TR_FIELD: "on"},
+            None, [], "x", 5, {1: 2}, {"class_irreversible": {"class-a": "irreversible"}},
+        ]
+        fams = [RA, TR, "f5-action-class-irreversibility-policy", "f5-action-class-unreadable-policy", "nope", None, 5, S(RA), ""]
+        vers = ["r08-v6", "r08-v7", "r08-v5", "r08-v1", "R08-V6", "r08-v6 ", None, b"r08-v6", S("r08-v6"), 6]
+        n = 0
+        for fam_, pl in itertools.product(fams, payloads):
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl)
+E           AssertionError: assert ('refusal', '...ce', None, {}) == ('ok', 'sha25...6a40f049fc37')
+E             
+E             At index 0 diff: 'refusal' != 'ok'
+E             Left contains 3 more items, first extra item: 'class_requires_revocation_assurance'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:397: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 11.86s
+
+
+=== ID13 contract version type unchecked [KILLED]
+olicy_digest, fam_, pl) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl)
+            assert identity_outcome(v6pi.effective_preimage, fam_, pl) == identity_outcome(identity_e.effective_preimage, P6, fam_, pl)
+            assert identity_outcome(v6pi.validate_effective_payload, fam_, pl) == identity_outcome(identity_e.validate_effective_payload, P6, fam_, pl)
+            assert identity_outcome(v6pi.deny_all_dimensions, fam_, pl) == identity_outcome(identity_e.deny_all_dimensions, P6, fam_, pl)
+            n += 4
+        good = {RA: {ra.F5RA_FIELD: {"class-a": "required"}}, TR: {trv.TR_FIELD: "on"}}
+        for fam_, ver in itertools.product(fams, vers):
+            pl = good.get(fam_, {})
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl, ver) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl, ver)
+E           AssertionError: assert ('refusal', '...ass': 'null'}) == ('refusal', '...on', None, {})
+E             
+E             At index 1 diff: 'field_type_invalid' != 'contract_unsupported'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:405: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 11.54s
+
+
+=== ID14 default contract version is not the profile's [KILLED]
+ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+registry_successor/engine/identity.py:103: in effective_policy_digest
+    return effective_digest_of_preimage(profile, effective_preimage(profile, family, payload, contract_version))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:92: in effective_preimage
+    version_value = registered_family_version(profile, family, contract_version)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+registry_successor/engine/identity.py:41: in registered_family_version
+    pid._refuse("contract_unsupported", "contract_version")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'contract_unsupported', member = 'contract_version', stage = None
+evidence = None
+
+    def _refuse(code: str, member: Any = None, stage: Any = None, evidence: Any = None):
+>       raise IdentityRefusal(code, member, stage, evidence)
+E       registry_successor.v2_policy_identity.IdentityRefusal: contract_unsupported
+
+registry_successor/v2_policy_identity.py:162: IdentityRefusal
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_profile.py::test_a_third_profile_runs_on_the_same_engine_and_is_isolated_from_the_others
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 129 passed, 5 deselected in 12.21s
+
+
+=== ID15 class value type check dropped [KILLED]
+tmodule
+    mod = import_path(
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/pathlib.py:596: in import_path
+    importlib.import_module(module_name)
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen importlib._bootstrap>:1404: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1369: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1340: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+../claude-0/-home-claude/139dd095-4028-5533-a993-4a7fc4b564f0/scratchpad/venv-g1-212/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:188: in exec_module
+    exec(co, module.__dict__)
+tests/test_r08v7_engine_differential.py:30: in <module>
+    from registry_successor.engine import identity as identity_e
+E     File "/tmp/mut_r7_ma4v9t7g/registry_successor/engine/identity.py", line 66
+E       if not value or len(value) > pid.MAX_LIST_ENTRIES or not all(pid.frozen_token_valid(k) for k in value):
+E       ^^
+E   IndentationError: expected an indented block after 'for' statement on line 65
+=========================== short test summary info ============================
+ERROR tests/test_r08v7_engine_differential.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 error in 0.54s
+
+
+=== ID16 unknown member tolerated [KILLED]
+v.TR_FIELD: "ON"}, {trv.TR_FIELD: True}, {trv.TR_FIELD: 1}, {trv.TR_FIELD: None}, {trv.TR_FIELD: {"a": "on"}},
+            {trv.TR_FIELD: S("on")}, {}, {"zzz": 1}, dict({trv.TR_FIELD: "on"}, zzz=1), {ra.F5RA_FIELD: {"class-a": "required"}, trv.TR_FIELD: "on"},
+            None, [], "x", 5, {1: 2}, {"class_irreversible": {"class-a": "irreversible"}},
+        ]
+        fams = [RA, TR, "f5-action-class-irreversibility-policy", "f5-action-class-unreadable-policy", "nope", None, 5, S(RA), ""]
+        vers = ["r08-v6", "r08-v7", "r08-v5", "r08-v1", "R08-V6", "r08-v6 ", None, b"r08-v6", S("r08-v6"), 6]
+        n = 0
+        for fam_, pl in itertools.product(fams, payloads):
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl)
+E           AssertionError: assert ('refusal', '...on', None, {}) == ('ok', 'sha25...8ee778d24782')
+E             
+E             At index 0 diff: 'refusal' != 'ok'
+E             Left contains 3 more items, first extra item: 'terminal_revocation'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:397: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 12.21s
+
+
+=== ID17 missing member tolerated [KILLED]
+)}},
+            {trv.TR_FIELD: "on"}, {trv.TR_FIELD: "off"}, {trv.TR_FIELD: "ON"}, {trv.TR_FIELD: True}, {trv.TR_FIELD: 1}, {trv.TR_FIELD: None}, {trv.TR_FIELD: {"a": "on"}},
+            {trv.TR_FIELD: S("on")}, {}, {"zzz": 1}, dict({trv.TR_FIELD: "on"}, zzz=1), {ra.F5RA_FIELD: {"class-a": "required"}, trv.TR_FIELD: "on"},
+            None, [], "x", 5, {1: 2}, {"class_irreversible": {"class-a": "irreversible"}},
+        ]
+        fams = [RA, TR, "f5-action-class-irreversibility-policy", "f5-action-class-unreadable-policy", "nope", None, 5, S(RA), ""]
+        vers = ["r08-v6", "r08-v7", "r08-v5", "r08-v1", "R08-V6", "r08-v6 ", None, b"r08-v6", S("r08-v6"), 6]
+        n = 0
+        for fam_, pl in itertools.product(fams, payloads):
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl)
+E           AssertionError: assert ('refusal', '...ce', None, {}) == ('refusal', '...on', None, {})
+E             
+E             At index 1 diff: 'field_missing' != 'field_unknown'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:397: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 11.36s
+
+
+=== ID18 payload copy skipped (aliased input) [KILLED]
+)}},
+            {trv.TR_FIELD: "on"}, {trv.TR_FIELD: "off"}, {trv.TR_FIELD: "ON"}, {trv.TR_FIELD: True}, {trv.TR_FIELD: 1}, {trv.TR_FIELD: None}, {trv.TR_FIELD: {"a": "on"}},
+            {trv.TR_FIELD: S("on")}, {}, {"zzz": 1}, dict({trv.TR_FIELD: "on"}, zzz=1), {ra.F5RA_FIELD: {"class-a": "required"}, trv.TR_FIELD: "on"},
+            None, [], "x", 5, {1: 2}, {"class_irreversible": {"class-a": "irreversible"}},
+        ]
+        fams = [RA, TR, "f5-action-class-irreversibility-policy", "f5-action-class-unreadable-policy", "nope", None, 5, S(RA), ""]
+        vers = ["r08-v6", "r08-v7", "r08-v5", "r08-v1", "R08-V6", "r08-v6 ", None, b"r08-v6", S("r08-v6"), 6]
+        n = 0
+        for fam_, pl in itertools.product(fams, payloads):
+>           assert identity_outcome(v6pi.effective_policy_digest, fam_, pl) == identity_outcome(identity_e.effective_policy_digest, P6, fam_, pl)
+E           AssertionError: assert ('refusal', '...y>', None, {}) == ('refusal', '...ce', None, {})
+E             
+E             At index 1 diff: 'field_unknown' != 'field_missing'
+E             Use -v to get more diff
+
+tests/test_r08v7_engine_differential.py:397: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r08v7_engine_differential.py::test_identity_digests_preimages_and_refusals_are_identical_over_a_hostile_grid
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 92 passed, 5 deselected in 11.80s
+
