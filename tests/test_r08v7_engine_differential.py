@@ -114,6 +114,7 @@ def selection_variants(family):
     good_sig = t6.sign(stmt)
     for i, noncanon in enumerate((good_sig + "\n", good_sig.replace("=", ""), good_sig[:-4], "!" + good_sig[1:], "", good_sig.lower(), "=" * 88)):
         out["noncanonical-sig:%d" % i] = r.dumps(s.envelope(stmt, domain=t6.V6_DOMAIN, contract="r08-v6", signature=noncanon, pub=t6.PK))
+    out["envelope-kind"] = r.dumps(dict(t6.envelope(stmt), kind="other"))
     out["wrong-key"] = t6.selection_text(rec, sk=t6.OTHER_SK)
     out["unsigned"] = r.dumps(s.envelope(stmt, domain=t6.V6_DOMAIN, contract="r08-v6", signed=False))
     out["unknown-key-id"] = r.dumps(s.envelope(stmt, domain=t6.V6_DOMAIN, contract="r08-v6", key_id="key-unknown", signature=t6.sign(stmt), pub=t6.PK))
@@ -150,6 +151,7 @@ def record_variants(family):
     tampered = copy.deepcopy(t6.record(family=family))
     key = next(iter(tampered["payload"]))
     tampered["payload"][key] = {"class-a": "not_required"} if family == RA else "off"
+    out["bad-record-digest-only"] = r.dumps(dict(rec, record_digest="sha256:" + "0" * 64))
     out["tampered"] = r.dumps(tampered)
     out["resealed"] = r.dumps(r.seal_record(tampered))
     for i, kw in enumerate(({"kind": "selection"}, {"non_authorizing": False}, {"record_version": 0}, {"record_id": "bad id"}, {"family": "f5-action-class-age-bounds"},
@@ -329,6 +331,14 @@ def test_hostile_selection_objects_are_identical():
         for foreign in ("r08-v2", "r08-v5", "r08-v6", "r08-v7", None, 6):
             for ok in (True, False):
                 obj = type("P", (), {"ok": ok, "code": None, "envelope": {"contract_version": foreign}, "statement": stmt, "statement_digest": digest, "signatures": []})()
+                same(v6_verify.verify_selection_v6(obj, s.CTX, s.trust(pub=t6.PK), verifier, r.NOW, None),
+                     verify_e.verify_selection(P6, obj, s.CTX, s.trust(pub=t6.PK), verifier, r.NOW, None))
+        sigs = [{"alg": "ed25519", "key_id": s.KEY_ID, "signature": t6.sign(stmt)}]
+        for how in STATEMENT_MUTATIONS + ["none"]:
+            bad = stmt if how == "none" else mutate_statement(stmt, how)
+            for digest_ in (c.digest(bad), "sha256:" + "0" * 64, "nope", None):
+                obj = type("P", (), {"ok": True, "code": None, "envelope": {"contract_version": "r08-v6"}, "statement": bad, "statement_digest": digest_,
+                                     "signatures": sigs})()
                 same(v6_verify.verify_selection_v6(obj, s.CTX, s.trust(pub=t6.PK), verifier, r.NOW, None),
                      verify_e.verify_selection(P6, obj, s.CTX, s.trust(pub=t6.PK), verifier, r.NOW, None))
         for obj in (None, object(), "x", 5):

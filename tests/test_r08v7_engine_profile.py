@@ -322,7 +322,7 @@ def test_engine_verification_carries_exactly_the_v6_layers_codes_and_details():
     multiplicity; the only differences are the version-specific literals."""
     for engine_fn, frozen_fn, only_frozen, only_engine in (
             (verify_e._verify, v6_verify._verify_v6, {"statement is not a valid r08-v6 statement": 1},
-             {"statement is not a valid statement of the profile's contract": 1}),
+             {"statement is not a valid %s statement": 1}),
             (verify_e._authenticity, v6_verify._authenticity_v6, {}, {})):
         a, b = _string_constants(engine_fn), _string_constants(frozen_fn)
         assert (a - b) == collections.Counter(only_engine), a - b

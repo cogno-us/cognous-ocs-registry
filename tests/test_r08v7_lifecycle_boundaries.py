@@ -167,6 +167,7 @@ def test_the_decision_step_rechecks_report_binding_and_record_digests_itself(fam
     t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, report(ok=False, code="signature_invalid")), "signature_invalid")
     t.assert_refused(decide_e.decide_verified(V7, "required", caller, rec, None), "selection_missing")
     t.assert_refused(decide_e.decide_verified(V7, "required", caller, None, report()), "composition_record_invalid")
+    assert decide_e.decide_verified(V7, "required", caller, None, report()).detail == "no record supplied"
     # a validated record whose body was altered after validation (payload lowered, digests left as recorded)
     altered = copy.deepcopy(rec.record)
     altered["payload"]["class_irreversible"]["class-a"] = "no_change"
@@ -183,3 +184,43 @@ def test_the_decision_step_rechecks_report_binding_and_record_digests_itself(fam
     altered2["record_digest"] = c.digest({k: v for k, v in altered2.items() if k != "record_digest"})
     forged2 = type("Rec", (), {"ok": True, "record": altered2, "record_digest": altered2["record_digest"], "code": None})()
     t.assert_refused(decide_e.decide_verified(V7, "required", caller, forged2, report(bound_record_digest=altered2["record_digest"])), "digest_mismatch")
+
+
+# ---- guards that the parser makes unreachable in the normal flow, exercised through hand-built objects
+def _hand_built_selection(stmt, digest=None, signature=True):
+    sigs = [{"alg": "ed25519", "key_id": s.KEY_ID, "signature": t.sign(stmt)}] if signature else []
+    return type("P", (), {"ok": True, "code": None, "envelope": {"contract_version": "r08-v7"}, "statement": stmt,
+                          "statement_digest": digest if digest is not None else c.digest(stmt), "signatures": sigs})()
+
+
+def test_the_verifier_rechecks_statement_shape_and_digest_on_its_private_copy():
+    from registry_successor.engine import verify as verify_e
+    ad = t.ev.Ed25519Verifier()
+    stmt = t.statement(t.record())
+    good = verify_e.verify_selection(V7, _hand_built_selection(stmt), s.CTX, s.trust(pub=t.PK), ad, r.NOW, None, ad.key_admission)
+    assert good.ok is True and good.layers["structural"] == "pass" and good.layers["integrity"] == "pass"
+    # a statement whose shape is invalid is refused in the structural layer even though the object claims ok (the parser is not trusted)
+    for mutate, code in ((lambda st: dict(st, kind="other"), "kind_unsupported"), (lambda st: dict(st, family="nope"), "family_unsupported"),
+                         (lambda st: dict(st, epoch=0), "field_invalid"), (lambda st: {k: v for k, v in st.items() if k != "disposition"}, "field_invalid")):
+        bad = mutate(stmt)
+        rep = verify_e.verify_selection(V7, _hand_built_selection(bad), s.CTX, s.trust(pub=t.PK), ad, r.NOW, None, ad.key_admission)
+        assert rep.ok is False and rep.code == code and rep.layers["structural"] == "refuse", (code, rep)
+    # a validly signed statement whose recorded digest is not its digest is refused in the integrity layer
+    rep = verify_e.verify_selection(V7, _hand_built_selection(stmt, digest="sha256:" + "0" * 64), s.CTX, s.trust(pub=t.PK), ad, r.NOW, None, ad.key_admission)
+    assert rep.ok is False and rep.code == "digest_mismatch" and rep.layers["integrity"] == "refuse" and rep.layers["structural"] == "pass"
+
+
+def test_a_composer_result_marked_deny_all_is_reported_as_applied_deny_all_and_never_as_applied():
+    """The shipped family never sets deny_all; the decision step still reports it faithfully if a family does (a profile with a stub composer)."""
+    from registry_successor.compose import CompositionResult
+    from registry_successor.engine import decide as decide_e
+    from registry_successor.engine.profile import ContractProfile, FamilyEntry
+    import dataclasses
+    spec = V7.families[FAM].spec
+    deny = dataclasses.replace(spec, composer=lambda caller, record, operator: CompositionResult(True, None, "", {"class_irreversible": {"class-a": "irreversible"}}, True, ("class_irreversible",)))
+    px = ContractProfile("r08-v9", b"ocs-reg/r08-v9/selection\n", b"ocs-reg/r08-v9/effective-policy\n", {FAM: FamilyEntry(deny, 1)}, V7.identity)
+    rec = record_e.validate_record_text(px, r.dumps(t.record(contract_version="r08-v9")))
+    assert rec.ok
+    report = type("Rep", (), {"ok": True, "code": None, "participation": "required", "layers": {"record_binding": "pass"}, "bound_record_digest": rec.record_digest})()
+    d = decide_e.decide_verified(px, "required", t.caller(), rec, report)
+    assert d.kind == "applied_deny_all" and d.deny_all is True and d.deny_all_fields == ("class_irreversible",) and d.operationally_authorized is False

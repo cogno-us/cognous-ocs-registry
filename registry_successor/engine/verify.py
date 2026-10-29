@@ -111,7 +111,7 @@ def _verify(profile, selection, context, trust_in, verifier, now, record, key_ad
         given = getattr(selection, "code", None)
         mark("structural", given if given in CODES else "field_invalid", "selection is missing or not structurally valid")
     elif shape_code is not None:
-        mark("structural", shape_code, "statement is not a valid statement of the profile's contract")
+        mark("structural", shape_code, "statement is not a valid %s statement" % profile.version)
         statement = None
     else:
         mark("structural", None)

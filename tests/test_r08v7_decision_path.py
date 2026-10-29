@@ -166,6 +166,19 @@ def test_record_supersession_is_validated():
         == "supersession_invalid"
 
 
+def test_envelope_kind_and_the_record_digest_alone_are_checked():
+    rec = rec_()
+    env = t.envelope(t.statement(rec))
+    env["kind"] = "other"
+    assert selection_e.parse_selection_envelope(V7, r.dumps(env)).code == "kind_unsupported"
+    assert_refused(t.decide(rec=rec, sel=r.dumps(env)), "kind_unsupported")
+    bad = dict(rec, record_digest="sha256:" + "0" * 64)  # payload digest intact, only the record digest is wrong
+    assert validate(r.dumps(bad)).code == "digest_mismatch"
+    assert validate(r.dumps(bad)).ok is False
+    assert t.decide(rec=bad, sel=t.selection_text(rec)).kind == "required_policy_unavailable"
+    assert_refused(t.decide(rec=bad, sel=t.selection_text(rec)), "composition_record_invalid")
+
+
 def test_record_top_level_checks():
     assert validate(r.dumps(rec_())).ok
     assert validate(r.dumps(rec_(kind="selection"))).code == "kind_unsupported"
