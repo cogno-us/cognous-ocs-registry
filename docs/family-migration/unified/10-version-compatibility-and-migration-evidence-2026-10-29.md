@@ -9,7 +9,7 @@ Status: BUILDER_TESTED developer record. Non-authorizing. Not independently qual
 | Control Plane #92 (r08-v6) | `4780abe0af54147c0770e98cb7b964b74b2008c4` | `a62ca8d8e4088c95407c2000dcca081383d8dd4d` (unchanged) |
 | Registry docs #70 | | `f309ae20a194786a45a708118b93603ee4670096` (unchanged) |
 | Registry #71 (r08-v7 engine; stacked on #69) | `42a6663` | `b73c59e6769acd5af7263397e81dfc6fa4561f38` |
-| Control Plane #93 (irreversibility + snapshot; stacked on #92) | `a62ca8d` | see PR #93 (head at time of writing recorded in the final report) |
+| Control Plane #93 (irreversibility + snapshot; stacked on #92) | `a62ca8d` | `14cd1b0613ee5943d0ae7a93df7e8c8942382321` (pins Registry `b73c59e`) |
 
 ## Frozen compatibility (Registry)
 - `tests/vectors/r08v7/frozen_baseline_manifest.json`: 193 files (r08-v1..r08-v6 modules, contracts, tests, vectors) byte-identical to `42a6663`; a test pins it. Independent review confirmed by `git diff`: the only existing file edited is `tests/test_ext_s1_5_identity_module.py` (allowlist addition, as each earlier contract did).
@@ -26,9 +26,11 @@ Status: BUILDER_TESTED developer record. Non-authorizing. Not independently qual
 | Registry whole suite | main `d7eb6be`: 1 failed / 7476 passed / 2 skipped; base `42a6663`: 1 failed / 8019 / 2 | v7 `b73c59e`: 1 failed / 8469 / 2 (+450 = the new v7 tests) |
 | The one failure | `test_adapter_ed25519.py::test_installed_cryptography_matches_the_test_only_lock` | identical on all three; environment cryptography differs from the lock; compared against baseline, not assumed |
 | Control Plane whole suite, Python 3.11 and 3.12 (no Registry pin) | main `4780abe`: 1359 passed / 101 skipped (both) | #92 head: 1359 / 102; v7 head: 1406 / 103 (+47 unit tests; +2 pin-gated module skips) |
+| Control Plane whole suite at the exact head `14cd1b0` (Python 3.12 and 3.11, raw logs in `evidence/`) | | 1406 passed / 103 skipped (both) |
 | Control Plane pinned set (5 files, Registry `b73c59e`, `OCS_REQUIRE_REGISTRY_PIN=1`) | n/a | 576 passed / 0 skipped |
+| GitHub CI at exact heads | | Registry #71 `b73c59e`: pytest, CodeQL passed. Control Plane #93 `14cd1b0`: test (3.11), test (3.12), manifest-validator-parity passed (push and pull_request) |
 | Mutation, Registry engine | | 126 mutants / 124 killed / 2 proven equivalent (IR26, DE08) |
-| Mutation, Control Plane | | 78 / 78 killed |
+| Mutation, Control Plane | | 78 / 78 killed (run on `b5ca0d7`; the later commits only set the pin, fix L-1 in `registry_effective_policy.py` and raise the gate) |
 
 ## Migration / rollback
 Nothing migrates records: v6 records stay v6; v7 is additive. Rolling back v7 means not merging #71/#93; no v1..v6 behaviour depends on them. The `V6_COMPAT` profile is verification reuse, not a re-signing of v6 records.
