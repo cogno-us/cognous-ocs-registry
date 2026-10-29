@@ -1,0 +1,33 @@
+r08-v7 unified-engine evidence (BUILDER_TESTED, non-authorizing; not independently qualified)
+Interpreter: scratchpad venv-g1-212 python 3.13.17 (pytest, pynacl, cryptography 50.0.2); pytest.ini supplies pythonpath. Same interpreter for every run below.
+Code commit under test: 8420144a9b277d8df7306eeaeeb8f88e5d7141d4 (branch r08-v7-unified-engine, stacked on r08-v6 head 42a666328b974a7581013358bcf8bc7b9eac7761).
+v7 tests:      python -m pytest -q -p no:cacheprovider tests/test_r08v7_*.py   -> 450 passed (v7-tests.txt)
+Whole suite:   branch (clean worktree at the commit above)   -> 1 failed, 8469 passed, 2 skipped (suite-branch-r08-v7-unified-engine.txt)
+               base 42a6663 (separate clean worktree)         -> 1 failed, 8019 passed, 2 skipped (suite-base-42a6663.txt)
+               main d7eb6be (separate clean worktree)         -> 1 failed, 7476 passed, 2 skipped (suite-main-d7eb6be.txt)
+               The single failure is identical on all three: tests/test_adapter_ed25519.py::test_installed_cryptography_matches_the_test_only_lock
+               (installed cryptography differs from the test-only lock in this environment). No regression: 8469 - 8019 = 450 = the new v7 tests.
+Mutation:      mut_r7.py, 126 mutants on the engine package, the irreversibility family module and the three thin v7 modules.
+               mutation-results-r08v7.json / mut-full.out (all v7 tests): 124 KILLED, 2 SURVIVED (both equivalent, proofs below).
+               mutation-results-r08v7-behavioural-only.json / mut-behavioural.out (the source-literal parity tests deselected): 124 KILLED, 2 SURVIVED (the same two).
+               Three mutants (PF06, ID11, ID15) are killed by an import/collection error (the profile construction invariant or a changed refusal path), which is a kill, not a pass.
+Round history: a first full pass had 9 survivors (IR26, PR13, PR15, PR16, PR17, RE03, VE20, DE04, DE08); tests were added (stub-composer dispatch test, table-member typing,
+               supersession, non-canonical signature codes, optional-refusal key order), leaving IR26 and DE08. A behavioural-only pass then showed six guards only the literal
+               parity tests reached (SE11, RE05, VE15, VE17, DE11, DE13); behavioural tests were added for each (envelope kind, record digest alone, hand-built selection objects,
+               a deny-all composer, the no-record detail). The differential test over hand-built selection objects also found one real byte difference between engine(V6_COMPAT) and
+               the frozen v6 (the structural-layer detail text); it was fixed (the detail now names profile.version) before the final runs reported here.
+Equivalent survivors:
+  IR26 (caller extra key tolerated): normalize_caller reads the caller with _snapshot(caller, len(IRR_FIELDS)) = _snapshot(caller, 1), which returns None for any mapping with more than one
+     entry, so snap has at most one entry. For snap = {} both `set(snap) != set(IRR_FIELDS)` and `IRR_FIELD not in snap` are true; for snap = {k: v} both are true iff k != IRR_FIELD.
+     The two conditions refuse exactly the same inputs. (Same argument as the r08-v6 survivor TR14.)
+  DE08 (compose with a version-less dispatch): decide_verified calls compose_for(profile, profile.version, ...), which refuses only when table_for_contract_version(profile, profile.version)
+     is not ok, i.e. unless `type(version) is str and version == profile.version`. ContractProfile.__post_init__ guarantees `type(profile.version) is str` (a non-str, bytes or None version
+     raises ValueError: tested) and the value equals itself, so the check is always true and compose_for(profile, profile.version, ...) == compose(profile, ...) for every input.
+     The version check of compose_for itself is exercised and killed (PR03) through other versions.
+Differential:  tests/test_r08v7_engine_differential.py compares engine(V6_COMPAT) with the frozen v6 entry points (decisions, verification reports, parse/validation results, identity
+               digests/preimages/refusals, table dispatch and composition) over the pinned tests/vectors/r08v6 vectors, one-at-a-time hostile variations, seeded random combinations,
+               hand-built selection objects and an identity grid; and shows every v3..v7 document is accepted only by its own contract and refused contract_unsupported/family_unsupported
+               elsewhere with no fallback.
+Frozen:        tests/vectors/r08v7/frozen_baseline_manifest.json: 193 files (r08-v1..v6 modules, contracts, tests, vectors) byte-identical to 42a6663; tests/test_ext_s1_5_identity_module.py
+               is the only existing file edited (allowlist addition only), as for r08-v6.
+Generators:    genman7.py (frozen manifest, 193 files from 42a6663), genvec7.py (independent-encoder identity vectors), genvec7s.py (signed vector; PYTHONPATH=.:baseline/execution-runtime).
