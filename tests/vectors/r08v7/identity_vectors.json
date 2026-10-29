@@ -1,0 +1,100 @@
+{
+ "domain": "ocs-reg/r08-v7/effective-policy\\n",
+ "profile": "ocs-effective-policy/1",
+ "vectors": [
+  {
+   "digest": "sha256:13ce3d6b0114998049e28417d158932ec4fc1076259544724597431fd1f07137",
+   "effective": {
+    "class_irreversible": {
+     "class-a": "irreversible",
+     "class-b": "no_change"
+    }
+   },
+   "family": "f5-action-class-irreversibility-policy",
+   "id": "irr-baseline",
+   "preimage": {
+    "contract_version": "r08-v7",
+    "deny_all": [],
+    "effective": {
+     "class_irreversible": {
+      "class-a": "irreversible",
+      "class-b": "no_change"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-irreversibility-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:e1e89a285d55c092240079d8f19fda57cba65c8e2172faa8fd0d006bc087a726",
+   "effective": {
+    "class_irreversible": {
+     "class-a": "irreversible",
+     "class-b": "irreversible",
+     "class-c": "irreversible"
+    }
+   },
+   "family": "f5-action-class-irreversibility-policy",
+   "id": "irr-all-irreversible",
+   "preimage": {
+    "contract_version": "r08-v7",
+    "deny_all": [],
+    "effective": {
+     "class_irreversible": {
+      "class-a": "irreversible",
+      "class-b": "irreversible",
+      "class-c": "irreversible"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-irreversibility-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:bbfca7a7bf6f3cfc766b620225b611b6bbd59663860580e7755550ae50c8a52d",
+   "effective": {
+    "class_irreversible": {
+     "class-a": "no_change"
+    }
+   },
+   "family": "f5-action-class-irreversibility-policy",
+   "id": "irr-all-no-change",
+   "preimage": {
+    "contract_version": "r08-v7",
+    "deny_all": [],
+    "effective": {
+     "class_irreversible": {
+      "class-a": "no_change"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-irreversibility-policy",
+    "family_schema_revision": 1
+   }
+  },
+  {
+   "digest": "sha256:bdf68c52d2e3d33d16592da65fa46bacd5181438d679a3c2f78f1dcbeaee1b2b",
+   "effective": {
+    "class_irreversible": {
+     "class-a": "irreversible"
+    }
+   },
+   "family": "f5-action-class-irreversibility-policy",
+   "id": "irr-single-irreversible",
+   "preimage": {
+    "contract_version": "r08-v7",
+    "deny_all": [],
+    "effective": {
+     "class_irreversible": {
+      "class-a": "irreversible"
+     }
+    },
+    "effective_policy_profile": "ocs-effective-policy/1",
+    "family": "f5-action-class-irreversibility-policy",
+    "family_schema_revision": 1
+   }
+  }
+ ]
+}
