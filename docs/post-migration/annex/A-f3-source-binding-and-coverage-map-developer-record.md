@@ -306,3 +306,7 @@ D-10. Protected-file pins are scattered. The six other evaluators are pinned tog
 - The Registry-side r08-v8 code (`registry_successor/v8_*`, `engine/families_anchor.py`, `engine/families_observation.py`) and its tests were only located, not inspected; the Registry-side claim that r08-v1..v7 identities are byte-identical was not checked.
 - Whether `tests/test_known_limits.py` contains any D-06-specific limit assertion was not read.
 - `git worktree`/clone creation for `061a986` was not performed.
+
+## Erratum (2026-10-29, appended; earlier text above is preserved unchanged)
+
+Line 58 states that intermediate D-07 head `fb24ed0` is "(not on main)". That statement is incorrect as a description of ancestry. `fb24ed0df2c0f43d156b9b0d2de4f383937ce657` ("D-07 developer evidence and record (no source or test change)") is an ancestor of Control Plane main `739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69` (verified with `git merge-base --is-ancestor fb24ed0 739efe7`), reached through the Control Plane #97 branch history. It is not on main's first-parent line (`git rev-list --first-parent 739efe7` does not list it). The hash, blob-prefix and comment-only-difference observations on line 58 are not affected by this correction. No other statement in this annex is altered by this erratum.
