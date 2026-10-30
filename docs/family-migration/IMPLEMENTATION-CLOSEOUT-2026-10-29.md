@@ -28,3 +28,7 @@
 - **Successor program:** independently qualify F3-A/F3-B and verify exact integrated behavior, then execute [R1 post-19 consolidation](../plans/REGISTRY-R1-POST19-CONSOLIDATION-PLAN-v1.0.md) under its own authorization; apply R1-E ergonomics integration when appropriate; perform prescribed frozen final Tier 1 campaign before any acceptance claim. This closeout does **not** authorize refactoring, paid testing, external effects, or production release.
 
 **Status ledger:** 19/19 implementation integrated; 0 independently accepted; migration implementation CLOSED; qualification and release OPEN/HELD.
+
+## Status note (2026-10-30; append-only)
+
+The "INDEPENDENT QUALIFICATION PENDING" wording above is as of 2026-10-29. Since then: original F3-A FAIL (preserved); successor F3-A conditional technical PASS reported, custody outstanding; F3-B scoped technical PASS; formal independent acceptance NOT ESTABLISHED. The final-three consumers are implemented and merged (see the table above). Current record: [final-three/14-f3-final-engineering-closeout-2026-10-30.md](final-three/14-f3-final-engineering-closeout-2026-10-30.md); open obligations: hub issue [#240](https://github.com/cogno-us/cognous-stack-qualification/issues/240).
