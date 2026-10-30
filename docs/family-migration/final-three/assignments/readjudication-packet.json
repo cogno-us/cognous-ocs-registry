@@ -87,7 +87,7 @@
       {
         "location": "scratchpad/F3-qualification-evidence-ed31764.tar.gz",
         "identity": "sha256 1d07a70439625de3b3e85e0ea3c088a43f14bc237649487d22d85da51a174fc5 (verified by D2 today)",
-        "purpose": "Delivered evidence bundle. UNVERIFIED: no GitHub or other published provenance for the qualification evidence has been located; directive: 'Do not invent an evidence location'"
+        "purpose": "Delivered evidence bundle. Not yet published: a custody record is proposed in hub PR cogno-us/cognous-stack-qualification#238 (unmerged; NOT published until merged and checksum-verified from a fresh clone), directory results/third-party/cp-739efe7-f3-independent-20261029/. Directive: do not invent an evidence location; the qualifier verifies the bytes by sha256 wherever obtained"
       },
       {
         "location": "PROTOCOL-F3-v1.md in the evidence repo",
