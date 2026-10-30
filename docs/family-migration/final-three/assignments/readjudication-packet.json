@@ -11,7 +11,7 @@
   },
   "authority": {
     "objective": "Independently readjudicate F3-A DEV-PE-1 and issue a NEW verdict (PASS, FAIL or BLOCKED, as the evidence supports, with its own exact protocol and source bindings) on whether Control Plane 739efe7 satisfies the F3-A contract under (i) the original literal wording of doc 03 F3-A requirement 1 and (ii) the Architect-approved successor clarification OCS-F3A-DEV-PE-1-INTERPRETATION/1.0, reporting both outcomes. Evaluate; do not improve or defend. The original F3-A FAIL remains permanent predecessor evidence. This assignment does not instruct, expect or favor any particular verdict.",
-    "sourceDecision": "Architect directive 'F3-A REMEDIATION AND QUALIFICATION CLOSEOUT' 2026-10-29 section 6 (attachment 70f283b5-attachment.txt): 'Prepare a fresh Archetype D assignment for the independent qualification owner.' UNVERIFIED: no competent designation record names a fresh independent_qualification_owner; the successor clarification has not yet been created and has no adopted standing.",
+    "sourceDecision": "Architect directives 2026-10-29: 'F3-A REMEDIATION AND QUALIFICATION CLOSEOUT' section 6 and 'F3-A REMEDIATION CLOSEOUT' section 7 (fresh Archetype D assignment; Architect decisions D1 approved in principle after final source review, D2, D3, D4 fresh independent qualifier required, D5, D6). UNVERIFIED: no competent designation record names a fresh independent_qualification_owner; drafting this packet appoints no one. The successor clarification has adopted-in-principle standing only (D1), pending the Architect's recorded post-review confirmation.",
     "allowedActions": [
       "Read the exact sources, evidence and successor clarification listed in Inputs (read-only)",
       "Freeze a readjudication oracle/protocol before any new execution and record its hash",
@@ -100,19 +100,24 @@
         "purpose": "Original verdicts: F3-A FAIL (DEV-PE-1; 74 pass / 23 fail final run A-main4), F3-B PASS (scoped)"
       },
       {
-        "location": "OCS-F3A-DEV-PE-1-INTERPRETATION/1.0 (successor clarification, in the documentation-only remediation PR)",
-        "identity": "UNVERIFIED: the PR and its head SHA do not exist yet (to be created by the implementation owner); NOT dispatchable until a real full 40-hex head SHA and document revisions are recorded",
-        "purpose": "Proposed, NOT retroactive successor to doc 03 F3-A requirement 1; becomes operative only via Architect review and independent adjudication"
+        "location": "cogno-us/cognous-ocs-registry PR #80, OCS-F3A-DEV-PE-1-INTERPRETATION/1.0 (docs/family-migration/final-three/06-...md, with 07 and 08)",
+        "identity": "Registry PR #80 on base 2815643c3e15fbc6aadadbf88dc7596f10120992; head at review round 1 was 6dd0e5d3856ef91017571619942c3825b2ae6b72 and moves with each later commit. UNVERIFIED until dispatch: the full 40-hex final head, the blob sha of 06 at that head, and the Architect's recorded post-review confirmation of decision D1 (adopt in principle after final source review). NOT dispatchable until these are recorded.",
+        "purpose": "Successor interpretation, adopted in principle by Architect decision D1 and NOT retroactive; it governs only from the Architect's recorded post-review confirmation; whether it is authoritative is for the qualifier to assess"
       },
       {
         "location": "remediation-packet.json (OCS-F3A-DEV-PE-1-REMEDIATION)",
-        "identity": "UNVERIFIED revision: file in scratchpad work2/D2; not committed anywhere",
+        "identity": "Committed in Registry PR #80 as docs/family-migration/final-three/assignments/remediation-packet.json (revision = PR head bound at dispatch)",
         "purpose": "Upstream implementation-owner assignment; context only"
       },
       {
         "location": "cogno-us/cognous-engineering-constitution",
         "identity": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c (dcdbe3b; main HEAD verified; normative files byte-identical to 230c0af per lead brief)",
         "purpose": "Governing documents: ENGINEERING_CONSTITUTION, ORCHESTRATION, ORCHESTRATOR_PROMPT_ENGINEERING_ADDENDUM, ENGINEERING_COMPLIANCE_ADDENDUM, TESTING_POLICY, ADOPTION, schemas/orchestrator-assignment-v1.schema.json"
+      },
+      {
+        "location": "cogno-us/cognous-control-plane PR #98 (docs-only companion corrections), branch docs/f3a-dev-pe-1-doc-corrections-20261029",
+        "identity": "head 95fe45fc6bb390dba3f7772805a69205f4929d80 on base 739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69 at opening; src tree d248bde478ae3f2ce050db4637f0c1203066e906, schemas tree 2e927251a664de16fef10b8295758e34bd947488, tests tree 889f7df42a255b288d3064d2ea10084c9be7469c and .github tree 4471a0cb0b94cd9918ed75a4a35c56fec5d39658 identical to base. UNVERIFIED until dispatch: the final head, and Control Plane main if #98 or other work merges (the qualifier re-derives the tree ids)",
+        "purpose": "Corrected documentation read by case A24; must be re-read at the exact head the qualifier binds"
       }
     ],
     "interfacesAndDependencies": [
@@ -120,7 +125,7 @@
       "Original F3-A result: FAIL (DEV-PE-1, CONTRACT-LITERAL, strict per R2): 22 x test_A19_pin_export_refuses_per_perturbed_member + test_A06...[pin:cutoff0_idx0] = 23 failed assertions; final run A-main4 74 pass / 23 fail; original corrective-owner note allows the Architect to reconcile 03 L23 with 02 section 4 rule 2.",
       "Original F3-A expected-outcome text and pass criteria were never changed and remain frozen.",
       "Registry pin per Control Plane suite and environment requirements as in the original protocol (OCS_REGISTRY_PIN_DIR, OCS_REQUIRE_REGISTRY_PIN=1; Python 3.11 venv); readjudicator must record the exact environment.",
-      "Dependency on remediation package OCS-F3A-DEV-PE-1-REMEDIATION: the successor clarification PR head SHA is UNVERIFIED (does not yet exist); this assignment is not dispatchable until it is recorded."
+      "Dependency on remediation package OCS-F3A-DEV-PE-1-REMEDIATION: Registry PR #80 exists; its final head SHA and the Architect's post-review confirmation of D1 are UNVERIFIED until dispatch; this assignment is not dispatchable until they are recorded."
     ]
   },
   "acceptance": {
@@ -129,7 +134,7 @@
     "successConditions": [
       "A NEW F3-A verdict (PASS/FAIL/BLOCKED) with its own frozen protocol hash and exact source bindings, reporting separately the outcome under the original literal wording and under OCS-F3A-DEV-PE-1-INTERPRETATION/1.0.",
       "Scope items A-E each evaluated and reported: (A) existing source-backed refusal behavior; (B) the successor clarification; (C) original DEV-PE-1 observations; (D) whether the clarified contract changes any legitimate external reliance commitment; (E) any remaining F3-A CONTRACT deviations independent of DEV-PE-1.",
-      "Required cases covered: A19 pin-export mismatch cases; A06 legacy pin-export subcase; A19 claim-issuance observations; A19 execution-refusal regression evidence; A09 compatibility.",
+      "Required cases covered: A19 pin-export mismatch cases; A06 legacy pin-export subcase; A19 claim-issuance observations; A19 execute durable refusal regression evidence; A09 compatibility; A24 limits-documented rerun (mandatory).",
       "Every reused raw result has an exact-source applicability statement (CP 739efe7 tree, protocol e799b108..., environment); every new test is justified by an identified evidence gap.",
       "Readjudication oracle frozen and hashed before any new execution; raw logs, failures and exclusions retained; qualifier identity, provenance and independence limits disclosed; no human certification claimed.",
       "Any actual defect found is recorded with source-backed requirement, reproduction, observed behavior, severity, reachable consequence, corrective owner and requalification scope, and is not excused by the interpretation."
@@ -138,7 +143,7 @@
       "Pin-export mismatch must suppress payload and be non-authorizing; any authorization payload or effect on mismatch is a FAIL regardless of reading",
       "Effecting execution refusal (durable EffectTimeRefusal, authorization_binding_changed, destination untouched) must remain intact",
       "Claim issuance on mismatch must issue no claim",
-      "Read-only paths must not acquire a persistent write merely to produce a refusal record",
+      "Under reading (ii) only: read-only paths must not acquire an authorization-state write or an EffectTimeRefusal write merely to produce a refusal record; existing ResolutionCheck journaling is permitted (Architect decision D2)",
       "Successor wording that weakens authorization, eliminates necessary evidence, requires a new durable reason code or a protected evaluator change is a stop condition to report, not to adjudicate away",
       "A relied-upon external interface that explicitly requires durable pin-export refusal evidence is reported as a compatibility finding",
       "No PASS inferred from CI, a docs PR, builder statements or the Architect-approved interpretation",
@@ -164,7 +169,7 @@
         "result": "PLANNED"
       },
       {
-        "test": "A19 execution-refusal regression evidence",
+        "test": "A19 execute durable refusal (EffectTimeRefusal with authorization_binding_changed) regression evidence",
         "purpose": "Confirm that effecting execution still produces the single durable EffectTimeRefusal with authorization_binding_changed, no attempt row, destination apply never called (original PASS evidence, A3/A4/A5 on all 22 members).",
         "command": "DISCOVER BEFORE EXECUTION; execute a new test only if an identified evidence gap is justified in the frozen readjudication protocol",
         "result": "PLANNED"
@@ -183,7 +188,7 @@
       },
       {
         "test": "Evaluation B: successor clarification OCS-F3A-DEV-PE-1-INTERPRETATION/1.0",
-        "purpose": "Assess the clarification text at the exact successor PR head and document revisions (UNVERIFIED: not yet existing)",
+        "purpose": "Assess the clarification text at the exact successor PR head and document revisions bound at dispatch (PR #80 exists; final head UNVERIFIED until dispatch)",
         "command": "DISCOVER BEFORE EXECUTION",
         "result": "PLANNED"
       },
@@ -204,6 +209,12 @@
         "purpose": "Do not turn the interpretation into an instruction to overlook unresolved actual defects",
         "command": "DISCOVER BEFORE EXECUTION",
         "result": "PLANNED"
+      },
+      {
+        "test": "A24 limits-documented / no anti-rollback claim (MANDATORY RERUN: not reusable)",
+        "purpose": "Re-run against the corrected documentation at the exact heads bound at dispatch, including the new text on a host-configuration change fully masked by a stricter effective Registry value; the original A-main4 PASS read documents that the companion documentation PR edits",
+        "command": "DISCOVER BEFORE EXECUTION",
+        "result": "PLANNED"
       }
     ],
     "reusedEvidence": [
@@ -213,7 +224,7 @@
           "identity": "commit ed3176462b8058ec6e9580ff85150ad3aa387669 (ed31764); protocol commit e08b5c2 (pre-execution freeze); permanent predecessor evidence, never modified",
           "purpose": "Original raw runs, amendments, mutant results, verdicts"
         },
-        "applicability": "UNVERIFIED until the readjudicator establishes exact-source applicability: Control Plane tree 739efe7 must be the executed tree, the documentation-only successor PR must be shown to touch no production source, tests or protected evaluators, and the environment/protocol identity (PROTOCOL-F3-v1 sha256 e799b108...) must match. Reuse is per case, not blanket."
+        "applicability": "UNVERIFIED until the readjudicator establishes exact-source applicability: Control Plane tree 739efe7 must be the executed tree, the documentation-only successor PR must be shown to touch no production source, tests or protected evaluators, and the environment/protocol identity (PROTOCOL-F3-v1 sha256 e799b108...) must match. Reuse is per case, not blanket. Case A24 is excluded from reuse and must be re-run."
       },
       {
         "source": {
@@ -226,7 +237,7 @@
     ],
     "notRun": [
       {
-        "test": "Automatic rerun of unchanged cases",
+        "test": "Automatic rerun of unchanged cases (except A24, which is mandatory)",
         "reason": "Directive section 6: do not rerun cases whose source, contract and execution behavior are unchanged; new tests only for identified evidence gaps"
       },
       {
@@ -302,7 +313,7 @@
     "constitutionalRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
     "projectAdoption": {
       "status": "CONFLICT",
-      "evidence": "OCS records pin different constitutional revisions: 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b (Registry README, PROJECT_PLAN, decisions D1-D5; predates the Compliance Addendum and numbers review tiers with Tier 1 = critical, whereas dcdbe3b/230c0af use Tier 3 = critical) and 230c0aff1c2d1e054652cfc1be175147260b8aae (Registry final-three 02/03, Control Plane D-06/FINAL3 docs). The directive names dcdbe3b76843d672ca3cfb1f000124ecd78ed03c and says 'Preserve the existing OCS project adoption'; the Compliance Addendum and Orchestrator Addendum state they are NOT ADOPTED by publication or merge, and Registry #79 04-architect-decision-packet D7 records the revision question as open. No OCS adoption decision selecting dcdbe3b was found. Existing adoptions preserved unchanged; the cells copied here are read at dcdbe3b and were verified byte-identical to 230c0af by the earlier qualification worker (equality with 1c2e920 was shown for CA04/06/07/08/23 by earlier Worker D, not rechecked here)."
+      "evidence": "OCS records pin different constitutional revisions: 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b (Registry README, PROJECT_PLAN, decisions D1-D5; predates the Compliance Addendum and numbers review tiers with Tier 1 = critical, whereas dcdbe3b/230c0af use Tier 3 = critical) and 230c0aff1c2d1e054652cfc1be175147260b8aae (Registry final-three 02/03, Control Plane D-06/FINAL3 docs). The directive names dcdbe3b76843d672ca3cfb1f000124ecd78ed03c and says 'Preserve the existing OCS project adoption'; the Compliance Addendum and Orchestrator Addendum state they are NOT ADOPTED by publication or merge, and Registry #79 04-architect-decision-packet D7 records the revision question as open. No OCS adoption decision selecting dcdbe3b was found. Existing adoptions preserved unchanged; the cells copied here are read at dcdbe3b and were verified byte-identical to 230c0af by the earlier qualification worker (equality with 1c2e920 was shown for CA04/06/07/08/23 by earlier Worker D, not rechecked here). Architect decision D6 (closeout directive 2026-10-29): preserve OCS's existing constitutional adoption; do not silently promote newer revisions; apply the newer orchestrator prompt-engineering convention prospectively."
     },
     "complianceAddendumRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
     "testingPolicyRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
