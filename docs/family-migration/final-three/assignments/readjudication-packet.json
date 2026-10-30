@@ -56,12 +56,12 @@
     "frozenSources": [
       {
         "location": "cogno-us/cognous-control-plane main",
-        "identity": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69 (merge of #97) is the implementation source under test. Control Plane main at packet preparation is 10099a135e7e5b82f60b2aff81350938f0a82622 (merge of docs-only #98; src d248bde478ae3f2ce050db4637f0c1203066e906, schemas 2e927251a664de16fef10b8295758e34bd947488, tests 889f7df42a255b288d3064d2ea10084c9be7469c, .github 4471a0cb0b94cd9918ed75a4a35c56fec5d39658, conformance 6cd2264fe605575f7b9bcec37b892ebd6625ce6a, all identical to 739efe7). If docstring-only PR #99 merges, the src tree changes (module docstring of registry_governed_policy.py only; executable AST identical to 739efe7 by the builder's check, to be re-derived by the qualifier). The qualifier binds the Control Plane head at dispatch and re-derives tree ids.",
+        "identity": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69 (merge of #97) is the original implementation subject. Control Plane main at packet preparation is 8616d5f64a901b8f858359809193961a1124b5f6 (after merged docs-only #98 -> 10099a135e7e5b82f60b2aff81350938f0a82622, then merged docstring-only #99). Trees at 8616d5f: schemas 2e927251a664de16fef10b8295758e34bd947488, tests 889f7df42a255b288d3064d2ea10084c9be7469c, .github 4471a0cb0b94cd9918ed75a4a35c56fec5d39658, conformance 6cd2264fe605575f7b9bcec37b892ebd6625ce6a (all identical to 739efe7); src ae336a4c1b4e85ef5198a38e384d01f216cc0a55 differs from 739efe7's d248bde478ae3f2ce050db4637f0c1203066e906 only in registry_governed_policy.py (module docstring; executable AST identical, builder-checked, to be re-derived by the qualifier). The qualifier binds the Control Plane head at dispatch.",
         "purpose": "Frozen F3-A/F3-B subject; the only code identity in scope"
       },
       {
         "location": "cogno-us/cognous-ocs-registry main",
-        "identity": "Registry main at packet preparation a4a3892f5af319fd41a8cc27780280ec5528fcb5 (includes merged successor clarification, merge commit 6bf83dd0e564951cb221c58cf9a4032f8db93e5c). Pre-integration base 2815643c3e15fbc6aadadbf88dc7596f10120992 (merge of #78) is the frozen-oracle base. The qualifier binds Registry main at dispatch.",
+        "identity": "Registry main at packet preparation f2abb9a0504a7d10ca1acae231528ade45cd63f3 (after merged #80 successor clarification 6bf83dd, #79 a4a3892, #81 packet). The adoption crosswalk (09) and this packet update are carried by a later Registry PR; the qualifier binds Registry main at dispatch. Frozen-oracle base: 2815643c3e15fbc6aadadbf88dc7596f10120992.",
         "purpose": "Registry migration closeout; oracle documents and r08-v8 contract"
       },
       {
@@ -87,7 +87,7 @@
       {
         "location": "cogno-us/cognous-stack-qualification results/third-party/cp-739efe7-f3-independent-20261029/F3-qualification-evidence-ed31764.tar.gz, merge commit 0d90e355238ca28549eed443efd4242c11de7f8a (PR #238)",
         "identity": "sha256 1d07a70439625de3b3e85e0ea3c088a43f14bc237649487d22d85da51a174fc5 (verified by D2 today)",
-        "purpose": "Original evidence bundle, filed as produced. Git custody verified by the builder from a fresh clone (sha256sum -c SHA256SUMS OK; protocol, bundle and verdict hashes equal the recorded identities); the qualifier re-verifies the bytes. Record is third-party/non-suite, not Tier 1, not certification. Addendum PR #239 (custody verification) was open and unmerged"
+        "purpose": "Original evidence bundle, filed as produced. Git custody verified by the builder from a fresh clone (sha256sum -c SHA256SUMS OK; protocol, bundle and verdict hashes equal the recorded identities); the qualifier re-verifies the bytes. Record is third-party/non-suite, not Tier 1, not certification. Custody-verification addendum PR #239 is merged (hub main 2f3dcd55ff2b6345d774f8868fa83d62e1bc2f3e); the original directory contents are unchanged"
       },
       {
         "location": "PROTOCOL-F3-v1.md in the evidence repo; also filed at the hub path above as PROTOCOL-F3-v1.md",
@@ -121,8 +121,18 @@
       },
       {
         "location": "cogno-us/cognous-control-plane PR #99 (docstring-only correction of registry_governed_policy.py lines 28-29)",
-        "identity": "head 2be2181423347e1b1d9c904e05d7a4a0fe8accf6 on base 10099a135e7e5b82f60b2aff81350938f0a82622; OPEN and UNMERGED at packet preparation (merge pending); builder AST check: identical outside the module docstring",
+        "identity": "MERGED: Control Plane PR #99, merge commit 8616d5f64a901b8f858359809193961a1124b5f6, reviewed head 2be2181423347e1b1d9c904e05d7a4a0fe8accf6; one file, docstring only; executable AST identical to 739efe7 outside the module docstring (builder and an independent automated reviewer; neither is a human approval). Review provenance: PR #99 comment issuecomment-6512926253",
         "purpose": "Corrects the source docstring that implied pin-export claim refusal produces authorization_binding_changed; no executable change. The qualifier checks whether it merged and re-derives AST equivalence if so"
+      },
+      {
+        "location": "cogno-us/cognous-ocs-registry docs/family-migration/final-three/09-constitutional-adoption-crosswalk-2026-10-30.md (and 09a clause-compare output)",
+        "identity": "Source-backed crosswalk of constitutional revisions 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b / 230c0aff1c2d1e054652cfc1be175147260b8aae / dcdbe3b76843d672ca3cfb1f000124ecd78ed03c; carried by the Registry PR that updates this packet (revision bound at dispatch). Builder finding to be independently checked, not accepted: all 23 CA rows are byte-identical at the three revisions and the five Archetype D cells equal the 1c2e920 CA-table cells",
+        "purpose": "Applicability of clause text to F3-A readjudication; no adoption event"
+      },
+      {
+        "location": "cogno-us/cognous-stack-qualification main",
+        "identity": "2f3dcd55ff2b6345d774f8868fa83d62e1bc2f3e at packet preparation (custody merge 0d90e355238ca28549eed443efd4242c11de7f8a, then the custody-verification addendum)",
+        "purpose": "Original evidence custody and the destination repository for the successor directory"
       }
     ],
     "interfacesAndDependencies": [
@@ -143,7 +153,8 @@
       "Every reused raw result has an exact-source applicability statement (CP 739efe7 tree, protocol e799b108..., environment); every new test is justified by an identified evidence gap.",
       "Readjudication oracle frozen and hashed before any new execution; raw logs, failures and exclusions retained; qualifier identity, provenance and independence limits disclosed; no human certification claimed.",
       "Any actual defect found is recorded with source-backed requirement, reproduction, observed behavior, severity, reachable consequence, corrective owner and requalification scope, and is not excused by the interpretation.",
-      "The new verdict explicitly supersedes, and does not replace or alter, the predecessor qualification verdict; the predecessor F3-A FAIL (DEV-PE-1) and F3-B scoped PASS remain preserved as filed."
+      "The new verdict explicitly supersedes, and does not replace or alter, the predecessor qualification verdict; the predecessor F3-A FAIL (DEV-PE-1) and F3-B scoped PASS remain preserved as filed.",
+      "The qualifier treats the predecessor AI session's verdict as evidence to inspect, not an outcome to reproduce, and determines PASS / FAIL / BLOCKED independently."
     ],
     "negativeControls": [
       "Pin-export mismatch must suppress payload and be non-authorizing; any authorization payload or effect on mismatch is a FAIL regardless of reading",
@@ -288,7 +299,7 @@
       "Required corrections and requalification scope, if any",
       "Remaining qualification and release holds"
     ],
-    "pullRequest": "Required new evidence destination: PROPOSED, awaiting Architect designation - a new append-only directory under cogno-us/cognous-stack-qualification results/third-party/ (for example cp-739efe7-f3a-readjudication-<YYYYMMDD>/), filed by PR, referencing and never editing the predecessor directory. No readjudication PR exists; no qualifier is designated by this packet. A fresh verdict must explicitly supersede, not replace, the predecessor F3-A FAIL / F3-B scoped PASS."
+    "pullRequest": "Required new evidence destination (separate successor directory, never overwriting the predecessor): cogno-us/cognous-stack-qualification, results/third-party/cp-739efe7-f3a-readjudication-<YYYYMMDD>/ (new, append-only; filed by PR; README states not Tier 1, not certification, independence limits; SHA256SUMS written last; reference but do not edit results/third-party/cp-739efe7-f3-independent-20261029/). No readjudication PR exists and no qualifier is designated by this packet."
   },
   "boundaries": {
     "stopConditions": [
@@ -318,8 +329,8 @@
   "governance": {
     "constitutionalRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
     "projectAdoption": {
-      "status": "CONFLICT",
-      "evidence": "OCS records pin different constitutional revisions: 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b (Registry README, PROJECT_PLAN, decisions D1-D5; predates the Compliance Addendum and numbers review tiers with Tier 1 = critical, whereas dcdbe3b/230c0af use Tier 3 = critical) and 230c0aff1c2d1e054652cfc1be175147260b8aae (Registry final-three 02/03, Control Plane D-06/FINAL3 docs). The directive names dcdbe3b76843d672ca3cfb1f000124ecd78ed03c and says 'Preserve the existing OCS project adoption'; the Compliance Addendum and Orchestrator Addendum state they are NOT ADOPTED by publication or merge, and Registry #79 04-architect-decision-packet D7 records the revision question as open. No OCS adoption decision selecting dcdbe3b was found. Existing adoptions preserved unchanged; the cells copied here are read at dcdbe3b and were verified byte-identical to 230c0af by the earlier qualification worker (equality with 1c2e920 was shown for CA04/06/07/08/23 by earlier Worker D, not rechecked here). Architect decision D6 (closeout directive 2026-10-29): preserve OCS's existing constitutional adoption; do not silently promote newer revisions; apply the newer orchestrator prompt-engineering convention prospectively."
+      "status": "UNVERIFIED",
+      "evidence": "Standing OCS technical baseline per the Architect's directives of 2026-10-29: cogno-us/cognous-engineering-constitution 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b; prospective prompt-engineering convention: dcdbe3b76843d672ca3cfb1f000124ecd78ed03c. No adoption event is created by this packet. Source inspection (docs/family-migration/final-three/09-constitutional-adoption-crosswalk-2026-10-30.md) found NO ADOPTION.md-form instrument (exact revision, scope, effective point, reserved powers, exceptions) for any of 1c2e920, 230c0af or dcdbe3b; 1c2e920 is the standing pin through operator-approved plans and a scoped D3 record that calls it 'still binding'; the Architect's own record of the baseline is not located (UNVERIFIED). No substantive clause conflict: all 23 CA rows are byte-identical at the three revisions, and the CA04/CA06/CA07/CA08/CA23 Archetype D cells in this packet equal the 1c2e920 CA-table cells. Differences are the review-tier label inversion (Tier 1 critical at 1c2e920; Tier 3 critical at 230c0af/dcdbe3b; the qualifier states criticality as critical/routine or T0-T4, never bare 'Tier N'), and process texts (compliance addendum, T0-T4 testing policy, packet schema) that exist only from 230c0af/dcdbe3b and apply as prospective convention. The qualifier independently verifies these findings."
     },
     "complianceAddendumRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
     "testingPolicyRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
