@@ -1,0 +1,388 @@
+{
+  "schemaVersion": "cognous-orchestrator-assignment-v1",
+  "identity": {
+    "workPackage": "OCS-F3A-DEV-PE-1-REMEDIATION",
+    "role": "implementation_owner",
+    "primaryArchetype": "C",
+    "archetypeMeaning": "Establish the source-backed discrepancy, preserve the original failure, identify the smallest legitimate correction and verify it without expanding the authorized engineering scope.",
+    "repository": "cogno-us/cognous-control-plane",
+    "baseCommitSha": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69",
+    "currentHeadSha": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69"
+  },
+  "authority": {
+    "objective": "Resolve DEV-PE-1, the F3-A qualification discrepancy, through a minimal, source-backed clarification of read-only versus effecting refusal semantics; prepare the corrected contractual interpretation for independent readjudication. No production-code change. Preserve the original F3-A FAIL, independent qualification protocol, raw evidence and complete predecessor history.",
+    "sourceDecision": "Architect directive 'COGNOUS OCS - F3-A REMEDIATION AND QUALIFICATION CLOSEOUT, ARCHITECT DIRECTIVE 2026-10-29' (attachment 70f283b5-attachment.txt), work package OCS-F3A-DEV-PE-1-REMEDIATION. The Architect interpretation (A effecting paths: durable EffectTimeRefusal with authorization_binding_changed; B read-only assessment / pin-export: fail closed, suppress payload, documented non-authorizing outcome, no persistent write authority; C claim issuance: prevent issuance, existing documented failure, no automatic journal-write obligation) is approved direction for a proposed successor clarification, NOT a retroactive rewrite of the frozen protocol and NOT a conversion of the observed FAIL into PASS. UNVERIFIED: no separate written designation record for the Lead Builder identity.",
+    "allowedActions": [
+      "Inspect the precise conflicting source requirements.",
+      "Record the Architect interpretation.",
+      "Prepare a narrowly scoped successor clarification.",
+      "Correct demonstrably stale documentation.",
+      "Add the documented masked-host-change limitation.",
+      "Prepare the independent F3-A readjudication handoff.",
+      "Perform relevant static source and contract checks.",
+      "Create a documentation-only GitHub PR."
+    ],
+    "prohibitedActions": [
+      "Production-code changes.",
+      "Changes to protected evaluators.",
+      "Rewriting qualification results.",
+      "Altering the frozen independent oracle.",
+      "Changing previous FAIL outcomes.",
+      "New Registry schema or contract versions.",
+      "Paid testing.",
+      "Full regression or mutation batteries.",
+      "Automatic merges.",
+      "Independent qualification self-certification."
+    ],
+    "paidExecution": {
+      "authorized": false,
+      "maximumUsd": 0
+    },
+    "mergeAuthorized": false,
+    "deploymentAuthorized": false
+  },
+  "ownership": {
+    "designatedWriter": "Lead Builder (implementation_owner): owns contract interpretation reconciliation, documentation correction and the final handoff, and is the single writer of the one documentation PR. Worker D prepares the successor clarification and implementation-owner handoff with non-overlapping writing ownership. The Independent Qualifier retains exclusive ownership of independent readjudication and its verdict; the implementation team may not issue that verdict. UNVERIFIED: individual identity of the Lead Builder is not stated in the directive.",
+    "writablePaths": [
+      "UNVERIFIED: the directive names no exact writable paths or target repository for the single documentation PR (two repositories are named: Registry and Control Plane). Authorized scope is documentation only: the successor clarification (OCS-F3A-DEV-PE-1-INTERPRETATION/1.0), crosswalk, readjudication handoff, and corrections to non-frozen current documentation (D-06 effective-configuration binding documentation, docs/final3-consumers.md section 6, Registry r08-v8 consumer status, D-07 'Before' description, historical mutation-result summaries (via errata or successor notes), D-06 test documentation referring to older pins, #95 merge-target and #97 main-integration statements, and the masked-host-change limitation). Exact file paths must be resolved and recorded by the Lead Builder before dispatch."
+    ],
+    "protectedPaths": [
+      "All production source in both repositories (including src/agent_control_plane/authorization_pin_export.py, bounded.py, effective_configuration_binding.py)",
+      "Protected evaluators and all test code and test expectations",
+      "Frozen independent oracle: Registry docs/family-migration/final-three/03-f3-qualification-expectations-F3A-F3B-2026-10-29.md and 02-architect-authorization-and-contract-freeze-2026-10-29.md original text (successor note only; no edit of expected outcomes)",
+      "Independent qualification evidence: PROTOCOL-F3-v1.md, VERDICTS-F3-20261029.md, runs/, MANIFEST-final.txt, evidence repo commit ed31764 and bundle sha256 1d07a704...; historical records and raw results",
+      "Registry schemas and contract versions (no new versions)",
+      "Pristine candidate checkout scratchpad/run/cp",
+      "Registry #58/#59, Control Plane #87, Ed25519 #26/#34 (HELD)"
+    ],
+    "parallelWorkers": [
+      {
+        "role": "Worker A - read-only source crosswalk for DEV-PE-1",
+        "writablePaths": [
+          "None in any repository (read-only); scratch output only under its own scratchpad work directory per the lead's brief"
+        ]
+      },
+      {
+        "role": "Worker B - read-only documentation consistency review",
+        "writablePaths": [
+          "None in any repository (read-only); scratch output only under its own scratchpad work directory per the lead's brief"
+        ]
+      },
+      {
+        "role": "Worker C - read-only qualification evidence and provenance audit",
+        "writablePaths": [
+          "None in any repository (read-only); scratch output only under its own scratchpad work directory per the lead's brief"
+        ]
+      },
+      {
+        "role": "Worker D - prepares successor clarification and implementation-owner handoff (non-overlapping writing ownership)",
+        "writablePaths": [
+          "UNVERIFIED: exact draft file paths in the documentation PR are not designated by the directive; drafts only under its own scratchpad work directory until the Lead Builder assigns paths"
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "projectPlan": "Registry migration plan (OCS-REG-PLAN v1.1 and docs/r08-v8-contract.md at Registry main 2815643c3e15fbc6aadadbf88dc7596f10120992) and the final-three decision records (docs/family-migration/final-three/02, 03) with the F3 handoff in Registry PR #79. The directive does not name one controlling plan file: the selection is the packet compiler's inference.",
+    "frozenSources": [
+      {
+        "location": "cogno-us/cognous-control-plane main",
+        "identity": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69 (merge of #97; head re-verified unchanged 2026-10-29; pristine detached checkout; read-only)",
+        "purpose": "Frozen F3-A/F3-B subject; the only code identity in scope"
+      },
+      {
+        "location": "cogno-us/cognous-ocs-registry main",
+        "identity": "2815643c3e15fbc6aadadbf88dc7596f10120992 (merge of #78; head re-verified unchanged 2026-10-29)",
+        "purpose": "Registry migration closeout; oracle documents and r08-v8 contract"
+      },
+      {
+        "location": "cogno-us/cognous-ocs-registry@2815643c3e15fbc6aadadbf88dc7596f10120992:docs/family-migration/final-three/03-f3-qualification-expectations-F3A-F3B-2026-10-29.md",
+        "identity": "blob 101ce289f7342d3db210566428f45f7ebd08ead2; F3-A requirement 1 at line 23 (literal 'execute AND pin-export ... durable EffectTimeRefusal')",
+        "purpose": "Doc 03: frozen oracle expectation (literal wording); never edited"
+      },
+      {
+        "location": "cogno-us/cognous-ocs-registry@2815643c3e15fbc6aadadbf88dc7596f10120992:docs/family-migration/final-three/02-architect-authorization-and-contract-freeze-2026-10-29.md",
+        "identity": "blob 0cd33bdb75df386328cbaca50c6047761fa43e91; section 4 rule 2 (line 52) 'refuse authorization_binding_changed'; D-06.6 line 31 reuse of registered reason",
+        "purpose": "Doc 02: contract interpretation (looser, fail-closed reading)"
+      },
+      {
+        "location": "cogno-us/cognous-control-plane@739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69:src/agent_control_plane/",
+        "identity": "authorization_pin_export.py blob 37c43dcb80e9276c8f12947671a301eb3bbcbabf; bounded.py blob 2cc8d998ff0a8fec3112a8b0634111fcf8fbef17; effective_configuration_binding.py blob 0e2ab1d2fe8917ec9ec6bdd5a47a966880ab2fb0 (blob SHAs read by D2 in the pristine checkout; exact line numbers to be re-verified by the workers)",
+        "purpose": "Control Plane interfaces to reconcile (execute / pin-export / claim issuance); read-only"
+      },
+      {
+        "location": "local evidence git repo scratchpad/evidence (independent qualification)",
+        "identity": "commit ed3176462b8058ec6e9580ff85150ad3aa387669 (ed31764); protocol commit e08b5c2 (pre-execution freeze); permanent predecessor evidence, never modified",
+        "purpose": "Original raw runs, amendments, mutant results, verdicts"
+      },
+      {
+        "location": "scratchpad/F3-qualification-evidence-ed31764.tar.gz",
+        "identity": "sha256 1d07a70439625de3b3e85e0ea3c088a43f14bc237649487d22d85da51a174fc5 (verified by D2 today)",
+        "purpose": "Delivered evidence bundle. UNVERIFIED: no GitHub or other published provenance for the qualification evidence has been located; directive: 'Do not invent an evidence location'"
+      },
+      {
+        "location": "PROTOCOL-F3-v1.md in the evidence repo",
+        "identity": "sha256 e799b1083743526648a0c1c23d2c1455c0533ac843d88f3fe977dfd6a3850135 (verified by D2 today; blob d03942c1470eb5b01238d997c7d886f3ec181101 at ed31764); frozen in evidence commit e08b5c2",
+        "purpose": "Original frozen protocol; permanent predecessor evidence"
+      },
+      {
+        "location": "VERDICTS-F3-20261029.md in the evidence repo",
+        "identity": "blob e94b3e04dc6e1e43614a986f2df7662ff6a716f1 at ed31764 (D2 read it; header names qualifier 'Claude (claude-sonnet-5-5)')",
+        "purpose": "Original verdicts: F3-A FAIL (DEV-PE-1; 74 pass / 23 fail final run A-main4), F3-B PASS (scoped)"
+      },
+      {
+        "location": "https://github.com/cogno-us/cognous-control-plane/pull/95",
+        "identity": "head b8fbe957f0e7b93b64679ebda03acfc11660f1d7 (enters main only through #97 history; feature-branch merge fb9c7e06 NOT on main)",
+        "purpose": "Relevant to the directive's #95 merge-target documentation correction"
+      },
+      {
+        "location": "https://github.com/cogno-us/cognous-control-plane/pull/97",
+        "identity": "head 55488d2f5d00ae948e4882d035236e353bf438e0; merged as 739efe7",
+        "purpose": "Relevant to the directive's #97 main-integration documentation correction"
+      },
+      {
+        "location": "https://github.com/cogno-us/cognous-ocs-registry/pull/79",
+        "identity": "head 430fbbca68a565bb95d2d5187e2646caa7e912e8 (ref pr/79; NOT in Registry main)",
+        "purpose": "R1-START documentation and F3 handoff; developer record, not proof"
+      },
+      {
+        "location": "cogno-us/cognous-engineering-constitution",
+        "identity": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c (dcdbe3b; main HEAD verified; normative files byte-identical to 230c0af per lead brief)",
+        "purpose": "Governing documents: ENGINEERING_CONSTITUTION, ORCHESTRATION, ORCHESTRATOR_PROMPT_ENGINEERING_ADDENDUM, ENGINEERING_COMPLIANCE_ADDENDUM, TESTING_POLICY, ADOPTION, schemas/orchestrator-assignment-v1.schema.json"
+      }
+    ],
+    "interfacesAndDependencies": [
+      "Conflicting clauses: doc 03 F3-A requirement 1 (line 23, blob 101ce289): 'execute AND pin-export ... refuse with authorization_binding_changed and a durable EffectTimeRefusal' versus doc 02 section 4 rule 2 (line 52, blob 0cd33bdb): 'refuse authorization_binding_changed' and D-06.6 (line 31): reuse the registered reason, no new durable code.",
+      "Control Plane interfaces to verify for current paths and exact lines: src/agent_control_plane/authorization_pin_export.py, bounded.py (EffectTimeRefusal persistence), effective_configuration_binding.py; claim-issuance boundary. Original qualification cited authorization_pin_export.py:170-189 (documented read-only) and bounded.py:1694 as the only EffectTimeRefusal append (UNVERIFIED by this packet; workers must re-verify).",
+      "Original observations: pin-export on perturbed member returns state unknown, payload None, no refusal row, no code token; claim route raises PermissionError('inputs changed before claim issuance'); destination untouched; 22 x test_A19_pin_export_refuses_per_perturbed_member[...] plus test_A06...[pin:cutoff0_idx0] failed (23 failed F3-A assertions; final run A-main4 74 pass / 23 fail).",
+      "Documentation under review: effective-configuration-binding.md lines 101 vs 113 (builder doc contradicts itself per original verdict); docs/final3-consumers.md section 6.",
+      "Dependent constraint: no change to approval_commitment, persisted schemas, signature domains or protected evaluators."
+    ],
+    "knownBaselineFailures": [
+      "41 environmental baseline failures retained in docs/evidence/final3-consumers/baseline-failures.txt at Control Plane 739efe7 (test_microsoft_agt 14, test_scan6_agt_exact 16, test_wave7_agt_binding_equality 5, test_v02_claim_policy_binding 6); source Registry #79 handoff section 3; not independently reproduced here. Not in scope of a documentation-only PR.",
+      "DEF-OBS-TOL-OVERFLOW-1: open, separate defect (not part of this package)."
+    ]
+  },
+  "acceptance": {
+    "riskTier": "T3",
+    "riskRationale": "Directive section 8: documentation-only reconciliation is T0 only if genuinely editorial; a normative clarification affecting externally relied-upon semantics is not automatically T0 and is to be assessed T2/T3. The successor clarification states normative refusal semantics for an authorization-binding boundary (D-06, itself T3) and could, if wrong, weaken fail-closed treatment or remove evidence a consumer relies on. This packet therefore takes the higher tier T3 for the clarification; purely editorial corrections within the same PR would individually be T0/T1. UNVERIFIED: the Lead Builder may justify T2 on reachable-consequence grounds. No production code changes, so no reachable runtime effect from the PR itself.",
+    "successConditions": [
+      "Distinguishes effecting execution, read-only assessment and claim issuance.",
+      "Preserves existing refusal requirements for actual effecting execution.",
+      "Does not introduce new write authority.",
+      "Does not weaken fail-closed treatment.",
+      "Does not change approval commitments, persistent schemas, signature domains or protected evaluators.",
+      "Explicitly identifies the former wording and explains the source of the discrepancy.",
+      "Preserves the original qualification protocol, observations and FAIL.",
+      "Defines the exact scope of independent readjudication.",
+      "Leaves all unrelated qualification requirements unchanged."
+    ],
+    "negativeControls": [
+      "Pin-export / read-only assessment on mismatch: fail closed, payload suppressed, non-authorizing outcome, NO persistent write (documentation must not grant a write)",
+      "Claim issuance on mismatch: no claim issued; existing documented failure outcome; no automatic effect-time journal-write obligation inferred",
+      "Effecting execution on mismatch: durable EffectTimeRefusal with authorization_binding_changed remains required and unchanged",
+      "Clarification does not edit doc 03 expectations, the frozen protocol, verdicts, raw results or any historical record",
+      "No new reason code, no new Registry schema/contract version, no protected evaluator edit (any need triggers a stop condition)",
+      "Masked-host-change limitation stated without implying protection against every host configuration change",
+      "Statements about #95 merge target and #97 main integration match verified git lineage (feature-branch merge fb9c7e06 is not on main; #95 enters main only through #97 history)",
+      "If the current implementation fails any of the three obligations: counterexample preserved and reported, not repaired"
+    ],
+    "newEvidence": [
+      {
+        "test": "Static source reconciliation of execute / pin-export / claim-issuance obligations",
+        "purpose": "Verify at CP 739efe7 whether the implementation already satisfies the three distinct obligations (Workstream A), citing exact file:line",
+        "command": "DISCOVER BEFORE EXECUTION (static reading, grep, git, hashing only)",
+        "result": "PLANNED"
+      },
+      {
+        "test": "Source-to-contract discrepancy crosswalk (doc 03 L23 vs doc 02 section 4 rule 2 vs implementation)",
+        "purpose": "Explain the source of the discrepancy and identify the former wording",
+        "command": "DISCOVER BEFORE EXECUTION",
+        "result": "PLANNED"
+      },
+      {
+        "test": "Documentation consistency checks (stale statements, #95/#97 lineage, older pin references, link validity)",
+        "purpose": "Support documentation corrections without duplicating test evidence",
+        "command": "DISCOVER BEFORE EXECUTION",
+        "result": "PLANNED"
+      },
+      {
+        "test": "Required CI for the documentation PR",
+        "purpose": "Mandatory repository gate at the exact PR head; CI is not independent qualification",
+        "command": "DISCOVER BEFORE EXECUTION",
+        "result": "PLANNED"
+      }
+    ],
+    "reusedEvidence": [
+      {
+        "source": {
+          "location": "local evidence git repo scratchpad/evidence (independent qualification)",
+          "identity": "commit ed3176462b8058ec6e9580ff85150ad3aa387669 (ed31764); protocol commit e08b5c2 (pre-execution freeze); permanent predecessor evidence, never modified",
+          "purpose": "Original raw runs, amendments, mutant results, verdicts"
+        },
+        "applicability": "Predecessor evidence read-only for observations and crosswalk. Applicability limited to Control Plane 739efe7 and PROTOCOL-F3-v1 sha256 e799b108...; it is NOT transferred as a pass to any new revision (CA07) and may not support any new verdict by the builder."
+      },
+      {
+        "source": {
+          "location": "VERDICTS-F3-20261029.md in the evidence repo",
+          "identity": "blob e94b3e04dc6e1e43614a986f2df7662ff6a716f1 at ed31764 (D2 read it; header names qualifier 'Claude (claude-sonnet-5-5)')",
+          "purpose": "Original verdicts: F3-A FAIL (DEV-PE-1; 74 pass / 23 fail final run A-main4), F3-B PASS (scoped)"
+        },
+        "applicability": "Cited for original observations, reproductions and the 23-failure count; not to be relabeled or rescored by the builder."
+      }
+    ],
+    "notRun": [
+      {
+        "test": "New production-code tests",
+        "reason": "Not authorized (directive section 8)"
+      },
+      {
+        "test": "Full regression battery",
+        "reason": "Not authorized; no production change"
+      },
+      {
+        "test": "Mutation testing",
+        "reason": "Not authorized"
+      },
+      {
+        "test": "Paid testing",
+        "reason": "Not authorized (paidExecution false)"
+      },
+      {
+        "test": "Independent qualification execution by the builder",
+        "reason": "Forbidden; the builder may not issue or alter the verdict (CA23)"
+      },
+      {
+        "test": "Rerun of full qualification",
+        "reason": "Forbidden by directive section 11"
+      }
+    ],
+    "qualificationBoundary": "The builder produces developer-inspected documentation only. Independent F3-A readjudication is a separate Archetype D package (readjudication-packet.json) owned by a fresh independent qualification owner who issues a NEW verdict with its own protocol and source bindings; the original F3-A FAIL and F3-B scoped PASS remain permanent predecessor evidence. CI green and the Architect-approved interpretation are not qualification. Not production readiness; no final human certification."
+  },
+  "delivery": {
+    "artifacts": [
+      "DEV-PE-1 Architect interpretation.",
+      "Source-to-contract discrepancy crosswalk.",
+      "Successor clarification.",
+      "Documentation corrections.",
+      "Independent readjudication handoff.",
+      "CI Scope Declaration.",
+      "Exact source identities.",
+      "Remaining qualification obligations."
+    ],
+    "reportFields": [
+      "Exact source heads reviewed",
+      "DEV-PE-1 source reconciliation result",
+      "Successor clarification PR link",
+      "Documentation corrections",
+      "CI Scope Declaration (risk tier, exact source head, files changed, evidence reused, new checks executed, tests omitted and why, remaining independent qualification obligations)",
+      "Independent F3-A readjudication assignment",
+      "Remaining architectural or qualification blockers",
+      "Required Architect decisions"
+    ],
+    "pullRequest": "UNVERIFIED: not yet created (one bounded documentation-only PR, no automatic merge; repository not designated by the directive). No PR URL or final head SHA is recorded."
+  },
+  "boundaries": {
+    "stopConditions": [
+      "Pin-export is found to be a contractually effecting operation rather than read-only assessment.",
+      "A relied-upon external interface explicitly requires durable pin-export refusal evidence.",
+      "The approved clarification weakens authorization or eliminates necessary evidence.",
+      "A new durable reason or protected evaluator change becomes necessary.",
+      "Existing evidence cannot establish the documented interface distinction.",
+      "Qualification independence or adoption authority remains materially unresolved.",
+      "If the clarification would modify a genuinely relied-upon external contract rather than resolve ambiguity: identify the compatibility transition and stop for Architect review.",
+      "If the current implementation does not satisfy the three distinct obligations (execute / pin-export / claim issuance): preserve the counterexample and report the defect; do not repair without further authorization."
+    ],
+    "escalationOwner": "Architect (per the directive's escalation list and the Registry final-three decision records). Ordinary documentation and linking issues are resolved without interrupting the Architect. UNVERIFIED: no named individual contact is stated.",
+    "outOfScope": [
+      "Registry #58/#59: HELD",
+      "Control Plane #87: HELD",
+      "Constructor tolerance: NOT AUTHORIZED",
+      "Ed25519 #26/#34: HELD",
+      "V09: SEPARATE",
+      "Independent final Tier 1: DEFERRED, NOT WAIVED",
+      "Publication/release/production: HOLD",
+      "DEF-OBS-TOL-OVERFLOW-1: OPEN, SEPARATE",
+      "R1 production refactoring: deferred",
+      "Do not widen authorization; do not add writes to read-only assessment paths; do not reinterpret execution refusal requirements",
+      "Do not silently modify historical records; do not change the qualification protocol's original pass criteria after observing the result",
+      "F3-B: preserved scoped PASS not reopened solely because F3-A requires a clarification (frozen F3-B protocol, original predecessor observations, one unscored harness over-specification, zero-window observation, declared scope limits, independence provenance limitations retained)",
+      "General README cleanup; no automatic merge; no final human certification claim"
+    ]
+  },
+  "governance": {
+    "constitutionalRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+    "projectAdoption": {
+      "status": "CONFLICT",
+      "evidence": "OCS records pin different constitutional revisions: 1c2e920f4e58e07a52e8e2408a506cf7dbc1292b (Registry README, PROJECT_PLAN, decisions D1-D5; predates the Compliance Addendum and numbers review tiers with Tier 1 = critical, whereas dcdbe3b/230c0af use Tier 3 = critical) and 230c0aff1c2d1e054652cfc1be175147260b8aae (Registry final-three 02/03, Control Plane D-06/FINAL3 docs). The directive names dcdbe3b76843d672ca3cfb1f000124ecd78ed03c and says 'Preserve the existing OCS project adoption'; the Compliance Addendum and Orchestrator Addendum state they are NOT ADOPTED by publication or merge, and Registry #79 04-architect-decision-packet D7 records the revision question as open. No OCS adoption decision selecting dcdbe3b was found. Existing adoptions preserved unchanged; the cells copied here are read at dcdbe3b and were verified byte-identical to 230c0af by the earlier qualification worker (equality with 1c2e920 was shown for CA04/06/07/08/23 by earlier Worker D, not rechecked here)."
+    },
+    "complianceAddendumRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+    "testingPolicyRevision": "dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+    "archetypeSource": "ENGINEERING_COMPLIANCE_ADDENDUM.md section 3 'Archetype C' table (verbatim cells CA02, CA04, CA06, CA07) at cogno-us/cognous-engineering-constitution@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c; additionally enforced CA05 (cells from the addendum Archetype B table), CA18 and CA21 (addendum Archetype A table), CA23 (addendum Archetype D table), and CA16 (not in any addendum archetype table; copied cell-exact from the ENGINEERING_CONSTITUTION.md CA table at the same revision), as directed ('applicable CA05, CA16, CA18, CA21 and CA23 obligations')",
+    "clauses": [
+      {
+        "article": "CA02",
+        "requiredBehavior": "Deliver the smallest complete authorized capability.",
+        "prohibitedShortcut": "Speculative architecture, infrastructure, dependencies or scope expansion.",
+        "binding": "Make only the minimum documentation and contract clarification required to resolve DEV-PE-1."
+      },
+      {
+        "article": "CA04",
+        "requiredBehavior": "Distinguish implementation inspection, independent qualification, competent certification and final integration; preserve independence wherever required.",
+        "prohibitedShortcut": "Fit an oracle to implementation or substitute developer tests.",
+        "binding": "Keep the original qualification oracle frozen. Publish an explicit successor interpretation rather than editing expected outcomes."
+      },
+      {
+        "article": "CA06",
+        "requiredBehavior": "Retain consequential decision ancestry, rejected alternatives, objections, adverse findings and supersession where legitimately relevant, subject to privacy and retention limits.",
+        "prohibitedShortcut": "Delete, relabel, overwrite or silently rescore failures.",
+        "binding": "Preserve the original FAIL, all 23 failed F3-A assertions, raw logs and original qualification evidence without relabeling or deletion."
+      },
+      {
+        "article": "CA07",
+        "requiredBehavior": "Bind claims to exact source, configuration, governing context and transition evidence; reconstruct authoritative pathways when deterministic execution replay is impossible.",
+        "prohibitedShortcut": "Transfer a pass across revisions.",
+        "binding": "Bind every assertion and clarification to exact source commits, document revisions and qualification protocol identities."
+      },
+      {
+        "article": "CA05",
+        "requiredBehavior": "Apply specified conservative treatment and expose missing semantics.",
+        "prohibitedShortcut": "Invent a cause, grant, floor, deadline, mapping or default.",
+        "binding": "Fail closed without inventing policy: on a configuration-binding mismatch the read-only assessment / pin-export path must fail closed, suppress the authorization payload and return the already documented non-authorizing assessment outcome (source observation: state 'unknown', payload None); the claim-issuance path must prevent issuance and report its existing documented failure outcome. The clarification must not invent a cause, reason, grant, floor, deadline, mapping or default, and must not add any write to a read-only path or any recovery/fallback. Where documentation is silent or contradictory (effective-configuration-binding.md lines 101 vs 113 per the original verdict), expose the gap in the crosswalk rather than filling it with new policy. Verify against authorization_pin_export.py (blob 37c43dcb) and bounded.py (blob 2cc8d998) at CP 739efe7; any finding that existing behavior is NOT fail-closed is a counterexample to report, not to repair."
+      },
+      {
+        "article": "CA16",
+        "requiredBehavior": "Separate proposed, documented, implemented, developer-tested, independently qualified, deployed and production-qualified.",
+        "prohibitedShortcut": "Promote lifecycle labels or substitute them for project-defined claim statuses.",
+        "binding": "No silent claim promotion: label every statement with its lifecycle state. The Architect interpretation is 'approved direction for a proposed successor clarification'; the clarification is 'documented/proposed' only. The original F3-A state remains 'independently qualified: FAIL (DEV-PE-1)'; F3-B remains 'independently qualified: PASS (scoped)'; nothing in the PR may state or imply that F3-A is PASS, 'resolved', 'qualified' or 'accepted'. Developer-tested, CI-green or documented does not mean independently qualified. Only a new, separately owned readjudication may change the F3-A verdict, and then only for its own protocol and source bindings."
+      },
+      {
+        "article": "CA18",
+        "requiredBehavior": "Version, authenticate and review governance-critical policy and rule changes; protect established mandatory invariants against configuration override.",
+        "prohibitedShortcut": "Treat unreviewed settings or evaluator changes as governing authority, weaken mandatory checks or introduce an unaccountable decision path.",
+        "binding": "Governance-critical authorization semantics are touched only by documentation: protected invariants (fail-closed refusal on binding mismatch for effecting execution, authorization_binding_changed with durable EffectTimeRefusal) stay unchanged and are not weakened by any configuration or wording; no protected evaluator is edited (any need for one is a stop condition to escalate); no new durable reason code (the existing registered authorization_binding_changed is reused per doc 02 D-06.6, line 31, which states a new code would need runtime-authority-reasons/0.4 and a protected edit that is not authorized); no unaccountable decision path; no new Registry schema or contract version."
+      },
+      {
+        "article": "CA21",
+        "requiredBehavior": "Preserve relied-upon external semantics or obtain an explicit authorized compatibility transition.",
+        "prohibitedShortcut": "Introduce silent contract, rights, evidence or interface regressions through internal refactoring.",
+        "binding": "Boundary commitments: approval_commitment, persisted schemas and signature domains are unchanged (the original qualification recorded catalogue_digest, approval_commitment, three profile dumps, 20 schema/vector hashes, reason vocabulary and EffectivePolicySnapshot.identity_digest byte-identical to b7eb11a; cite as predecessor evidence, not as re-proof). The clarification must state an explicit compatibility path: effecting execution refusal semantics unchanged; read-only/claim behavior already implemented is documented, not changed; any relied-upon external interface that explicitly requires durable pin-export refusal evidence is a STOP CONDITION: identify the compatibility transition and stop for Architect review rather than resolving it."
+      },
+      {
+        "article": "CA23",
+        "requiredBehavior": "Separate contribution, inspection, qualification, certification and integration according to risk and governing independence requirements.",
+        "prohibitedShortcut": "Self-certify generated work or treat nominal human involvement as sufficient authority.",
+        "binding": "The implementation team (builder) issues no verdict and does not self-certify: Workers A-D and the Lead Builder contribute inspection and documentation only; no PASS/FAIL/BLOCKED statement about F3-A is made by the builder. The independent qualifier retains exclusive ownership of readjudication and of the resulting verdict, with its own protocol and source bindings. Nominal approval by the Architect of an interpretation is direction for a clarification, not a qualification verdict. Independence provenance limits are disclosed, not asserted away."
+      }
+    ],
+    "supplementalSources": [
+      "ENGINEERING_CONSTITUTION.md@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+      "ORCHESTRATION.md@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+      "ORCHESTRATOR_PROMPT_ENGINEERING_ADDENDUM.md@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+      "ENGINEERING_COMPLIANCE_ADDENDUM.md@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+      "TESTING_POLICY.md@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+      "ADOPTION.md@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c",
+      "schemas/orchestrator-assignment-v1.schema.json@dcdbe3b76843d672ca3cfb1f000124ecd78ed03c"
+    ]
+  }
+}
