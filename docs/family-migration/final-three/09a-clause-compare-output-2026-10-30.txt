@@ -1,0 +1,155 @@
+SECTION 1: file existence and blob ids per revision
+ENGINEERING_CONSTITUTION.md                        1c2e920=3bb01a02b8  230c0af=bed8f0639f  dcdbe3b=bed8f0639f  identical_all_three=False
+ORCHESTRATION.md                                   1c2e920=1d3b924d59  230c0af=221f97785f  dcdbe3b=221f97785f  identical_all_three=False
+ENGINEERING_COMPLIANCE_ADDENDUM.md                 1c2e920=ABSENT  230c0af=1d8a31a986  dcdbe3b=1d8a31a986  identical_all_three=False
+ORCHESTRATOR_PROMPT_ENGINEERING_ADDENDUM.md        1c2e920=ABSENT  230c0af=ABSENT  dcdbe3b=e1b73f74cc  identical_all_three=False
+TESTING_POLICY.md                                  1c2e920=ABSENT  230c0af=f9d6ebbd6d  dcdbe3b=f9d6ebbd6d  identical_all_three=False
+ADOPTION.md                                        1c2e920=a9394cdb2b  230c0af=a9394cdb2b  dcdbe3b=a9394cdb2b  identical_all_three=True
+schemas/orchestrator-assignment-v1.schema.json     1c2e920=ABSENT  230c0af=ABSENT  dcdbe3b=9b65bfd606  identical_all_three=False
+
+SECTION 2: CA table (ENGINEERING_CONSTITUTION.md) cells, per revision. Columns: Required behavior / Prohibited shortcut / Validation
+ CA01 Required   identical_all_three=True  sha=683c343d122a  lines={'1c2e920': 88, '230c0af': 88, 'dcdbe3b': 88}
+ CA01 Prohibited identical_all_three=True  sha=39de09955924  lines={'1c2e920': 88, '230c0af': 88, 'dcdbe3b': 88}
+ CA01 Validation identical_all_three=True  sha=9e54d27f9f72  lines={'1c2e920': 88, '230c0af': 88, 'dcdbe3b': 88}
+*CA02 Required   identical_all_three=True  sha=1288decc536d  lines={'1c2e920': 89, '230c0af': 89, 'dcdbe3b': 89}
+*CA02 Prohibited identical_all_three=True  sha=088a6a9cb76f  lines={'1c2e920': 89, '230c0af': 89, 'dcdbe3b': 89}
+*CA02 Validation identical_all_three=True  sha=3dbd271da77d  lines={'1c2e920': 89, '230c0af': 89, 'dcdbe3b': 89}
+ CA03 Required   identical_all_three=True  sha=bdfaaa3c6e67  lines={'1c2e920': 90, '230c0af': 90, 'dcdbe3b': 90}
+ CA03 Prohibited identical_all_three=True  sha=8b5136c9de38  lines={'1c2e920': 90, '230c0af': 90, 'dcdbe3b': 90}
+ CA03 Validation identical_all_three=True  sha=248e4aac8425  lines={'1c2e920': 90, '230c0af': 90, 'dcdbe3b': 90}
+*CA04 Required   identical_all_three=True  sha=6da905d68b61  lines={'1c2e920': 91, '230c0af': 91, 'dcdbe3b': 91}
+*CA04 Prohibited identical_all_three=True  sha=afb230917bc9  lines={'1c2e920': 91, '230c0af': 91, 'dcdbe3b': 91}
+*CA04 Validation identical_all_three=True  sha=a1a6ceec49ab  lines={'1c2e920': 91, '230c0af': 91, 'dcdbe3b': 91}
+*CA05 Required   identical_all_three=True  sha=3fd740aa018e  lines={'1c2e920': 92, '230c0af': 92, 'dcdbe3b': 92}
+*CA05 Prohibited identical_all_three=True  sha=efdd60893f8b  lines={'1c2e920': 92, '230c0af': 92, 'dcdbe3b': 92}
+*CA05 Validation identical_all_three=True  sha=b7729374d598  lines={'1c2e920': 92, '230c0af': 92, 'dcdbe3b': 92}
+*CA06 Required   identical_all_three=True  sha=c910980cfea8  lines={'1c2e920': 93, '230c0af': 93, 'dcdbe3b': 93}
+*CA06 Prohibited identical_all_three=True  sha=fa6788c4bffd  lines={'1c2e920': 93, '230c0af': 93, 'dcdbe3b': 93}
+*CA06 Validation identical_all_three=True  sha=43ef7c96e1d0  lines={'1c2e920': 93, '230c0af': 93, 'dcdbe3b': 93}
+*CA07 Required   identical_all_three=True  sha=10b680837c9e  lines={'1c2e920': 94, '230c0af': 94, 'dcdbe3b': 94}
+*CA07 Prohibited identical_all_three=True  sha=0f04e8ebe594  lines={'1c2e920': 94, '230c0af': 94, 'dcdbe3b': 94}
+*CA07 Validation identical_all_three=True  sha=2ef283e365f3  lines={'1c2e920': 94, '230c0af': 94, 'dcdbe3b': 94}
+*CA08 Required   identical_all_three=True  sha=0d688490cc6f  lines={'1c2e920': 95, '230c0af': 95, 'dcdbe3b': 95}
+*CA08 Prohibited identical_all_three=True  sha=971206dfcecd  lines={'1c2e920': 95, '230c0af': 95, 'dcdbe3b': 95}
+*CA08 Validation identical_all_three=True  sha=8eaa808b1d97  lines={'1c2e920': 95, '230c0af': 95, 'dcdbe3b': 95}
+ CA09 Required   identical_all_three=True  sha=bbfa8f0779bd  lines={'1c2e920': 96, '230c0af': 96, 'dcdbe3b': 96}
+ CA09 Prohibited identical_all_three=True  sha=8467d25fb75f  lines={'1c2e920': 96, '230c0af': 96, 'dcdbe3b': 96}
+ CA09 Validation identical_all_three=True  sha=9f65e85d24ac  lines={'1c2e920': 96, '230c0af': 96, 'dcdbe3b': 96}
+ CA10 Required   identical_all_three=True  sha=2881baf57f4c  lines={'1c2e920': 97, '230c0af': 97, 'dcdbe3b': 97}
+ CA10 Prohibited identical_all_three=True  sha=92feac951d14  lines={'1c2e920': 97, '230c0af': 97, 'dcdbe3b': 97}
+ CA10 Validation identical_all_three=True  sha=454cc939cf35  lines={'1c2e920': 97, '230c0af': 97, 'dcdbe3b': 97}
+ CA11 Required   identical_all_three=True  sha=4f2836c56610  lines={'1c2e920': 98, '230c0af': 98, 'dcdbe3b': 98}
+ CA11 Prohibited identical_all_three=True  sha=01880eb4a31d  lines={'1c2e920': 98, '230c0af': 98, 'dcdbe3b': 98}
+ CA11 Validation identical_all_three=True  sha=5c77a73beda4  lines={'1c2e920': 98, '230c0af': 98, 'dcdbe3b': 98}
+ CA12 Required   identical_all_three=True  sha=76937d378a30  lines={'1c2e920': 99, '230c0af': 99, 'dcdbe3b': 99}
+ CA12 Prohibited identical_all_three=True  sha=aa55a808ee49  lines={'1c2e920': 99, '230c0af': 99, 'dcdbe3b': 99}
+ CA12 Validation identical_all_three=True  sha=cdb60e4326e3  lines={'1c2e920': 99, '230c0af': 99, 'dcdbe3b': 99}
+ CA13 Required   identical_all_three=True  sha=4fe8161bd79f  lines={'1c2e920': 100, '230c0af': 100, 'dcdbe3b': 100}
+ CA13 Prohibited identical_all_three=True  sha=3dfc9e38d3ec  lines={'1c2e920': 100, '230c0af': 100, 'dcdbe3b': 100}
+ CA13 Validation identical_all_three=True  sha=19a51ec855b6  lines={'1c2e920': 100, '230c0af': 100, 'dcdbe3b': 100}
+ CA14 Required   identical_all_three=True  sha=5355b027ba7a  lines={'1c2e920': 101, '230c0af': 101, 'dcdbe3b': 101}
+ CA14 Prohibited identical_all_three=True  sha=486e77143163  lines={'1c2e920': 101, '230c0af': 101, 'dcdbe3b': 101}
+ CA14 Validation identical_all_three=True  sha=5e927237c32f  lines={'1c2e920': 101, '230c0af': 101, 'dcdbe3b': 101}
+ CA15 Required   identical_all_three=True  sha=db2ad6070fb4  lines={'1c2e920': 102, '230c0af': 102, 'dcdbe3b': 102}
+ CA15 Prohibited identical_all_three=True  sha=ddf53c0def4c  lines={'1c2e920': 102, '230c0af': 102, 'dcdbe3b': 102}
+ CA15 Validation identical_all_three=True  sha=b2fc6a0ded73  lines={'1c2e920': 102, '230c0af': 102, 'dcdbe3b': 102}
+*CA16 Required   identical_all_three=True  sha=ec48bdb7c906  lines={'1c2e920': 103, '230c0af': 103, 'dcdbe3b': 103}
+*CA16 Prohibited identical_all_three=True  sha=4a8a80546233  lines={'1c2e920': 103, '230c0af': 103, 'dcdbe3b': 103}
+*CA16 Validation identical_all_three=True  sha=65b168f86c3f  lines={'1c2e920': 103, '230c0af': 103, 'dcdbe3b': 103}
+ CA17 Required   identical_all_three=True  sha=42ffd25e7546  lines={'1c2e920': 104, '230c0af': 104, 'dcdbe3b': 104}
+ CA17 Prohibited identical_all_three=True  sha=16647feef867  lines={'1c2e920': 104, '230c0af': 104, 'dcdbe3b': 104}
+ CA17 Validation identical_all_three=True  sha=201dc18648b2  lines={'1c2e920': 104, '230c0af': 104, 'dcdbe3b': 104}
+*CA18 Required   identical_all_three=True  sha=6d5abe354a10  lines={'1c2e920': 105, '230c0af': 105, 'dcdbe3b': 105}
+*CA18 Prohibited identical_all_three=True  sha=6eb826c9bdd5  lines={'1c2e920': 105, '230c0af': 105, 'dcdbe3b': 105}
+*CA18 Validation identical_all_three=True  sha=3e3d87365dcb  lines={'1c2e920': 105, '230c0af': 105, 'dcdbe3b': 105}
+ CA19 Required   identical_all_three=True  sha=25da29d4b5e5  lines={'1c2e920': 106, '230c0af': 106, 'dcdbe3b': 106}
+ CA19 Prohibited identical_all_three=True  sha=43392959c992  lines={'1c2e920': 106, '230c0af': 106, 'dcdbe3b': 106}
+ CA19 Validation identical_all_three=True  sha=de92e2bcf9cd  lines={'1c2e920': 106, '230c0af': 106, 'dcdbe3b': 106}
+ CA20 Required   identical_all_three=True  sha=6dfa951c88fd  lines={'1c2e920': 107, '230c0af': 107, 'dcdbe3b': 107}
+ CA20 Prohibited identical_all_three=True  sha=ec0411b5b427  lines={'1c2e920': 107, '230c0af': 107, 'dcdbe3b': 107}
+ CA20 Validation identical_all_three=True  sha=2887c40d7b8a  lines={'1c2e920': 107, '230c0af': 107, 'dcdbe3b': 107}
+*CA21 Required   identical_all_three=True  sha=60d694e1b1d7  lines={'1c2e920': 108, '230c0af': 108, 'dcdbe3b': 108}
+*CA21 Prohibited identical_all_three=True  sha=35a5cb4fcb41  lines={'1c2e920': 108, '230c0af': 108, 'dcdbe3b': 108}
+*CA21 Validation identical_all_three=True  sha=18b33ef5bb0d  lines={'1c2e920': 108, '230c0af': 108, 'dcdbe3b': 108}
+ CA22 Required   identical_all_three=True  sha=3525a9d36be1  lines={'1c2e920': 109, '230c0af': 109, 'dcdbe3b': 109}
+ CA22 Prohibited identical_all_three=True  sha=9744baee1616  lines={'1c2e920': 109, '230c0af': 109, 'dcdbe3b': 109}
+ CA22 Validation identical_all_three=True  sha=1f266b74f172  lines={'1c2e920': 109, '230c0af': 109, 'dcdbe3b': 109}
+*CA23 Required   identical_all_three=True  sha=250206d161e2  lines={'1c2e920': 110, '230c0af': 110, 'dcdbe3b': 110}
+*CA23 Prohibited identical_all_three=True  sha=31da3a9451b5  lines={'1c2e920': 110, '230c0af': 110, 'dcdbe3b': 110}
+*CA23 Validation identical_all_three=True  sha=fcc1c3353c68  lines={'1c2e920': 110, '230c0af': 110, 'dcdbe3b': 110}
+(* = clause named in request)
+
+SECTION 3: Compliance Addendum slice cells (Archetype C/D etc.) vs CA table at same revision
+1c2e920: ENGINEERING_COMPLIANCE_ADDENDUM.md ABSENT (no archetype slices exist at this revision)
+230c0af: 19 slice rows; mismatches vs CA table = []
+dcdbe3b: 19 slice rows; mismatches vs CA table = []
+230c0af vs dcdbe3b addendum blob identical: True
+
+SECTION 4: Archetype C and D rows named in request (Required behavior and Prohibited shortcut)
+Arch C CA02: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=52; table line@1c2e920=89
+Arch C CA04: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=53; table line@1c2e920=91
+Arch C CA06: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=54; table line@1c2e920=93
+Arch C CA07: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=55; table line@1c2e920=94
+Arch D CA04: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=61; table line@1c2e920=91
+Arch D CA06: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=62; table line@1c2e920=93
+Arch D CA07: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=63; table line@1c2e920=94
+Arch D CA08: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=64; table line@1c2e920=95
+Arch D CA23: addendum cells identical 230c0af==dcdbe3b: True; CA-table cells at 1c2e920 identical to addendum cells at dcdbe3b: True; addendum line@dcdbe3b=65; table line@1c2e920=110
+
+SECTION 5: Other clauses in request (A/B archetype and non-archetype): CA table cells identical at all three?
+CA05: identical_all_three=True; in addendum default slice: B
+CA16: identical_all_three=True; in addendum default slice:
+CA18: identical_all_three=True; in addendum default slice: A
+CA21: identical_all_three=True; in addendum default slice: A
+
+SECTION 6: F3-A packets verbatim cells vs each revision
+-- F3-A readjudication (Archetype D): /home/claude/cognous-ocs-registry/docs/family-migration/final-three/assignments/readjudication-packet.json
+   constitutionalRevision: dcdbe3b76843d672ca3cfb1f000124ecd78ed03c | archetypeSource: ENGINEERING_COMPLIANCE_ADDENDUM.md section 3 'Archetype D' table (verbatim cells) at cogno-us/cognous-engineering-constitution@dcdbe3b76843d
+    CA04 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH
+    CA06 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA07 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA08 1c2e920:table=MATCH 230c0af:table=MATCH/addD=MATCH dcdbe3b:table=MATCH/addD=MATCH
+    CA23 1c2e920:table=MATCH 230c0af:table=MATCH/addD=MATCH dcdbe3b:table=MATCH/addD=MATCH
+-- F3-A remediation (Archetype C): /home/claude/cognous-ocs-registry/docs/family-migration/final-three/assignments/remediation-packet.json
+   constitutionalRevision: dcdbe3b76843d672ca3cfb1f000124ecd78ed03c | archetypeSource: ENGINEERING_COMPLIANCE_ADDENDUM.md section 3 'Archetype C' table (verbatim cells CA02, CA04, CA06, CA07) at cogno-us/cognous-engineering-con
+    CA02 1c2e920:table=MATCH 230c0af:table=MATCH/addB=MATCH/addC=MATCH dcdbe3b:table=MATCH/addB=MATCH/addC=MATCH
+    CA04 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH
+    CA06 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA07 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA05 1c2e920:table=MATCH 230c0af:table=MATCH/addB=MATCH dcdbe3b:table=MATCH/addB=MATCH
+    CA16 1c2e920:table=MATCH 230c0af:table=MATCH dcdbe3b:table=MATCH
+    CA18 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH dcdbe3b:table=MATCH/addA=MATCH
+    CA21 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH dcdbe3b:table=MATCH/addA=MATCH
+    CA23 1c2e920:table=MATCH 230c0af:table=MATCH/addD=MATCH dcdbe3b:table=MATCH/addD=MATCH
+-- F3-A: /home/claude/cognous-ocs-registry/docs/post-migration/assignments/F3-A.assignment.json
+   constitutionalRevision: dcdbe3b76843d672ca3cfb1f000124ecd78ed03c | archetypeSource: ENGINEERING_COMPLIANCE_ADDENDUM.md §3 Archetype D at dcdbe3b76843d672ca3cfb1f000124ecd78ed03c
+    CA04 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH
+    CA06 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA07 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA08 1c2e920:table=MATCH 230c0af:table=MATCH/addD=MATCH dcdbe3b:table=MATCH/addD=MATCH
+    CA23 1c2e920:table=MATCH 230c0af:table=MATCH/addD=MATCH dcdbe3b:table=MATCH/addD=MATCH
+-- F3-B: /home/claude/cognous-ocs-registry/docs/post-migration/assignments/F3-B.assignment.json
+   constitutionalRevision: dcdbe3b76843d672ca3cfb1f000124ecd78ed03c | archetypeSource: ENGINEERING_COMPLIANCE_ADDENDUM.md §3 Archetype D at dcdbe3b76843d672ca3cfb1f000124ecd78ed03c
+    CA04 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH
+    CA06 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA07 1c2e920:table=MATCH 230c0af:table=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addC=MATCH/addD=MATCH
+    CA08 1c2e920:table=MATCH 230c0af:table=MATCH/addD=MATCH dcdbe3b:table=MATCH/addD=MATCH
+    CA23 1c2e920:table=MATCH 230c0af:table=MATCH/addD=MATCH dcdbe3b:table=MATCH/addD=MATCH
+-- R1-NEXT: /home/claude/cognous-ocs-registry/docs/post-migration/assignments/R1-NEXT.assignment.json
+   constitutionalRevision: dcdbe3b76843d672ca3cfb1f000124ecd78ed03c | archetypeSource: ENGINEERING_COMPLIANCE_ADDENDUM.md §3 Archetype A at dcdbe3b76843d672ca3cfb1f000124ecd78ed03c
+    CA01 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH dcdbe3b:table=MATCH/addA=MATCH
+    CA03 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH dcdbe3b:table=MATCH/addA=MATCH
+    CA04 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH dcdbe3b:table=MATCH/addA=MATCH/addB=MATCH/addC=MATCH/addD=MATCH
+    CA18 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH dcdbe3b:table=MATCH/addA=MATCH
+    CA21 1c2e920:table=MATCH 230c0af:table=MATCH/addA=MATCH dcdbe3b:table=MATCH/addA=MATCH
+
+SECTION 7: Review-tier text (ENGINEERING_CONSTITUTION.md lines 150-156, ORCHESTRATION.md tier lines)
+1c2e920 | **Tier 1 is highest criticality; Tier 3 is lowest.** These are a | ['| Tier 1 — critical | Authority, admissi', '| Tier 2 — substantive | Bounded impleme', '| Tier 3 — routine | Documentation, meta']
+   ORCHESTRATION.md:76: Material changes to an oracle, fixture, threshold or evidence rule are Tier 1 (critical).
+   ORCHESTRATION.md:105: Apply Tier 3 routine self-validation without unnecessary independent review; Tier 2 requires applicable regressions and qualification; Tier 1 retains
+230c0af | **Tier 1 is routine; Tier 3 is critical.** These are assurance a | ['| Tier 1 — routine | Documentation, meta', '| Tier 2 — substantive | Bounded impleme', '| Tier 3 — critical | Authority, admissi']
+   ORCHESTRATION.md:90: Material changes to an oracle, fixture, threshold or evidence rule are Tier 3 (critical).
+   ORCHESTRATION.md:119: Apply Tier 1 routine self-validation without unnecessary independent review; Tier 2 requires applicable regressions and qualification; Tier 3 retains
+dcdbe3b | **Tier 1 is routine; Tier 3 is critical.** These are assurance a | ['| Tier 1 — routine | Documentation, meta', '| Tier 2 — substantive | Bounded impleme', '| Tier 3 — critical | Authority, admissi']
+   ORCHESTRATION.md:90: Material changes to an oracle, fixture, threshold or evidence rule are Tier 3 (critical).
+   ORCHESTRATION.md:119: Apply Tier 1 routine self-validation without unnecessary independent review; Tier 2 requires applicable regressions and qualification; Tier 3 retains
