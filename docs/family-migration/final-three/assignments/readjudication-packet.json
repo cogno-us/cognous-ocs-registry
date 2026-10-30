@@ -56,12 +56,12 @@
     "frozenSources": [
       {
         "location": "cogno-us/cognous-control-plane main",
-        "identity": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69 (merge of #97; head re-verified unchanged 2026-10-29; pristine detached checkout; read-only)",
+        "identity": "739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69 (merge of #97) is the implementation source under test. Control Plane main at packet preparation is 10099a135e7e5b82f60b2aff81350938f0a82622 (merge of docs-only #98; src d248bde478ae3f2ce050db4637f0c1203066e906, schemas 2e927251a664de16fef10b8295758e34bd947488, tests 889f7df42a255b288d3064d2ea10084c9be7469c, .github 4471a0cb0b94cd9918ed75a4a35c56fec5d39658, conformance 6cd2264fe605575f7b9bcec37b892ebd6625ce6a, all identical to 739efe7). If docstring-only PR #99 merges, the src tree changes (module docstring of registry_governed_policy.py only; executable AST identical to 739efe7 by the builder's check, to be re-derived by the qualifier). The qualifier binds the Control Plane head at dispatch and re-derives tree ids.",
         "purpose": "Frozen F3-A/F3-B subject; the only code identity in scope"
       },
       {
         "location": "cogno-us/cognous-ocs-registry main",
-        "identity": "2815643c3e15fbc6aadadbf88dc7596f10120992 (merge of #78; head re-verified unchanged 2026-10-29)",
+        "identity": "Registry main at packet preparation a4a3892f5af319fd41a8cc27780280ec5528fcb5 (includes merged successor clarification, merge commit 6bf83dd0e564951cb221c58cf9a4032f8db93e5c). Pre-integration base 2815643c3e15fbc6aadadbf88dc7596f10120992 (merge of #78) is the frozen-oracle base. The qualifier binds Registry main at dispatch.",
         "purpose": "Registry migration closeout; oracle documents and r08-v8 contract"
       },
       {
@@ -85,24 +85,24 @@
         "purpose": "Original raw runs, amendments, mutant results, verdicts"
       },
       {
-        "location": "scratchpad/F3-qualification-evidence-ed31764.tar.gz",
+        "location": "cogno-us/cognous-stack-qualification results/third-party/cp-739efe7-f3-independent-20261029/F3-qualification-evidence-ed31764.tar.gz, merge commit 0d90e355238ca28549eed443efd4242c11de7f8a (PR #238)",
         "identity": "sha256 1d07a70439625de3b3e85e0ea3c088a43f14bc237649487d22d85da51a174fc5 (verified by D2 today)",
-        "purpose": "Delivered evidence bundle. Not yet published: a custody record is proposed in hub PR cogno-us/cognous-stack-qualification#238 (unmerged; NOT published until merged and checksum-verified from a fresh clone), directory results/third-party/cp-739efe7-f3-independent-20261029/. Directive: do not invent an evidence location; the qualifier verifies the bytes by sha256 wherever obtained"
+        "purpose": "Original evidence bundle, filed as produced. Git custody verified by the builder from a fresh clone (sha256sum -c SHA256SUMS OK; protocol, bundle and verdict hashes equal the recorded identities); the qualifier re-verifies the bytes. Record is third-party/non-suite, not Tier 1, not certification. Addendum PR #239 (custody verification) was open and unmerged"
       },
       {
-        "location": "PROTOCOL-F3-v1.md in the evidence repo",
+        "location": "PROTOCOL-F3-v1.md in the evidence repo; also filed at the hub path above as PROTOCOL-F3-v1.md",
         "identity": "sha256 e799b1083743526648a0c1c23d2c1455c0533ac843d88f3fe977dfd6a3850135 (verified by D2 today; blob d03942c1470eb5b01238d997c7d886f3ec181101 at ed31764); frozen in evidence commit e08b5c2",
         "purpose": "Original frozen protocol; permanent predecessor evidence"
       },
       {
-        "location": "VERDICTS-F3-20261029.md in the evidence repo",
+        "location": "VERDICTS-F3-20261029.md in the evidence repo; also filed at the hub path above as verdict.md (sha256 57546d2b3fd390d905a731ee7904660fa06f42128aaeae68593a0677a8342cb1)",
         "identity": "blob e94b3e04dc6e1e43614a986f2df7662ff6a716f1 at ed31764 (D2 read it; header names qualifier 'Claude (claude-sonnet-5-5)')",
         "purpose": "Original verdicts: F3-A FAIL (DEV-PE-1; 74 pass / 23 fail final run A-main4), F3-B PASS (scoped)"
       },
       {
         "location": "cogno-us/cognous-ocs-registry PR #80, OCS-F3A-DEV-PE-1-INTERPRETATION/1.0 (docs/family-migration/final-three/06-...md, with 07 and 08)",
-        "identity": "Registry PR #80 on base 2815643c3e15fbc6aadadbf88dc7596f10120992; head at review round 1 was 6dd0e5d3856ef91017571619942c3825b2ae6b72 and moves with each later commit. UNVERIFIED until dispatch: the full 40-hex final head, the blob sha of 06 at that head, and the Architect's recorded post-review confirmation of decision D1 (adopt in principle after final source review). NOT dispatchable until these are recorded.",
-        "purpose": "Successor interpretation, adopted in principle by Architect decision D1 and NOT retroactive; it governs only from the Architect's recorded post-review confirmation; whether it is authoritative is for the qualifier to assess"
+        "identity": "MERGED: Registry PR #80, merge commit 6bf83dd0e564951cb221c58cf9a4032f8db93e5c, reviewed head a7a2390d4434849e6b9ee4546f1dc416f3d1caf6; exact-head acceptance recorded in the PR #80 comment (issuecomment-6512677056) under Architect directive 'PR INTEGRATION AND F3-A CLOSEOUT' (2026-10-29). The qualifier reads 06 at the Registry head it binds at dispatch and records its blob sha.",
+        "purpose": "Successor interpretation, approved by the Architect, governing prospectively after integration and NOT retroactive; it does not convert the original F3-A FAIL into a PASS. Whether it is authoritative, and whether it preserves externally relied-upon semantics, is for the qualifier to assess"
       },
       {
         "location": "remediation-packet.json (OCS-F3A-DEV-PE-1-REMEDIATION)",
@@ -116,8 +116,13 @@
       },
       {
         "location": "cogno-us/cognous-control-plane PR #98 (docs-only companion corrections), branch docs/f3a-dev-pe-1-doc-corrections-20261029",
-        "identity": "head 95fe45fc6bb390dba3f7772805a69205f4929d80 on base 739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69 at opening; src tree d248bde478ae3f2ce050db4637f0c1203066e906, schemas tree 2e927251a664de16fef10b8295758e34bd947488, tests tree 889f7df42a255b288d3064d2ea10084c9be7469c and .github tree 4471a0cb0b94cd9918ed75a4a35c56fec5d39658 identical to base. UNVERIFIED until dispatch: the final head, and Control Plane main if #98 or other work merges (the qualifier re-derives the tree ids)",
+        "identity": "MERGED: Control Plane PR #98, merge commit 10099a135e7e5b82f60b2aff81350938f0a82622, reviewed head 95fe45fc6bb390dba3f7772805a69205f4929d80 on base 739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69; executable, schema, test, conformance and workflow trees unchanged. The qualifier re-reads the corrected documentation at the head it binds (case A24 rerun is mandatory)",
         "purpose": "Corrected documentation read by case A24; must be re-read at the exact head the qualifier binds"
+      },
+      {
+        "location": "cogno-us/cognous-control-plane PR #99 (docstring-only correction of registry_governed_policy.py lines 28-29)",
+        "identity": "head 2be2181423347e1b1d9c904e05d7a4a0fe8accf6 on base 10099a135e7e5b82f60b2aff81350938f0a82622; OPEN and UNMERGED at packet preparation (merge pending); builder AST check: identical outside the module docstring",
+        "purpose": "Corrects the source docstring that implied pin-export claim refusal produces authorization_binding_changed; no executable change. The qualifier checks whether it merged and re-derives AST equivalence if so"
       }
     ],
     "interfacesAndDependencies": [
@@ -125,7 +130,7 @@
       "Original F3-A result: FAIL (DEV-PE-1, CONTRACT-LITERAL, strict per R2): 22 x test_A19_pin_export_refuses_per_perturbed_member + test_A06...[pin:cutoff0_idx0] = 23 failed assertions; final run A-main4 74 pass / 23 fail; original corrective-owner note allows the Architect to reconcile 03 L23 with 02 section 4 rule 2.",
       "Original F3-A expected-outcome text and pass criteria were never changed and remain frozen.",
       "Registry pin per Control Plane suite and environment requirements as in the original protocol (OCS_REGISTRY_PIN_DIR, OCS_REQUIRE_REGISTRY_PIN=1; Python 3.11 venv); readjudicator must record the exact environment.",
-      "Dependency on remediation package OCS-F3A-DEV-PE-1-REMEDIATION: Registry PR #80 exists; its final head SHA and the Architect's post-review confirmation of D1 are UNVERIFIED until dispatch; this assignment is not dispatchable until they are recorded."
+      "Dependency on remediation package OCS-F3A-DEV-PE-1-REMEDIATION: Registry PR #80 is merged (6bf83dd) and approved by the Architect. UNVERIFIED until dispatch: the Registry and Control Plane heads the qualifier binds, and the designation of the qualifier."
     ]
   },
   "acceptance": {
@@ -137,7 +142,8 @@
       "Required cases covered: A19 pin-export mismatch cases; A06 legacy pin-export subcase; A19 claim-issuance observations; A19 execute durable refusal regression evidence; A09 compatibility; A24 limits-documented rerun (mandatory).",
       "Every reused raw result has an exact-source applicability statement (CP 739efe7 tree, protocol e799b108..., environment); every new test is justified by an identified evidence gap.",
       "Readjudication oracle frozen and hashed before any new execution; raw logs, failures and exclusions retained; qualifier identity, provenance and independence limits disclosed; no human certification claimed.",
-      "Any actual defect found is recorded with source-backed requirement, reproduction, observed behavior, severity, reachable consequence, corrective owner and requalification scope, and is not excused by the interpretation."
+      "Any actual defect found is recorded with source-backed requirement, reproduction, observed behavior, severity, reachable consequence, corrective owner and requalification scope, and is not excused by the interpretation.",
+      "The new verdict explicitly supersedes, and does not replace or alter, the predecessor qualification verdict; the predecessor F3-A FAIL (DEV-PE-1) and F3-B scoped PASS remain preserved as filed."
     ],
     "negativeControls": [
       "Pin-export mismatch must suppress payload and be non-authorizing; any authorization payload or effect on mismatch is a FAIL regardless of reading",
@@ -273,7 +279,7 @@
       "Deviation, blocker and corrective-action report, if required"
     ],
     "reportFields": [
-      "Exact source heads qualified (CP 739efe7, Registry 2815643, successor PR head SHA, document revisions)",
+      "Exact source heads qualified (CP 739efe7 and the CP head bound at dispatch, Registry main bound at dispatch, merged successor 6bf83dd, document revisions and blob shas)",
       "Frozen readjudication protocol hash and evidence links",
       "Outcome for each of A-E and each required case, under both readings",
       "Reused versus new evidence with applicability",
@@ -282,7 +288,7 @@
       "Required corrections and requalification scope, if any",
       "Remaining qualification and release holds"
     ],
-    "pullRequest": "UNVERIFIED: no readjudication PR or evidence location designated. No final head SHA recorded."
+    "pullRequest": "Required new evidence destination: PROPOSED, awaiting Architect designation - a new append-only directory under cogno-us/cognous-stack-qualification results/third-party/ (for example cp-739efe7-f3a-readjudication-<YYYYMMDD>/), filed by PR, referencing and never editing the predecessor directory. No readjudication PR exists; no qualifier is designated by this packet. A fresh verdict must explicitly supersede, not replace, the predecessor F3-A FAIL / F3-B scoped PASS."
   },
   "boundaries": {
     "stopConditions": [
