@@ -5,7 +5,7 @@ Status: **decision record prepared by the Lead Builder from the Architect direct
 ## 1. Exact successor document identity
 | Item | Identity |
 |---|---|
-| Successor | OCS-F3A-DEV-PE-1-INTERPRETATION/1.0, `docs/family-migration/final-three/06-f3a-dev-pe-1-interpretation-v1.0-2026-10-29.md`, git blob `eac91d3b6a7a0cb7db2d7bcdd1fd0ecc2a03c4d4` at Registry main `517062529f0507be81a8ac5e457a009db98f8d90` |
+| Successor | OCS-F3A-DEV-PE-1-INTERPRETATION/1.0, `docs/family-migration/final-three/06-f3a-dev-pe-1-interpretation-v1.0-2026-10-29.md`, git blob `0d90012019c652bf704f266d095c23cd0a31dff1` at Registry main `517062529f0507be81a8ac5e457a009db98f8d90` |
 | Integrated by | Registry PR #80, merge commit `6bf83dd0e564951cb221c58cf9a4032f8db93e5c` (reviewed head `a7a2390d4434849e6b9ee4546f1dc416f3d1caf6`) |
 | Implementation the interpretation describes | Control Plane `739efe7d8f16a0cee1efc7dd3a978d5d4d85fe69`; Control Plane main `8616d5f64a901b8f858359809193961a1124b5f6` differs from it only in the module docstring of `registry_governed_policy.py` (docs PR #98, docstring PR #99) |
 
