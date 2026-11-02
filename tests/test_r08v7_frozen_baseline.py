@@ -79,8 +79,12 @@ def test_every_other_committed_registry_file_is_unchanged_from_the_baseline_exce
     """A tripwire on the working tree (not only the manifest): `git diff --name-only <baseline> <historical-end>` may list only new v7 files, the new docs/vectors/tests and the
     three allowlist-edited guards. Skipped where no git metadata or baseline object is available."""
     import subprocess
-    probe = subprocess.run(["git", "cat-file", "-e", HISTORICAL_END + "^{commit}"], cwd=ROOT, capture_output=True)
-    if probe.returncode != 0:
-        pytest.skip("baseline commit not present in this checkout")
-    changed = subprocess.run(["git", "diff", "--name-only", "--diff-filter=MDRT", BASELINE, HISTORICAL_END, "--", "."], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    for revision in (BASELINE, HISTORICAL_END):
+        probe = subprocess.run(["git", "cat-file", "-e", revision + "^{commit}"], cwd=ROOT, capture_output=True)
+        if probe.returncode != 0:
+            pytest.skip("historical commit not present in this checkout: " + revision)
+    changed = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=MDRT", BASELINE, HISTORICAL_END, "--", "."],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout.split()
     assert set(changed) <= ALLOWLIST_EDITED_GUARDS, sorted(set(changed) - ALLOWLIST_EDITED_GUARDS)
