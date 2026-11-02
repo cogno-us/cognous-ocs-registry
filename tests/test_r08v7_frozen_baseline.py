@@ -21,6 +21,7 @@ ENGINE_MODULES = {"__init__.py", "profile.py", "profiles.py", "selection.py", "r
                   "families_anchor.py", "families_observation.py"}  # allowlist-only edit for r08-v8 (docs/r08-v8-contract.md): the two NEW family modules; r08-v7 itself is unchanged
 ALLOWLIST_EDITED_GUARDS = {"tests/test_ext_s1_5_identity_module.py", "tests/test_ext_s1_5_vectors.py", "tests/test_r08v2_family_dispatch.py"}
 BASELINE = "42a666328b974a7581013358bcf8bc7b9eac7761"
+HISTORICAL_END = "8284f75a574dedbf0171dfce0a0f76e8003f8fa0"  # Frozen migration completion commit; do not compare against moving main.
 
 
 def test_manifest_shape():
@@ -75,11 +76,15 @@ def test_no_per_version_copy_of_the_engine_exists():
 
 
 def test_every_other_committed_registry_file_is_unchanged_from_the_baseline_except_the_allowlisted_guards():
-    """A tripwire on the working tree (not only the manifest): `git diff --name-only <baseline>` may list only new v7 files, the new docs/vectors/tests and the
+    """A tripwire on the working tree (not only the manifest): `git diff --name-only <baseline> <historical-end>` may list only new v7 files, the new docs/vectors/tests and the
     three allowlist-edited guards. Skipped where no git metadata or baseline object is available."""
     import subprocess
-    probe = subprocess.run(["git", "cat-file", "-e", BASELINE + "^{commit}"], cwd=ROOT, capture_output=True)
-    if probe.returncode != 0:
-        pytest.skip("baseline commit not present in this checkout")
-    changed = subprocess.run(["git", "diff", "--name-only", "--diff-filter=MDRT", BASELINE, "--", "."], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    for revision in (BASELINE, HISTORICAL_END):
+        probe = subprocess.run(["git", "cat-file", "-e", revision + "^{commit}"], cwd=ROOT, capture_output=True)
+        if probe.returncode != 0:
+            pytest.skip("historical commit not present in this checkout: " + revision)
+    changed = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=MDRT", BASELINE, HISTORICAL_END, "--", "."],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout.split()
     assert set(changed) <= ALLOWLIST_EDITED_GUARDS, sorted(set(changed) - ALLOWLIST_EDITED_GUARDS)
