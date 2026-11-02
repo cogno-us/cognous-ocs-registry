@@ -643,8 +643,9 @@ JUNK = [pytest.param(f, id=i) for i, f in (("none", lambda: None), ("zero", lamb
 
 @pytest.mark.parametrize("field", ["selection_text", "record_text", "context", "trust", "verifier", "now", "key_admission"])
 @pytest.mark.parametrize("junk_factory", JUNK)
-def test_the_module_never_raises_and_never_admits_on_hostile_inputs(field, junk_factory):
+def test_the_module_never_raises_and_never_admits_on_hostile_inputs(field, junk_factory, request):
     junk = junk_factory()
+    junk_factory_id = request.node.callspec.id.split("-")[0]
     rec = fam_record(F4, F4P)
     ad = ev.Ed25519Verifier()
     args = dict(selection_text=sel_text(rec), record_text=r.dumps(rec), context=s.CTX, trust=trust(), verifier=ad, now=r.NOW,
@@ -655,7 +656,15 @@ def test_the_module_never_raises_and_never_admits_on_hostile_inputs(field, junk_
                                     min_trust_snapshot_version=1, last_accepted_snapshot=None, key_admission=args["key_admission"])
     assert isinstance(res, vs.VerifiedSelectionV2) and res.admitted is expect_admitted
     if not expect_admitted:
-        assert res.code in v2_codes.CODES_V2 and res.record is None
+        # Each (field, junk) pair maps to ONE deterministic code (observed against the verifier, pinned here). A non-text input is
+        # input_not_text; a text whose attribute access raises is classified by the parser/validator's own defensive branch.
+        expected = {"selection_text": "input_not_text", "record_text": "input_not_text", "context": "selection_scope_mismatch",
+                    "trust": "trust_snapshot_invalid", "verifier": "signature_invalid", "now": "time_unavailable",
+                    "key_admission": "trust_snapshot_invalid"}[field]
+        special = {("selection_text", "hostile"): "field_invalid", ("record_text", "hostile"): "field_type_invalid",
+                   ("trust", "none"): "trust_snapshot_missing", ("verifier", "none"): "verifier_unavailable"}
+        assert res.code == special.get((field, junk_factory_id), expected), (field, junk_factory_id, res.code)
+        assert res.record is None and res.issuer_id is None and res.selection_id is None and res.scope is None
 
 
 @pytest.mark.parametrize("junk_factory", [pytest.param(f, id=i) for i, f in (("none", lambda: None), ("zero", lambda: 0), ("hostile", Hostile),

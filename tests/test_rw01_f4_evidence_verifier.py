@@ -329,14 +329,27 @@ def test_the_adapter_never_raises_on_hostile_members():
     class Hostile:
         def __getattribute__(self, name):
             raise RuntimeError("hostile")
+    # one deterministic code per hostile member (the adapter validates every member before any verification; a hostile value is never a pass)
+    expected = {"contract": "contract_unsupported", "registry_contract": "contract_unsupported", "family": "family_unsupported",
+                "selection_text": "input_not_text", "record_text": "input_not_text", "expected_context": "selection_scope_mismatch",
+                "expected_operation_id": "selection_operation_mismatch", "trust_snapshot": "trust_snapshot_invalid",
+                "verification_time": "time_unavailable", "verification_time_utc": "time_unavailable",
+                "min_trust_snapshot_version": "trust_snapshot_invalid", "last_accepted_snapshot": "trust_snapshot_invalid",
+                "host_policy": "composition_caller_invalid"}
+    assert set(expected) == set(adapter_mod.REQUEST_KEYS)
     for key in sorted(adapter_mod.REQUEST_KEYS):
         out = make_adapter().verify_selection_evidence(request(**{key: Hostile()}))
-        assert out["ok"] is False and out["code"] in v2_codes.CODES_V2 and set(out) == adapter_mod.VERDICT_KEYS, key
+        assert_refused(out, expected[key])
+        assert out["ok"] is False and out["authenticated"] is False, key
 
 
 def test_a_text_that_cannot_be_utf8_encoded_is_refused_without_an_exception():
     out = make_adapter().verify_selection_evidence(request(selection_text="\ud800"))
-    assert out["ok"] is False and out["code"] in v2_codes.CODES_V2 and out["selection_text_sha256"] is None
+    assert_refused(out, "input_not_text")
+    assert out["selection_text_sha256"] is None and out["record_text_sha256"] is not None
+    out = make_adapter().verify_selection_evidence(request(record_text="\ud800"))
+    assert_refused(out, "input_not_text")
+    assert out["record_text_sha256"] is None
 
 
 # ----------------------------------------------------------------------------------------------------------------- module shape
